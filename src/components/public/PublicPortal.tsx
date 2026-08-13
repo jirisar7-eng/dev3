@@ -24,6 +24,7 @@ import {
   LegalHelpView,
   SupportView
 } from './community';
+import { RegistrSubjektu } from './RegistrSubjektu';
 import {
   AiAssistantView,
   AiGuideView,
@@ -176,7 +177,10 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <AiFormsView onNavigate={onNavigate} />;
   }
 
-  // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty)
+  // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty, /registr-subjektu)
+  if (slug === 'registr-subjektu' || slug === 'subjekty' || slug === 'hodnoceni-subjektu' || slug === 'hodnoceni') {
+    return <RegistrSubjektu onNavigate={onNavigate} />;
+  }
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {
     return <AgendaView onNavigate={onNavigate} />;
   }

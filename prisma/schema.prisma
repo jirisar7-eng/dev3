@@ -745,6 +745,51 @@ model CustomModule {
   updatedAt   DateTime @updatedAt
 }
 
+enum EntityType {
+  SOUD
+  OSPOD
+  ZNALEC
+  ADVOKAT
+  PORADNA_CHARITA
+}
+
+model Subjekt {
+  id            String       @id @default(uuid())
+  type          EntityType
+  name          String       // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore   String?      // Např. "PhDr.", "JUDr."
+  position      String?      // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution   String?      // Název pracoviště / Úřadu / Kanceláře
+  city          String       // Např. "Pardubice", "Přelouč"
+  region        String       // Např. "Pardubický kraj"
+  address       String?
+  email         String?
+  phone         String?
+  website       String?
+  avgRating     Float        @default(0.0)
+  reviewCount   Int          @default(0)
+  isVerified    Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  reviews       Review[]
+}
+
+model Review {
+  id                   String     @id @default(uuid())
+  subjektId            String
+  subjekt              Subjekt    @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  userId               String?
+  rating               Int        // Overall 1-5 hvězdiček
+  // Strukturovaná věcná kritéria (1-5):
+  supportSharedCare    Int        // Podpora střídavé/společné péče
+  professionalism      Int        // Věcnost a odbornost
+  speedAndDeadlines    Int        // Dodržování lhůt a rychlost
+  status               String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  comment              String     @db.Text
+  isAnonymous          Boolean    @default(true)
+  createdAt            DateTime   @default(now())
+}
+
+
 
 
 

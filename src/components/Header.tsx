@@ -44,6 +44,7 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
   { id: 'sub-2-3', labelKey: 'Judikatura', url: '/judikatura', order: 23, target: '_self', isExternal: false, parentId: 'cat-2' },
   { id: 'sub-2-4', labelKey: 'Dokumenty', url: '/dokumenty', order: 24, target: '_self', isExternal: false, parentId: 'cat-2' },
   { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', isExternal: false, parentId: 'cat-2' },
+  { id: 'sub-2-6', labelKey: 'Registr Subjektů & Hodnocení', url: '/registr-subjektu', order: 26, target: '_self', isExternal: false, parentId: 'cat-2' },
 
   // Parent Category 3: 🏛️ Státní data & Projekt
   { id: 'cat-3', labelKey: '🏛️ Státní data & Projekt', url: '#', order: 30, target: '_self', isExternal: false },

@@ -546,6 +546,43 @@ export interface SchemaDrivenContent {
   sections?: SchemaComponent[];
 }
 
+export type EntityType = 'SOUD' | 'OSPOD' | 'ZNALEC' | 'ADVOKAT' | 'PORADNA_CHARITA';
+
+export interface Review {
+  id: string;
+  subjektId: string;
+  userId?: string | null;
+  rating: number; // 1-5 overall
+  supportSharedCare: number; // 1-5
+  professionalism: number; // 1-5
+  speedAndDeadlines: number; // 1-5
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  comment: string;
+  isAnonymous: boolean;
+  createdAt: string | Date;
+}
+
+export interface Subjekt {
+  id: string;
+  type: EntityType;
+  name: string;
+  titleBefore?: string | null;
+  position?: string | null;
+  institution?: string | null;
+  city: string;
+  region: string;
+  address?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  avgRating: number;
+  reviewCount: number;
+  isVerified: boolean;
+  createdAt?: string | Date;
+  reviews?: Review[];
+}
+
+
 
 
 
