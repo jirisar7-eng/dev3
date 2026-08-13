@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
@@ -84,6 +85,8 @@ export class GithubPublisherService {
   }
 
   private static getToken(): string | undefined {
+    // Dynamické načtení z .env pro jistotu aktuálnosti
+    dotenv.config({ override: true });
     const token = process.env.GITHUB_TOKEN;
     return token && token.trim().length > 0 ? token.trim() : undefined;
   }
@@ -231,7 +234,7 @@ export class GithubPublisherService {
     const workDir = this.resolveWorkDir();
 
     // 1. RBAC Security check
-    if (!user || user.role !== 'SUPER_ADMIN') {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
       await AuditService.recordLog(
         'GITHUB_PUSH_DENIED',
         'SYSTEM',
@@ -239,7 +242,7 @@ export class GithubPublisherService {
         user,
         ipAddress
       );
-      throw new Error('PŘÍSTUP ODEPŘEN: Pouze uživatel s rolí SUPER_ADMIN může publikovat na GitHub.');
+      throw new Error('PŘÍSTUP ODEPŘEN: Pouze administrátoři mohou publikovat na GitHub.');
     }
 
     // 2. Validate commit message
@@ -382,7 +385,7 @@ export class GithubPublisherService {
     const workDir = this.resolveWorkDir();
 
     // 1. RBAC & Permission check
-    if (!user || user.role !== 'SUPER_ADMIN') {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
       await AuditService.recordLog(
         'GITHUB_FORCE_PUSH_DENIED',
         'SYSTEM',
@@ -390,7 +393,7 @@ export class GithubPublisherService {
         user,
         ipAddress
       );
-      throw new Error('PŘÍSTUP ODEPŘEN: Pouze uživatel s rolí SUPER_ADMIN a oprávněním system.github.force_publish může provést FORCE PUSH.');
+      throw new Error('PŘÍSTUP ODEPŘEN: Pouze administrátoři mohou provést FORCE PUSH.');
     }
 
     const repo = this.getRepo();

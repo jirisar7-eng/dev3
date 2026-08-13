@@ -1072,20 +1072,13 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
 
 // --- GITHUB PUBLISHER ENDPOINTS (SUPER_ADMIN ONLY, ADMIN supported in Dev/Preview) ---
 const requireGithubPublishAccess = (req: AuthenticatedRequest, res: any, next: any) => {
-  const isDevOrPreview = process.env.NODE_ENV !== 'production' || 
-    req.hostname?.includes('localhost') || 
-    req.hostname?.includes('run.app') || 
-    req.hostname?.includes('aistudio');
-
-  if (isDevOrPreview) {
-    return next();
-  }
-
-  return requireRole('SUPER_ADMIN')(req, res, next);
+  return requireRole('ADMIN')(req, res, next);
 };
 
 app.get('/api/admin/github/status', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
   try {
+    // Dynamické načtení z .env pro jistotu aktuálnosti
+    dotenv.config({ override: true });
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
       return res.json({ status: 'GITHUB_TOKEN_MISSING' });

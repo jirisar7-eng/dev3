@@ -449,11 +449,11 @@ export const GitHubPublisher: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-500">
+          <div className="p-8 text-center bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-700">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-            <p className="font-bold text-slate-800">Pracovní strom je čistý</p>
-            <p className="text-slate-500 text-[11px] mt-1">
-              Všechny změny jsou uložené a synchronizované. Pro provedení nového push proveďte změny v kódu.
+            <p className="font-bold text-emerald-800 text-sm">Všechny změny jsou úspěšně synchronizovány s GitHubem.</p>
+            <p className="text-emerald-600 text-[11px] mt-1">
+              Pracovní strom je čistý. Pro provedení nového push proveďte další změny v kódu.
             </p>
           </div>
         )}
