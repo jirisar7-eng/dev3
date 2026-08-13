@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Heart, AlertTriangle } from 'lucide-react';
+import { Logo } from './common/Logo';
 
 interface FooterProps {
   onOpenComplianceDoc: (docKey: string) => void;
@@ -37,14 +38,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
           <div className="grid grid-cols-12 gap-8 items-start pb-10 border-b border-slate-800">
             {/* Identity Column */}
             <div className="col-span-7 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-900/30">
-                  T
-                </div>
-                <span className="font-black text-white text-xl tracking-tight uppercase">
-                  TÁTA MÁ PRÁVO
-                </span>
-              </div>
+              <Logo variant="white" size="md" showSubtitle={false} />
               <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
                 Praktická pomoc otcům v náročných rodinných situacích. Informace, dokumenty, zkušenosti a podpora na jednom místě.
               </p>
@@ -228,14 +222,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
         <div className="block md:hidden space-y-6">
           {/* 1. Logo and subtitle */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-base shadow">
-                T
-              </div>
-              <span className="font-black text-white text-lg tracking-tight uppercase">
-                TÁTA MÁ PRÁVO
-              </span>
-            </div>
+            <Logo variant="white" size="md" showSubtitle={false} />
             <p className="text-xs text-slate-400 leading-relaxed">
               Praktická pomoc otcům v náročných rodinných situacích. Informace, dokumenty, zkušenosti a podpora na jednom místě.
             </p>

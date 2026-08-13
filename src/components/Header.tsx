@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
 import { RegisterModal } from './public/RegisterModal';
+import { Logo } from './common/Logo';
 import {
   Shield,
   User as UserIcon,
@@ -156,22 +157,12 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
-        <div
-          className="flex items-center gap-3 cursor-pointer shrink-0"
+        <Logo
+          variant="full"
+          size="md"
+          className="shrink-0 cursor-pointer"
           onClick={() => handleNavClick('/')}
-        >
-          <div className="w-10 h-10 rounded-lg bg-[var(--color-primary,#1e3a8a)] flex items-center justify-center text-white shadow-sm font-bold text-xl">
-            T
-          </div>
-          <div>
-            <span className="font-extrabold text-base sm:text-lg tracking-tight text-[var(--color-heading,#0f172a)] block leading-none">
-              TÁTA MÁ PRÁVO
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-medium text-[var(--color-secondary,#0284c7)] tracking-wide uppercase">
-              Pro nejlepší zájem dítěte
-            </span>
-          </div>
-        </div>
+        />
 
         {/* CMS Dynamic Navigation Links (Desktop) */}
         <nav className="hidden lg:flex items-center gap-5 text-xs sm:text-sm font-medium">
