@@ -14,6 +14,9 @@ import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
 import { CaseDatabaseView } from './CaseDatabaseView';
 import { PartnersView } from './PartnersView';
+import { AboutView } from './AboutView';
+import { ContactView } from './ContactView';
+import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
 import {
   CrisisCommunityPortal,
@@ -232,8 +235,17 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <StateStatisticsView />;
   }
 
-  // 3f. Partners & Sponsors (/sponzori, /partners)
-  if (slug === 'sponzori' || slug === 'partners') {
+  // 3f. About Project Routes (/o-nas, /kontakt, /sponzori, /partneri)
+  if (slug === 'o-nas' || slug === 'o-projektu') {
+    return <AboutView onNavigate={onNavigate} />;
+  }
+  if (slug === 'kontakt') {
+    return <ContactView onNavigate={onNavigate} />;
+  }
+  if (slug === 'sponzori') {
+    return <SponsorsView onNavigate={onNavigate} />;
+  }
+  if (slug === 'partneri' || slug === 'partners') {
     return <PartnersView />;
   }
 

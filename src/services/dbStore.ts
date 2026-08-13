@@ -1239,6 +1239,13 @@ const defaultNavItems: NavItem[] = [
   { id: 'sub-7-5', labelKey: 'Context', url: '/ai-context', order: 75, target: '_self', isExternal: false, parentId: 'cat-7' },
   { id: 'sub-7-6', labelKey: 'Nápověda', url: '/user-manual', order: 76, target: '_self', isExternal: false, parentId: 'cat-7' },
   { id: 'sub-7-7', labelKey: 'Architektura', url: '/sitemap', order: 77, target: '_self', isExternal: false, parentId: 'cat-7' },
+
+  // Parent Category 8: ℹ️ O projektu tatovacesta.cz
+  { id: 'cat-8', labelKey: 'ℹ️ O projektu tatovacesta.cz', url: '#', order: 80, target: '_self', isExternal: false },
+  { id: 'sub-8-1', labelKey: 'O nás', url: '/o-nas', order: 81, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-2', labelKey: 'Kontakt', url: '/kontakt', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-3', labelKey: 'Sponzoři', url: '/sponzori', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-4', labelKey: 'Partneři', url: '/partneri', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
 ];
 
 const defaultComplianceDocs: ComplianceDoc[] = [
