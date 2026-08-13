@@ -62,9 +62,14 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
             },
           });
         } else {
+             // UPDATE ONLY ROLE AND PASSWORD - NEVER TOUCH 2FA/TOTP FIELDS
              existingUser = await prisma.user.update({
               where: { id: existingUser.id },
-              data: { role: 'SUPER_ADMIN', passwordHash },
+              data: { 
+                role: 'SUPER_ADMIN', 
+                passwordHash 
+                // Do NOT add totpEnabled, totpSecret, etc here
+              },
             });
         }
     }
