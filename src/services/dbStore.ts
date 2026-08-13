@@ -1,3 +1,4 @@
+import { legalDocumentsContent } from '../data/legalDocuments';
 import {
   User,
   TextItem,
@@ -1255,16 +1256,7 @@ const defaultComplianceDocs: ComplianceDoc[] = [
     title: 'Podmínky užívání portálu',
     type: 'TERMS',
     description: 'Právní vymezení informativní povahy portálu a zřeknutí se odpovědnosti za právní rady',
-    content: `Podmínky užívání portálu Táta má právo (v1.0.0)
-
-1. VŠEOBECNÁ USTANOVENÍ
-Všechny informace, články, vzory podání a výstupy kalkulaček poskytované v rámci portálu Táta má právo mají výhradně informativní, edukativní a osvětový charakter.
-
-2. ODPOVĚDNOST A LIMITY SLUŽBY
-Nenahrazují individuální právní nebo psychologickou péči poskytovanou advokáty či licencovanými terapeuty. Provozovatelé portálu nenesou odpovědnost za jakékoli rozhodnutí nebo úkony učiněné uživatelem na základě informací z tohoto portálu.
-
-3. OCHRANA AUTORSKÝCH PRÁV
-Veškerý obsah, rozhraní a modulární nástroje jsou chráněny autorským právem. Jejich komerční šíření bez předchozího písemného souhlasu provozovatele je zakázáno.`,
+    content: legalDocumentsContent.terms,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1277,16 +1269,7 @@ Veškerý obsah, rozhraní a modulární nástroje jsou chráněny autorským pr
     title: 'Ochrana osobních údajů (GDPR)',
     type: 'PRIVACY',
     description: 'Pravidla zpracování a ochrany osobních údajů uživatelů dle nařízení GDPR',
-    content: `Zásady ochrany osobních údajů (GDPR) - Táta má právo (v1.0.0)
-
-1. SPRÁVCE OSOBNÍCH ÚDAJŮ
-Portál Táta má právo zpracovává osobní údaje výhradně pro účely správy uživatelského účtu, posílení bezpečnosti a umožnění využívání interaktivních modulů.
-
-2. ROZSAH ZPRACOVÁVANÝCH ÚDAJŮ
-Zpracováváme jméno, e-mailovou adresu, IP adresu a údaje zadané uživatelem do soukromého portálu (např. spisy, poznámky, data v kalendáři péče).
-
-3. PRÁVA UŽIVATELE
-Každý uživatel má právo na přístup ke svým údajům, jejich opravu, výmaz (právo být zapomenut) a možnost odvolat udělený souhlas přes Compliance Center. Vaše údaje nejsou předávány třetím stranám bez vášho výslovného souhlasu.`,
+    content: legalDocumentsContent.gdpr,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1299,19 +1282,7 @@ Každý uživatel má právo na přístup ke svým údajům, jejich opravu, vým
     title: 'Zásady používání souborů cookie',
     type: 'COOKIES',
     description: 'Informace o používání technických a preferenčních souborů cookie',
-    content: `Zásady používání souborů cookie (v1.0.0)
-
-1. CO JSOU SOUBORY COOKIE
-Soubory cookie jsou malé textové soubory ukládané ve vašem prohlížeči, které slouží k zajištění správného fungování webového portálu.
-
-2. POUŽÍVANÉ COOKIES
-Používáme výhradně nezbytné technické a relační cookies pro:
-- Uložení stavu přihlášení a bezpečnostních tokenů (JWT / relace)
-- Uložení vybraného barevného tématu (Theme Manager)
-- Zaznamenání potvrzených souhlasů s compliance dokumenty
-
-3. SPRÁVA COOKIES
-Technické cookies jsou nezbytné pro provoz portálu. Můžete je zakázat v nastavení prohlížeče, což však může narušit funkčnost přihlášení.`,
+    content: legalDocumentsContent.cookies,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1324,16 +1295,7 @@ Technické cookies jsou nezbytné pro provoz portálu. Můžete je zakázat v na
     title: 'Moje právní dokumenty & Právní výhrada',
     type: 'LEGAL',
     description: 'Právní výhrada k vygenerovaným návrhům na úpravu poměrů a vzorům podání',
-    content: `Právní výhrada k vygenerovaným dokumentům (v1.0.0)
-
-1. INFORMATIVNÍ CHARAKTER VZORŮ
-Všechny vzory podání k soudu (návrhy na střídavou péči, vyjádření k OSPOD, dohody rodičů) generované v modulu Právní dokumenty mají orientační charakter.
-
-2. DOPORUČENÁ VERIFIKACE
-Uživatel přebírá plnou odpovědnost za kontrolu a doplnění vygenerovaných právních dokumentů. Důrazně doporučujeme každý návrh před podáním k okresnímu soudu konzultovat s advokátem specializovaným na rodinné právo.
-
-3. ŽÁDNÝ VZNIK ADVOKÁTNÍHO VZTAHU
-Využitím generátoru dokumentů nevzniká mezi uživatelem a provozovatelem portálu vztah mezi advokátem a klientem.`,
+    content: legalDocumentsContent.legal,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1346,362 +1308,7 @@ Využitím generátoru dokumentů nevzniká mezi uživatelem a provozovatelem po
     title: 'DOBROVOLNICKÝ KODEX • Táta má právo / Synthesis OS',
     type: 'VOLUNTEER_CODE',
     description: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS',
-    content: `DOBROVOLNICKÝ KODEX
-
-Táta má právo / Synthesis OS
-
-Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků
-
-Verze dokumentu: 1.0
-Účinnost od: 12. 8. 2026
-ID dokumentu: SYNTH-CODEX-VOL-2026-V1
-
----
-
-I. ÚČEL KODEXU
-
-1. Tento kodex stanovuje základní pravidla chování všech dobrovolníků, spolupracovníků a osob s přístupem k projektu Táta má právo / Synthesis OS.
-
-
-2. Účelem kodexu je zajistit, aby projekt zůstal bezpečným, důvěryhodným a respektujícím prostředím pro rodiče, děti i všechny členy komunity.
-
-
-3. Dobrovolník přijímá skutečnost, že práce v projektu může mít přímý dopad na životní situace lidí, kteří se nacházejí v náročných rodinných, právních nebo psychických okolnostech.
-
-
-
-
----
-
-II. POSLÁNÍ PROJEKTU
-
-Dobrovolník při své činnosti podporuje zejména:
-
-nejlepší zájem dítěte,
-
-zdravý vztah dítěte k oběma rodičům,
-
-respekt mezi rodiči,
-
-odpovědné rodičovství,
-
-dostupnost ověřených informací,
-
-lidský přístup k lidem v obtížné situaci.
-
-
-Projekt není založen na boji proti jednotlivým osobám, ale na podpoře řešení, informovanosti a odpovědnosti.
-
-
----
-
-III. ZÁKLADNÍ HODNOTY DOBROVOLNÍKA
-
-1. Respekt
-
-Dobrovolník jedná s respektem ke každému člověku bez ohledu na:
-
-pohlaví,
-
-věk,
-
-rodinnou situaci,
-
-názory,
-
-životní zkušenosti.
-
-
-Nikdo nesmí být ponižován, zesměšňován nebo napadán.
-
-
----
-
-2. Ochrana dítěte
-
-Dítě není nástroj konfliktu mezi dospělými.
-
-Dobrovolník:
-
-nezneužívá příběhy dětí pro argumentaci,
-
-chrání jejich soukromí,
-
-nepodporuje nenávist mezi rodiči,
-
-vždy zohledňuje dlouhodobý zájem dítěte.
-
-
-
----
-
-3. Pravdivost a odpovědnost
-
-Dobrovolník:
-
-nepřidává neověřená tvrzení,
-
-nerozšiřuje fámy,
-
-odlišuje fakta od osobního názoru,
-
-uvádí zdroje, pokud pracuje s odbornými informacemi.
-
-
-
----
-
-IV. KOMUNIKACE S UŽIVATELI
-
-Dobrovolník komunikuje:
-
-slušně,
-
-klidně,
-
-věcně,
-
-bez odsuzování.
-
-
-Je zakázáno:
-
-urážení,
-
-vyhrožování,
-
-zesměšňování,
-
-vyvolávání konfliktů,
-
-podněcování nenávisti.
-
-
-
----
-
-V. PRÁCE S RODIČI V KRIZI
-
-Dobrovolník bere na vědomí, že uživatelé mohou být:
-
-pod silným stresem,
-
-v emoční krizi,
-
-po rozchodu,
-
-v probíhajícím soudním řízení.
-
-
-Proto:
-
-1. Nenahrazuje psychologa ani advokáta.
-
-
-2. Neposkytuje právní záruky typu:
-
-„Soud určitě rozhodne takto.“
-
-3. Nepodporuje impulzivní jednání.
-
-
-4. Pomáhá uživateli orientovat se, nikoliv eskalovat konflikt.
-
-
-
-
----
-
-VI. ZÁSADA NEÚTOČENÍ NA DRUHÉHO RODIČE
-
-Dobrovolník nesmí využívat projekt k:
-
-veřejnému pranýřování druhého rodiče,
-
-zveřejňování osobních údajů,
-
-pomstě,
-
-nátlaku.
-
-
-Kritizovat lze:
-
-postupy,
-
-systémy,
-
-rozhodnutí,
-
-obecné problémy.
-
-
-Nelze útočit na konkrétní osoby bez oprávněného důvodu.
-
-
----
-
-VII. OCHRANA SOUKROMÍ
-
-Dobrovolník:
-
-chrání identitu uživatelů,
-
-nezveřejňuje příběhy bez souhlasu,
-
-nesdílí screenshoty komunikace,
-
-nepřenáší informace mimo projekt.
-
-
-Platí zásada:
-
-„To, co člověk svěří projektu v těžké chvíli, není materiál pro veřejnou debatu.“
-
-
----
-
-VIII. ODBORNOST A HRANICE ROLE
-
-Dobrovolník:
-
-nepředstírá odbornou kvalifikaci, kterou nemá,
-
-nepředstavuje se jako právník, psycholog nebo úředník, pokud jím není,
-
-přizná své limity.
-
-
-Pokud si není jistý, požádá o konzultaci Správce projektu.
-
-
----
-
-IX. SOCIÁLNÍ SÍTĚ A VEŘEJNÉ VYSTUPOVÁNÍ
-
-Dobrovolník:
-
-nesmí vystupovat jménem projektu bez oprávnění,
-
-nesmí zveřejňovat interní informace,
-
-nesmí poškozovat pověst projektu.
-
-
-Při veřejném vyjadřování jasně rozlišuje:
-
-„Můj osobní názor“
-
-od
-
-„Stanovisko projektu Táta má právo“.
-
-
----
-
-X. TECHNOLOGICKÁ ETIKA
-
-Dobrovolník pracující s technologií:
-
-chrání bezpečnost systému,
-
-nevyužívá chyby k vlastnímu prospěchu,
-
-nezkouší útoky bez povolení,
-
-chrání uživatelská data.
-
-
-Bezpečnost projektu znamená ochranu lidí, ne pouze ochranu systému.
-
-
----
-
-XI. UMĚLÁ INTELIGENCE
-
-Dobrovolník využívající AI:
-
-kontroluje výsledky,
-
-nevkládá citlivé údaje do neschválených služeb,
-
-nepoužívá AI k vytváření falešných důkazů,
-
-zachovává lidskou odpovědnost.
-
-
-
----
-
-XII. KONFLIKTY A NESOUHLAS
-
-Rozdílný názor je přípustný.
-
-Dobrovolník řeší neshody:
-
-věcně,
-
-přímo,
-
-s respektem.
-
-
-Není přípustné:
-
-osobní napadání,
-
-vytváření skupin proti konkrétním lidem,
-
-poškozování projektu zevnitř.
-
-
-
----
-
-XIII. PORUŠENÍ KODEXU
-
-Porušení kodexu může vést k:
-
-upozornění,
-
-omezení oprávnění,
-
-odebrání přístupu,
-
-ukončení spolupráce.
-
-
-Při závažném porušení může být věc řešena podle platných právních předpisů.
-
-
----
-
-XIV. SLIB DOBROVOLNÍKA
-
-Dobrovolník potvrzuje:
-
-„Přijímám odpovědnost za své jednání v projektu Táta má právo. Budu chránit soukromí lidí, respektovat důstojnost rodičů i dětí a využívat své schopnosti k pomoci, nikoliv k prohlubování konfliktů.“
-
-
----
-
-ELEKTRONICKÉ POTVRZENÍ
-
-Jméno:
-
-{{USER_FULL_NAME}}
-
-ID účtu:
-
-{{USER_ID}}
-
-Datum:
-
-{{TIMESTAMP}}
-
-Potvrzení:
-
-☐ Seznámil(a) jsem se s kodexem a zavazuji se jej dodržovat.`,
+    content: legalDocumentsContent.volunteer_code,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1714,15 +1321,7 @@ Potvrzení:
     title: 'Prohlášení o využití umělé inteligence (AI)',
     type: 'AI_STATEMENT',
     description: 'Prohlášení o vývoji portálu svépomocí s využitím AI, odborných zdrojů a právní výhradě',
-    content: `PROHLÁŠENÍ O VYUŽITÍ UMĚLÉ INTELIGENCE (AI) & PRÁVNÍ VÝHRADA
-
-Tento projekt a jeho webový portál vznikají svépomocí s využitím pokročilých technologií umělé inteligence (AI), odborných veřejných zdrojů, judikatury a vlastních životních zkušeností z opatrovnických řízení.
-
-UPOZORNĚNÍ A PRÁVNÍ VÝHRADA:
-1. Autor portálu ani provozovatelé nejsou licencovanými advokáty, právníky ani registrovanými klinickými psychology.
-2. Všechny informace, vzory dokumentů, výstupy AI asistenta a kalkulačky mají výhradně informativní, edukativní a osvětový charakter.
-3. Poskytované materiály nenahrazují individuální právní poradenství poskytované advokátem dle zákona o advokacii ani odbornou psychoterapeutickou péči.
-4. Před podáním jakéhokoli návrhu či podání k okresnímu soudu nebo jednáním s OSPOD důrazně doporučujeme konzultovat konkrétní případ s kvalifikovaným odborníkem.`,
+    content: legalDocumentsContent.ai_statement,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
@@ -1735,104 +1334,7 @@ UPOZORNĚNÍ A PRÁVNÍ VÝHRADA:
     title: 'Dohoda o dobrovolné spolupráci (e-Smlouva)',
     type: 'VOLUNTEER_CODE',
     description: 'Dohoda o dobrovolné spolupráci, mlčenlivosti (NDA), ochraně informací, licenci k výstupům a GDPR',
-    content: `DOHODA O DOBROVOLNÉ SPOLUPRÁCI, MLČENLIVOSTI, OCHRANĚ INFORMACÍ, LICENCI K VÝSTUPŮM A PRAVIDLECH PRÁCE S OSOBNÍMI ÚDAJI
-
-Elektronická e-Smlouva projektu Táta má právo / Synthesis OS
-
-Verze dokumentu: 1.0
-ID smlouvy: SYNTH-VOL-{{GENERATED_ID}}
-Datum uzavření: {{TIMESTAMP}}
-
----
-STRANA 1/5
-I. SMLUVNÍ STRANY
-1. Zakladatel a správce projektu: Jiří Šár (Táta má právo / Synthesis OS, www.tatavacesta.cz, info@tatavacesta.cz)
-2. Dobrovolník: {{USER_FULL_NAME}}, Nar. {{USER_BIRTH_DATE}}, Adresa: {{USER_ADDRESS}}, E-mail: {{USER_EMAIL}}, Uživatelské ID: {{USER_ID}}
-
-II. ÚVODNÍ USTANOVENÍ A SMYSL SPOLUPRÁCE
-Dohoda upravuje nezávislou občanskou iniciativu a podporu aktivního rodičovství, nejlepšího zájmu dítěte a ochranu soukromí rodin.
-
-III. CHARAKTER DOBROVOLNÉ SPOLUPRÁCE
-Vstup z vlastní svobodné vůle, bez nátlaku, bez očekávání mzdy či honoráře. Nezahrnuje pracovní poměr.
-
-IV. PŘEDMĚT DOBROVOLNICKÉ ČINNOSTI
-A) Obsah a vzdělávání, B) Technologie, C) Komunita, D) Výzkum a analýza.
-
----
-STRANA 2/5
-V. POVINNOSTI DOBROVOLNÍKA
-Nezpůsobit škodu na dobrém jménu, zachovávat nestrannost, nepředstavovat osobní názory jako oficiální.
-
-VI. ZÁKAZ ZNEUŽITÍ POSTAVENÍ DOBROVOLNÍKA
-Zákaz komerční propagace, získávání kontaktů uživatelů pro vlastní účely a manipulativního jednání.
-
-VII. PRÁCE S PŘÍBĚHY RODIN A UŽIVATELŮ
-Striktní zákaz odtajňování anonymizovaných identit rodin a dětí.
-
-VIII. MLČENLIVOST A OCHRANA DŮVĚRNÝCH INFORMACÍ (NDA)
-Důvěrné informace zahrnují uživatelská data, zdrojové kódy, architketuru Synthesis OS i vývojové plány.
-
-IX. POVINNOST MLČENLIVOSTI
-Povinnost mlčenlivosti trvá během spolupráce i po jejím skončení.
-
-X. VÝJIMKY Z MLČENLIVOSTI
-Zákonné povinnosti či veřejně dostupné informace bez zavinění.
-
----
-STRANA 3/5
-XI. OCHRANA OSOBNÍCH ÚDAJŮ A PRAVIDLA GDPR
-Respektování Nařízení GDPR (EU 2016/679) a zákona č. 110/2019 Sb.
-
-XII. POVINNOSTI DOBROVOLNÍKA PŘI PRÁCI S OSOBNÍMI ÚDAJI
-Používání pouze schválených nástrojů, zákaz neoprávněného exportu či ukládání na osobní cloudy.
-
-XIII. PRAVIDLA PRO UCHOVÁVÁNÍ A MAZÁNÍ DAT
-Po skončení spolupráce okamžité odstranění kopií a odhlášení ze systémů.
-
-XIV. BEZPEČNOSTNÍ PRAVIDLA SYSTÉMU SYNTHESIS OS
-Ochrana účtů, zákaz obcházení bezpečnostních prvků.
-
-XV. PRAVIDLA PRO VYUŽITÍ UMĚLÉ INTELIGENCE (AI)
-Zákaz vkládání osobních údajů uživatelů a zdrojových kódů do veřejných AI modelů.
-
-XVI. TECHNICKÉ DÍLO, ZDROJOVÝ KÓD A INFRASTRUKTURA
-Ochrana zdrojového kódu a know-how Správce projektu.
-
-XVII. OZNAMOVACÍ POVINNOST
-Bezodkladné oznámení bezpečnostních chyb a incidentů.
-
----
-STRANA 4/5
-XVIII. AUTORSKÁ DÍLA, VÝSTUPY A LICENČNÍ UJEDNÁNÍ
-Výstupy zahrnují texty, kódy, grafiku, databáze a vzdělávací materiály.
-
-XIX. POSKYTNUTÍ LICENCE K VÝSTUPŮM
-Výhradní, bezúplatná, časově i územně neomezená licence pro Správce projektu.
-
-XX. ÚPRAVY A ROZVOJ VÝSTUPŮ
-Souhlas s úpravami, aktualizacemi a začleněním do budoucích verzí Synthesis OS.
-
-XXI. AUTORSKÉ PROHLÁŠENÍ DOBROVOLNÍKA
-Prohlášení o vlastní tvůrčí činnosti a neporušování práv třetích stran.
-
-XXII. UVÁDĚNÍ AUTORSTVÍ
-XXIII. PUBLIKACE A VEŘEJNÉ VYSTUPOVÁNÍ
-XXIV. UKONČENÍ SPOLUPRÁCE
-XXV. POVINNOSTI PO UKONČENÍ SPOLUPRÁCE
-
----
-STRANA 5/5
-XXVI. ODPOVĚDNOST, NÁHRADA ŠKODY A SMLUVNÍ SANKCE
-Odpovědnost za úmyslné porušení mlčenlivosti či únik dat.
-
-XXVII. ELEKTRONICKÁ SMLOUVA, AUDITNÍ STOPA A IDENTIFIKACE
-Právní závaznost elektronické akceptace s unikátním ID a časovým razítkem.
-
-XXVIII. ŘEŠENÍ SPORŮ A ROZHODNÉ PRÁVO
-Rozhodné právo ČR a příslušnost českých soudů.
-
-XXIX. ZÁVĚREČNÁ USTANOVENÍ A PROHLÁŠENÍ SOUHLASU
-XXX. ELEKTRONICKÝ PODPIS, AKCEPTACE A AUDITNÍ PROTOKOL`,
+    content: legalDocumentsContent.volunteer_agreement,
     version: '1.0.0',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
