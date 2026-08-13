@@ -54,7 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (res.ok) {
         const data = await res.json();
-        setUsers(data);
+        const usersList = Array.isArray(data) ? data : (data.users || data.data || []);
+        setUsers(usersList);
       } else {
         console.error('Error fetching users, status:', res.status);
       }

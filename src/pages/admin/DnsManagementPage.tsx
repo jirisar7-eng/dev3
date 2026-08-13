@@ -24,7 +24,8 @@ export const DnsManagementPage: React.FC = () => {
       const res = await fetch('/api/admin/dns');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load DNS records');
-      setRecords(data.records || []);
+      const recordsList = Array.isArray(data) ? data : (data.records || data.data || []);
+      setRecords(recordsList);
     } catch (err: any) {
       setError(err.message);
     } finally {

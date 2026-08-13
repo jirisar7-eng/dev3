@@ -5,13 +5,19 @@ const VERCEL_API_URL = 'https://api.vercel.com/v2/domains';
 export async function getDnsRecords() {
   const token = process.env.VERCEL_API_TOKEN;
   const domain = process.env.VERCEL_DOMAIN || 'tatovacesta.cz';
+  const teamId = process.env.VERCEL_TEAM_ID;
 
   if (!token) {
     console.warn("[Vercel DNS] VERCEL_API_TOKEN chybí v process.env");
     return { records: [], error: "VERCEL_API_TOKEN chybí v konfiguračním souboru .env" };
   }
 
-  const response = await fetch(`https://api.vercel.com/v2/domains/${domain}/records`, {
+  let url = `https://api.vercel.com/v2/domains/${domain}/records`;
+  if (teamId) {
+    url += `?teamId=${teamId}`;
+  }
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
