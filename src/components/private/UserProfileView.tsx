@@ -799,6 +799,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
           {/* 1. NOT ENABLED AND NOT SETUP IN PROGRESS */}
           {!is2faEnabled && mfaSetupStep === 0 && (
             <div className="space-y-4">
+              <div className="p-3 bg-red-50 text-red-700 rounded-xl text-xs border border-red-100 font-bold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                2FA není aktivní
+              </div>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Dvoufázové ověření přidává dodatečnou vrstvu zabezpečení k vašemu účtu. Po zadání hesla budete vyzváni k zadání jednorázového 6místného kódu z vaší mobilní aplikace (např. Google Authenticator, Microsoft Authenticator nebo 1Password).
               </p>
