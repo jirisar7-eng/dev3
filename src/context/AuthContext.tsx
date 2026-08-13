@@ -12,6 +12,8 @@ interface AuthResult {
 interface AuthContextType {
   currentUser: User | null;
   users: User[];
+  loading: boolean;
+  error: string | null;
   login: (email: string, password?: string) => Promise<AuthResult>;
   verifyMfa: (userId: string, code: string) => Promise<AuthResult>;
   register: (
@@ -44,10 +46,13 @@ const canFetchUsers = (user: User) => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Zajišťuje načítání skutečných uživatelů z PostgreSQL DEV3 databáze
       const token = localStorage.getItem('tatovacesta_auth_token');
       const res = await fetch('/api/users', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -57,10 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const usersList = Array.isArray(data) ? data : (data.users || data.data || []);
         setUsers(usersList);
       } else {
+        const errorText = `Error ${res.status}: ${res.statusText}`;
+        setError(errorText);
         console.error('Error fetching users, status:', res.status);
       }
-    } catch (e) {
+    } catch (e: any) {
+      setError(e.message || 'Error fetching users');
       console.error('Error fetching users:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -232,6 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         currentUser,
         users,
+        loading,
+        error,
         login,
         verifyMfa,
         register,

@@ -4,7 +4,7 @@ import { User, UserRole } from '../../types';
 import { Users, ShieldAlert, Search, ShieldCheck, UserX, UserCheck, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }> = ({ onCreateMailbox }) => {
-  const { users, updateUserRole, currentUser } = useAuth();
+  const { users, updateUserRole, currentUser, loading, error } = useAuth();
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Quick Create State
@@ -25,6 +25,9 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
   React.useEffect(() => {
     setUserList(users);
   }, [users]);
+  
+  if (loading) return <div className="text-center p-10 text-slate-500">Načítám uživatele...</div>;
+  if (error) return <div className="p-4 rounded-xl bg-red-50 text-red-800 border border-red-200">Chyba při načítání uživatelů: {error}</div>;
 
   const handleQuickCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,102 +324,112 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map((u) => {
-                const isSuspended = u.status === 'SUSPENDED';
-                return (
-                  <tr key={u.id} className="hover:bg-slate-50">
-                    <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
-                      <img src={u.avatar} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-slate-200" />
-                      <div>
-                        <span className="block">{u.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">ID: {u.id}</span>
-                      </div>
-                    </td>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-slate-500">
+                    <div className="bg-amber-50 text-amber-800 p-3 rounded-lg border border-amber-200 inline-block text-xs font-bold">
+                       Upozornění: API navrátilo 0 uživatelů. Zkontrolujte spojení s DB.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u) => {
+                  const isSuspended = u.status === 'SUSPENDED';
+                  return (
+                    <tr key={u.id} className="hover:bg-slate-50">
+                      <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
+                        <img src={u.avatar} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                        <div>
+                          <span className="block">{u.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">ID: {u.id}</span>
+                        </div>
+                      </td>
 
-                    <td className="p-3.5 text-slate-600 font-mono">{u.email}</td>
+                      <td className="p-3.5 text-slate-600 font-mono">{u.email}</td>
 
-                    <td className="p-3.5">
-                      {isSuspended ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
-                          <UserX className="w-3 h-3 text-red-600" />
-                          SUSPENDED
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          <UserCheck className="w-3 h-3 text-emerald-600" />
-                          ACTIVE
-                        </span>
-                      )}
-                    </td>
+                      <td className="p-3.5">
+                        {isSuspended ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
+                            <UserX className="w-3 h-3 text-red-600" />
+                            SUSPENDED
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <UserCheck className="w-3 h-3 text-emerald-600" />
+                            ACTIVE
+                          </span>
+                        )}
+                      </td>
 
-                    <td className="p-3.5">
-                      <select
-                        value={u.role}
-                        onChange={(e) => updateUserRole(u.id, e.target.value as UserRole)}
-                        className="p-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-600 bg-white"
-                      >
-                        {roles.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                    <td className="p-3.5 text-slate-500 font-mono text-[11px]">
-                      {new Date(u.createdAt).toLocaleDateString('cs-CZ')}
-                    </td>
-
-                    <td className="p-3.5 text-right space-x-2">
-                      <button
-                        onClick={() => handleToggleStatus(u)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
-                          isSuspended
-                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                            : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                        }`}
-                        title={isSuspended ? 'Aktivovat účet' : 'Blokovat účet'}
-                      >
-                        {isSuspended ? 'Aktivovat' : 'Blokovat'}
-                      </button>
-
-                      <button
-                        onClick={() => handleAdminResetPassword(u)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                        title="Resetovat heslo"
-                      >
-                        Reset Hesla
-                      </button>
-
-                      {onCreateMailbox && (
-                        <button
-                          onClick={() => onCreateMailbox(u.name)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                          title="Vytvořit @tatovacesta.cz e-mail"
+                      <td className="p-3.5">
+                        <select
+                          value={u.role}
+                          onChange={(e) => updateUserRole(u.id, e.target.value as UserRole)}
+                          className="p-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-600 bg-white"
                         >
-                          Vytvořit @tatovacesta.cz e-mail
+                          {roles.map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      <td className="p-3.5 text-slate-500 font-mono text-[11px]">
+                        {new Date(u.createdAt).toLocaleDateString('cs-CZ')}
+                      </td>
+
+                      <td className="p-3.5 text-right space-x-2">
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
+                            isSuspended
+                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                              : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                          }`}
+                          title={isSuspended ? 'Aktivovat účet' : 'Blokovat účet'}
+                        >
+                          {isSuspended ? 'Aktivovat' : 'Blokovat'}
                         </button>
-                      )}
 
-                      <button
-                        onClick={() => handleEdit(u)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
-                        title="Upravit uživatele"
-                      >
-                        Upravit
-                      </button>
+                        <button
+                          onClick={() => handleAdminResetPassword(u)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                          title="Resetovat heslo"
+                        >
+                          Reset Hesla
+                        </button>
 
-                      <button
-                        onClick={() => handleDelete(u)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
-                        title="Smazat uživatele"
-                      >
-                        Smazat
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {onCreateMailbox && (
+                          <button
+                            onClick={() => onCreateMailbox(u.name)}
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                            title="Vytvořit @tatovacesta.cz e-mail"
+                          >
+                            Vytvořit @tatovacesta.cz e-mail
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => handleEdit(u)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                          title="Upravit uživatele"
+                        >
+                          Upravit
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(u)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
+                          title="Smazat uživatele"
+                        >
+                          Smazat
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

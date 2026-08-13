@@ -784,12 +784,36 @@ app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedR
 // Users & Roles (RBAC)
 app.get('/api/users', requireAuth as any, requireRole('ADMIN') as any, async (_req: AuthenticatedRequest, res) => {
   try {
-    const users = await AuthService.getUsers();
+    let users = await AuthService.getUsers();
+    
+    // Check for sarji@seznam.cz
+    const hasSarji = users.some(u => u.email === 'sarji@seznam.cz');
+    if (!hasSarji) {
+        // Upsert logic if missing
+        try {
+            await prisma.user.upsert({
+                where: { email: 'sarji@seznam.cz' },
+                update: {},
+                create: {
+                    id: 'usr-sarji-superadmin',
+                    email: 'sarji@seznam.cz',
+                    name: 'Sarji (Super Admin)',
+                    role: 'SUPER_ADMIN',
+                    passwordHash: await hash("159753"),
+                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
+                }
+            });
+            users = await AuthService.getUsers(); // Refresh
+        } catch (e) {
+            console.error("Failed to upsert superadmin:", e);
+        }
+    }
+    
     console.log("[ADMIN OK] Načten seznam uživatelů:", users.length);
     res.json(users);
   } catch (err: any) {
     console.error("[ADMIN ERROR] Chyba při načítání uživatelů:", err);
-    res.status(500).json({ error: 'Chyba při načítání uživatelů.' });
+    res.status(500).json({ success: false, error: "Chyba databáze: " + err.message });
   }
 });
 
