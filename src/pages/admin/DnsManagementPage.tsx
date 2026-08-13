@@ -17,10 +17,11 @@ export const DnsManagementPage: React.FC = () => {
 
   const loadRecords = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/admin/dns');
-      if (!res.ok) throw new Error('Failed to load DNS records');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load DNS records');
       setRecords(data.records || []);
     } catch (err: any) {
       setError(err.message);
@@ -39,7 +40,8 @@ export const DnsManagementPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord),
       });
-      if (!res.ok) throw new Error('Failed to add record');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add record');
       await loadRecords();
       setNewRecord({ name: '', type: 'A', value: '', ttl: 60 });
     } catch (err: any) {
@@ -51,7 +53,8 @@ export const DnsManagementPage: React.FC = () => {
     if (!window.confirm('Opravdu chcete smazat tento DNS záznam?')) return;
     try {
       const res = await fetch(`/api/admin/dns/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete record');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete record');
       await loadRecords();
     } catch (err: any) {
       alert(err.message);

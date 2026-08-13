@@ -6,7 +6,10 @@ export async function getDnsRecords(domain: string, token: string) {
   const response = await fetch(`${VERCEL_API_URL}/${domain}/records`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!response.ok) throw new Error('Failed to fetch DNS records');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch DNS records');
+  }
   return response.json();
 }
 
@@ -19,7 +22,10 @@ export async function addDnsRecord(domain: string, token: string, record: any) {
     },
     body: JSON.stringify(record),
   });
-  if (!response.ok) throw new Error('Failed to add DNS record');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to add DNS record');
+  }
   return response.json();
 }
 
@@ -28,6 +34,9 @@ export async function deleteDnsRecord(domain: string, token: string, recordId: s
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!response.ok) throw new Error('Failed to delete DNS record');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to delete DNS record');
+  }
   return response.json();
 }
