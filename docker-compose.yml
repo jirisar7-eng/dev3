@@ -19,3 +19,9 @@ services:
       POSTGRES_USER: tatovacesta
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data_dev3:/var/lib/postgresql/data
+
+volumes:
+  postgres_data_dev3:
+
