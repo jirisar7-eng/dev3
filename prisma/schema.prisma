@@ -39,6 +39,7 @@ model User {
   status          AccountStatus @default(ACTIVE)
   totpEnabled     Boolean       @default(false)
   totpSecret      String?
+  totpTempSecret  String?
   totpBackupCodes String[]
   phone           String?
   bio             String?

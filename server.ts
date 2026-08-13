@@ -520,7 +520,7 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
         await getPrismaClient().user.update({
           where: { id: user.id },
           data: {
-            totpSecret: secretData.base32,
+            totpTempSecret: secretData.base32,
             totpBackupCodes: secretData.backupCodes,
           },
         });
@@ -532,7 +532,7 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
     // Sync to dbStore
     const dbUser = dbStore.users.find(u => u.id === user.id);
     if (dbUser) {
-      dbUser.totpSecret = secretData.base32;
+      dbUser.totpTempSecret = secretData.base32;
       dbUser.totpBackupCodes = secretData.backupCodes;
     }
 
@@ -556,10 +556,10 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
     }
 
     // Get current secret
-    let secret = user.totpSecret;
+    let secret = user.totpTempSecret;
     if (!secret) {
       const dbUser = dbStore.users.find(u => u.id === user.id);
-      secret = dbUser?.totpSecret;
+      secret = dbUser?.totpTempSecret;
     }
 
     if (!secret) {
@@ -576,7 +576,11 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       try {
         await getPrismaClient().user.update({
           where: { id: user.id },
-          data: { totpEnabled: true },
+          data: {
+            totpEnabled: true,
+            totpSecret: secret,
+            totpTempSecret: null
+          },
         });
       } catch (prismaErr) {
         console.warn('[2FA Enable] Prisma update failed, using dbStore:', prismaErr);
@@ -587,6 +591,8 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
     const dbUser = dbStore.users.find(u => u.id === user.id);
     if (dbUser) {
       dbUser.totpEnabled = true;
+      dbUser.totpSecret = secret;
+      dbUser.totpTempSecret = undefined;
     }
 
     // Log action
