@@ -34,12 +34,12 @@ fi
 
 # 5. Synchronize Prisma database schema
 echo "[5/6] Synchronizing Prisma DB schema..."
-if docker compose exec -T app npx prisma db push --skip-generate 2>/dev/null; then
+if docker compose exec -T app npx prisma db push; then
   echo "[DEPLOYMENT] DB schema push completed successfully via Compose app."
 elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev3'; then
-  docker exec -i tatovacesta_app_dev3 npx prisma db push --skip-generate
+  docker exec -i tatovacesta_app_dev3 npx prisma db push
 elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev'; then
-  docker exec -i tatovacesta_app_dev npx prisma db push --skip-generate
+  docker exec -i tatovacesta_app_dev npx prisma db push
 fi
 
 # 6. Verify Health Check

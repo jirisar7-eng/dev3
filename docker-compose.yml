@@ -5,6 +5,11 @@ services:
       - "3003:3000"
     env_file:
       - .env
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev3@postgres_dev3:5432/tatovacesta_dev3?schema=public}
+      - JWT_SECRET=${JWT_SECRET:-dev3_super_secret_jwt_key}
     restart: always
     depends_on:
       - postgres
