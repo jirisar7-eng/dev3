@@ -18,6 +18,7 @@ import {
   Lock,
   Mail,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 
 
@@ -35,6 +36,7 @@ import { GitPullRequest, LayoutTemplate } from 'lucide-react';
 import AdminPagesList from '../../pages/admin/AdminPagesList';
 import AdminPageBuilder from '../../pages/admin/AdminPageBuilder';
 
+import { DnsManagementPage } from '../../pages/admin/DnsManagementPage';
 import { PartnerManager } from './PartnerManager';
 import { TemplateManager } from './TemplateManager';
 import { CustomModuleManager } from './CustomModuleManager';
@@ -60,6 +62,7 @@ type AdminTab =
   | 'audit'
   | 'settings'
   | 'sponsors'
+  | 'dns'
   | 'github';
 
 
@@ -77,6 +80,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
     const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
     if (path.startsWith('/admin/pages/new') || path.startsWith('/admin/pages/edit')) return 'page-builder';
     if (path.startsWith('/admin/pages')) return 'pages';
+    if (path.startsWith('/admin/dns')) return 'dns';
     return 'overview';
   };
 
@@ -89,6 +93,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
       setActiveTab('page-builder');
     } else if (path.startsWith('/admin/pages')) {
       setActiveTab('pages');
+    } else if (path.startsWith('/admin/dns')) {
+      setActiveTab('dns');
     }
   }, [currentPath]);
 
@@ -387,6 +393,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
             <span>Systémové Nastavení</span>
           </button>
 
+          <button
+            onClick={() => {
+              setActiveTab('dns');
+              if (onNavigate) onNavigate('/admin/dns');
+              else {
+                window.history.pushState({}, '', '/admin/dns');
+                window.dispatchEvent(new Event('popstate'));
+              }
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'dns' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Globe className="w-4 h-4 text-sky-400" />
+              <span>Správa DNS</span>
+            </span>
+            <span className="text-[10px] bg-sky-100 text-sky-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              Vercel
+            </span>
+          </button>
+
           <div className="pt-2 border-t border-slate-100 my-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-3 py-1">
               System Operations
@@ -492,6 +520,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'compliance' && <ComplianceManager />}
           {activeTab === 'audit' && <AuditLogViewer />}
           {activeTab === 'settings' && <SettingsManager />}
+          {activeTab === 'dns' && <DnsManagementPage />}
           {activeTab === 'sponsors' && <PartnerManager />}
           {activeTab === 'github' && <GitHubPublisher />}
         </div>
