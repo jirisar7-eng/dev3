@@ -70,7 +70,10 @@ function checkUserStatusAndMfa(user: any, req: Request, res: Response): boolean 
   // 2. MFA requirement check for administrative roles (except during MFA configuration/me routes)
   const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
   
-  const isDevOrPreview = process.env.NODE_ENV !== 'production' || req.get('host')?.includes('dev3') || req.get('host')?.includes('ais-');
+  const isDevOrPreview = process.env.NODE_ENV !== 'production' || 
+                         req.get('host')?.includes('dev3') || 
+                         req.get('host')?.includes('ais-') || 
+                         req.get('host')?.includes('localhost');
   
   if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled && !isMfaSetupRoute) {
     if (isDevOrPreview || user.email === 'sarji@seznam.cz') {

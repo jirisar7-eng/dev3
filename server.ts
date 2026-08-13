@@ -556,11 +556,16 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       return res.status(401).json({ error: 'Uživatel není přihlášen.' });
     }
 
-    // Get current secret
-    let secret = user.totpTempSecret;
+    // Get current secret - ALWAYS FETCH FRESH FROM DB
+    const freshUser = await getPrismaClient().user.findUnique({
+      where: { id: user.id }
+    });
+    
+    let secret = freshUser?.totpTempSecret;
     if (!secret) {
-      const dbUser = dbStore.users.find(u => u.id === user.id);
-      secret = dbUser?.totpTempSecret;
+        // Fallback to dbStore if Prisma fails or not used
+        const dbUser = dbStore.users.find(u => u.id === user.id);
+        secret = dbUser?.totpTempSecret;
     }
 
     if (!secret) {
