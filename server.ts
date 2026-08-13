@@ -36,6 +36,7 @@ import { EsbirkaService } from './src/services/EsbirkaService.ts';
 import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { TotpService } from './src/services/totpService.ts';
+import { getDns, addDns, deleteDns } from './src/controllers/dnsController.ts';
 import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
 import pageRoutes from './src/routes/pageRoutes';
@@ -1110,6 +1111,11 @@ app.post('/api/volunteers', async (req, res) => {
     res.status(500).json({ error: 'Chyba při ukládání přihlášky.' });
   }
 });
+
+// --- DNS MANAGEMENT ENDPOINTS (SUPER_ADMIN ONLY) ---
+app.get('/api/admin/dns', requireRole('SUPER_ADMIN'), getDns);
+app.post('/api/admin/dns', requireRole('SUPER_ADMIN'), addDns);
+app.delete('/api/admin/dns/:recordId', requireRole('SUPER_ADMIN'), deleteDns);
 
 // --- GITHUB PUBLISHER ENDPOINTS (SUPER_ADMIN ONLY, ADMIN supported in Dev/Preview) ---
 const requireGithubPublishAccess = (req: AuthenticatedRequest, res: any, next: any) => {
