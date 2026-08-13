@@ -16,20 +16,28 @@ if git rev-parse --verify origin/main >/dev/null 2>&1; then
   git reset --hard origin/main
 fi
 
-# 2. Validate Prisma Schema
-echo "[2/6] Validating Prisma schema..."
-npx prisma validate
-
-# 3. Ensure Docker network app_network exists
-echo "[3/6] Verifying Docker networks..."
+# 2. Ensure Docker network app_network exists
+echo "[2/6] Verifying Docker networks..."
 docker network create app_network 2>/dev/null || true
 
-# 4. Build and start containers with docker compose
-echo "[4/6] Building and starting Docker containers..."
+# 3. Build and start containers with docker compose
+echo "[3/6] Building and starting Docker containers..."
 if [ -f "docker-compose.yml" ]; then
   docker compose up -d --build --remove-orphans
 elif [ -f "docker-compose.dev.yml" ]; then
   docker compose -f docker-compose.dev.yml up -d --build --remove-orphans
+fi
+
+# 4. Validate Prisma Schema
+echo "[4/6] Validating Prisma schema..."
+if docker compose exec -T app npx prisma validate; then
+  echo "[DEPLOYMENT] Prisma schema validation passed."
+elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev3'; then
+  docker exec -i tatovacesta_app_dev3 npx prisma validate
+elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev'; then
+  docker exec -i tatovacesta_app_dev npx prisma validate
+else
+  echo "[DEPLOYMENT] Warning: Could not validate prisma schema inside container."
 fi
 
 # 5. Synchronize Prisma database schema

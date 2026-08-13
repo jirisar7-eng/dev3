@@ -95,6 +95,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
   const [selectedSubjekt, setSelectedSubjekt] = useState<Subjekt | null>(null);
   const [showAddSubjektModal, setShowAddSubjektModal] = useState<boolean>(false);
   const [showReviewModal, setShowReviewModal] = useState<Subjekt | null>(null);
+  const [showAddPracovnikModal, setShowAddPracovnikModal] = useState<boolean>(false);
 
   // New Subjekt Form
   const [newSubjektForm, setNewSubjektForm] = useState({
@@ -121,8 +122,44 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     isAnonymous: true,
   });
 
+  // Pracovnik Form
+  const [pracovnikForm, setPracovnikForm] = useState({
+    jmeno: '',
+    pozice: '',
+    telefon: '',
+    email: '',
+    kancelar: '',
+  });
+
   const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleAddPracovnik = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSubjekt || !pracovnikForm.jmeno.trim()) return;
+    try {
+      const res = await fetch(`/api/subjekty/${selectedSubjekt.id}/pracovnici`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pracovnikForm),
+      });
+      if (res.ok) {
+        const newPrac = await res.json();
+        const updatedSubjekt = {
+          ...selectedSubjekt,
+          pracovnici: [newPrac, ...(selectedSubjekt.pracovnici || [])],
+        };
+        setSelectedSubjekt(updatedSubjekt);
+        setSubjekty(subjekty.map((s) => (s.id === updatedSubjekt.id ? updatedSubjekt : s)));
+        setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
+        setShowAddPracovnikModal(false);
+        setSuccessMessage('Pracovník byl úspěšně přidán.');
+        setTimeout(() => setSuccessMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error('Error adding pracovnik:', err);
+    }
+  };
 
   useEffect(() => {
     fetchSubjekty();
@@ -133,7 +170,10 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     try {
       const params = new URLSearchParams();
       if (activeType !== 'ALL') params.append('type', activeType);
-      if (selectedRegion !== 'Všechny kraje') params.append('region', selectedRegion);
+      if (selectedRegion && selectedRegion !== 'Všechny kraje') {
+        params.append('region', selectedRegion);
+        params.append('kraj', selectedRegion);
+      }
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
       if (minRatingFilter > 0) params.append('minRating', minRatingFilter.toString());
 
@@ -353,33 +393,41 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       </div>
 
       {/* Subjekty List */}
-      {loading ? (
-        <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center space-y-3">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium">Načítám registr subjektů...</p>
-        </div>
-      ) : subjekty.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
-          <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-900">Nenalezeny žádné zadané subjekty</h3>
-          <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Zkus upravit vyhledávací dotaz nebo filtr krajů. Můžeš také do registru vložit nový subjekt.
-          </p>
-          <button
-            onClick={() => setShowAddSubjektModal(true)}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow-xs transition-all text-sm cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Přidat nový subjekt</span>
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subjekty.map((item) => {
-            const cfg = ENTITY_CONFIG[item.type] || ENTITY_CONFIG.SOUD;
-            const Icon = cfg.icon;
+      {(() => {
+        const filteredSubjekty = subjekty.filter((item) => {
+          if (!selectedRegion || selectedRegion === 'Všechny kraje') return true;
+          const selectedNorm = selectedRegion.trim().toLowerCase();
+          const itemRegion = (item.region || '').trim().toLowerCase();
+          return itemRegion === selectedNorm || itemRegion.includes(selectedNorm);
+        });
 
-            return (
+        return loading ? (
+          <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center space-y-3">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-medium">Načítám registr subjektů...</p>
+          </div>
+        ) : filteredSubjekty.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
+            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
+            <h3 className="text-lg font-bold text-slate-900">Nenalezeny žádné zadané subjekty</h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Zkus upravit vyhledávací dotaz nebo filtr krajů. Můžeš také do registru vložit nový subjekt.
+            </p>
+            <button
+              onClick={() => setShowAddSubjektModal(true)}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow-xs transition-all text-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Přidat nový subjekt</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSubjekty.map((item) => {
+              const cfg = ENTITY_CONFIG[item.type] || ENTITY_CONFIG.SOUD;
+              const Icon = cfg.icon;
+
+              return (
               <div
                 key={item.id}
                 className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 group"
@@ -453,7 +501,8 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
             );
           })}
         </div>
-      )}
+      );
+      })()}
 
       {/* DETAIL MODAL */}
       {selectedSubjekt && (
@@ -534,6 +583,62 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                   <a href={selectedSubjekt.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline truncate">
                     {selectedSubjekt.website}
                   </a>
+                </div>
+              )}
+            </div>
+
+            {/* Workers / Contact Persons Section */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-indigo-600" />
+                  <span>Konkrétní pracovníci / Kontakty ({selectedSubjekt.pracovnici?.length || 0})</span>
+                </h3>
+                <button
+                  onClick={() => setShowAddPracovnikModal(true)}
+                  className="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border border-indigo-200"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Přidat pracovníka</span>
+                </button>
+              </div>
+
+              {!selectedSubjekt.pracovnici || selectedSubjekt.pracovnici.length === 0 ? (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center text-xs text-slate-500 italic">
+                  Zatím zde nejsou evidováni žádní konkrétní pracovníci (sociální pracovníci, soudci, kurátoři).
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {selectedSubjekt.pracovnici.map((prac) => (
+                    <div key={prac.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{prac.jmeno}</h4>
+                          {prac.pozice && <p className="text-[11px] text-indigo-600 font-semibold">{prac.pozice}</p>}
+                        </div>
+                        {prac.kancelar && (
+                          <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                            {prac.kancelar}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 pt-1 text-xs text-slate-600">
+                        {prac.telefon && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <a href={`tel:${prac.telefon}`} className="hover:text-indigo-600 font-medium">{prac.telefon}</a>
+                          </div>
+                        )}
+                        {prac.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <a href={`mailto:${prac.email}`} className="hover:text-indigo-600 truncate">{prac.email}</a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -882,6 +987,101 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   {formSubmitting ? 'Ukládám...' : 'Zaevidovat subjekt'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ADD WORKER MODAL */}
+      {showAddPracovnikModal && selectedSubjekt && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
+            <button
+              onClick={() => setShowAddPracovnikModal(false)}
+              className="absolute right-5 top-5 text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div>
+              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Kontaktní osoba / Pracovník</span>
+              <h2 className="text-xl font-extrabold text-slate-900 mt-1">
+                Přidat pracovníka k: {selectedSubjekt.name}
+              </h2>
+            </div>
+
+            <form onSubmit={handleAddPracovnik} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-800 block">Jméno a titul (např. Bc. Pavelková): *</label>
+                <input
+                  type="text"
+                  required
+                  value={pracovnikForm.jmeno}
+                  onChange={(e) => setPracovnikForm({ ...pracovnikForm, jmeno: e.target.value })}
+                  placeholder="např. Bc. Jana Nováková"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-800 block">Pozice / Funkce:</label>
+                <input
+                  type="text"
+                  value={pracovnikForm.pozice}
+                  onChange={(e) => setPracovnikForm({ ...pracovnikForm, pozice: e.target.value })}
+                  placeholder="např. Sociální pracovnice OSPOD, Soudce"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-800 block">Přímý telefon:</label>
+                  <input
+                    type="text"
+                    value={pracovnikForm.telefon}
+                    onChange={(e) => setPracovnikForm({ ...pracovnikForm, telefon: e.target.value })}
+                    placeholder="+420 469 605 ..."
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-800 block">Kancelář / Číslo dveří:</label>
+                  <input
+                    type="text"
+                    value={pracovnikForm.kancelar}
+                    onChange={(e) => setPracovnikForm({ ...pracovnikForm, kancelar: e.target.value })}
+                    placeholder="Kancelář č. 214"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-800 block">Email:</label>
+                <input
+                  type="email"
+                  value={pracovnikForm.email}
+                  onChange={(e) => setPracovnikForm({ ...pracovnikForm, email: e.target.value })}
+                  placeholder="pracovnik@urad.cz"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddPracovnikModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold transition-all cursor-pointer"
+                >
+                  Zrušit
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
+                >
+                  Uložit pracovníka
                 </button>
               </div>
             </form>

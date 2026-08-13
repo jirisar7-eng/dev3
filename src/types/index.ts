@@ -548,6 +548,17 @@ export interface SchemaDrivenContent {
 
 export type EntityType = 'SOUD' | 'OSPOD' | 'ZNALEC' | 'ADVOKAT' | 'PORADNA_CHARITA';
 
+export interface Pracovnik {
+  id: string;
+  jmeno: string;
+  pozice?: string | null;
+  telefon?: string | null;
+  email?: string | null;
+  kancelar?: string | null;
+  subjektId: string;
+  createdAt?: string | Date;
+}
+
 export interface Review {
   id: string;
   subjektId: string;
@@ -580,6 +591,7 @@ export interface Subjekt {
   isVerified: boolean;
   createdAt?: string | Date;
   reviews?: Review[];
+  pracovnici?: Pracovnik[];
 }
 
 

@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: tatovacesta_app_dev3
     build: .
     ports:
       - "3003:3000"
@@ -11,6 +12,9 @@ services:
       - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev3@postgres_dev3:5432/tatovacesta_dev3?schema=public}
       - JWT_SECRET=${JWT_SECRET:-dev3_super_secret_jwt_key}
     restart: always
+    networks:
+      - default
+      - caddy_net
     depends_on:
       - postgres
 
@@ -25,7 +29,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data_dev3:/var/lib/postgresql/data
+    networks:
+      - default
 
 volumes:
   postgres_data_dev3:
+
+networks:
+  caddy_net:
+    external: true
+    name: tatovacesta_app_network
 

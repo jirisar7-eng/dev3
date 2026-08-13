@@ -6,10 +6,12 @@ const router = Router();
 // GET /api/subjekty - Get all subjekty with optional filtering
 router.get('/', async (req, res) => {
   try {
-    const { type, region, city, search, minRating } = req.query;
+    const { type, region, kraj, city, search, minRating } = req.query;
+    const filterRegion = (region || kraj) as string;
     const items = await subjektService.getSubjekty({
       type: type as string,
-      region: region as string,
+      region: filterRegion,
+      kraj: filterRegion,
       city: city as string,
       search: search as string,
       minRating: minRating ? Number(minRating) : undefined,
@@ -113,6 +115,32 @@ router.post('/:id/reviews', async (req, res) => {
   } catch (error) {
     console.error('Error adding review:', error);
     return res.status(500).json({ error: 'Chyba při ukládání recenze' });
+  }
+});
+
+// POST /api/subjekty/:id/pracovnici - Add worker to Subjekt
+router.post('/:id/pracovnici', async (req, res) => {
+  try {
+    const subjektId = req.params.id;
+    const { jmeno, pozice, telefon, email, kancelar } = req.body;
+
+    if (!jmeno) {
+      return res.status(400).json({ error: 'Chybí jméno pracovníka' });
+    }
+
+    const pracovnik = await subjektService.addPracovnik({
+      subjektId,
+      jmeno,
+      pozice,
+      telefon,
+      email,
+      kancelar,
+    });
+
+    return res.status(201).json(pracovnik);
+  } catch (error) {
+    console.error('Error adding pracovnik:', error);
+    return res.status(500).json({ error: 'Chyba při přidávání pracovníka' });
   }
 });
 

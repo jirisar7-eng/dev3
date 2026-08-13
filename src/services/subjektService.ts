@@ -7,28 +7,29 @@ export class SubjektService {
   /**
    * Get filtered subjekty with optional type, region, or search term
    */
-  async getSubjekty(params?: { type?: string; region?: string; city?: string; search?: string; minRating?: number }) {
+  async getSubjekty(params?: { type?: string; region?: string; kraj?: string; city?: string; search?: string; minRating?: number }) {
     try {
       const whereClause: any = {};
 
       if (params?.type && params.type !== 'ALL') {
         whereClause.type = params.type as EntityType;
       }
-      if (params?.region && params.region !== 'ALL') {
-        whereClause.region = { contains: params.region };
+      const targetRegion = params?.region || params?.kraj;
+      if (targetRegion && targetRegion !== 'Všechny kraje' && targetRegion !== 'ALL') {
+        whereClause.region = { contains: targetRegion.trim(), mode: 'insensitive' };
       }
       if (params?.city) {
-        whereClause.city = { contains: params.city };
+        whereClause.city = { contains: params.city, mode: 'insensitive' };
       }
       if (params?.minRating) {
         whereClause.avgRating = { gte: Number(params.minRating) };
       }
       if (params?.search) {
         whereClause.OR = [
-          { name: { contains: params.search } },
-          { city: { contains: params.search } },
-          { institution: { contains: params.search } },
-          { position: { contains: params.search } },
+          { name: { contains: params.search, mode: 'insensitive' } },
+          { city: { contains: params.search, mode: 'insensitive' } },
+          { institution: { contains: params.search, mode: 'insensitive' } },
+          { position: { contains: params.search, mode: 'insensitive' } },
         ];
       }
 
@@ -37,6 +38,9 @@ export class SubjektService {
         include: {
           reviews: {
             where: { status: 'APPROVED' },
+            orderBy: { createdAt: 'desc' },
+          },
+          pracovnici: {
             orderBy: { createdAt: 'desc' },
           },
         },
@@ -51,8 +55,13 @@ export class SubjektService {
       if (params?.type && params.type !== 'ALL') {
         list = list.filter((s) => s.type === params.type);
       }
-      if (params?.region && params.region !== 'ALL') {
-        list = list.filter((s) => s.region.toLowerCase().includes(params.region!.toLowerCase()));
+      const targetRegion = params?.region || params?.kraj;
+      if (targetRegion && targetRegion !== 'Všechny kraje' && targetRegion !== 'ALL') {
+        const regNorm = targetRegion.trim().toLowerCase();
+        list = list.filter((s) => {
+          const sRegion = (s.region || '').trim().toLowerCase();
+          return sRegion === regNorm || sRegion.includes(regNorm);
+        });
       }
       if (params?.city) {
         list = list.filter((s) => s.city.toLowerCase().includes(params.city!.toLowerCase()));
@@ -71,10 +80,11 @@ export class SubjektService {
         );
       }
 
-      // Attach reviews
+      // Attach reviews and pracovnici
       return list.map((s) => ({
         ...s,
         reviews: dbStore.reviews.filter((r) => r.subjektId === s.id && r.status === 'APPROVED'),
+        pracovnici: (s as any).pracovnici || [],
       }));
     }
   }
@@ -91,6 +101,9 @@ export class SubjektService {
             where: { status: 'APPROVED' },
             orderBy: { createdAt: 'desc' },
           },
+          pracovnici: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       });
       if (item) return item;
@@ -104,7 +117,52 @@ export class SubjektService {
     return {
       ...memoryItem,
       reviews: dbStore.reviews.filter((r) => r.subjektId === id && r.status === 'APPROVED'),
+      pracovnici: (memoryItem as any).pracovnici || [],
     };
+  }
+
+  /**
+   * Add worker (pracovnik) to subjekt
+   */
+  async addPracovnik(data: {
+    subjektId: string;
+    jmeno: string;
+    pozice?: string;
+    telefon?: string;
+    email?: string;
+    kancelar?: string;
+  }) {
+    try {
+      const created = await prisma.pracovnik.create({
+        data: {
+          subjektId: data.subjektId,
+          jmeno: data.jmeno,
+          pozice: data.pozice || null,
+          telefon: data.telefon || null,
+          email: data.email || null,
+          kancelar: data.kancelar || null,
+        },
+      });
+      return created;
+    } catch (error) {
+      console.warn('Prisma addPracovnik error, fallback to memory:', error);
+      const sub = dbStore.subjekty.find((s) => s.id === data.subjektId);
+      const newPrac = {
+        id: 'prac-' + Date.now(),
+        subjektId: data.subjektId,
+        jmeno: data.jmeno,
+        pozice: data.pozice || null,
+        telefon: data.telefon || null,
+        email: data.email || null,
+        kancelar: data.kancelar || null,
+        createdAt: new Date(),
+      };
+      if (sub) {
+        if (!(sub as any).pracovnici) (sub as any).pracovnici = [];
+        (sub as any).pracovnici.unshift(newPrac);
+      }
+      return newPrac;
+    }
   }
 
   /**

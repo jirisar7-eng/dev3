@@ -640,6 +640,20 @@ export const realSubjektyData = [
     isVerified: true,
   },
   {
+    type: 'OSPOD',
+    name: 'Městský úřad Přelouč - Odbor sociálních věcí a zdravotnictví',
+    titleBefore: null,
+    position: 'OSPOD Přelouč',
+    institution: 'Městský úřad Přelouč',
+    city: 'Přelouč',
+    region: 'Pardubický kraj',
+    address: 'Československé armády 1565, 535 33 Přelouč',
+    email: 'podatelna@muprelouc.cz',
+    phone: '+420 469 605 111',
+    website: 'https://www.muprelouc.cz',
+    isVerified: true,
+  },
+  {
     type: 'ZNALEC',
     name: 'Jaroslav Beneš',
     titleBefore: 'PhDr.',
@@ -1403,7 +1417,7 @@ export async function runSeed() {
       // 4. OPATROVNICKÉ SUBJEKTY ČR (Soudy, OSPOD, Krizová centra, Poradny)
       console.log('[Prisma Seed] Seedování opatrovnických subjektů ČR (14 krajů pomocí upsert)...');
       for (const s of realSubjektyData) {
-        await prisma.subjekt.upsert({
+        const savedSubjekt = await prisma.subjekt.upsert({
           where: { email: s.email },
           update: {
             type: s.type as any,
@@ -1433,6 +1447,47 @@ export async function runSeed() {
             reviewCount: 0,
           },
         });
+
+        // Seed sample workers for OSPOD Přelouč
+        if (s.email === 'podatelna@muprelouc.cz' || s.name.includes('Přelouč')) {
+          const samplePracovnici = [
+            {
+              jmeno: 'Bc. Pavelková',
+              pozice: 'Sociální pracovnice OSPOD',
+              telefon: '+420 469 605 122',
+              email: 'pavelkova@muprelouc.cz',
+              kancelar: 'Kancelář č. 214',
+            },
+            {
+              jmeno: 'Šejnová',
+              pozice: 'Sociální pracovnice / Kurátorka',
+              telefon: '+420 469 605 125',
+              email: 'sejnova@muprelouc.cz',
+              kancelar: 'Kancelář č. 216',
+            },
+          ];
+
+          for (const p of samplePracovnici) {
+            const existingPrac = await prisma.pracovnik.findFirst({
+              where: {
+                subjektId: savedSubjekt.id,
+                jmeno: p.jmeno,
+              },
+            });
+            if (!existingPrac) {
+              await prisma.pracovnik.create({
+                data: {
+                  subjektId: savedSubjekt.id,
+                  jmeno: p.jmeno,
+                  pozice: p.pozice,
+                  telefon: p.telefon,
+                  email: p.email,
+                  kancelar: p.kancelar,
+                },
+              });
+            }
+          }
+        }
       }
 
       console.log('[Prisma Seed] Úspěšně naseedován výchozí CMS i Registr Subjektů v PostgreSQL!');

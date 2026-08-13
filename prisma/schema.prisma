@@ -771,6 +771,19 @@ model Subjekt {
   isVerified    Boolean      @default(true)
   createdAt     DateTime     @default(now())
   reviews       Review[]
+  pracovnici    Pracovnik[]
+}
+
+model Pracovnik {
+  id          String   @id @default(uuid())
+  jmeno       String
+  pozice      String?
+  telefon     String?
+  email       String?
+  kancelar    String?
+  subjektId   String
+  subjekt     Subjekt  @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
 
 model Review {
