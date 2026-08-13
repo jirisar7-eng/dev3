@@ -27,6 +27,7 @@ import { ComplianceService } from './src/services/complianceService.ts';
 import { AuditService } from './src/services/auditService.ts';
 import { SettingsService } from './src/services/settingsService.ts';
 import { seedDatabaseIfEmpty, ensureSuperAdminAccount } from './src/services/seedService.ts';
+import { runSeed } from './prisma/seed';
 import { ensureAllModulePagesExist, convertAllPagesToPuck } from './src/services/PageService.ts';
 import { seedSystemTemplates } from './src/services/templateService';
 import { UserDataService } from './src/services/userDataService.ts';
@@ -56,24 +57,13 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'dev3_super_secret_jwt_key_tatovacesta';
 }
 
-try {
-  if (process.env.DATABASE_URL) {
-    const isDbReachable = await checkDatabaseReachable();
-    if (isDbReachable) {
-      console.log('[System] Synchonizuji Prisma schéma s databází...');
-      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-      console.log('[System] Prisma schéma úspěšně synchronizováno.');
-    } else {
-      console.info('[System] PostgreSQL databáze na DATABASE_URL není dostupná. Přeskakuji Prisma synchronizaci.');
-    }
-  } else {
-    console.log('[System] DATABASE_URL chybí, přeskakuji Prisma synchronizaci.');
-    markPrismaUnavailable('DATABASE_URL is missing');
-  }
-} catch (error) {
-  console.warn('[System] Upozornění při synchronizaci Prisma schématu:', error);
-  markPrismaUnavailable(error);
-}
+// Helper for __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+app.set('trust proxy', 1);
+const PORT = 3000;
 
 // Zamezí pádu náhledu v AI Studiu, když není dostupná databáze postgres_db_dev
 process.on('unhandledRejection', (reason: any) => {
@@ -83,13 +73,6 @@ process.on('unhandledRejection', (reason: any) => {
   }
   console.error('[Unhandled Rejection]:', reason);
 });
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-app.set('trust proxy', 1);
-const PORT = 3000;
 
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.json({ limit: '50mb' }));
@@ -2411,31 +2394,66 @@ app.get('/sitemap.xml', async (_req, res) => {
   }
 });
 
-// --- VITE INTEGRATION / STATIC SERVING ---
-if (process.env.NODE_ENV !== 'production') {
-  const { createServer: createViteServer } = await import('vite');
-  const vite = await createViteServer({
-    configFile: './vite.config.ts',
-    server: {
-      middlewareMode: true,
-      allowedHosts: ['dev3.tatovacesta.cz', '.run.app', 'localhost'],
-    },
-    appType: 'spa',
+async function startServer() {
+  // --- VITE INTEGRATION / STATIC SERVING ---
+  if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      configFile: './vite.config.ts',
+      server: {
+        middlewareMode: true,
+        allowedHosts: ['dev3.tatovacesta.cz', '.run.app', 'localhost'],
+      },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  }
+
+  app.use(express.static(path.resolve('dist')));
+
+  app.get('*', (_req, res) => {
+    const indexPath = path.resolve('dist/index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('Index HTML not found');
+    }
   });
-  app.use(vite.middlewares);
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);
+  });
+
+  // Background DB sync and seed - performed non-blockingly so app.listen opens port 3000 immediately
+  setTimeout(async () => {
+    try {
+      if (process.env.DATABASE_URL) {
+        const isDbReachable = await checkDatabaseReachable();
+        if (isDbReachable) {
+          console.log('[System] Synchonizuji Prisma schéma s databází...');
+          try {
+            execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit', timeout: 5000 });
+            console.log('[System] Prisma schéma úspěšně synchronizováno.');
+          } catch (pushErr) {
+            console.warn('[System] Prisma db push přeskočen nebo selhal:', pushErr);
+          }
+        } else {
+          console.info('[System] PostgreSQL databáze na DATABASE_URL není dostupná. Přeskakuji Prisma synchronizaci.');
+        }
+      } else {
+        console.log('[System] DATABASE_URL chybí, přeskakuji Prisma synchronizaci.');
+        markPrismaUnavailable('DATABASE_URL is missing');
+      }
+
+      // Safe background seeding with automatic fallback to dbStore
+      await runSeed();
+    } catch (error) {
+      console.warn('[System] Upozornění při inicializaci databáze/seedu:', error);
+      markPrismaUnavailable(error);
+    }
+  }, 100);
 }
 
-app.use(express.static(path.resolve('dist')));
-
-app.get('*', (_req, res) => {
-  const indexPath = path.resolve('dist/index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('Index HTML not found');
-  }
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);
+startServer().catch((err) => {
+  console.error('[System] Chyba při spouštění serveru:', err);
 });

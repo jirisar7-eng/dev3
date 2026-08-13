@@ -1,8 +1,7 @@
-import { PrismaClient, EntityType } from '@prisma/client';
+import { EntityType } from '@prisma/client';
 import { dbStore } from './dbStore';
 import { Subjekt, Review } from '../types';
-
-const prisma = new PrismaClient();
+import { prisma } from '../db/prisma';
 
 export class SubjektService {
   /**
