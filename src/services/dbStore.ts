@@ -27,6 +27,7 @@ import {
   PartnerType,
   ForumThread,
   ForumPost,
+  CustomModule,
 } from '../types';
 
 // Initial Seed Data for "Táta má právo"
@@ -2235,6 +2236,83 @@ class MemoryStore {
 
   forumThreads: ForumThread[] = [];
   forumPosts: ForumPost[] = [];
+
+  customModules: CustomModule[] = [
+    {
+      id: 'cm-1',
+      slug: 'krizovy-rozcestnik-modul',
+      title: 'Krizový rozcestník pro otce',
+      category: 'Krizová pomoc & Komunita',
+      icon: 'ShieldAlert',
+      showInMenu: true,
+      isActive: true,
+      contentJson: JSON.stringify({
+        version: '1.0',
+        title: 'Krizový rozcestník první pomoci',
+        description: 'Schema-Driven modul poskytující okamžitý přehled kroků v akutní krizové situaci.',
+        sections: [
+          {
+            type: 'hero',
+            title: 'Akutní krizový rozcestník',
+            subtitle: 'Stali jste se obětí popírání rodičovských práv nebo náhlé krizové situace?',
+            badge: '🚨 První pomoc 24/7',
+            badgeColor: 'rose',
+            buttonText: 'Otevřít SOS Plán',
+            buttonLink: '/sos-plan'
+          },
+          {
+            type: 'alert',
+            variant: 'danger',
+            title: 'Důležité upozornění pro krizové chvíle',
+            description: 'Zachovejte klid. Nikdy neustupujte do agresivního jednání, vše dokumentujte písemně a komunikujte výhradně věcně.'
+          },
+          {
+            type: 'grid',
+            title: 'Klíčové kroky první pomoci',
+            columns: 3,
+            items: [
+              {
+                title: '1. Písemná výzva',
+                description: 'Zašlete druhému rodiči slušnou, jasnou písemnou výzvu s návrhem termínů péče.',
+                icon: 'FileText',
+                badge: 'Právní krok',
+                badgeColor: 'blue'
+              },
+              {
+                title: '2. Kontaktování OSPOD',
+                description: 'Informujte OSPOD o překážkách v kontaktu a požádejte o součinnost a záznam.',
+                icon: 'Users',
+                badge: 'Úřední krok',
+                badgeColor: 'indigo'
+              },
+              {
+                title: '3. Návrh na předběžné opatření',
+                description: 'V případě kompletního zamezení styku podej do 7 dnů návrh na PO u příslušného soudu.',
+                icon: 'Scale',
+                badge: 'Soudní krok',
+                badgeColor: 'emerald'
+              }
+            ]
+          },
+          {
+            type: 'accordion',
+            title: 'Nejčastější krizové otázky',
+            items: [
+              {
+                question: 'Co dělám, když matka bez důvodu odmítá předat dítě?',
+                answer: 'Trvejte na písemném potvrzení doručení výzvy. Nahlaste incident na OSPOD a zajistěte si svědectví nebo záznam bez vyvolání konfliktu.'
+              },
+              {
+                question: 'Mám volat Policii ČR při nepředání dítěte?',
+                answer: 'Pokud máte pravomocný rozsudek nebo předběžné opatření, Policie ČR může sepsat úřední záznam, který slouží jako důkaz pro výkon rozhodnutí.'
+              }
+            ]
+          }
+        ]
+      })
+    }
+  ];
+
 
 
 

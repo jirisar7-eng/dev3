@@ -466,5 +466,86 @@ export interface ForumThread {
   replies?: Array<{ id?: string; author: string; createdAt: string | Date; text: string; content?: string }>;
 }
 
+export interface CustomModule {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  icon: string;
+  showInMenu: boolean;
+  isActive: boolean;
+  contentJson: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+// Schema-Driven UI Component specifications
+export type SchemaComponentType =
+  | 'hero'
+  | 'grid'
+  | 'cards'
+  | 'accordion'
+  | 'faq'
+  | 'callout'
+  | 'alert'
+  | 'text'
+  | 'stats'
+  | 'form'
+  | 'cta'
+  | 'links';
+
+export interface SchemaComponentItem {
+  id?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  content?: string;
+  icon?: string;
+  link?: string;
+  linkText?: string;
+  badge?: string;
+  badgeColor?: 'blue' | 'rose' | 'amber' | 'emerald' | 'indigo' | 'slate';
+  value?: string;
+  label?: string;
+  question?: string;
+  answer?: string;
+  [key: string]: any;
+}
+
+export interface SchemaComponent {
+  id?: string;
+  type: SchemaComponentType;
+  title?: string;
+  subtitle?: string;
+  badge?: string;
+  badgeColor?: string;
+  description?: string;
+  columns?: 1 | 2 | 3 | 4;
+  variant?: 'info' | 'warning' | 'success' | 'danger' | 'primary' | 'secondary';
+  buttonText?: string;
+  buttonLink?: string;
+  items?: SchemaComponentItem[];
+  fields?: Array<{
+    name: string;
+    label: string;
+    type: 'text' | 'email' | 'tel' | 'textarea' | 'select';
+    placeholder?: string;
+    options?: string[];
+    required?: boolean;
+  }>;
+  submitLabel?: string;
+  submitMessage?: string;
+  [key: string]: any;
+}
+
+export interface SchemaDrivenContent {
+  version?: string;
+  title?: string;
+  description?: string;
+  theme?: 'light' | 'dark' | 'brand';
+  sections?: SchemaComponent[];
+}
+
+
 
 

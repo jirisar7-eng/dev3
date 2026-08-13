@@ -40,6 +40,7 @@ import systemRoutes from './src/routes/system';
 import partnerRoutes from './src/routes/partnerRoutes';
 import templateRoutes from './src/routes/templateRoutes';
 import forumRoutes from './src/routes/forumRoutes';
+import customModuleRoutes from './src/routes/customModuleRoutes';
 
 dotenv.config();
 
@@ -171,6 +172,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/forum', forumRoutes);
+app.use('/api/custom-modules', customModuleRoutes);
 app.post('/api/admin/pages/sync-modules', async (_req, res) => {
   try {
     const result = await ensureAllModulePagesExist();

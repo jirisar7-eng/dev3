@@ -115,15 +115,33 @@ export const Header: React.FC<HeaderProps> = ({
   });
 
   useEffect(() => {
-    fetch('/api/cms/nav')
-      .then((res) => res.json())
-      .then((data: NavItem[]) => {
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a, b) => (a.order || 0) - (b.order || 0));
-          setNavItems(sorted);
-        }
-      })
-      .catch((err) => console.error('Error fetching CMS navigation:', err));
+    Promise.all([
+      fetch('/api/cms/nav').then((res) => (res.ok ? res.json() : [])).catch(() => []),
+      fetch('/api/custom-modules?all=false').then((res) => (res.ok ? res.json() : [])).catch(() => []),
+    ]).then(([navData, customMods]: [NavItem[], any[]]) => {
+      let baseNav = Array.isArray(navData) && navData.length > 0 ? [...navData] : [...FALLBACK_NAV_ITEMS];
+
+      if (Array.isArray(customMods) && customMods.length > 0) {
+        const menuMods = customMods.filter((m) => m.isActive && m.showInMenu);
+        menuMods.forEach((m, idx) => {
+          const modNavItem: NavItem = {
+            id: `custom-mod-${m.id}`,
+            labelKey: m.title,
+            url: `/${m.slug}`,
+            order: 18 + idx,
+            target: '_self',
+            isExternal: false,
+            parentId: 'cat-1',
+          };
+          if (!baseNav.some((n) => n.url === `/${m.slug}`)) {
+            baseNav.push(modNavItem);
+          }
+        });
+      }
+
+      const sorted = baseNav.sort((a, b) => (a.order || 0) - (b.order || 0));
+      setNavItems(sorted);
+    });
   }, []);
 
   const handleNavClick = (url: string) => {

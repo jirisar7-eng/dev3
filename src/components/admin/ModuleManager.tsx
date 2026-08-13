@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useModules } from '../../context/ModuleContext';
 import { Module } from '../../types';
 import { SystemTestModuleAdmin } from './modules/SystemTestModuleAdmin';
-import { Sliders, CheckCircle2, XCircle, Code, Save, RefreshCw, TestTube, Layers, Lock, Globe } from 'lucide-react';
+import { CustomModuleManager } from './CustomModuleManager';
+import { Sliders, CheckCircle2, XCircle, Code, Save, RefreshCw, TestTube, Layers, Lock, Globe, Sparkles } from 'lucide-react';
 
 export const ModuleManager: React.FC = () => {
   const { modules, toggleModule, updateModuleConfig, reloadModules } = useModules();
+  const [managerMode, setManagerMode] = useState<'system' | 'custom'>('system');
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [activeTestModule, setActiveTestModule] = useState<string | null>(null);
@@ -58,8 +60,39 @@ export const ModuleManager: React.FC = () => {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+      {/* Mode Switcher */}
+      <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
+        <button
+          onClick={() => setManagerMode('system')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            managerMode === 'system'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Systémové moduly ({modules.length})</span>
+        </button>
+
+        <button
+          onClick={() => setManagerMode('custom')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            managerMode === 'custom'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Code className="w-3.5 h-3.5" />
+          <span>Vlastní JSON Moduly (Schema-Driven UI)</span>
+        </button>
+      </div>
+
+      {managerMode === 'custom' ? (
+        <CustomModuleManager />
+      ) : (
+        <>
+          {/* Tabs */}
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <button
           onClick={() => setFilterTab('all')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -250,6 +283,8 @@ export const ModuleManager: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

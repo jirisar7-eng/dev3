@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Page, Faq } from '../../types';
+import { Page, Faq, CustomModule } from '../../types';
 import { useModules } from '../../context/ModuleContext';
 import { useText } from '../../context/TextContext';
 import { SeoHead } from './SeoHead';
 import { PageRender } from '../builder/PageRender';
+import { SchemaDrivenRenderer } from '../common/SchemaDrivenRenderer';
 import {
   FileText,
   ArrowRight,
@@ -24,6 +25,7 @@ interface CmsPageRendererProps {
 
 export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNavigate }) => {
   const [page, setPage] = useState<Page | null>(null);
+  const [customModule, setCustomModule] = useState<CustomModule | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,17 +36,28 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setPage(null);
+    setCustomModule(null);
 
-    // Try /api/pages/:slug first (Puck / dynamic DB pages), fallback to /api/cms/pages/slug/:slug
+    // Try /api/pages/:slug first, then fallback to /api/cms/pages/slug/:slug, then /api/custom-modules/slug/:slug
     fetch(`/api/pages/${slug}`)
       .then(async (res) => {
         if (res.ok) return res.json();
         const fallbackRes = await fetch(`/api/cms/pages/slug/${slug}`);
-        if (!fallbackRes.ok) throw new Error('Stránka nebyla nalezena');
-        return fallbackRes.json();
+        if (fallbackRes.ok) return fallbackRes.json();
+        const moduleRes = await fetch(`/api/custom-modules/slug/${slug}`);
+        if (moduleRes.ok) {
+          const modData = await moduleRes.json();
+          return { _isCustomModule: true, ...modData };
+        }
+        throw new Error('Stránka ani modul nebyly nalezeny');
       })
-      .then((data: Page) => {
-        setPage(data);
+      .then((data: any) => {
+        if (data._isCustomModule) {
+          setCustomModule(data);
+        } else {
+          setPage(data);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -62,6 +75,25 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
     return (
       <div className="min-h-[400px] flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-900"></div>
+      </div>
+    );
+  }
+
+  // Render Custom Module if present
+  if (customModule) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <SeoHead
+          title={`${customModule.title} • Táta má právo`}
+          description={`Schema-Driven modul: ${customModule.title}`}
+          canonicalPath={`/${customModule.slug}`}
+        />
+        <SchemaDrivenRenderer
+          contentJson={customModule.contentJson}
+          title={customModule.title}
+          category={customModule.category}
+          onNavigate={onNavigate}
+        />
       </div>
     );
   }
