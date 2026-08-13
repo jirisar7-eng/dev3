@@ -780,8 +780,8 @@ app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedR
   }
 });
 
-// Users & Roles (RBAC)
-// Users & Roles (RBAC)
+import { getUsers } from './src/controllers/userController';
+app.get('/api/admin/users', requireAuth as any, requireRole('ADMIN') as any, getUsers);
 app.get('/api/users', requireAuth as any, requireRole('ADMIN') as any, async (_req: AuthenticatedRequest, res) => {
   try {
     let users = await AuthService.getUsers();

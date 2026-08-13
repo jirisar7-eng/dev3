@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/users', {
+      const res = await fetch('/api/admin/users', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
