@@ -90,7 +90,7 @@ export const DnsManagementPage: React.FC = () => {
 
         <div className="pt-4 border-t flex flex-wrap gap-2">
             <span className="text-sm text-slate-500 font-medium self-center mr-2">Rychlé předvolby:</span>
-            <button onClick={() => applyPreset('A', '@', 'YOUR_VPS_IP_HERE')} className="text-xs bg-slate-100 p-2 rounded hover:bg-slate-200">A -> VPS</button>
+            <button onClick={() => applyPreset('A', '@', 'YOUR_VPS_IP_HERE')} className="text-xs bg-slate-100 p-2 rounded hover:bg-slate-200">A &rarr; VPS</button>
             <button onClick={() => applyPreset('TXT', '@', 'v=spf1 include:_spf.google.com ~all')} className="text-xs bg-slate-100 p-2 rounded hover:bg-slate-200">SPF</button>
         </div>
       </div>
