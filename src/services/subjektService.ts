@@ -37,10 +37,17 @@ export class SubjektService {
         where: whereClause,
         include: {
           reviews: {
-            where: { status: 'APPROVED' },
+            where: { status: 'APPROVED', pracovnikId: null },
             orderBy: { createdAt: 'desc' },
           },
           pracovnici: {
+            where: { status: 'APPROVED' },
+            include: {
+              reviews: {
+                where: { status: 'APPROVED' },
+                orderBy: { createdAt: 'desc' },
+              },
+            },
             orderBy: { createdAt: 'desc' },
           },
         },
@@ -80,11 +87,16 @@ export class SubjektService {
         );
       }
 
-      // Attach reviews and pracovnici
+      // Attach reviews and approved pracovnici
       return list.map((s) => ({
         ...s,
-        reviews: dbStore.reviews.filter((r) => r.subjektId === s.id && r.status === 'APPROVED'),
-        pracovnici: (s as any).pracovnici || [],
+        reviews: dbStore.reviews.filter((r) => r.subjektId === s.id && r.status === 'APPROVED' && !r.pracovnikId),
+        pracovnici: ((s as any).pracovnici || [])
+          .filter((p: any) => !p.status || p.status === 'APPROVED')
+          .map((p: any) => ({
+            ...p,
+            reviews: dbStore.reviews.filter((r) => r.pracovnikId === p.id && r.status === 'APPROVED'),
+          })),
       }));
     }
   }
@@ -98,10 +110,17 @@ export class SubjektService {
         where: { id },
         include: {
           reviews: {
-            where: { status: 'APPROVED' },
+            where: { status: 'APPROVED', pracovnikId: null },
             orderBy: { createdAt: 'desc' },
           },
           pracovnici: {
+            where: { status: 'APPROVED' },
+            include: {
+              reviews: {
+                where: { status: 'APPROVED' },
+                orderBy: { createdAt: 'desc' },
+              },
+            },
             orderBy: { createdAt: 'desc' },
           },
         },
@@ -116,8 +135,13 @@ export class SubjektService {
 
     return {
       ...memoryItem,
-      reviews: dbStore.reviews.filter((r) => r.subjektId === id && r.status === 'APPROVED'),
-      pracovnici: (memoryItem as any).pracovnici || [],
+      reviews: dbStore.reviews.filter((r) => r.subjektId === id && r.status === 'APPROVED' && !r.pracovnikId),
+      pracovnici: ((memoryItem as any).pracovnici || [])
+        .filter((p: any) => !p.status || p.status === 'APPROVED')
+        .map((p: any) => ({
+          ...p,
+          reviews: dbStore.reviews.filter((r) => r.pracovnikId === p.id && r.status === 'APPROVED'),
+        })),
     };
   }
 
@@ -131,6 +155,8 @@ export class SubjektService {
     telefon?: string;
     email?: string;
     kancelar?: string;
+    status?: string;
+    createdById?: string;
   }) {
     try {
       const created = await prisma.pracovnik.create({
@@ -141,6 +167,8 @@ export class SubjektService {
           telefon: data.telefon || null,
           email: data.email || null,
           kancelar: data.kancelar || null,
+          status: data.status || 'APPROVED',
+          createdById: data.createdById || null,
         },
       });
       return created;
@@ -155,6 +183,8 @@ export class SubjektService {
         telefon: data.telefon || null,
         email: data.email || null,
         kancelar: data.kancelar || null,
+        status: data.status || 'APPROVED',
+        createdById: data.createdById || null,
         createdAt: new Date(),
       };
       if (sub) {
@@ -162,6 +192,79 @@ export class SubjektService {
         (sub as any).pracovnici.unshift(newPrac);
       }
       return newPrac;
+    }
+  }
+
+  /**
+   * Get all pending workers for moderation
+   */
+  async getPendingPracovnici() {
+    try {
+      const list = await prisma.pracovnik.findMany({
+        where: { status: 'PENDING' },
+        include: { subjekt: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      return list.map((p) => ({
+        ...p,
+        subjektName: p.subjekt?.name,
+      }));
+    } catch (error) {
+      console.warn('Prisma getPendingPracovnici error, fallback:', error);
+      const pending: any[] = [];
+      for (const s of dbStore.subjekty) {
+        if ((s as any).pracovnici) {
+          for (const p of (s as any).pracovnici) {
+            if (p.status === 'PENDING') {
+              pending.push({ ...p, subjektName: s.name });
+            }
+          }
+        }
+      }
+      return pending;
+    }
+  }
+
+  /**
+   * Update worker status (APPROVED / REJECTED)
+   */
+  async updatePracovnikStatus(id: string, status: 'APPROVED' | 'REJECTED') {
+    try {
+      const updated = await prisma.pracovnik.update({
+        where: { id },
+        data: { status },
+      });
+      return updated;
+    } catch (error) {
+      console.warn('Prisma updatePracovnikStatus error, fallback:', error);
+      for (const s of dbStore.subjekty) {
+        if ((s as any).pracovnici) {
+          const p = (s as any).pracovnici.find((item: any) => item.id === id);
+          if (p) {
+            p.status = status;
+            return p;
+          }
+        }
+      }
+      throw new Error('Pracovník nenalezen');
+    }
+  }
+
+  /**
+   * Delete worker
+   */
+  async deletePracovnik(id: string) {
+    try {
+      await prisma.pracovnik.delete({ where: { id } });
+      return { success: true };
+    } catch (error) {
+      console.warn('Prisma deletePracovnik error, fallback:', error);
+      for (const s of dbStore.subjekty) {
+        if ((s as any).pracovnici) {
+          (s as any).pracovnici = (s as any).pracovnici.filter((item: any) => item.id !== id);
+        }
+      }
+      return { success: true };
     }
   }
 
@@ -276,35 +379,46 @@ export class SubjektService {
   }
 
   /**
-   * Add Review for a Subjekt
+   * Add Review for a Subjekt or a specific Pracovnik
    */
   async addReview(data: {
     subjektId: string;
+    pracovnikId?: string;
     userId?: string;
     rating: number;
-    supportSharedCare: number;
-    professionalism: number;
-    speedAndDeadlines: number;
+    supportSharedCare?: number;
+    professionalism?: number;
+    speedAndDeadlines?: number;
+    objektivita?: number;
+    komunikace?: number;
+    rychlost?: number;
     comment: string;
     isAnonymous?: boolean;
+    status?: 'PENDING' | 'APPROVED';
   }) {
     try {
       const created = await prisma.review.create({
         data: {
           subjektId: data.subjektId,
+          pracovnikId: data.pracovnikId || null,
           userId: data.userId || null,
           rating: Number(data.rating),
-          supportSharedCare: Number(data.supportSharedCare),
-          professionalism: Number(data.professionalism),
-          speedAndDeadlines: Number(data.speedAndDeadlines),
-          status: 'APPROVED', // Default to approved or PENDING for admin moderation
+          supportSharedCare: Number(data.supportSharedCare || data.rating),
+          professionalism: Number(data.professionalism || data.rating),
+          speedAndDeadlines: Number(data.speedAndDeadlines || data.rating),
+          objektivita: data.objektivita ? Number(data.objektivita) : null,
+          komunikace: data.komunikace ? Number(data.komunikace) : null,
+          rychlost: data.rychlost ? Number(data.rychlost) : null,
+          status: data.status || 'APPROVED',
           comment: data.comment,
           isAnonymous: data.isAnonymous ?? true,
         },
       });
 
-      // Recalculate average rating for Subjekt
-      await this.recalculateRating(data.subjektId);
+      // Recalculate average rating for Subjekt only if it is not a worker-specific review
+      if (!data.pracovnikId) {
+        await this.recalculateRating(data.subjektId);
+      }
 
       return created;
     } catch (error) {
@@ -312,26 +426,32 @@ export class SubjektService {
       const newReview: Review = {
         id: 'rev-' + Date.now(),
         subjektId: data.subjektId,
+        pracovnikId: data.pracovnikId || null,
         userId: data.userId || null,
         rating: Number(data.rating),
-        supportSharedCare: Number(data.supportSharedCare),
-        professionalism: Number(data.professionalism),
-        speedAndDeadlines: Number(data.speedAndDeadlines),
-        status: 'APPROVED',
+        supportSharedCare: Number(data.supportSharedCare || data.rating),
+        professionalism: Number(data.professionalism || data.rating),
+        speedAndDeadlines: Number(data.speedAndDeadlines || data.rating),
+        objektivita: data.objektivita ? Number(data.objektivita) : null,
+        komunikace: data.komunikace ? Number(data.komunikace) : null,
+        rychlost: data.rychlost ? Number(data.rychlost) : null,
+        status: data.status || 'APPROVED',
         comment: data.comment,
         isAnonymous: data.isAnonymous ?? true,
         createdAt: new Date(),
       };
       dbStore.reviews.unshift(newReview);
 
-      // Recalculate rating in memory
-      const subj = dbStore.subjekty.find((s) => s.id === data.subjektId);
-      if (subj) {
-        const approvedRev = dbStore.reviews.filter((r) => r.subjektId === data.subjektId && r.status === 'APPROVED');
-        subj.reviewCount = approvedRev.length;
-        if (approvedRev.length > 0) {
-          const sum = approvedRev.reduce((acc, curr) => acc + curr.rating, 0);
-          subj.avgRating = Number((sum / approvedRev.length).toFixed(1));
+      // Recalculate rating in memory only if it is not a worker-specific review
+      if (!data.pracovnikId) {
+        const subj = dbStore.subjekty.find((s) => s.id === data.subjektId);
+        if (subj) {
+          const approvedRev = dbStore.reviews.filter((r) => r.subjektId === data.subjektId && r.status === 'APPROVED' && !r.pracovnikId);
+          subj.reviewCount = approvedRev.length;
+          if (approvedRev.length > 0) {
+            const sum = approvedRev.reduce((acc, curr) => acc + curr.rating, 0);
+            subj.avgRating = Number((sum / approvedRev.length).toFixed(1));
+          }
         }
       }
 

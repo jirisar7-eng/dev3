@@ -33,6 +33,7 @@ import { seedSystemTemplates } from './src/services/templateService';
 import { UserDataService } from './src/services/userDataService.ts';
 import { GithubPublisherService } from './src/services/githubPublisherService.ts';
 import { EsbirkaService } from './src/services/EsbirkaService.ts';
+import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
@@ -158,6 +159,60 @@ app.use('/api/partners', partnerRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/custom-modules', customModuleRoutes);
 app.use('/api/subjekty', subjektRoutes);
+
+// Pracovnici community proposal & moderation endpoints
+app.get('/api/pracovnici/pending', async (_req, res) => {
+  try {
+    const list = await subjektService.getPendingPracovnici();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba při načítání pending pracovníků' });
+  }
+});
+
+app.post('/api/pracovnici', async (req, res) => {
+  try {
+    const { subjektId, jmeno, pozice, telefon, email, kancelar, status, createdById } = req.body;
+    if (!subjektId || !jmeno) {
+      return res.status(400).json({ error: 'Chybí subjektId nebo jméno' });
+    }
+    const created = await subjektService.addPracovnik({
+      subjektId,
+      jmeno,
+      pozice,
+      telefon,
+      email,
+      kancelar,
+      status: status || 'PENDING',
+      createdById,
+    });
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba při přidávání pracovníka' });
+  }
+});
+
+app.patch('/api/pracovnici/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ error: 'Neplatný status' });
+    }
+    const updated = await subjektService.updatePracovnikStatus(req.params.id, status);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba při změně statusu pracovníka' });
+  }
+});
+
+app.delete('/api/pracovnici/:id', async (req, res) => {
+  try {
+    await subjektService.deletePracovnik(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba při mazání pracovníka' });
+  }
+});
 app.post('/api/admin/pages/sync-modules', async (_req, res) => {
   try {
     const result = await ensureAllModulePagesExist();

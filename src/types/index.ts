@@ -556,21 +556,30 @@ export interface Pracovnik {
   email?: string | null;
   kancelar?: string | null;
   subjektId: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  createdById?: string | null;
   createdAt?: string | Date;
+  subjektName?: string;
+  reviews?: Review[];
 }
 
 export interface Review {
   id: string;
   subjektId: string;
+  pracovnikId?: string | null;
   userId?: string | null;
   rating: number; // 1-5 overall
   supportSharedCare: number; // 1-5
   professionalism: number; // 1-5
   speedAndDeadlines: number; // 1-5
+  objektivita?: number | null;
+  komunikace?: number | null;
+  rychlost?: number | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   comment: string;
   isAnonymous: boolean;
   createdAt: string | Date;
+  pracovnikName?: string;
 }
 
 export interface Subjekt {

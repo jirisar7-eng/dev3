@@ -39,6 +39,7 @@ import { PartnerManager } from './PartnerManager';
 import { TemplateManager } from './TemplateManager';
 import { CustomModuleManager } from './CustomModuleManager';
 import { SubjektManager } from './SubjektManager';
+import { ContactModerationManager } from './ContactModerationManager';
 import { Code, Building2 } from 'lucide-react';
 
 type AdminTab =
@@ -51,6 +52,7 @@ type AdminTab =
   | 'modules'
   | 'custom-modules'
   | 'subjekty'
+  | 'schvalovani-kontaktu'
   | 'cms'
   | 'users'
   | 'mailcow'
@@ -301,6 +303,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           </button>
 
           <button
+            onClick={() => setActiveTab('schvalovani-kontaktu')}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'schvalovani-kontaktu' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Users className="w-4 h-4 text-emerald-400" />
+              <span>Schvalování kontaktů</span>
+            </span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              Mod
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('cms')}
             className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
               activeTab === 'cms' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
@@ -461,6 +478,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'modules' && <ModuleManager />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
           {activeTab === 'subjekty' && <SubjektManager />}
+          {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
           {activeTab === 'cms' && <CmsManager />}
           {activeTab === 'users' && (
             <UserManager

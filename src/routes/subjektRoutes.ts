@@ -90,25 +90,51 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST /api/subjekty/:id/reviews - Add Review to Subjekt
+// POST /api/subjekty/:id/reviews - Add Review to Subjekt or Pracovnik
 router.post('/:id/reviews', async (req, res) => {
   try {
     const subjektId = req.params.id;
-    const { rating, supportSharedCare, professionalism, speedAndDeadlines, comment, isAnonymous, userId } = req.body;
+    const {
+      rating,
+      supportSharedCare,
+      professionalism,
+      speedAndDeadlines,
+      pracovnikId,
+      objektivita,
+      komunikace,
+      rychlost,
+      comment,
+      isAnonymous,
+      userId
+    } = req.body;
 
-    if (!rating || !supportSharedCare || !professionalism || !speedAndDeadlines || !comment) {
-      return res.status(400).json({ error: 'Chybí povinná hodnocení a komentář' });
+    if (!rating || !comment) {
+      return res.status(400).json({ error: 'Chybí hodnocení nebo slovní komentář' });
+    }
+
+    if (pracovnikId) {
+      if (objektivita === undefined || komunikace === undefined || rychlost === undefined) {
+        return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií pracovníka (objektivita, komunikace, rychlost)' });
+      }
+    } else {
+      if (supportSharedCare === undefined || professionalism === undefined || speedAndDeadlines === undefined) {
+        return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií instituce (podpora střídavé péče, věcnost, rychlost)' });
+      }
     }
 
     const review = await subjektService.addReview({
       subjektId,
+      pracovnikId,
       userId,
       rating: Number(rating),
-      supportSharedCare: Number(supportSharedCare),
-      professionalism: Number(professionalism),
-      speedAndDeadlines: Number(speedAndDeadlines),
+      supportSharedCare: supportSharedCare !== undefined ? Number(supportSharedCare) : undefined,
+      professionalism: professionalism !== undefined ? Number(professionalism) : undefined,
+      speedAndDeadlines: speedAndDeadlines !== undefined ? Number(speedAndDeadlines) : undefined,
+      objektivita: objektivita !== undefined ? Number(objektivita) : undefined,
+      komunikace: komunikace !== undefined ? Number(komunikace) : undefined,
+      rychlost: rychlost !== undefined ? Number(rychlost) : undefined,
       comment,
-      isAnonymous: Boolean(isAnonymous),
+      isAnonymous: isAnonymous !== undefined ? Boolean(isAnonymous) : true,
     });
 
     return res.status(201).json(review);

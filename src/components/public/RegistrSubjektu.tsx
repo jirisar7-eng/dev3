@@ -122,6 +122,18 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     isAnonymous: true,
   });
 
+  // Worker rating state
+  const [showPracovnikRatingModal, setShowPracovnikRatingModal] = useState<boolean>(false);
+  const [selectedPracovnikForRating, setSelectedPracovnikForRating] = useState<any | null>(null);
+  const [pracovnikReviewForm, setPracovnikReviewForm] = useState({
+    rating: 5,
+    objektivita: 5,
+    komunikace: 5,
+    rychlost: 5,
+    comment: '',
+    isAnonymous: true,
+  });
+
   // Pracovnik Form
   const [pracovnikForm, setPracovnikForm] = useState({
     jmeno: '',
@@ -138,23 +150,20 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     e.preventDefault();
     if (!selectedSubjekt || !pracovnikForm.jmeno.trim()) return;
     try {
-      const res = await fetch(`/api/subjekty/${selectedSubjekt.id}/pracovnici`, {
+      const res = await fetch('/api/pracovnici', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pracovnikForm),
+        body: JSON.stringify({
+          ...pracovnikForm,
+          subjektId: selectedSubjekt.id,
+          status: 'PENDING',
+        }),
       });
       if (res.ok) {
-        const newPrac = await res.json();
-        const updatedSubjekt = {
-          ...selectedSubjekt,
-          pracovnici: [newPrac, ...(selectedSubjekt.pracovnici || [])],
-        };
-        setSelectedSubjekt(updatedSubjekt);
-        setSubjekty(subjekty.map((s) => (s.id === updatedSubjekt.id ? updatedSubjekt : s)));
         setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
         setShowAddPracovnikModal(false);
-        setSuccessMessage('Pracovník byl úspěšně přidán.');
-        setTimeout(() => setSuccessMessage(null), 4000);
+        setSuccessMessage('Děkujeme! Návrh byl odeslán ke schválení administrátorovi.');
+        setTimeout(() => setSuccessMessage(null), 5000);
       }
     } catch (err) {
       console.error('Error adding pracovnik:', err);
@@ -263,6 +272,48 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       }
     } catch (err) {
       console.error('Error adding review:', err);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const handleAddPracovnikReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSubjekt || !selectedPracovnikForRating || !pracovnikReviewForm.comment) return;
+
+    setFormSubmitting(true);
+    try {
+      const res = await fetch(`/api/subjekty/${selectedSubjekt.id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...pracovnikReviewForm,
+          pracovnikId: selectedPracovnikForRating.id,
+        }),
+      });
+
+      if (res.ok) {
+        setShowPracovnikRatingModal(false);
+        setPracovnikReviewForm({
+          rating: 5,
+          objektivita: 5,
+          komunikace: 5,
+          rychlost: 5,
+          comment: '',
+          isAnonymous: true,
+        });
+        setSuccessMessage('Vaše hodnocení pracovníka bylo úspěšně odesláno!');
+        setTimeout(() => setSuccessMessage(null), 4000);
+
+        // Refresh detail to get the new reviews of the workers
+        const detailRes = await fetch(`/api/subjekty/${selectedSubjekt.id}`);
+        if (detailRes.ok) {
+          const updatedDetail = await detailRes.json();
+          setSelectedSubjekt(updatedDetail);
+        }
+      }
+    } catch (err) {
+      console.error('Error adding worker review:', err);
     } finally {
       setFormSubmitting(false);
     }
@@ -599,7 +650,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                   className="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border border-indigo-200"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Přidat pracovníka</span>
+                  <span>+ Navrhnout / Přidat pracovníka</span>
                 </button>
               </div>
 
@@ -609,36 +660,102 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {selectedSubjekt.pracovnici.map((prac) => (
-                    <div key={prac.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{prac.jmeno}</h4>
-                          {prac.pozice && <p className="text-[11px] text-indigo-600 font-semibold">{prac.pozice}</p>}
-                        </div>
-                        {prac.kancelar && (
-                          <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
-                            {prac.kancelar}
-                          </span>
-                        )}
-                      </div>
+                  {selectedSubjekt.pracovnici.map((prac) => {
+                    const pracReviews = prac.reviews || [];
+                    const pracAvgRating = pracReviews.length > 0
+                      ? (pracReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / pracReviews.length).toFixed(1)
+                      : null;
 
-                      <div className="space-y-1 pt-1 text-xs text-slate-600">
-                        {prac.telefon && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <a href={`tel:${prac.telefon}`} className="hover:text-indigo-600 font-medium">{prac.telefon}</a>
+                    return (
+                      <div key={prac.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between space-y-2">
+                        <div>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{prac.jmeno}</h4>
+                              {prac.pozice && <p className="text-[11px] text-indigo-600 font-semibold">{prac.pozice}</p>}
+                            </div>
+                            {prac.kancelar && (
+                              <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                {prac.kancelar}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        {prac.email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <a href={`mailto:${prac.email}`} className="hover:text-indigo-600 truncate">{prac.email}</a>
+
+                          <div className="space-y-1 pt-1.5 text-xs text-slate-600">
+                            {prac.telefon && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <a href={`tel:${prac.telefon}`} className="hover:text-indigo-600 font-medium">{prac.telefon}</a>
+                              </div>
+                            )}
+                            {prac.email && (
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <a href={`mailto:${prac.email}`} className="hover:text-indigo-600 truncate">{prac.email}</a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200 mt-2">
+                          <div className="flex items-center gap-1">
+                            {pracAvgRating ? (
+                              <span className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-700 font-extrabold text-[11px] px-2 py-0.5 rounded-lg border border-amber-200">
+                                ★ {pracAvgRating} <span className="text-[9px] font-normal text-slate-500">({pracReviews.length}x)</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 italic">Zatím nehodnocen</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedPracovnikForRating(prac);
+                              setShowPracovnikRatingModal(true);
+                            }}
+                            className="text-[11px] text-indigo-600 hover:text-indigo-800 font-extrabold flex items-center gap-1 hover:underline cursor-pointer"
+                          >
+                            <Star className="w-3.5 h-3.5 shrink-0 text-amber-500 fill-amber-400" />
+                            <span>Hodnotit</span>
+                          </button>
+                        </div>
+
+                        {pracReviews.length > 0 && (
+                          <div className="pt-2 mt-2 border-t border-slate-200 space-y-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Zkušenosti rodičů ({pracReviews.length}):</span>
+                            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                              {pracReviews.map((rev: any) => (
+                                <div key={rev.id} className="bg-white border border-slate-100 rounded-xl p-2 space-y-1.5 shadow-2xs">
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="font-extrabold text-amber-600">★ {rev.rating}/5</span>
+                                    <span className="text-slate-400">{new Date(rev.createdAt).toLocaleDateString('cs-CZ')}</span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-1 text-[9px] text-slate-500 bg-slate-50 p-1 rounded-md text-center">
+                                    <div>
+                                      <span className="block font-semibold">Objektivita</span>
+                                      <span>{rev.objektivita ?? rev.rating}/5</span>
+                                    </div>
+                                    <div>
+                                      <span className="block font-semibold">Komunikace</span>
+                                      <span>{rev.komunikace ?? rev.rating}/5</span>
+                                    </div>
+                                    <div>
+                                      <span className="block font-semibold">Rychlost</span>
+                                      <span>{rev.rychlost ?? rev.rating}/5</span>
+                                    </div>
+                                  </div>
+                                  {rev.comment && (
+                                    <p className="text-[10.5px] text-slate-600 italic leading-snug">
+                                      "{rev.comment}"
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1082,6 +1199,152 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                   className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
                 >
                   Uložit pracovníka
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* WORKER RATING MODAL */}
+      {showPracovnikRatingModal && selectedPracovnikForRating && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
+            <button
+              onClick={() => {
+                setShowPracovnikRatingModal(false);
+                setSelectedPracovnikForRating(null);
+              }}
+              className="absolute right-5 top-5 text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div>
+              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Hodnocení jednání pracovníka</span>
+              <h2 className="text-xl font-extrabold text-slate-900 mt-1">
+                Hodnotit: {selectedPracovnikForRating.jmeno}
+              </h2>
+              {selectedPracovnikForRating.pozice && (
+                <p className="text-xs text-indigo-600 font-semibold">{selectedPracovnikForRating.pozice}</p>
+              )}
+            </div>
+
+            <form onSubmit={handleAddPracovnikReview} className="space-y-4 text-xs">
+              {/* Notice to user */}
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-2xl flex gap-2 text-[11px] leading-relaxed">
+                <span className="font-bold shrink-0">⚠️ Upozornění:</span>
+                <span>Prosíme o dodržování věcnosti, slušnosti a konstruktivního tónu. Popisujte pouze svou přímou osobní zkušenost. Nepravdivá či vulgární hodnocení budou smazána.</span>
+              </div>
+
+              {/* Overall rating */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-800 block">Celkový dojem a spokojenost (1-5 hvězdiček):</label>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setPracovnikReviewForm({ ...pracovnikReviewForm, rating: num })}
+                      className={`p-2 rounded-xl transition-all cursor-pointer ${
+                        pracovnikReviewForm.rating >= num ? 'text-amber-400 bg-amber-50' : 'text-slate-300 bg-slate-100'
+                      }`}
+                    >
+                      <Star className={`w-6 h-6 ${pracovnikReviewForm.rating >= num ? 'fill-amber-400' : ''}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Criteria Ratings */}
+              <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="space-y-1">
+                  <div className="flex justify-between font-semibold text-slate-700">
+                    <span>Objektivita a nestrannost jednání:</span>
+                    <span className="font-bold text-indigo-600">{pracovnikReviewForm.objektivita} / 5</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={pracovnikReviewForm.objektivita}
+                    onChange={(e) => setPracovnikReviewForm({ ...pracovnikReviewForm, objektivita: Number(e.target.value) })}
+                    className="w-full accent-indigo-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between font-semibold text-slate-700">
+                    <span>Komunikace a přístup (slušnost, empatie):</span>
+                    <span className="font-bold text-indigo-600">{pracovnikReviewForm.komunikace} / 5</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={pracovnikReviewForm.komunikace}
+                    onChange={(e) => setPracovnikReviewForm({ ...pracovnikReviewForm, komunikace: Number(e.target.value) })}
+                    className="w-full accent-indigo-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between font-semibold text-slate-700">
+                    <span>Rychlost vyřízení / dodržování termínů:</span>
+                    <span className="font-bold text-indigo-600">{pracovnikReviewForm.rychlost} / 5</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={pracovnikReviewForm.rychlost}
+                    onChange={(e) => setPracovnikReviewForm({ ...pracovnikReviewForm, rychlost: Number(e.target.value) })}
+                    className="w-full accent-indigo-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-800 block">Popis osobní zkušenosti s jednáním:</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={pracovnikReviewForm.comment}
+                  onChange={(e) => setPracovnikReviewForm({ ...pracovnikReviewForm, comment: e.target.value })}
+                  placeholder="Popište věcně průběh jednání, komunikaci a věcnost přístupu tohoto pracovníka..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Anonymous Checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={pracovnikReviewForm.isAnonymous}
+                  onChange={(e) => setPracovnikReviewForm({ ...pracovnikReviewForm, isAnonymous: e.target.checked })}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>Zveřejnit hodnocení anonymně</span>
+              </label>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPracovnikRatingModal(false);
+                    setSelectedPracovnikForRating(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Zrušit
+                </button>
+                <button
+                  type="submit"
+                  disabled={formSubmitting}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  {formSubmitting ? 'Ukládám...' : 'Odeslat hodnocení'}
                 </button>
               </div>
             </form>
