@@ -18,6 +18,7 @@ import { AboutView } from './AboutView';
 import { ContactView } from './ContactView';
 import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
+import { LegalHubPage } from '../../pages/LegalHubPage';
 import {
   CrisisCommunityPortal,
   SosPlanView,
@@ -55,9 +56,10 @@ interface PublicPortalProps {
   currentPath: string;
   onNavigate: (path: string) => void;
   currentUser?: { id: string; email?: string; name?: string } | null;
+  onOpenCookieSettings?: () => void;
 }
 
-export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavigate, currentUser }) => {
+export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavigate, currentUser, onOpenCookieSettings }) => {
   const { t } = useText();
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [contactMessage, setContactMessage] = useState({ name: '', email: '', phone: '', subject: '', text: '' });
@@ -421,6 +423,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         </div>
       </div>
     );
+  }
+
+  // 4b. Central Legal Hub Route (/pravni-dokumenty)
+  if (slug === 'pravni-dokumenty') {
+    return <LegalHubPage onNavigate={onNavigate} onOpenCookieSettings={onOpenCookieSettings} />;
   }
 
   // 5. Compliance Documents Routes (/podminky-uzivani, /gdpr, /cookies, /moje-pravni-dokumenty, /dobrovolnicky-kodex, /ai-prohlaseni)

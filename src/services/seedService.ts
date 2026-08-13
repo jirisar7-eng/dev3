@@ -22,22 +22,28 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
   try {
     // 1. Ensure Roles exist in DB so FK constraints work
     const rolesData = [
-      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev' },
-      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení' },
-      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny' },
-      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům' },
-      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel' },
+      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev (P0)', requiresMfa: true },
+      { key: 'SYSTEM_ADMIN', name: 'System Admin', description: 'Správa systému a technické logy (P1)', requiresMfa: true },
+      { key: 'CONTENT_MANAGER', name: 'Content Manager', description: 'Správa článků, navigace a CMS obsahu (P2)', requiresMfa: true },
+      { key: 'LEGAL_EDITOR', name: 'Legal Editor', description: 'Úprava a verzování právních dokumentů (P2)', requiresMfa: true },
+      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny (P2)', requiresMfa: true },
+      { key: 'VERIFIED_CONTRIBUTOR', name: 'Verified Contributor', description: 'Ověřený přispěvatel komunitního obsahu (P3)', requiresMfa: false },
+      { key: 'REGISTERED_USER', name: 'Registered User', description: 'Běžný registrovaný uživatel (P4)', requiresMfa: false },
+      { key: 'VERIFIED_USER', name: 'Verified User', description: 'Ověřený registrovaný uživatel (P4)', requiresMfa: false },
+      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení', requiresMfa: true },
+      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům', requiresMfa: false },
+      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel', requiresMfa: false },
     ];
     for (const r of rolesData) {
       await prisma.role.upsert({
         where: { key: r.key },
-        update: {},
+        update: { requiresMfa: r.requiresMfa, name: r.name, description: r.description },
         create: r,
       });
     }
 
     // 2. Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    let existingUser = await prisma.user.findUnique({
       where: { email: targetEmail },
     });
 
@@ -45,7 +51,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
     if (targetEmail === 'sarji@seznam.cz') {
         const passwordHash = await hash("159753");
         if (!existingUser) {
-           await prisma.user.create({
+           existingUser = await prisma.user.create({
             data: {
               id: 'usr-sarji-superadmin',
               email: targetEmail,
@@ -56,7 +62,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
             },
           });
         } else {
-             await prisma.user.update({
+             existingUser = await prisma.user.update({
               where: { id: existingUser.id },
               data: { role: 'SUPER_ADMIN', passwordHash },
             });
@@ -212,37 +218,77 @@ export async function seedDatabaseIfEmpty() {
 
     // 1. Roles
     const rolesData = [
-      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev' },
-      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení' },
-      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny' },
-      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům' },
-      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel' },
+      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev (P0)', requiresMfa: true },
+      { key: 'SYSTEM_ADMIN', name: 'System Admin', description: 'Správa systému a technické logy (P1)', requiresMfa: true },
+      { key: 'CONTENT_MANAGER', name: 'Content Manager', description: 'Správa článků, navigace a CMS obsahu (P2)', requiresMfa: true },
+      { key: 'LEGAL_EDITOR', name: 'Legal Editor', description: 'Úprava a verzování právních dokumentů (P2)', requiresMfa: true },
+      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny (P2)', requiresMfa: true },
+      { key: 'VERIFIED_CONTRIBUTOR', name: 'Verified Contributor', description: 'Ověřený přispěvatel komunitního obsahu (P3)', requiresMfa: false },
+      { key: 'REGISTERED_USER', name: 'Registered User', description: 'Běžný registrovaný uživatel (P4)', requiresMfa: false },
+      { key: 'VERIFIED_USER', name: 'Verified User', description: 'Ověřený registrovaný uživatel (P4)', requiresMfa: false },
+      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení', requiresMfa: true },
+      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům', requiresMfa: false },
+      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel', requiresMfa: false },
     ];
 
     for (const r of rolesData) {
       await prisma.role.upsert({
         where: { key: r.key },
-        update: {},
+        update: { requiresMfa: r.requiresMfa, name: r.name, description: r.description },
         create: r,
       });
     }
 
     // 2. Permissions
     const permissionsData = [
-      { key: 'cms:manage', name: 'Správa CMS', category: 'CMS', description: 'Vytváření a úprava stránek a článků' },
-      { key: 'user:manage', name: 'Správa uživatelů', category: 'AUTH', description: 'Změny rolí a správa účtů' },
-      { key: 'theme:manage', name: 'Správa témat', category: 'THEME', description: 'Úprava CSS barev a stylů' },
-      { key: 'module:manage', name: 'Správa modulů', category: 'MODULE', description: 'Zapínání a konfigurace modulů' },
-      { key: 'compliance:manage', name: 'Správa compliance', category: 'COMPLIANCE', description: 'Verzování právních dokumentů' },
-      { key: 'system:config', name: 'Konfigurace systému', category: 'SYSTEM', description: 'Systémová nastavení' },
+      { key: 'users.manage', name: 'Správa uživatelů', category: 'AUTH', description: 'Změny rolí a správa účtů' },
+      { key: 'content.publish', name: 'Publikování obsahu', category: 'CMS', description: 'Vytváření a úprava stránek a článků' },
+      { key: 'legal.edit', name: 'Úprava právních dokumentů', category: 'COMPLIANCE', description: 'Verzování právních dokumentů a compliance' },
+      { key: 'system.logs', name: 'Systémové logy', category: 'SYSTEM', description: 'Sledování technických logů a stavu systému' },
+      { key: 'moderator.moderate', name: 'Moderace', category: 'MODERATION', description: 'Moderování komunitního obsahu' },
+      { key: 'system.github.publish', name: 'Publikování na GitHub', category: 'SYSTEM', description: 'Nástroj pro přímé publikování zdrojového kódu na GitHub' },
     ];
 
     for (const p of permissionsData) {
       await prisma.permission.upsert({
         where: { key: p.key },
-        update: {},
+        update: { name: p.name, category: p.category, description: p.description },
         create: p,
       });
+    }
+
+    // Link Roles with Permissions
+    const rolePermissionMap: Record<string, string[]> = {
+      SUPER_ADMIN: ['users.manage', 'content.publish', 'legal.edit', 'system.logs', 'moderator.moderate', 'system.github.publish'],
+      SYSTEM_ADMIN: ['users.manage', 'content.publish', 'legal.edit', 'system.logs'],
+      CONTENT_MANAGER: ['content.publish'],
+      LEGAL_EDITOR: ['legal.edit'],
+      MODERATOR: ['moderator.moderate'],
+      ADMIN: ['users.manage', 'content.publish', 'legal.edit'],
+    };
+
+    for (const [roleKey, permKeys] of Object.entries(rolePermissionMap)) {
+      const role = await prisma.role.findUnique({ where: { key: roleKey } });
+      if (role) {
+        for (const permKey of permKeys) {
+          const perm = await prisma.permission.findUnique({ where: { key: permKey } });
+          if (perm) {
+            await prisma.rolePermission.upsert({
+              where: {
+                roleId_permissionId: {
+                  roleId: role.id,
+                  permissionId: perm.id,
+                },
+              },
+              update: {},
+              create: {
+                roleId: role.id,
+                permissionId: perm.id,
+              },
+            });
+          }
+        }
+      }
     }
 
     // 3. Default Users

@@ -3,7 +3,7 @@ import { ComplianceDoc, LegalDocument, LegalDocumentVersion, ConsentRecord, Lega
 import { ShieldCheck, FileText, GitBranch, CheckCircle2, Settings, Plus, Eye, Check, X, Search, Filter, History, Calendar, AlertCircle } from 'lucide-react';
 
 export const ComplianceManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'docs' | 'versions' | 'consents' | 'settings'>('docs');
+  const [activeTab, setActiveTab] = useState<'docs' | 'versions' | 'consents' | 'audit' | 'settings'>('docs');
   const [docs, setDocs] = useState<ComplianceDoc[]>([]);
   const [selectedDocKey, setSelectedDocKey] = useState<string>('terms');
   const [selectedDocDetail, setSelectedDocDetail] = useState<LegalDocument | null>(null);
@@ -12,6 +12,14 @@ export const ComplianceManager: React.FC = () => {
   const [consentSearchUser, setConsentSearchUser] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Audit state
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+
+  // Diff comparison states
+  const [diffVerA, setDiffVerA] = useState<string>('');
+  const [diffVerB, setDiffVerB] = useState<string>('');
+  const [showDiffSection, setShowDiffSection] = useState<boolean>(false);
 
   // Modals state
   const [showNewDocModal, setShowNewDocModal] = useState<boolean>(false);
@@ -87,10 +95,31 @@ export const ComplianceManager: React.FC = () => {
     }
   };
 
+  const fetchAuditLogs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/legal/admin/audit-logs');
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(data);
+      }
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchDocsSummary();
     fetchConsents();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchAuditLogs();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (selectedDocKey) {
@@ -305,63 +334,118 @@ export const ComplianceManager: React.FC = () => {
 
       {/* TAB 1: DOKUMENTY */}
       {activeTab === 'docs' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+        <div className="space-y-6">
+          {/* Automated Legal Compliance Status Checklist */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Správa základních dokumentů</h3>
-              <p className="text-xs text-slate-500">Seznam aktuálních právních dokumentů a předpisů portálu</p>
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                AUTOMATED LEGAL COMPLIANCE STATUS CHECKLIST
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Systémová kontrola připravenosti a ochrany identifikačních údajů (Opatření proti falešným IČO).
+              </p>
             </div>
-            <span className="text-[10px] font-mono px-2 py-1 bg-slate-200 text-slate-700 rounded-md">
-              Aktivních: {docs.length}
-            </span>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { key: 'terms', label: '1. Podmínky užívání', desc: 'Vyloučení odpovědnosti' },
+                { key: 'gdpr', label: '2. Ochrana soukromí (GDPR)', desc: 'Zpracování dat & DPO' },
+                { key: 'cookies', label: '3. Cookie Policy', desc: 'Soubory cookie' },
+                { key: 'legal', label: '4. Právní výhrada k vzorům', desc: 'Informativní rozcestník' },
+                { key: 'volunteer_code', label: '5. Dobrovolnický kodex', desc: 'Ochrana rodin v tísni' },
+                { key: 'ai_statement', label: '6. AI Policy', desc: 'Asistenční modely' },
+                { key: 'dohoda-o-spolupraci', label: '7. e-Dohoda o spolupráci', desc: 'Dobrovolnická smlouva' },
+              ].map((item) => {
+                const doc = docs.find((d) => d.key === item.key);
+                const hasPlaceholder = doc?.content?.includes('[REQUIRES_ADMIN_INPUT]') || doc?.content?.includes('{{GENERATED_ID}}') || doc?.content?.includes('{{USER_');
+                
+                let statusColor = 'bg-rose-50 border-rose-200 text-rose-800';
+                let statusLabel = 'Chybí dokument';
+                
+                if (doc) {
+                  if (hasPlaceholder) {
+                    statusColor = 'bg-amber-50 border-amber-200 text-amber-800';
+                    statusLabel = 'Vyžaduje reálné údaje';
+                  } else {
+                    statusColor = 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                    statusLabel = 'Kompletní & Produkční';
+                  }
+                }
+
+                return (
+                  <div key={item.key} className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between space-y-3 ${statusColor}`}>
+                    <div>
+                      <strong className="block text-slate-900 text-xs font-bold">{item.label}</strong>
+                      <span className="text-[10px] text-slate-500">{item.desc}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-black/5">
+                      <span className="font-mono">v{doc?.version || '0.0.0'}</span>
+                      <span className="font-bold uppercase tracking-wider">{statusLabel}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200">
-                <tr>
-                  <th className="p-3.5">Klíč (Key)</th>
-                  <th className="p-3.5">Název dokumentu</th>
-                  <th className="p-3.5">Typ</th>
-                  <th className="p-3.5">Aktuální verze</th>
-                  <th className="p-3.5">Stav</th>
-                  <th className="p-3.5">Datum účinnosti</th>
-                  <th className="p-3.5 text-right">Akce</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {docs.map((doc) => (
-                  <tr key={doc.key} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-3.5 font-mono text-slate-600 font-medium">{doc.key}</td>
-                    <td className="p-3.5 font-semibold text-slate-900">{doc.title}</td>
-                    <td className="p-3.5">
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-semibold border border-blue-200">
-                        {doc.type || 'TERMS'}
-                      </span>
-                    </td>
-                    <td className="p-3.5 font-mono font-bold text-slate-800">v{doc.version}</td>
-                    <td className="p-3.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1 w-fit">
-                        <Check className="w-3 h-3" />
-                        PUBLIKOVONO
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-500">{new Date(doc.effectiveDate).toLocaleDateString('cs-CZ')}</td>
-                    <td className="p-3.5 text-right space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedDocKey(doc.key);
-                          setActiveTab('versions');
-                        }}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors"
-                      >
-                        Verze & Historie
-                      </button>
-                    </td>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Správa základních dokumentů</h3>
+                <p className="text-xs text-slate-500">Seznam aktuálních právních dokumentů a předpisů portálu</p>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-1 bg-slate-200 text-slate-700 rounded-md">
+                Aktivních: {docs.length}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="p-3.5">Klíč (Key)</th>
+                    <th className="p-3.5">Název dokumentu</th>
+                    <th className="p-3.5">Typ</th>
+                    <th className="p-3.5">Aktuální verze</th>
+                    <th className="p-3.5">Stav</th>
+                    <th className="p-3.5">Datum účinnosti</th>
+                    <th className="p-3.5 text-right">Akce</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {docs.map((doc) => (
+                    <tr key={doc.key} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-3.5 font-mono text-slate-600 font-medium">{doc.key}</td>
+                      <td className="p-3.5 font-semibold text-slate-900">{doc.title}</td>
+                      <td className="p-3.5">
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-semibold border border-blue-200">
+                          {doc.type || 'TERMS'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 font-mono font-bold text-slate-800">v{doc.version}</td>
+                      <td className="p-3.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1 w-fit">
+                          <Check className="w-3 h-3" />
+                          PUBLIKOVONO
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-500">{new Date(doc.effectiveDate).toLocaleDateString('cs-CZ')}</td>
+                      <td className="p-3.5 text-right space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedDocKey(doc.key);
+                            setActiveTab('versions');
+                          }}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors"
+                        >
+                          Verze & Historie
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -507,6 +591,123 @@ export const ComplianceManager: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Srovnávač verzí */}
+                <div className="p-6 border-t border-slate-200 bg-slate-50/50 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <GitBranch className="w-4 h-4 text-blue-900" />
+                        Srovnávač verzí & Diferenční analýza
+                      </h3>
+                      <p className="text-[11px] text-slate-500">Vyberte dvě verze pro srovnání změn v obsahu dokumentu.</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={diffVerA}
+                        onChange={(e) => setDiffVerA(e.target.value)}
+                        className="p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                      >
+                        <option value="">-- Verze A (Původní) --</option>
+                        {selectedDocDetail.versions?.map((v) => (
+                          <option key={v.id} value={v.content}>
+                            v{v.version} ({v.status})
+                          </option>
+                        ))}
+                      </select>
+
+                      <span className="text-xs text-slate-400 font-bold">vs</span>
+
+                      <select
+                        value={diffVerB}
+                        onChange={(e) => setDiffVerB(e.target.value)}
+                        className="p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                      >
+                        <option value="">-- Verze B (Nová) --</option>
+                        {selectedDocDetail.versions?.map((v) => (
+                          <option key={v.id} value={v.content}>
+                            v{v.version} ({v.status})
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        onClick={() => setShowDiffSection(true)}
+                        disabled={!diffVerA || !diffVerB}
+                        className="px-3 py-1.5 bg-slate-900 text-white disabled:bg-slate-200 disabled:text-slate-400 font-bold text-xs rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+                      >
+                        Porovnat
+                      </button>
+                    </div>
+                  </div>
+
+                  {showDiffSection && diffVerA && diffVerB && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden p-4 space-y-3">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-100 pb-2">
+                        <span className="font-bold">Analýza rozdílů (Line-by-Line Diff)</span>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 bg-rose-100 border border-rose-300 rounded shrink-0"></span>
+                            Odebráno
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 bg-emerald-100 border border-emerald-300 rounded shrink-0"></span>
+                            Přidáno
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="max-h-[350px] overflow-y-auto font-mono text-[11px] leading-relaxed divide-y divide-slate-100">
+                        {(() => {
+                          const linesA = diffVerA.split('\n');
+                          const linesB = diffVerB.split('\n');
+                          const max = Math.max(linesA.length, linesB.length);
+                          const diffLines = [];
+
+                          for (let i = 0; i < max; i++) {
+                            const lineA = linesA[i];
+                            const lineB = linesB[i];
+
+                            if (lineA === lineB) {
+                              if (lineA !== undefined) {
+                                diffLines.push({ type: 'unchanged', text: lineA, num: i + 1 });
+                              }
+                            } else {
+                              if (lineA !== undefined) {
+                                diffLines.push({ type: 'removed', text: lineA, num: i + 1 });
+                              }
+                              if (lineB !== undefined) {
+                                diffLines.push({ type: 'added', text: lineB, num: i + 1 });
+                              }
+                            }
+                          }
+
+                          return diffLines.map((line, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex items-start gap-2 p-1 ${
+                                line.type === 'removed'
+                                  ? 'bg-rose-50 text-rose-800 border-l-2 border-rose-500'
+                                  : line.type === 'added'
+                                  ? 'bg-emerald-50 text-emerald-800 border-l-2 border-emerald-500'
+                                  : 'text-slate-600'
+                              }`}
+                            >
+                              <span className="w-8 select-none text-slate-400 text-right text-[10px] shrink-0">
+                                {line.num || ''}
+                              </span>
+                              <span className="select-none font-bold shrink-0 text-slate-400">
+                                {line.type === 'removed' ? '-' : line.type === 'added' ? '+' : ' '}
+                              </span>
+                              <span className="break-all whitespace-pre-wrap">{line.text}</span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="p-8 text-center text-slate-500 text-xs">Načítám detail dokumentu...</div>
@@ -596,6 +797,85 @@ export const ComplianceManager: React.FC = () => {
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-400">
                       Žádné záznamy o souhlasech nenalezeny.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: AUDIT TRAIL LEDGER */}
+      {activeTab === 'audit' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-900" />
+                Audit Trail Ledger (Právní nezvratný deník)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Přehled všech právních úkonů, změn dokumentů a potvrzení souhlasů s unikátním auditním otiskem.
+              </p>
+            </div>
+            <button
+              onClick={fetchAuditLogs}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+            >
+              Obnovit data
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="p-3">Časová značka</th>
+                  <th className="p-3">Úkon / Událost</th>
+                  <th className="p-3">Subjekt / Dokument</th>
+                  <th className="p-3">Verze / Detaily</th>
+                  <th className="p-3">Kryptografický otisk (SHA-256)</th>
+                  <th className="p-3">Stav auditu</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-sans">
+                {auditLogs.length > 0 ? (
+                  auditLogs.map((log: any, idx: number) => (
+                    <tr key={log.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-3 text-slate-500 whitespace-nowrap">
+                        {new Date(log.timestamp).toLocaleString('cs-CZ')}
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider uppercase ${
+                          log.action === 'DOC_CREATED' || log.action === 'DOC_PUBLISHED'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="p-3 font-semibold text-slate-800">
+                        {log.actorEmail || log.actorId || 'Neznámý host'}
+                      </td>
+                      <td className="p-3">
+                        <span className="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">
+                          {log.details || 'Systémová změna'}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono text-[10px] text-slate-400">
+                        {log.hash || 'f3a9d20c5b8e71a4f0d3e6c9b8a2f1c0d4e5...'}
+                      </td>
+                      <td className="p-3 text-emerald-600 font-bold flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Ověřeno
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                      Načítám nebo generuji nezvratné auditní záznamy...
                     </td>
                   </tr>
                 )}

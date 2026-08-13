@@ -5,12 +5,15 @@ interface AuthResult {
   success: boolean;
   user?: User;
   error?: string;
+  mfaRequired?: boolean;
+  userId?: string;
 }
 
 interface AuthContextType {
   currentUser: User | null;
   users: User[];
   login: (email: string, password?: string) => Promise<AuthResult>;
+  verifyMfa: (userId: string, code: string) => Promise<AuthResult>;
   register: (
     name: string,
     email: string,
@@ -28,6 +31,15 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const ROLES_REQUIRING_MFA = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'];
+const ADMIN_ROLES = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'ADMIN'];
+
+const canFetchUsers = (user: User) => {
+  if (!ADMIN_ROLES.includes(user.role)) return false;
+  if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled) return false;
+  return true;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -61,8 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const data = await res.json();
         if (data.user) {
           setCurrentUser(data.user);
-          if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
-            await fetchUsers(); // Fetch users after successful auth
+          if (canFetchUsers(data.user)) {
+            await fetchUsers(); // Fetch users after successful auth if permitted
           }
           return;
         }
@@ -86,12 +98,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
+      if (data.mfaRequired) {
+        return { success: false, mfaRequired: true, userId: data.userId };
+      }
       if (res.ok && data.user) {
         if (data.token) {
           localStorage.setItem('tatovacesta_auth_token', data.token);
         }
         setCurrentUser(data.user);
-        if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
+        if (canFetchUsers(data.user)) {
           await fetchUsers();
         }
         return { success: true, user: data.user };
@@ -100,6 +115,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e: any) {
       console.error('Login error:', e);
       return { success: false, error: e.message || 'Chyba při přihlášení.' };
+    }
+  };
+
+  const verifyMfa = async (userId: string, code: string): Promise<AuthResult> => {
+    try {
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, code }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        if (data.token) {
+          localStorage.setItem('tatovacesta_auth_token', data.token);
+        }
+        setCurrentUser(data.user);
+        if (canFetchUsers(data.user)) {
+          await fetchUsers();
+        }
+        return { success: true, user: data.user };
+      }
+      return { success: false, error: data.error || 'Neplatný ověřovací kód.' };
+    } catch (e: any) {
+      console.error('MFA verification error:', e);
+      return { success: false, error: e.message || 'Chyba při ověřování kódu.' };
     }
   };
 
@@ -124,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('tatovacesta_auth_token', data.token);
         }
         setCurrentUser(data.user);
-        if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
+        if (canFetchUsers(data.user)) {
           await fetchUsers();
         }
         return { success: true, user: data.user };
@@ -170,12 +210,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = (requiredRole: UserRole): boolean => {
     if (!currentUser) return false;
-    const roleHierarchy: Record<UserRole, number> = {
+    const roleHierarchy: Record<string, number> = {
       USER: 1,
-      VOLUNTEER: 2,
-      MODERATOR: 3,
-      ADMIN: 4,
-      SUPER_ADMIN: 5,
+      REGISTERED_USER: 1,
+      VERIFIED_USER: 2,
+      VOLUNTEER: 3,
+      VERIFIED_CONTRIBUTOR: 3,
+      MODERATOR: 4,
+      LEGAL_EDITOR: 4,
+      CONTENT_MANAGER: 4,
+      SYSTEM_ADMIN: 5,
+      ADMIN: 5,
+      SUPER_ADMIN: 6,
     };
     return (roleHierarchy[currentUser.role] || 0) >= (roleHierarchy[requiredRole] || 1);
   };
@@ -186,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         users,
         login,
+        verifyMfa,
         register,
         logout,
         switchUser,

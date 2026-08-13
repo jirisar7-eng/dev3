@@ -1,4 +1,15 @@
-export type UserRole = 'USER' | 'VOLUNTEER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
+export type UserRole =
+  | 'USER'
+  | 'REGISTERED_USER'
+  | 'VERIFIED_USER'
+  | 'VOLUNTEER'
+  | 'VERIFIED_CONTRIBUTOR'
+  | 'MODERATOR'
+  | 'LEGAL_EDITOR'
+  | 'CONTENT_MANAGER'
+  | 'SYSTEM_ADMIN'
+  | 'ADMIN'
+  | 'SUPER_ADMIN';
 
 export interface UserProfile {
   id?: string;
@@ -29,7 +40,10 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  status?: 'ACTIVE' | 'SUSPENDED' | string;
+  status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED' | string;
+  totpEnabled?: boolean;
+  totpSecret?: string;
+  totpBackupCodes?: string[];
   phone?: string;
   bio?: string;
   avatar?: string;

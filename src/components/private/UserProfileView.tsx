@@ -19,6 +19,13 @@ import {
   Sparkles,
   ToggleLeft,
   ToggleRight,
+  Lock,
+  Shield,
+  Key,
+  Copy,
+  QrCode,
+  Check,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface UserProfileViewProps {
@@ -36,7 +43,23 @@ const getAuthHeaders = (extraHeaders: Record<string, string> = {}) => {
 };
 
 export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfileUpdated }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'children' | 'autofill'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'children' | 'autofill' | 'security'>('profile');
+
+  // 2FA TOTP States
+  const [is2faEnabled, setIs2faEnabled] = useState(user.totpEnabled ?? false);
+  const [mfaSetupStep, setMfaSetupStep] = useState<number>(0); // 0 = off, 1 = qr code / key, 2 = code verify, 3 = backup codes
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [secretKey, setSecretKey] = useState<string>('');
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [totpVerifyCode, setTotpVerifyCode] = useState<string>('');
+  const [mfaError, setMfaError] = useState<string>('');
+  const [mfaSuccess, setMfaSuccess] = useState<string>('');
+  const [copiedKey, setCopiedKey] = useState<boolean>(false);
+
+  // Sync state if user prop changes
+  useEffect(() => {
+    setIs2faEnabled(user.totpEnabled ?? false);
+  }, [user.totpEnabled]);
 
   // Profile Form States
   const [name, setName] = useState(user.name || '');
@@ -347,6 +370,16 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
         >
           <Sparkles className="w-4 h-4 text-amber-300" />
           Předvyplňování dokumentů
+        </button>
+
+        <button
+          onClick={() => setActiveTab('security')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'security' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Lock className="w-4 h-4 text-amber-400" />
+          Zabezpečení (2FA)
         </button>
       </div>
 
@@ -725,6 +758,305 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Security Tab (2FA) */}
+      {activeTab === 'security' && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-6">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="p-3 bg-blue-50 text-blue-900 rounded-2xl">
+              <Shield className="w-6 h-6 text-blue-850" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-base">Dvoufázové ověření (2FA / MFA)</h3>
+              <p className="text-xs text-slate-500">Zabezpečte svůj účet pomocí jednorázových časových kódů (TOTP).</p>
+            </div>
+          </div>
+
+          {/* MFA Required Status Notice */}
+          {['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'].includes(user.role) && (
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 text-xs text-amber-800 animate-pulse">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" />
+              <div>
+                <span className="font-bold">Povinné zabezpečení:</span> Vaše role (<span className="font-mono">{user.role}</span>) vyžaduje aktivní dvoufázové ověření. Pokud jej vypnete nebo nenastavíte, systém vás nepustí do chráněných sekcí.
+              </div>
+            </div>
+          )}
+
+          {mfaError && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-xl text-xs border border-red-100">
+              {mfaError}
+            </div>
+          )}
+
+          {mfaSuccess && (
+            <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl text-xs border border-emerald-100">
+              {mfaSuccess}
+            </div>
+          )}
+
+          {/* 1. NOT ENABLED AND NOT SETUP IN PROGRESS */}
+          {!is2faEnabled && mfaSetupStep === 0 && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Dvoufázové ověření přidává dodatečnou vrstvu zabezpečení k vašemu účtu. Po zadání hesla budete vyzváni k zadání jednorázového 6místného kódu z vaší mobilní aplikace (např. Google Authenticator, Microsoft Authenticator nebo 1Password).
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  setMfaError('');
+                  try {
+                    const res = await fetch('/api/auth/2fa/generate', { method: 'POST' });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || 'Nepodařilo se vygenerovat 2FA klíč.');
+                    }
+                    const data = await res.json();
+                    setQrCodeData(data.qrCode);
+                    setSecretKey(data.secret);
+                    setBackupCodes(data.backupCodes);
+                    setMfaSetupStep(1);
+                  } catch (err: any) {
+                    setMfaError(err.message);
+                  }
+                }}
+                className="px-5 py-2.5 bg-blue-900 text-white rounded-xl font-bold text-xs hover:bg-blue-800 transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Key className="w-4 h-4" />
+                Aktivovat dvoufázové ověření
+              </button>
+            </div>
+          )}
+
+          {/* 2. SETUP STEP 1: SHOW QR CODE & KEY */}
+          {!is2faEnabled && mfaSetupStep === 1 && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Krok 1: Naskenujte QR kód</h4>
+                <p className="text-xs text-slate-500">
+                  Otevřete svou autentizační aplikaci v telefonu a naskenujte tento QR kód.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-6 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                {qrCodeData ? (
+                  <img src={qrCodeData} alt="2FA QR Code" className="w-36 h-36 bg-white p-2 rounded-xl border border-slate-200" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-36 h-36 bg-slate-200 flex items-center justify-center rounded-xl text-slate-400">
+                    <QrCode className="w-8 h-8" />
+                  </div>
+                )}
+                <div className="space-y-3 flex-1 w-full text-left">
+                  <div>
+                    <span className="block text-[11px] font-bold text-slate-500">Tajný klíč (pokud nelze naskenovat):</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-700 select-all flex-1 break-all">
+                        {secretKey}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(secretKey);
+                          setCopiedKey(true);
+                          setTimeout(() => setCopiedKey(false), 2000);
+                        }}
+                        className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                        title="Kopírovat klíč"
+                      >
+                        {copiedKey ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Název účtu v aplikaci: <strong className="text-slate-700">TataMaPravo:{user.email}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMfaSetupStep(0)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+                >
+                  Zrušit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMfaSetupStep(2)}
+                  className="px-4 py-2 text-xs font-bold bg-blue-900 text-white rounded-xl hover:bg-blue-800 transition-colors cursor-pointer"
+                >
+                  Pokračovat na ověření
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. SETUP STEP 2: VERIFY CODE */}
+          {!is2faEnabled && mfaSetupStep === 2 && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Krok 2: Ověřte kód</h4>
+                <p className="text-xs text-slate-500">
+                  Zadejte 6místný kód, který se právě zobrazuje ve vaší aplikaci, aby se dokončilo nastavení.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700">6místný kód z aplikace:</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={totpVerifyCode}
+                  onChange={(e) => setTotpVerifyCode(e.target.value.replace(/\s+/g, ''))}
+                  className="w-full sm:w-48 p-2.5 rounded-xl border border-slate-200 text-sm font-mono tracking-[0.2em] text-center focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMfaSetupStep(1)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+                >
+                  Zpět
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setMfaError('');
+                    try {
+                      const res = await fetch('/api/auth/2fa/enable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: totpVerifyCode }),
+                      });
+                      if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || 'Neplatný kód. Zkuste to prosím znovu.');
+                      }
+                      setIs2faEnabled(true);
+                      onProfileUpdated({ ...user, totpEnabled: true, totpBackupCodes: backupCodes });
+                      setMfaSetupStep(3);
+                    } catch (err: any) {
+                      setMfaError(err.message);
+                    }
+                  }}
+                  className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition-colors cursor-pointer"
+                >
+                  Ověřit a zapnout
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. SETUP STEP 3: BACKUP CODES */}
+          {mfaSetupStep === 3 && (
+            <div className="space-y-4">
+              <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 flex items-center gap-2 text-xs">
+                <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="font-bold">Dvoufázové ověření bylo úspěšně zapnuto!</span>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Záložní kódy pro nouzové obnovení</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Pokud ztratíte přístup ke své autentizační aplikaci, můžete k přihlášení použít jeden z těchto záložních kódů. 
+                  <strong className="block mt-1 text-slate-700">Každý záložní kód lze použít pouze jednou! Bezpečně si je uložte nebo vytiskněte.</strong>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 font-mono text-xs text-slate-700 text-center">
+                {backupCodes.map((code, idx) => (
+                  <div key={idx} className="bg-white py-1.5 px-3 rounded-lg border border-slate-200 shadow-3xs font-bold">
+                    {code}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMfaSetupStep(0);
+                    setMfaSuccess('2FA je aktivní a plně nastavená.');
+                  }}
+                  className="px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-xs hover:bg-blue-800 transition-colors cursor-pointer"
+                >
+                  Hotovo, mám uloženo
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 5. ALREADY ENABLED */}
+          {is2faEnabled && mfaSetupStep !== 3 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
+                  <Check className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="block font-bold text-emerald-900 text-xs">Zabezpečení 2FA je AKTIVNÍ</span>
+                  <span className="text-[11px] text-emerald-700">Váš účet je chráněn časovými kódy.</span>
+                </div>
+              </div>
+
+              {/* Disable Section */}
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-xs text-slate-700">Vypnout dvoufázové ověření</h4>
+                  <p className="text-xs text-slate-500">
+                    Pokud dvoufázové ověření vypnete, snížíte tím bezpečnost svého účtu.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">Pro vypnutí zadejte aktuální 6místný kód (nepovinné):</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={totpVerifyCode}
+                      onChange={(e) => setTotpVerifyCode(e.target.value.replace(/\s+/g, ''))}
+                      className="w-full sm:w-48 p-2 rounded-xl border border-slate-200 text-sm font-mono tracking-[0.2em] text-center focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm('Opravdu chcete vypnout dvoufázové ověření?')) return;
+                      setMfaError('');
+                      setMfaSuccess('');
+                      try {
+                        const res = await fetch('/api/auth/2fa/disable', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ code: totpVerifyCode }),
+                        });
+                        if (!res.ok) {
+                          const data = await res.json();
+                          throw new Error(data.error || 'Nepodařilo se vypnout 2FA.');
+                        }
+                        setIs2faEnabled(false);
+                        onProfileUpdated({ ...user, totpEnabled: false, totpSecret: undefined, totpBackupCodes: [] });
+                        setTotpVerifyCode('');
+                        setMfaSuccess('Dvoufázové ověření bylo vypnuto.');
+                      } catch (err: any) {
+                        setMfaError(err.message);
+                      }
+                    }}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    Vypnout dvoufázové ověření
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

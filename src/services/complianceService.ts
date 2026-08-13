@@ -2,6 +2,22 @@ import { prisma } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, UserConsent, ConsentRecord, User, LegalDocStatus } from '../types';
 
+export function safeIsoString(val: any): string {
+  if (!val) return new Date().toISOString();
+  if (typeof val.toISOString === 'function') {
+    return val.toISOString();
+  }
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+  } catch (err) {
+    // ignore
+  }
+  return new Date().toISOString();
+}
+
 export class ComplianceService {
   // Map public URL slugs or aliases to official document keys
   static resolveKey(slugOrKey: string): string {
@@ -51,8 +67,8 @@ export class ComplianceService {
               description: d.description || undefined,
               content: publishedVer?.content || '',
               version: publishedVer?.version || '1.0.0',
-              effectiveDate: publishedVer?.effectiveDate.toISOString() || d.createdAt.toISOString(),
-              updatedAt: d.updatedAt.toISOString(),
+              effectiveDate: publishedVer ? safeIsoString(publishedVer.effectiveDate) : safeIsoString(d.createdAt),
+              updatedAt: safeIsoString(d.updatedAt),
               status: (publishedVer?.status as LegalDocStatus) || 'PUBLISHED',
               author: publishedVer?.author || 'Administrátor',
               versions: d.versions.map((v) => ({
@@ -61,10 +77,10 @@ export class ComplianceService {
                 version: v.version,
                 content: v.content,
                 status: v.status as LegalDocStatus,
-                effectiveDate: v.effectiveDate.toISOString(),
+                effectiveDate: safeIsoString(v.effectiveDate),
                 author: v.author || 'Administrátor',
-                createdAt: v.createdAt.toISOString(),
-                updatedAt: v.updatedAt.toISOString(),
+                createdAt: safeIsoString(v.createdAt),
+                updatedAt: safeIsoString(v.updatedAt),
               })),
             };
           });
@@ -555,7 +571,7 @@ export class ComplianceService {
           versionId: consent.versionId || undefined,
           status: consent.status as 'ACCEPTED' | 'REVOKED',
           ipAddress: consent.ipAddress || ipAddress,
-          consentedAt: consent.consentedAt.toISOString(),
+          consentedAt: safeIsoString(consent.consentedAt),
         };
       } catch (err) {
         console.warn('Prisma recordConsent error, falling back:', err);
@@ -613,7 +629,7 @@ export class ComplianceService {
           versionId: c.versionId || undefined,
           status: (c.status as 'ACCEPTED' | 'REVOKED') || 'ACCEPTED',
           ipAddress: c.ipAddress || '127.0.0.1',
-          consentedAt: c.consentedAt.toISOString(),
+          consentedAt: safeIsoString(c.consentedAt),
         }));
       } catch (err) {
         console.warn('Prisma getConsents error:', err);
@@ -645,5 +661,140 @@ export class ComplianceService {
   // 12. User consents helper
   static async getUserConsents(userId: string): Promise<UserConsent[]> {
     return this.getConsents(userId);
+  }
+
+  // 13. Record Cookie Consent
+  static async recordCookieConsent(
+    userId: string | null,
+    sessionHash: string | null,
+    preferences: { essential?: boolean; functional?: boolean; analytics?: boolean; marketing?: boolean },
+    ipAddress: string = '127.0.0.1'
+  ): Promise<any> {
+    const data = {
+      userId,
+      sessionHash,
+      essential: preferences.essential !== false, // default true
+      functional: preferences.functional || false,
+      analytics: preferences.analytics || false,
+      marketing: preferences.marketing || false,
+      version: '1.0',
+      ipAddress,
+    };
+
+    if (prisma) {
+      try {
+        const consent = await (prisma as any).cookieConsent.create({
+          data,
+        });
+        return consent;
+      } catch (err) {
+        console.warn('Prisma recordCookieConsent error, falling back:', err);
+      }
+    }
+
+    const consent = {
+      id: 'cc-' + Date.now(),
+      ...data,
+      consentAt: new Date(),
+    };
+    (dbStore as any).cookieConsents = (dbStore as any).cookieConsents || [];
+    (dbStore as any).cookieConsents.push(consent);
+    return consent;
+  }
+
+  // 14. Get Cookie Consent
+  static async getCookieConsent(userIdOrSession: string): Promise<any> {
+    if (prisma) {
+      try {
+        const consent = await (prisma as any).cookieConsent.findFirst({
+          where: {
+            OR: [
+              { userId: userIdOrSession },
+              { sessionHash: userIdOrSession },
+            ]
+          },
+          orderBy: { consentAt: 'desc' },
+        });
+        if (consent) return consent;
+      } catch (err) {
+        console.warn('Prisma getCookieConsent error, falling back:', err);
+      }
+    }
+    const list = (dbStore as any).cookieConsents || [];
+    return list.find((c: any) => c.userId === userIdOrSession || c.sessionHash === userIdOrSession) || null;
+  }
+
+  // 15. Create Legal Audit Log
+  static async logLegalAudit(
+    userId: string | null,
+    action: string,
+    entity: string,
+    entityId?: string,
+    metadata?: any
+  ): Promise<any> {
+    const metadataJson = metadata ? JSON.stringify(metadata) : null;
+    const data = {
+      userId,
+      action,
+      entity,
+      entityId,
+      metadataJson,
+    };
+
+    if (prisma) {
+      try {
+        const log = await (prisma as any).legalAuditLog.create({
+          data,
+        });
+        return log;
+      } catch (err) {
+        console.warn('Prisma logLegalAudit error, falling back:', err);
+      }
+    }
+
+    const log = {
+      id: 'al-' + Date.now(),
+      ...data,
+      createdAt: new Date(),
+    };
+    (dbStore as any).legalAuditLogs = (dbStore as any).legalAuditLogs || [];
+    (dbStore as any).legalAuditLogs.push(log);
+    return log;
+  }
+
+  // 16. Get Legal Audit Logs
+  static async getLegalAuditLogs(): Promise<any[]> {
+    if (prisma) {
+      try {
+        const logs = await (prisma as any).legalAuditLog.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: { email: true, name: true },
+            }
+          }
+        });
+        return logs.map((l: any) => ({
+          id: l.id,
+          userId: l.userId,
+          userEmail: l.user?.email || 'Neznámý e-mail',
+          userName: l.user?.name || 'Neznámý uživatel',
+          action: l.action,
+          entity: l.entity,
+          entityId: l.entityId,
+          metadataJson: l.metadataJson,
+          createdAt: l.createdAt.toISOString ? l.createdAt.toISOString() : l.createdAt,
+        }));
+      } catch (err) {
+        console.warn('Prisma getLegalAuditLogs error, falling back:', err);
+      }
+    }
+    const list = (dbStore as any).legalAuditLogs || [];
+    return list.map((l: any) => ({
+      ...l,
+      userEmail: 'In-Memory',
+      userName: 'In-Memory Uživatel',
+      createdAt: l.createdAt.toISOString ? l.createdAt.toISOString() : l.createdAt,
+    }));
   }
 }

@@ -15,10 +15,13 @@ import { ComplianceModal } from './components/public/ComplianceModal';
 
 import { UserDashboard } from './components/private/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { CookieConsentBanner } from './components/common/CookieConsentBanner';
+import { VersionUpdateReacceptModal } from './components/public/VersionUpdateReacceptModal';
 
 type AppView = 'public' | 'private' | 'admin' | 'login' | 'register';
 
 function MainApp() {
+  const { currentUser } = useAuth();
   const initialPath = typeof window !== 'undefined' ? window.location.pathname : '/';
   
   const getViewFromPath = (path: string): AppView => {
@@ -32,6 +35,7 @@ function MainApp() {
   const [currentView, setCurrentView] = useState<AppView>(getViewFromPath(initialPath));
   const [currentPath, setCurrentPath] = useState<string>(initialPath);
   const [activeComplianceDoc, setActiveComplianceDoc] = useState<string | null>(null);
+  const [forceCookieSettings, setForceCookieSettings] = useState<boolean>(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -68,7 +72,12 @@ function MainApp() {
         {currentView === 'register' && <RegisterPage onNavigate={handleNavigate} />}
 
         {currentView === 'public' && (
-          <PublicPortal currentPath={currentPath} onNavigate={handleNavigate} />
+          <PublicPortal
+            currentPath={currentPath}
+            onNavigate={handleNavigate}
+            currentUser={currentUser}
+            onOpenCookieSettings={() => setForceCookieSettings(true)}
+          />
         )}
 
         {currentView === 'private' && (
@@ -79,13 +88,31 @@ function MainApp() {
       </main>
 
       {/* Footer with Compliance Links */}
-      <Footer onOpenComplianceDoc={(docKey) => setActiveComplianceDoc(docKey)} onNavigate={handleNavigate} />
+      <Footer
+        onOpenComplianceDoc={(docKey) => {
+          if (docKey === 'cookies') {
+            setForceCookieSettings(true);
+          } else {
+            setActiveComplianceDoc(docKey);
+          }
+        }}
+        onNavigate={handleNavigate}
+      />
 
       {/* Compliance Modal for versioned legal documents */}
       <ComplianceModal
         activeDocKey={activeComplianceDoc}
         onClose={() => setActiveComplianceDoc(null)}
       />
+
+      {/* Granular Cookie Consent Banner */}
+      <CookieConsentBanner
+        forceOpenTrigger={forceCookieSettings}
+        onCloseTrigger={() => setForceCookieSettings(false)}
+      />
+
+      {/* Version Update Re-acceptance Modal */}
+      <VersionUpdateReacceptModal />
     </div>
   );
 }

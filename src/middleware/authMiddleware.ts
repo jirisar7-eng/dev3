@@ -58,6 +58,28 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
   next();
 }
 
+const ROLES_REQUIRING_MFA = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'];
+
+function checkUserStatusAndMfa(user: any, req: Request, res: Response): boolean {
+  // 1. Account status check
+  if (user.status === 'BANNED' || user.status === 'SUSPENDED') {
+    res.status(403).json({ error: 'Přístup odepřen. Váš účet byl zablokován nebo pozastaven.' });
+    return false;
+  }
+
+  // 2. MFA requirement check for administrative roles (except during MFA configuration/me routes)
+  const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
+  if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled && !isMfaSetupRoute) {
+    res.status(403).json({
+      code: 'MFA_REQUIRED',
+      error: 'Tato role vyžaduje aktivní dvoufázové ověření (2FA). Chcete-li pokračovat, aktivujte si 2FA v nastavení zabezpečení profilu.',
+    });
+    return false;
+  }
+
+  return true;
+}
+
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const userId = req.session?.userId;
   if (!userId) {
@@ -65,6 +87,9 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   }
   if (!req.user) {
     return res.status(401).json({ error: 'Neautorizovaný přístup. Uživatel nebyl nalezen v databázi.' });
+  }
+  if (!checkUserStatusAndMfa(req.user, req, res)) {
+    return;
   }
   next();
 }
@@ -80,6 +105,10 @@ export function requireRole(minRole: UserRole) {
       const dbUser = await AuthService.getUserById(userId);
       if (!dbUser) {
         return res.status(401).json({ error: 'Uživatel nebyl nalezen v databázi.' });
+      }
+
+      if (!checkUserStatusAndMfa(dbUser, req, res)) {
+        return;
       }
 
       if (!AuthService.hasPermission(dbUser.role, minRole)) {
@@ -108,6 +137,10 @@ export function requirePermission(permissionKey: string) {
       const dbUser = await AuthService.getUserById(userId);
       if (!dbUser) {
         return res.status(401).json({ error: 'Uživatel nebyl nalezen v databázi.' });
+      }
+
+      if (!checkUserStatusAndMfa(dbUser, req, res)) {
+        return;
       }
 
       if (dbUser.role === 'SUPER_ADMIN') {
