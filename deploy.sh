@@ -27,19 +27,19 @@ docker network create app_network 2>/dev/null || true
 # 4. Build and start containers with docker compose
 echo "[4/6] Building and starting Docker containers..."
 if [ -f "docker-compose.yml" ]; then
-  docker compose up -d --build
+  docker compose up -d --build --remove-orphans
 elif [ -f "docker-compose.dev.yml" ]; then
-  docker compose -f docker-compose.dev.yml up -d --build
+  docker compose -f docker-compose.dev.yml up -d --build --remove-orphans
 fi
 
 # 5. Synchronize Prisma database schema
 echo "[5/6] Synchronizing Prisma DB schema..."
-if docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev3'; then
+if docker compose exec -T app npx prisma db push --skip-generate 2>/dev/null; then
+  echo "[DEPLOYMENT] DB schema push completed successfully via Compose app."
+elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev3'; then
   docker exec -i tatovacesta_app_dev3 npx prisma db push --skip-generate
 elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev'; then
   docker exec -i tatovacesta_app_dev npx prisma db push --skip-generate
-else
-  docker compose exec -T app npx prisma db push --skip-generate
 fi
 
 # 6. Verify Health Check
