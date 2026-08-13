@@ -30,7 +30,7 @@ export async function getDnsRecords() {
     return { records: [], error: `Vercel API vrátilo kód ${response.status}: ${errorText}` };
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   return { records: data.records || [], error: null };
 }
 

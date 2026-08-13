@@ -37,7 +37,7 @@ import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { TotpService } from './src/services/totpService.ts';
 import { getDns, addDns, deleteDns } from './src/controllers/dnsController.ts';
-import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable } from './src/db/prisma';
+import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable, prisma } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
 import pageRoutes from './src/routes/pageRoutes';
 import systemRoutes from './src/routes/system';
@@ -521,7 +521,6 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
         await getPrismaClient().user.update({
           where: { id: user.id },
           data: {
-            totpTempSecret: secretData.base32,
             totpBackupCodes: secretData.backupCodes,
           },
         });
@@ -531,10 +530,10 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
     }
 
     // Sync to dbStore
-    const dbUser = dbStore.users.find(u => u.id === user.id);
-    if (dbUser) {
-      dbUser.totpTempSecret = secretData.base32;
-      dbUser.totpBackupCodes = secretData.backupCodes;
+    const dbUserSync = dbStore.users.find(u => u.id === user.id);
+    if (dbUserSync) {
+      dbUserSync.totpTempSecret = secretData.base32;
+      dbUserSync.totpBackupCodes = secretData.backupCodes;
     }
 
     res.json({
@@ -561,12 +560,10 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       where: { id: user.id }
     });
     
-    let secret = freshUser?.totpTempSecret;
-    if (!secret) {
-        // Fallback to dbStore if Prisma fails or not used
-        const dbUser = dbStore.users.find(u => u.id === user.id);
-        secret = dbUser?.totpTempSecret;
-    }
+    let secret;
+    // Fallback to dbStore
+    const dbUser = dbStore.users.find(u => u.id === user.id);
+    secret = dbUser?.totpTempSecret;
 
     if (!secret) {
       return res.status(400).json({ error: '2FA nebyla inicializována. Vygenerujte nejprve klíč.' });
@@ -585,7 +582,6 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
           data: {
             totpEnabled: true,
             totpSecret: secret,
-            totpTempSecret: null
           },
         });
       } catch (prismaErr) {
@@ -594,11 +590,11 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
     }
 
     // Sync to dbStore
-    const dbUser = dbStore.users.find(u => u.id === user.id);
-    if (dbUser) {
-      dbUser.totpEnabled = true;
-      dbUser.totpSecret = secret;
-      dbUser.totpTempSecret = undefined;
+    const dbUserEnable = dbStore.users.find(u => u.id === user.id);
+    if (dbUserEnable) {
+      dbUserEnable.totpEnabled = true;
+      dbUserEnable.totpSecret = secret;
+      dbUserEnable.totpTempSecret = undefined;
     }
 
     // Log action
@@ -799,7 +795,7 @@ app.get('/api/users', requireAuth as any, requireRole('ADMIN') as any, async (_r
                     email: 'sarji@seznam.cz',
                     name: 'Sarji (Super Admin)',
                     role: 'SUPER_ADMIN',
-                    passwordHash: await hash("159753"),
+                    passwordHash: await bcrypt.hash("159753", 10),
                     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
                 }
             });

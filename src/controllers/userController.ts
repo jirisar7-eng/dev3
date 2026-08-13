@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcrypt';
-
-const prisma = new PrismaClient();
+import { prisma } from '../db/prisma';
+import { hash } from 'bcryptjs';
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -19,7 +17,6 @@ export const getUsers = async (req: Request, res: Response) => {
             email: 'sarji@seznam.cz',
             name: 'Jiří Šár',
             role: 'SUPER_ADMIN',
-            isActive: true,
             passwordHash: await hash('159753', 10),
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
           },

@@ -43,6 +43,7 @@ export interface User {
   status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED' | string;
   totpEnabled?: boolean;
   totpSecret?: string;
+  totpTempSecret?: string;
   totpBackupCodes?: string[];
   phone?: string;
   bio?: string;
