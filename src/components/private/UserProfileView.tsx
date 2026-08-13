@@ -55,6 +55,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
   const [mfaError, setMfaError] = useState<string>('');
   const [mfaSuccess, setMfaSuccess] = useState<string>('');
   const [copiedKey, setCopiedKey] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Sync state if user prop changes
   useEffect(() => {
@@ -808,8 +809,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
               </p>
               <button
                 type="button"
+                disabled={isGenerating}
                 onClick={async () => {
                   setMfaError('');
+                  setIsGenerating(true);
                   try {
                     const res = await fetch('/api/auth/2fa/generate', { method: 'POST' });
                     if (!res.ok) {
@@ -823,12 +826,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                     setMfaSetupStep(1);
                   } catch (err: any) {
                     setMfaError(err.message);
+                  } finally {
+                    setIsGenerating(false);
                   }
                 }}
-                className="px-5 py-2.5 bg-blue-900 text-white rounded-xl font-bold text-xs hover:bg-blue-800 transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
+                className="px-5 py-2.5 bg-blue-900 text-white rounded-xl font-bold text-xs hover:bg-blue-800 transition-colors flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 <Key className="w-4 h-4" />
-                Aktivovat dvoufázové ověření
+                {isGenerating ? 'Generuji...' : 'Aktivovat dvoufázové ověření'}
               </button>
             </div>
           )}
@@ -939,7 +944,13 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                       });
                       if (!res.ok) {
                         const data = await res.json();
-                        throw new Error(data.error || 'Neplatný kód. Zkuste to prosím znovu.');
+                        if (data.error === '2FA nebyla inicializována') {
+                           setMfaSetupStep(1);
+                           setMfaError('Platnost relace klíče vypršela. Vygenerujte prosím nový QR kód.');
+                        } else {
+                           throw new Error(data.error || 'Neplatný kód. Zkuste to prosím znovu.');
+                        }
+                        return;
                       }
                       setIs2faEnabled(true);
                       onProfileUpdated({ ...user, totpEnabled: true, totpBackupCodes: backupCodes });
