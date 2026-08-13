@@ -2,23 +2,30 @@ import fetch from 'node-fetch';
 
 const VERCEL_API_URL = 'https://api.vercel.com/v2/domains';
 
-export async function getDnsRecords(domain: string, token: string) {
-  try {
-    const response = await fetch(`${VERCEL_API_URL}/${domain}/records`, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({})) as any;
-      throw new Error(errorData.message || 'Failed to fetch DNS records');
-    }
-    return response.json();
-  } catch (error) {
-    console.error('Error fetching DNS records:', error);
-    throw error;
+export async function getDnsRecords() {
+  const token = process.env.VERCEL_API_TOKEN;
+  const domain = process.env.VERCEL_DOMAIN || 'tatovacesta.cz';
+
+  if (!token) {
+    console.warn("[Vercel DNS] VERCEL_API_TOKEN chybí v process.env");
+    return { records: [], error: "VERCEL_API_TOKEN chybí v konfiguračním souboru .env" };
   }
+
+  const response = await fetch(`https://api.vercel.com/v2/domains/${domain}/records`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[Vercel DNS Error ${response.status}]:`, errorText);
+    return { records: [], error: `Vercel API vrátilo kód ${response.status}: ${errorText}` };
+  }
+
+  const data = await response.json();
+  return { records: data.records || [], error: null };
 }
 
 export async function addDnsRecord(domain: string, token: string, record: any) {

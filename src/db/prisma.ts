@@ -107,7 +107,12 @@ export function getPrismaClient(): PrismaClientType | null {
 
   if (!clientInstance) {
     try {
-      const pool = new pg.Pool({ connectionString: dbUrl, connectionTimeoutMillis: 2000 });
+      const pool = new pg.Pool({ 
+        connectionString: dbUrl, 
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        max: 20
+      });
       const adapter = new PrismaPg(pool);
       clientInstance = new PrismaClient({ adapter });
     } catch (error) {

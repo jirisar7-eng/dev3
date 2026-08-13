@@ -6,15 +6,13 @@ const VERCEL_API_TOKEN = process.env.VERCEL_API_TOKEN;
 const VERCEL_DOMAIN = process.env.VERCEL_DOMAIN || 'tatovacesta.cz';
 
 export const getDns = async (req: AuthenticatedRequest, res: Response) => {
-  if (!VERCEL_API_TOKEN || !VERCEL_DOMAIN) {
-    return res.status(500).json({ records: [], error: "VERCEL_API_TOKEN není nastaven v .env" });
-  }
   try {
-    const data = await getDnsRecords(VERCEL_DOMAIN, VERCEL_API_TOKEN);
-    res.json(data);
+    const result = await getDnsRecords();
+    // Vracíme vždy 200, i když je tam error v poli, frontend si to přebere.
+    res.status(200).json(result);
   } catch (err: any) {
-    console.error("Vercel DNS Error:", err.message);
-    res.status(500).json({ records: [], error: err.message });
+    console.error("Vercel DNS Controller Error:", err);
+    res.status(200).json({ records: [], error: "Interní chyba při načítání DNS." });
   }
 };
 
