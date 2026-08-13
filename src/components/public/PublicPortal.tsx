@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { VolunteersPage } from './VolunteersPage';
 import { Hero } from './Hero';
 import { CorePrincipleCard } from './CorePrincipleCard';
 import { ArticlesSection } from './ArticlesSection';
@@ -91,6 +92,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       setContactMessage({ name: '', email: '', phone: '', subject: '', text: '' });
     }, 5000);
   };
+
+  // 0. Volunteers Route (/dobrovolnici)
+  if (slug === 'dobrovolnici' || slug === 'hledame-kolegy') {
+    return <VolunteersPage onNavigate={onNavigate} />;
+  }
 
   // 1. Homepage Route
   if (cleanPath === '/' || slug === 'domu') {

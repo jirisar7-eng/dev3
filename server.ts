@@ -1070,6 +1070,41 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
   }
 });
 
+// --- VOLUNTEER API ENDPOINTS ---
+app.post('/api/volunteers', async (req, res) => {
+  try {
+    const { name, email, phone, birthDate, address, motivation, linkedin, position, acceptedVolunteering, acceptedGDPR, acceptedCodex } = req.body;
+    
+    if (!name || !email || !motivation || !position || !acceptedVolunteering || !acceptedGDPR || !acceptedCodex) {
+      return res.status(400).json({ error: 'Chybí povinné údaje.' });
+    }
+
+    const prisma = getPrismaClient();
+    if (prisma) {
+        await (prisma as any).volunteerApplication.create({
+            data: {
+                name,
+                email,
+                phone,
+                birthDate,
+                address,
+                motivation,
+                linkedin,
+                position
+            }
+        });
+    }
+
+    // Odeslání notifikace (volitelné, zatím jen log)
+    console.log('[Volunteer] Nová přihláška od:', email, 'na pozici:', position);
+
+    res.status(201).json({ success: true });
+  } catch (err: any) {
+    console.error('Chyba při ukládání dobrovolníka:', err);
+    res.status(500).json({ error: 'Chyba při ukládání přihlášky.' });
+  }
+});
+
 // --- GITHUB PUBLISHER ENDPOINTS (SUPER_ADMIN ONLY, ADMIN supported in Dev/Preview) ---
 const requireGithubPublishAccess = (req: AuthenticatedRequest, res: any, next: any) => {
   return requireRole('ADMIN')(req, res, next);

@@ -663,6 +663,19 @@ model VolunteerCodexAgreement {
   @@unique([userId, documentVersion])
 }
 
+model VolunteerApplication {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  birthDate   String?
+  address     String?
+  motivation  String   @db.Text
+  linkedin    String?
+  position    String
+  createdAt   DateTime @default(now())
+}
+
 model UserConsentLog {
   id              String   @id @default(uuid())
   userId          String
