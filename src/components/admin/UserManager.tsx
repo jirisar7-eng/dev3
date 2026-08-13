@@ -43,6 +43,12 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         body: JSON.stringify({ name: quickCreateName, email: quickCreateEmail }),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        alert('Relace vypršela. Přihlaste se prosím znovu.');
+        window.location.href = '/prihlaseni';
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
         setQuickCreateResult({ message: data.message, password: data.generatedPassword });
@@ -73,6 +79,12 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
+      if (res.status === 401 || res.status === 403) {
+        alert('Relace vypršela. Přihlaste se prosím znovu.');
+        window.location.href = '/prihlaseni';
+        return;
+      }
+
       if (res.ok) {
         setUserList((prev) => prev.filter((u) => u.id !== user.id));
         setStatusMsg({ type: 'success', text: 'Uživatel smazán.' });
@@ -99,6 +111,12 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         },
         body: JSON.stringify({ name: editingUser.name, email: editingUser.email, role: editingUser.role }),
       });
+
+      if (res.status === 401 || res.status === 403) {
+        alert('Relace vypršela. Přihlaste se prosím znovu.');
+        window.location.href = '/prihlaseni';
+        return;
+      }
 
       if (res.ok) {
         const updated = await res.json();
@@ -137,6 +155,12 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         body: JSON.stringify({ status: newStatus }),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        alert('Relace vypršela. Přihlaste se prosím znovu.');
+        window.location.href = '/prihlaseni';
+        return;
+      }
+
       if (res.ok) {
         const updated = await res.json();
         setUserList((prev) => prev.map((u) => (u.id === user.id ? { ...u, status: updated.status } : u)));
@@ -166,6 +190,12 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
           'Authorization': `Bearer ${token}`,
         },
       });
+
+      if (res.status === 401 || res.status === 403) {
+        alert('Relace vypršela. Přihlaste se prosím znovu.');
+        window.location.href = '/prihlaseni';
+        return;
+      }
 
       if (res.ok) {
         setStatusMsg({

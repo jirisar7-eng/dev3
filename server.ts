@@ -947,7 +947,7 @@ app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as an
     const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(500).json({ error: 'Chybí konfigurace MAILCOW_API_KEY.' });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/get/mailbox/all`, {
@@ -955,14 +955,13 @@ app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as an
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      return res.status(response.status).json({ error: `Mailcow API error: ${errText || response.statusText}` });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Interní chyba při komunikaci s Mailcow.' });
+    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
   }
 });
 
@@ -978,7 +977,7 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
     const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(500).json({ error: 'Chybí konfigurace MAILCOW_API_KEY.' });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/add/mailbox`, {
@@ -998,18 +997,17 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      return res.status(response.status).json({ error: `Mailcow API error: ${errText || response.statusText}` });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const data = await response.json();
     if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ error: translateMailcowError(data[0].msg) });
+      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
     }
 
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Interní chyba při komunikaci s Mailcow.' });
+    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
   }
 });
 
@@ -1019,7 +1017,7 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
     const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(500).json({ error: 'Chybí konfigurace MAILCOW_API_KEY.' });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/delete/mailbox`, {
@@ -1032,18 +1030,17 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      return res.status(response.status).json({ error: `Mailcow API error: ${errText || response.statusText}` });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const data = await response.json();
     if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ error: translateMailcowError(data[0].msg) });
+      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
     }
 
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Interní chyba při komunikaci s Mailcow.' });
+    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
   }
 });
 
@@ -1054,7 +1051,7 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
     const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(500).json({ error: 'Chybí konfigurace MAILCOW_API_KEY.' });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/edit/mailbox`, {
@@ -1067,18 +1064,17 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      return res.status(response.status).json({ error: `Mailcow API error: ${errText || response.statusText}` });
+      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
     }
 
     const data = await response.json();
     if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ error: translateMailcowError(data[0].msg) });
+      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
     }
 
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Interní chyba při komunikaci s Mailcow.' });
+    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
   }
 });
 
