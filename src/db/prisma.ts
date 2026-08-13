@@ -91,10 +91,28 @@ export async function checkDatabaseReachable(): Promise<boolean> {
   }
 }
 
+export async function waitForDatabase(maxRetries = 5): Promise<boolean> {
+  let delay = 1000;
+  for (let i = 0; i < maxRetries; i++) {
+    console.log(`[Database] Pokus o připojení k PostgreSQL (${i + 1}/${maxRetries})...`);
+    const reachable = await checkDatabaseReachable();
+    if (reachable) {
+      console.log('[Database] PostgreSQL je dostupná.');
+      isPrismaDisabled = false; // Reset if it was previously marked as unavailable
+      return true;
+    }
+    console.warn(`[Database] Připojení selhalo. Další pokus za ${delay / 1000}s.`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    delay *= 2;
+  }
+  console.error('[Database] Maximální počet pokusů o připojení vyčerpán.');
+  return false;
+}
+
 export function getPrismaClient(): PrismaClientType | null {
   if (isPrismaDisabled) {
     if (!isFallbackAllowed()) {
-      throw new Error('[Database Error] PostgreSQL database is unavailable and fallback is disabled.');
+      return null; // Let the caller handle it, or we could throw here
     }
     return null;
   }
@@ -150,7 +168,10 @@ export const prisma = new Proxy({} as any, {
   get(_target, prop) {
     const client = getPrismaClient();
     if (!client) {
-      return dummyModel;
+      if (isFallbackAllowed()) {
+        return dummyModel;
+      }
+      throw new Error('Databáze je momentálně nedostupná.');
     }
 
     const val = (client as any)[prop];
@@ -161,26 +182,18 @@ export const prisma = new Proxy({} as any, {
           if (res && typeof res.catch === 'function') {
             return res.catch((err: any) => {
               markPrismaUnavailable(err);
-              if (isFallbackAllowed()) {
-                if (prop === 'findMany') return [];
-                if (prop === 'count') return 0;
-                return null;
-              }
               throw err;
             });
           }
           return res;
         } catch (err) {
           markPrismaUnavailable(err);
-          if (isFallbackAllowed()) {
-            return null;
-          }
           throw err;
         }
       };
     }
 
-    if (val && typeof val === 'object') {
+    if (val && typeof val === 'object' && val !== null) {
       return new Proxy(val, {
         get(modelTarget, modelProp) {
           const modelVal = modelTarget[modelProp];
@@ -191,20 +204,12 @@ export const prisma = new Proxy({} as any, {
                 if (res && typeof res.catch === 'function') {
                   return res.catch((err: any) => {
                     markPrismaUnavailable(err);
-                    if (isFallbackAllowed()) {
-                      if (modelProp === 'findMany') return [];
-                      if (modelProp === 'count') return 0;
-                      return null;
-                    }
                     throw err;
                   });
                 }
                 return res;
               } catch (err) {
                 markPrismaUnavailable(err);
-                if (isFallbackAllowed()) {
-                  return null;
-                }
                 throw err;
               }
             };
@@ -214,6 +219,6 @@ export const prisma = new Proxy({} as any, {
       });
     }
 
-    return val || dummyModel;
+    return val;
   },
 });

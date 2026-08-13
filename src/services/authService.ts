@@ -34,7 +34,7 @@ export class AuthService {
     if (cleanEmail === 'sarji@seznam.cz') {
       // Ensure sarji@seznam.cz always succeeds regardless of prisma errors
       let user: any = null;
-      if (prisma) {
+      if (isPrismaAvailable()) {
         try {
           user = await prisma.user.findUnique({ where: { email: cleanEmail } });
           if (!user) {
@@ -94,7 +94,7 @@ export class AuthService {
       return { token, user: sanitizedUser };
     }
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         let user = await prisma.user.findUnique({
           where: { email: cleanEmail },
@@ -212,7 +212,7 @@ export class AuthService {
     const passwordHash = await hash(password);
     const displayName = (name || '').trim() || (profileData?.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : cleanEmail.split('@')[0]);
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
         if (existing) {
@@ -318,7 +318,7 @@ export class AuthService {
   }
 
   static async getUsers(): Promise<User[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const users = await prisma.user.findMany({
           orderBy: { createdAt: 'desc' },
@@ -385,7 +385,7 @@ export class AuthService {
   }
 
   static async updateUserRole(userId: string, newRole: UserRole, adminUser?: User | null): Promise<User> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.user.update({
           where: { id: userId },
@@ -428,7 +428,7 @@ export class AuthService {
   }
 
   static async getRoles() {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         return await prisma.role.findMany({
           include: { rolePermissions: { include: { permission: true } } },
@@ -447,7 +447,7 @@ export class AuthService {
   }
 
   static async getPermissions() {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         return await prisma.permission.findMany({ orderBy: { category: 'asc' } });
       } catch (err) {
@@ -465,7 +465,7 @@ export class AuthService {
   }
 
   static async updateUser(userId: string, data: Partial<User>, adminUser?: User | null): Promise<User> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updateData: any = {};
         if (data.name !== undefined) updateData.name = data.name;
@@ -522,7 +522,7 @@ export class AuthService {
         throw new Error('Uživatel nemůže smazat sám sebe.');
     }
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.user.delete({
           where: { id: userId },
@@ -561,7 +561,7 @@ export class AuthService {
     const newPassword = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
     const passwordHash = await hash(newPassword);
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.user.update({
           where: { id: userId },

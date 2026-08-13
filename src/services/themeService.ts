@@ -1,4 +1,4 @@
-import { prisma } from '../db/prisma';
+import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { Theme, ThemeVariable, ThemeSetting, User } from '../types';
 
@@ -24,7 +24,7 @@ export class ThemeService {
    * Retrieves all themes with their associated variables.
    */
   static async getThemes(): Promise<Theme[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const themes = await prisma.theme.findMany({
           include: { variables: true },
@@ -141,7 +141,7 @@ export class ThemeService {
   ): Promise<Theme> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.theme.create({
           data: {
@@ -239,7 +239,7 @@ export class ThemeService {
   static async activateTheme(idOrKey: string, user?: User | null): Promise<Theme> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const theme = await prisma.theme.findFirst({
           where: { OR: [{ id: idOrKey }, { key: idOrKey }] },
@@ -309,7 +309,7 @@ export class ThemeService {
   ): Promise<Theme> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const theme = await prisma.theme.findFirst({
           where: { OR: [{ id: idOrKey }, { key: idOrKey }] },
@@ -398,7 +398,7 @@ export class ThemeService {
   static async deleteTheme(idOrKey: string, user?: User | null): Promise<boolean> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const theme = await prisma.theme.findFirst({
           where: { OR: [{ id: idOrKey }, { key: idOrKey }] },

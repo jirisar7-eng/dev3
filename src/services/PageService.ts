@@ -1,4 +1,4 @@
-import { getPrismaClient } from '../db/prisma';
+import { getPrismaClient, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 
 export interface ModulePageDef {
@@ -64,7 +64,7 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
 
 export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {
   let createdCount = 0;
-  const prismaClient = getPrismaClient();
+    const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
     const defaultPuckData = {
@@ -184,7 +184,7 @@ export async function convertAllPagesToPuck(): Promise<{ success: boolean; conve
   await ensureAllModulePagesExist();
 
   let convertedCount = 0;
-  const prismaClient = getPrismaClient();
+  const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   // Helper to convert plain string/HTML/legacy content into Puck Data
   const convertToPuckFormat = (title: string, slug: string, rawContent: any) => {

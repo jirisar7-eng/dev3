@@ -31,7 +31,12 @@ export async function getDnsRecords() {
   }
 
   const data = await response.json() as any;
-  return { records: data.records || [], error: null };
+  const records = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.records)
+      ? data.records
+      : [];
+  return { records, error: null };
 }
 
 export async function addDnsRecord(domain: string, token: string, record: any) {

@@ -1,10 +1,10 @@
-import { prisma } from '../db/prisma';
+import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { TextItem, User } from '../types';
 
 export class TextService {
   static async getAllTexts(): Promise<TextItem[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const texts = await prisma.contentString.findMany({
           orderBy: { key: 'asc' },
@@ -39,7 +39,7 @@ export class TextService {
   }
 
   static async getTextByKey(key: string): Promise<TextItem | null> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const t = await prisma.contentString.findUnique({ where: { key } });
         if (t) {
@@ -73,7 +73,7 @@ export class TextService {
   ): Promise<TextItem> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const existing = await prisma.contentString.findUnique({ where: { key } });
         if (existing) {
@@ -148,7 +148,7 @@ export class TextService {
   ): Promise<TextItem> {
     const userEmail = user?.email || 'system@tatovacesta.cz';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const category = data.category || (key.split('.')[0] || 'general');
         const updated = await prisma.contentString.upsert({
@@ -231,7 +231,7 @@ export class TextService {
     const action = active ? 'TEXT_ACTIVATE' : 'TEXT_DEACTIVATE';
     const logDetail = active ? `Aktivován textový klíč '${key}'.` : `Deaktivován textový klíč '${key}'.`;
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.auditLog.create({
           data: {
@@ -253,7 +253,7 @@ export class TextService {
   }
 
   static async deleteText(key: string, user?: User | null): Promise<boolean> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.contentString.delete({ where: { key } });
         await prisma.auditLog.create({

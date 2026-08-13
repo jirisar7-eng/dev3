@@ -37,7 +37,7 @@ import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { TotpService } from './src/services/totpService.ts';
 import { getDns, addDns, deleteDns } from './src/controllers/dnsController.ts';
-import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable, prisma } from './src/db/prisma';
+import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable, prisma, waitForDatabase } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
 import pageRoutes from './src/routes/pageRoutes';
 import systemRoutes from './src/routes/system';
@@ -136,18 +136,28 @@ app.get('/api/health', async (_req, res) => {
 });
 
 // Initialize DB seeding asynchronously depending on database availability
-checkDatabaseReachable().then((reachable) => {
-  if (reachable) {
-    seedDatabaseIfEmpty().catch((err) => console.error('[DB Startup Error]:', err));
-    ensureAllModulePagesExist().catch((err) => console.error('[Module Pages Startup Sync Error]:', err));
-    convertAllPagesToPuck().catch((err) => console.error('[Puck Page Conversion Startup Error]:', err));
-    seedSystemTemplates().catch((err) => console.error('[Templates Startup Seed Error]:', err));
+async function initializeApp() {
+  const isProd = process.env.NODE_ENV === 'production';
+  const dbConnected = await waitForDatabase(isProd ? 10 : 5);
+
+  if (dbConnected) {
+    try {
+      await seedDatabaseIfEmpty();
+      await ensureAllModulePagesExist();
+      await convertAllPagesToPuck();
+      await seedSystemTemplates();
+      console.log('[System] Databáze byla úspěšně inicializována.');
+    } catch (err) {
+      console.error('[System] Chyba při inicializaci databáze po připojení:', err);
+    }
   } else {
-    console.info('[System] In-memory seeding inicializace...');
-    ensureAllModulePagesExist().catch((err) => console.error('[Module Pages In-Memory Sync Error]:', err));
-    seedSystemTemplates().catch((err) => console.error('[Templates In-Memory Seed Error]:', err));
+    console.warn('[System] Databáze není dostupná po všech pokusech. Aplikace běží v omezeném režimu.');
+    // Optional: seed in-memory if needed
+    seedSystemTemplates().catch(() => {});
   }
-});
+}
+
+initializeApp();
 
 // Initialize e-Sbírka Cron Scheduler (3x daily: 03:00, 11:00, 19:00)
 EsbirkaService.initCronScheduler();
@@ -778,40 +788,7 @@ app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedR
 
 import { getUsers } from './src/controllers/userController';
 app.get('/api/admin/users', requireAuth as any, requireRole('ADMIN') as any, getUsers);
-app.get('/api/users', requireAuth as any, requireRole('ADMIN') as any, async (_req: AuthenticatedRequest, res) => {
-  try {
-    let users = await AuthService.getUsers();
-    
-    // Check for sarji@seznam.cz
-    const hasSarji = users.some(u => u.email === 'sarji@seznam.cz');
-    if (!hasSarji) {
-        // Upsert logic if missing
-        try {
-            await prisma.user.upsert({
-                where: { email: 'sarji@seznam.cz' },
-                update: {},
-                create: {
-                    id: 'usr-sarji-superadmin',
-                    email: 'sarji@seznam.cz',
-                    name: 'Sarji (Super Admin)',
-                    role: 'SUPER_ADMIN',
-                    passwordHash: await bcrypt.hash("159753", 10),
-                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-                }
-            });
-            users = await AuthService.getUsers(); // Refresh
-        } catch (e) {
-            console.error("Failed to upsert superadmin:", e);
-        }
-    }
-    
-    console.log("[ADMIN OK] Načten seznam uživatelů:", users.length);
-    res.json(users);
-  } catch (err: any) {
-    console.error("[ADMIN ERROR] Chyba při načítání uživatelů:", err);
-    res.status(500).json({ success: false, error: "Chyba databáze: " + err.message });
-  }
-});
+app.get('/api/users', requireAuth as any, requireRole('ADMIN') as any, getUsers);
 
 app.put('/api/admin/users/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
@@ -964,10 +941,10 @@ const translateMailcowError = (msg: string): string => {
 
 app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
   try {
-    const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
+    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/get/mailbox/all`, {
@@ -975,13 +952,14 @@ app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as an
     });
 
     if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: `Mailcow API vrátilo chybu: ${response.status}` });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err: any) {
-    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+    console.error('[Mailcow API Error]:', err);
+    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
   }
 });
 
@@ -994,10 +972,10 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
     const formattedLocalPart = local_part.toLowerCase().trim();
     const formattedQuota = parseInt(quota, 10) || 3072;
 
-    const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
+    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/add/mailbox`, {
@@ -1017,7 +995,7 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
     });
 
     if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
     }
 
     const data = await response.json();
@@ -1027,17 +1005,18 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
 
     res.json(data);
   } catch (err: any) {
-    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+    console.error('[Mailcow Create Error]:', err);
+    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
   }
 });
 
 app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
   try {
     const { email } = req.params;
-    const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
+    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/delete/mailbox`, {
@@ -1050,7 +1029,7 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
     });
 
     if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
     }
 
     const data = await response.json();
@@ -1060,7 +1039,8 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
 
     res.json(data);
   } catch (err: any) {
-    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+    console.error('[Mailcow Delete Error]:', err);
+    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
   }
 });
 
@@ -1068,10 +1048,10 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
   try {
     const { email } = req.params;
     const { password } = req.body;
-    const mailcowUrl = process.env.MAILCOW_URL || 'http://nginx-mailcow:8088';
+    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
     const mailcowApiKey = process.env.MAILCOW_API_KEY;
     if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
     }
 
     const response = await fetch(`${mailcowUrl}/api/v1/edit/mailbox`, {
@@ -1084,7 +1064,7 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
     });
 
     if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
     }
 
     const data = await response.json();
@@ -1094,7 +1074,8 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
 
     res.json(data);
   } catch (err: any) {
-    res.status(503).json({ success: false, error: "Mailcow server není nakonfigurován nebo je nedostupný." });
+    console.error('[Mailcow Password Error]:', err);
+    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
   }
 });
 

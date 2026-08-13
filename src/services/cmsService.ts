@@ -1,11 +1,11 @@
-import { prisma, markPrismaUnavailable } from '../db/prisma';
+import { prisma, markPrismaUnavailable, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { Page, PageSection, Category, Article, Faq, NavItem, MediaItem, User } from '../types';
 
 export class CmsService {
   // --- PAGES & SECTIONS ---
   static async getPages(): Promise<Page[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const pages = await prisma.page.findMany({
           orderBy: { createdAt: 'desc' },
@@ -50,7 +50,7 @@ export class CmsService {
   }
 
   static async getPageBySlug(slug: string): Promise<Page | null> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const p = await prisma.page.findUnique({
           where: { slug },
@@ -98,7 +98,7 @@ export class CmsService {
   }
 
   static async createPage(pageData: Omit<Page, 'id' | 'updatedAt'>, user?: User | null): Promise<Page> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const p = await prisma.page.create({
           data: {
@@ -149,7 +149,7 @@ export class CmsService {
   }
 
   static async updatePage(id: string, pageData: Partial<Page>, user?: User | null): Promise<Page> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const p = await prisma.page.update({
           where: { id },
@@ -225,7 +225,7 @@ export class CmsService {
   }
 
   static async deletePage(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const page = await prisma.page.findUnique({ where: { id } });
         if (page) {
@@ -261,7 +261,7 @@ export class CmsService {
     sectionData: Omit<PageSection, 'id' | 'pageId' | 'createdAt' | 'updatedAt'>,
     user?: User | null
   ): Promise<PageSection> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.pageSection.create({
           data: {
@@ -322,7 +322,7 @@ export class CmsService {
     sectionData: Partial<PageSection>,
     user?: User | null
   ): Promise<PageSection> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.pageSection.update({
           where: { id: sectionId },
@@ -370,7 +370,7 @@ export class CmsService {
   }
 
   static async deleteSection(sectionId: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const sec = await prisma.pageSection.findUnique({ where: { id: sectionId } });
         if (sec) {
@@ -404,7 +404,7 @@ export class CmsService {
     orders: { id: string; order: number }[],
     user?: User | null
   ): Promise<PageSection[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         for (const item of orders) {
           await prisma.pageSection.update({
@@ -457,7 +457,7 @@ export class CmsService {
 
   // --- ARTICLES ---
   static async getArticles(): Promise<Article[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const articles = await prisma.article.findMany({
           orderBy: { createdAt: 'desc' },
@@ -485,7 +485,7 @@ export class CmsService {
   }
 
   static async getArticleBySlug(slug: string): Promise<Article | null> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const a = await prisma.article.findUnique({
           where: { slug },
@@ -514,7 +514,7 @@ export class CmsService {
   }
 
   static async createArticle(artData: Omit<Article, 'id' | 'createdAt' | 'updatedAt'>, user?: User | null): Promise<Article> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.article.create({
           data: {
@@ -569,7 +569,7 @@ export class CmsService {
   }
 
   static async updateArticle(id: string, artData: Partial<Article>, user?: User | null): Promise<Article> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.article.update({
           where: { id },
@@ -628,7 +628,7 @@ export class CmsService {
   }
 
   static async deleteArticle(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const art = await prisma.article.findUnique({ where: { id } });
         if (art) {
@@ -659,7 +659,7 @@ export class CmsService {
 
   // --- CATEGORIES ---
   static async getCategories(): Promise<Category[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
         return categories.map((c) => ({
@@ -679,7 +679,7 @@ export class CmsService {
   }
 
   static async createCategory(catData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>, user?: User | null): Promise<Category> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.category.create({
           data: {
@@ -726,7 +726,7 @@ export class CmsService {
   }
 
   static async updateCategory(id: string, catData: Partial<Category>, user?: User | null): Promise<Category> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.category.update({
           where: { id },
@@ -771,7 +771,7 @@ export class CmsService {
   }
 
   static async deleteCategory(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const cat = await prisma.category.findUnique({ where: { id } });
         if (cat) {
@@ -802,7 +802,7 @@ export class CmsService {
 
   // --- FAQ ---
   static async getFaqs(): Promise<Faq[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const faqs = await prisma.fAQ.findMany({
           orderBy: { order: 'asc' },
@@ -824,7 +824,7 @@ export class CmsService {
   }
 
   static async createFaq(faqData: Omit<Faq, 'id'>, user?: User | null): Promise<Faq> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.fAQ.create({
           data: {
@@ -871,7 +871,7 @@ export class CmsService {
   }
 
   static async updateFaq(id: string, faqData: Partial<Faq>, user?: User | null): Promise<Faq> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.fAQ.update({
           where: { id },
@@ -918,7 +918,7 @@ export class CmsService {
   }
 
   static async deleteFaq(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const faq = await prisma.fAQ.findUnique({ where: { id } });
         if (faq) {
@@ -949,7 +949,7 @@ export class CmsService {
 
   // --- NAVIGATION ---
   static async getNavItems(): Promise<NavItem[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const items = await prisma.navigationItem.findMany({
           orderBy: { order: 'asc' },
@@ -971,7 +971,7 @@ export class CmsService {
   }
 
   static async createNavItem(data: Omit<NavItem, 'id'>, user?: User | null): Promise<NavItem> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.navigationItem.create({
           data: {
@@ -1018,7 +1018,7 @@ export class CmsService {
   }
 
   static async updateNavItems(items: NavItem[], user?: User | null): Promise<NavItem[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.navigationItem.deleteMany({});
         for (const item of items) {
@@ -1056,7 +1056,7 @@ export class CmsService {
   }
 
   static async deleteNavItem(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         await prisma.navigationItem.delete({ where: { id } });
         await prisma.auditLog.create({
@@ -1083,7 +1083,7 @@ export class CmsService {
 
   // --- MEDIA ---
   static async getMediaItems(): Promise<MediaItem[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const media = await prisma.media.findMany({
           orderBy: { createdAt: 'desc' },
@@ -1108,7 +1108,7 @@ export class CmsService {
   }
 
   static async addMediaItem(itemData: Omit<MediaItem, 'id' | 'createdAt'>, user?: User | null): Promise<MediaItem> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const created = await prisma.media.create({
           data: {
@@ -1161,7 +1161,7 @@ export class CmsService {
   }
 
   static async deleteMediaItem(id: string, user?: User | null): Promise<void> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const item = await prisma.media.findUnique({ where: { id } });
         if (item) {

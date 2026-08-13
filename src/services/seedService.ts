@@ -1,15 +1,14 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
 import { prisma, isPrismaAvailable } from '../db/prisma.ts';
 import crypto from 'crypto';
-import { hash } from '@node-rs/argon2';
+import bcrypt from 'bcryptjs';
+import { hash as argonHash } from '@node-rs/argon2';
 import { ensureAllModulePagesExist } from './PageService.ts';
 
 export { ensureAllModulePagesExist };
 
-export function hashPassword(password: string): string {
-  // Keeping this for backward compatibility if needed, but not used for login anymore.
-  const salt = 'tatovacesta_salt_2026';
-  return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+export async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, 10);
 }
 
 export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | 'updated' | 'skipped' | 'error'; email: string; details: string }> {
@@ -50,7 +49,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
 
     // Special handling for sarji@seznam.cz
     if (targetEmail === 'sarji@seznam.cz') {
-        const passwordHash = await hash("159753");
+        const passwordHash = await hashPassword("159753");
         if (!existingUser) {
            existingUser = await prisma.user.create({
             data: {
@@ -95,7 +94,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
 
       // Update password hash if ADMIN_INITIAL_PASSWORD is provided and differs
       if (initialPassword && initialPassword.trim().length > 0) {
-        const newHash = hashPassword(initialPassword.trim());
+        const newHash = await hashPassword(initialPassword.trim());
         if (existingUser.passwordHash !== newHash) {
           await prisma.user.update({
             where: { id: existingUser.id },
@@ -116,7 +115,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
         return { action: 'skipped', email: targetEmail, details: warning };
       }
 
-      const passwordHash = hashPassword(initialPassword.trim());
+      const passwordHash = await hashPassword(initialPassword.trim());
       const newUser = await prisma.user.create({
         data: {
           id: 'usr-sarji-superadmin',
@@ -293,7 +292,7 @@ export async function seedDatabaseIfEmpty() {
     }
 
     // 3. Default Users
-    const defaultPasswordHash = hashPassword('Heslo123!');
+    const defaultPasswordHash = await hashPassword('Heslo123!');
     const usersData = [
       {
         id: 'usr-superadmin',

@@ -4,32 +4,32 @@ import { hash } from 'bcryptjs';
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    let users = await prisma.user.findMany();
-
-    if (users.length === 0) {
-      // Auto-heal SuperAdmin
-      try {
-        await prisma.user.upsert({
-          where: { email: 'sarji@seznam.cz' },
-          update: {},
-          create: {
-            id: 'usr-sarji-superadmin',
-            email: 'sarji@seznam.cz',
-            name: 'Jiří Šár',
-            role: 'SUPER_ADMIN',
-            passwordHash: await hash('159753', 10),
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-          },
-        });
-        users = await prisma.user.findMany();
-      } catch (upsertError) {
-        console.error("Failed to upsert superadmin:", upsertError);
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        avatar: true,
+        isActive: true,
       }
-    }
+    });
 
     res.json({ users });
   } catch (err: any) {
     console.error("Error fetching users:", err);
-    res.status(500).json({ success: false, error: "Chyba databáze: " + err.message });
+    
+    // Check if it's a database connection error
+    if (err.message?.includes('momentálně nedostupná') || err.message?.includes('connection failed') || err.code?.startsWith('P1')) {
+      return res.status(503).json({ 
+        success: false, 
+        error: "Databáze je momentálně nedostupná." 
+      });
+    }
+
+    res.status(500).json({ success: false, error: "Chyba při načítání uživatelů: " + err.message });
   }
 };
