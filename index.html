@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Táta má právo</title>
+    <style>
+      :root {
+        --sp-bg: #f8fafc;
+        --sp-card: #ffffff;
+        --sp-title: #0f172a;
+        --sp-text: #64748b;
+        --sp-brand: #1e3a8a;
+        --sp-brand-light: #2563eb;
+        --sp-border: #e2e8f0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --sp-bg: #0f172a;
+          --sp-card: #1e293b;
+          --sp-title: #f8fafc;
+          --sp-text: #94a3b8;
+          --sp-brand: #3b82f6;
+          --sp-brand-light: #60a5fa;
+          --sp-border: #334155;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--sp-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #app-preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--sp-bg);
+        padding: 1.5rem;
+        box-sizing: border-box;
+        transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
+        opacity: 1;
+        visibility: visible;
+      }
+      #app-preloader.fade-out {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .sp-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+        background: var(--sp-card);
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--sp-border);
+      }
+      .sp-logo {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1.25rem;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+      }
+      .sp-logo svg {
+        width: 36px;
+        height: 36px;
+        color: #ffffff;
+      }
+      .sp-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--sp-title);
+        margin: 0 0 0.35rem 0;
+        letter-spacing: -0.025em;
+      }
+      .sp-subtitle {
+        font-size: 0.925rem;
+        color: var(--sp-text);
+        margin: 0 0 1.75rem 0;
+        font-weight: 400;
+      }
+      .sp-status-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--sp-bg);
+        padding: 0.625rem 1.25rem;
+        border-radius: 9999px;
+        border: 1px solid var(--sp-border);
+      }
+      .sp-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2.5px solid rgba(37, 99, 235, 0.2);
+        border-top-color: var(--sp-brand-light);
+        border-radius: 50%;
+        animation: sp-spin 0.75s linear infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .sp-spinner {
+          animation: sp-pulse 1.2s ease-in-out infinite;
+          border-top-color: var(--sp-brand-light);
+          background-color: var(--sp-brand-light);
+        }
+      }
+      @keyframes sp-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes sp-pulse {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 1; }
+      }
+      .sp-status-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sp-title);
+      }
+      .sp-error-wrapper {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+      }
+      .sp-error-msg {
+        font-size: 0.875rem;
+        color: #ef4444;
+        margin: 0;
+        line-height: 1.5;
+        background: rgba(239, 68, 68, 0.1);
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .sp-retry-btn {
+        background-color: #1e3a8a;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        width: 100%;
+      }
+      .sp-retry-btn:hover {
+        background-color: #1d4ed8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-preloader" role="status" aria-live="polite" aria-label="Načítání aplikace Táta má právo">
+      <div class="sp-card">
+        <div class="sp-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h1 class="sp-title">Táta má právo</h1>
+        <p class="sp-subtitle">Připravujeme obsah portálu</p>
+
+        <div class="sp-status-wrapper" id="sp-loading-box">
+          <div class="sp-spinner" aria-hidden="true"></div>
+          <span class="sp-status-text">Načítáme Táta má právo…</span>
+        </div>
+
+        <div class="sp-error-wrapper" id="sp-error-box">
+          <p class="sp-error-msg" id="sp-error-text">Inicializace aplikace selhala.</p>
+          <button class="sp-retry-btn" onclick="window.location.reload()">Zkusit znovu</button>
+        </div>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

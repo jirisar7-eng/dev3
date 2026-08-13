@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: tatovacesta_app_dev3
+    ports:
+      - "3003:3000"
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_dev3
+    environment:
+      POSTGRES_DB: tatovacesta_dev3
+      POSTGRES_PASSWORD: secure_password_dev3
+      POSTGRES_USER: tatovacesta
+    ports:
+      - "5432:5432"

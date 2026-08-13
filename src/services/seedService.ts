@@ -1,0 +1,1739 @@
+import { prisma, isPrismaAvailable } from '../db/prisma.ts';
+import crypto from 'crypto';
+import { hash } from '@node-rs/argon2';
+import { ensureAllModulePagesExist } from './PageService.ts';
+
+export { ensureAllModulePagesExist };
+
+export function hashPassword(password: string): string {
+  // Keeping this for backward compatibility if needed, but not used for login anymore.
+  const salt = 'tatovacesta_salt_2026';
+  return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+}
+
+export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | 'updated' | 'skipped' | 'error'; email: string; details: string }> {
+  if (!prisma || !isPrismaAvailable()) {
+    return { action: 'skipped', email: 'sarji@seznam.cz', details: 'Prisma klient není k dispozici.' };
+  }
+
+  const targetEmail = 'sarji@seznam.cz';
+  const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
+
+  try {
+    // 1. Ensure Roles exist in DB so FK constraints work
+    const rolesData = [
+      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev' },
+      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení' },
+      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny' },
+      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům' },
+      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel' },
+    ];
+    for (const r of rolesData) {
+      await prisma.role.upsert({
+        where: { key: r.key },
+        update: {},
+        create: r,
+      });
+    }
+
+    // 2. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: targetEmail },
+    });
+
+    // Special handling for sarji@seznam.cz
+    if (targetEmail === 'sarji@seznam.cz') {
+        const passwordHash = await hash("159753");
+        if (!existingUser) {
+           await prisma.user.create({
+            data: {
+              id: 'usr-sarji-superadmin',
+              email: targetEmail,
+              name: 'Sarji (Super Admin)',
+              role: 'SUPER_ADMIN',
+              passwordHash,
+              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
+            },
+          });
+        } else {
+             await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { role: 'SUPER_ADMIN', passwordHash },
+            });
+        }
+    }
+
+    if (existingUser) {
+      let roleUpdated = false;
+      let passwordUpdated = false;
+
+      // Update role if not SUPER_ADMIN
+      if (existingUser.role !== 'SUPER_ADMIN') {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { role: 'SUPER_ADMIN' },
+        });
+        roleUpdated = true;
+      }
+
+      // Ensure UserRole relation exists
+      const superAdminRole = await prisma.role.findUnique({ where: { key: 'SUPER_ADMIN' } });
+      if (superAdminRole) {
+        await prisma.userRole.upsert({
+          where: { userId_roleId: { userId: existingUser.id, roleId: superAdminRole.id } },
+          update: {},
+          create: { userId: existingUser.id, roleId: superAdminRole.id },
+        });
+      }
+
+      // Update password hash if ADMIN_INITIAL_PASSWORD is provided and differs
+      if (initialPassword && initialPassword.trim().length > 0) {
+        const newHash = hashPassword(initialPassword.trim());
+        if (existingUser.passwordHash !== newHash) {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { passwordHash: newHash },
+          });
+          passwordUpdated = true;
+        }
+      }
+
+      const msg = `Uživatel ${targetEmail} nalezen v DB. Role: SUPER_ADMIN (aktualizována: ${roleUpdated ? 'ano' : 'ne'}), Heslo (aktualizováno: ${passwordUpdated ? 'ano' : 'ne'}).`;
+      console.log(`[Admin Seed] ${msg}`);
+      return { action: 'updated', email: targetEmail, details: msg };
+    } else {
+      // User does NOT exist yet
+      if (!initialPassword || initialPassword.trim().length === 0) {
+        const warning = `Uživatel ${targetEmail} neexistuje a ADMIN_INITIAL_PASSWORD není v env proměnných nastaveno. Účet nebyl vytvořen.`;
+        console.warn(`[Admin Seed] ${warning}`);
+        return { action: 'skipped', email: targetEmail, details: warning };
+      }
+
+      const passwordHash = hashPassword(initialPassword.trim());
+      const newUser = await prisma.user.create({
+        data: {
+          id: 'usr-sarji-superadmin',
+          email: targetEmail,
+          name: 'Sarji (Super Admin)',
+          role: 'SUPER_ADMIN',
+          passwordHash,
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
+        },
+      });
+
+      // Link UserRole mapping table
+      const superAdminRole = await prisma.role.findUnique({ where: { key: 'SUPER_ADMIN' } });
+      if (superAdminRole) {
+        await prisma.userRole.create({
+          data: { userId: newUser.id, roleId: superAdminRole.id },
+        });
+      }
+
+      // Create UserProfile
+      try {
+        await (prisma as any).userProfile.create({
+          data: {
+            userId: newUser.id,
+            firstName: 'Sarji',
+            lastName: 'Admin',
+            autoFillDocs: true,
+          },
+        });
+      } catch (pErr) {
+        // profile already exists or optional
+      }
+
+      // Audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: newUser.id,
+          userEmail: newUser.email,
+          action: 'SUPERADMIN_INITIALIZED',
+          module: 'AUTH',
+          details: `Vytvořen nový SUPER_ADMIN účet ${targetEmail} přes DEV inicializaci.`,
+        },
+      });
+
+      const msg = `Úspěšně vytvořen novostavěný SUPER_ADMIN účet ${targetEmail} v Prisma databázi.`;
+      console.log(`[Admin Seed] ${msg}`);
+      return { action: 'created', email: targetEmail, details: msg };
+    }
+  } catch (err: any) {
+    const errorMsg = err?.message || String(err);
+    const errorCode = err?.code || '';
+    const isConnError = 
+      errorCode === 'EAI_AGAIN' ||
+      errorCode === 'ENOTFOUND' ||
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'P1001' ||
+      errorMsg.includes('getaddrinfo') ||
+      errorMsg.includes("Can't reach database server") ||
+      errorMsg.includes('connection failed') ||
+      errorMsg.includes('unreachable') ||
+      errorMsg.includes('timeout');
+
+    if (isConnError) {
+      console.info(`[Admin Seed Info] Databáze není dostupná (${errorCode || 'EAI_AGAIN'}). Seeding přeskočen, aplikace běží v režimu in-memory fallback.`);
+      return { action: 'skipped', email: targetEmail, details: 'Database connection failed, falling back to local memory.' };
+    }
+
+    console.error(`[Admin Seed Error]:`, err);
+    return { action: 'error', email: targetEmail, details: errorMsg };
+  }
+}
+
+export async function seedDatabaseIfEmpty() {
+  if (!prisma || !isPrismaAvailable()) {
+    console.log('[Prisma Seed] Databáze není dostupná, přeskakuji seeding.');
+    return;
+  }
+
+  try {
+    // 0. Ensure Super Admin sarji@seznam.cz is present or updated
+    const adminResult = await ensureSuperAdminAccount();
+    if (adminResult.action === 'error' || !isPrismaAvailable()) {
+      console.log('[Prisma Seed] Nastala chyba při inicializaci databáze nebo připojení selhalo, přeskakuji seeding.');
+      return;
+    }
+
+    const userCount = await prisma.user.count().catch(() => 0);
+    const navCount = await prisma.navigationItem.count().catch(() => 0);
+    const pageCount = await prisma.page.count().catch(() => 0);
+    const catCount = await prisma.category.count().catch(() => 0);
+    const faqCount = await prisma.fAQ.count().catch(() => 0);
+
+    if (userCount > 1 && navCount > 0 && pageCount > 0 && catCount > 0 && faqCount > 0) {
+      console.log('[Prisma Seed] Databáze již obsahuje uživatele i kompletní CMS data. Kontroluji stránky modulů...');
+      await ensureAllModulePagesExist();
+      return;
+    }
+
+    console.log('[Prisma Seed] Seeding databáze inicializačními daty...');
+
+    // 1. Roles
+    const rolesData = [
+      { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev' },
+      { key: 'ADMIN', name: 'Administrátor', description: 'Správa obsahu, uživatelů a nastavení' },
+      { key: 'MODERATOR', name: 'Moderátor', description: 'Moderace příspěvků a poradny' },
+      { key: 'VOLUNTEER', name: 'Dobrovolník', description: 'Mentoring a pomoc tátům' },
+      { key: 'USER', name: 'Uživatel', description: 'Běžný registrovaný uživatel' },
+    ];
+
+    for (const r of rolesData) {
+      await prisma.role.upsert({
+        where: { key: r.key },
+        update: {},
+        create: r,
+      });
+    }
+
+    // 2. Permissions
+    const permissionsData = [
+      { key: 'cms:manage', name: 'Správa CMS', category: 'CMS', description: 'Vytváření a úprava stránek a článků' },
+      { key: 'user:manage', name: 'Správa uživatelů', category: 'AUTH', description: 'Změny rolí a správa účtů' },
+      { key: 'theme:manage', name: 'Správa témat', category: 'THEME', description: 'Úprava CSS barev a stylů' },
+      { key: 'module:manage', name: 'Správa modulů', category: 'MODULE', description: 'Zapínání a konfigurace modulů' },
+      { key: 'compliance:manage', name: 'Správa compliance', category: 'COMPLIANCE', description: 'Verzování právních dokumentů' },
+      { key: 'system:config', name: 'Konfigurace systému', category: 'SYSTEM', description: 'Systémová nastavení' },
+    ];
+
+    for (const p of permissionsData) {
+      await prisma.permission.upsert({
+        where: { key: p.key },
+        update: {},
+        create: p,
+      });
+    }
+
+    // 3. Default Users
+    const defaultPasswordHash = hashPassword('Heslo123!');
+    const usersData = [
+      {
+        id: 'usr-superadmin',
+        email: 'superadmin@tatovacesta.cz',
+        name: 'Hlavní Správce (Super Admin)',
+        role: 'SUPER_ADMIN' as const,
+        passwordHash: defaultPasswordHash,
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      }
+    ];
+
+    for (const u of usersData) {
+      const existingUser = await prisma.user.findUnique({ where: { email: u.email } });
+      if (!existingUser) {
+        await prisma.user.create({ data: u });
+      }
+    }
+
+    // 4. Default ContentStrings
+    const textData = [
+      { key: 'home.hero.title', category: 'home', valueCzech: 'Táta má právo. Dítě má právo na oba rodiče.', valueEnglish: 'Dad Has a Right. Child Has a Right to Both Parents.', description: 'Hlavní nadpis na úvodní stránce', active: true },
+      { key: 'home.hero.subtitle', category: 'home', valueCzech: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.', valueEnglish: 'Comprehensive support for fathers in custody situations.', description: 'Podnadpis v hlavním banneru', active: true },
+      { key: 'home.hero.cta', category: 'home', valueCzech: 'Prozkoumat poradnu', valueEnglish: 'Explore Advice', description: 'Tlačítko v hlavním banneru', active: true },
+      { key: 'nav.home', category: 'nav', valueCzech: 'Domů', valueEnglish: 'Home', description: 'Položka menu Domů', active: true },
+      { key: 'nav.about', category: 'nav', valueCzech: 'O projektu', valueEnglish: 'About', description: 'Položka menu O projektu', active: true },
+      { key: 'nav.legal', category: 'nav', valueCzech: 'Právní poradna', valueEnglish: 'Legal Advice', description: 'Položka menu Právní poradna', active: true },
+      { key: 'nav.modules', category: 'nav', valueCzech: 'Moduly & Nástroje', valueEnglish: 'Modules & Tools', description: 'Položka menu Moduly', active: true },
+      { key: 'nav.compliance', category: 'nav', valueCzech: 'Dokumenty & Práva', valueEnglish: 'Documents & Compliance', description: 'Položka menu Compliance', active: true },
+      { key: 'login.title', category: 'login', valueCzech: 'Přihlášení do portálu', valueEnglish: 'Portal Login', description: 'Nadpis přihlašovacího formuláře', active: true },
+      { key: 'login.email', category: 'login', valueCzech: 'E-mailová adresa', valueEnglish: 'Email Address', description: 'Štítek pro emailové pole', active: true },
+      { key: 'footer.copyright', category: 'footer', valueCzech: '© 2026 Táta má právo • Všechna práva vyhrazena', valueEnglish: '© 2026 Dad Has a Right • All rights reserved', description: 'Patička copyright', active: true },
+      { key: 'core.principle.title', category: 'core', valueCzech: 'NEJLEPŠÍ ZÁJEM DÍTĚTE', valueEnglish: 'BEST INTERESTS OF THE CHILD', description: 'Hlavní princip portálu', active: true },
+      { key: 'core.principle.desc', category: 'core', valueCzech: 'Všechna doporučení, nástroje a metodiky stavíme na nezpochybnitelném právu dítěte mít zdravý a rovnocenný vztah s oběma rodiči.', valueEnglish: 'All recommendations are built on the child\'s right to both parents.', description: 'Popis hlavního principu', active: true },
+    ];
+
+    for (const txt of textData) {
+      await prisma.contentString.upsert({
+        where: { key: txt.key },
+        update: {},
+        create: txt,
+      });
+    }
+
+    // 5. Default Themes & Variables
+    const defaultTheme = await prisma.theme.upsert({
+      where: { key: 'default' },
+      update: {},
+      create: {
+        key: 'default',
+        name: 'Výchozí Světlý Vzhled',
+        description: 'Oficiální barevný profil portálu Táta má právo',
+        isDefault: true,
+        active: true,
+        context: 'GLOBAL',
+      },
+    });
+
+    const themeVars = [
+      { key: 'primary', value: '#1e3a8a', label: 'Hlavní (Primary)', category: 'color' },
+      { key: 'secondary', value: '#0284c7', label: 'Sekundární (Secondary)', category: 'color' },
+      { key: 'background', value: '#f8fafc', label: 'Pozadí (Background)', category: 'color' },
+      { key: 'surface', value: '#ffffff', label: 'Povrch karet (Surface)', category: 'color' },
+      { key: 'text', value: '#1e293b', label: 'Text těla (Text)', category: 'color' },
+      { key: 'textMuted', value: '#64748b', label: 'Tlumený text (Text Muted)', category: 'color' },
+      { key: 'heading', value: '#0f172a', label: 'Text nadpisů (Heading)', category: 'color' },
+      { key: 'link', value: '#2563eb', label: 'Odkazy (Link)', category: 'color' },
+      { key: 'border', value: '#e2e8f0', label: 'Rámečky (Border)', category: 'color' },
+      { key: 'button', value: '#1e3a8a', label: 'Tlačítko (Button)', category: 'color' },
+      { key: 'buttonHover', value: '#0f172a', label: 'Tlačítko Hover (Button Hover)', category: 'color' },
+      { key: 'success', value: '#16a34a', label: 'Úspěch (Success)', category: 'color' },
+      { key: 'warning', value: '#d97706', label: 'Varování (Warning)', category: 'color' },
+      { key: 'error', value: '#dc2626', label: 'Chyba (Error)', category: 'color' },
+    ];
+
+    if (defaultTheme && defaultTheme.id) {
+      for (const tv of themeVars) {
+        const existing = await prisma.themeVariable.findFirst({
+          where: { themeId: defaultTheme.id, key: tv.key },
+        });
+        if (!existing) {
+          await prisma.themeVariable.create({
+            data: {
+              themeId: defaultTheme.id,
+              key: tv.key,
+              value: tv.value,
+              label: tv.label,
+              category: tv.category,
+            },
+          });
+        }
+      }
+    }
+
+    // 6. Default Modules
+    const modulesData = [
+      {
+        key: 'system-test-module',
+        name: 'System Test Module (Technický Test)',
+        version: '1.0.0',
+        enabled: true,
+        public: false,
+        config: JSON.stringify({ maxRequestsPerMin: 100, debugMode: true, apiEndpointUrl: 'https://test.api' }),
+        description: 'Demonstrační technický modul pro verifikaci funkčnosti Module Engine, RBAC a konfigurací.',
+        icon: 'TestTube',
+      },
+      {
+        key: 'child_support_calc',
+        name: 'Kalkulačka výživného',
+        version: '1.0.0',
+        enabled: true,
+        public: true,
+        config: JSON.stringify({ minSalary: 20000, maxChildren: 5, useDoporučenéTabulkyMSP: true }),
+        description: 'Orientační výpočet výživného dle doporučujících tabulek Ministerstva spravedlnosti ČR.',
+        icon: 'Calculator',
+      },
+      {
+        key: 'handover_simulator',
+        name: 'Simulátor předávání dítěte',
+        version: '1.0.0',
+        enabled: true,
+        public: true,
+        config: JSON.stringify({ enableProtocolGenerator: true, requireGPSVerification: false }),
+        description: 'Nástroj pro evidenci a bezpečné předávání dítěte včetně předávacích protokolů.',
+        icon: 'RefreshCw',
+      },
+      {
+        key: 'care_calendar',
+        name: 'Kalendář péče',
+        version: '1.0.0',
+        enabled: true,
+        public: true,
+        config: JSON.stringify({ defaultRotationWeeks: 2, syncWithGoogleCalendar: true }),
+        description: 'Plánovač střídavé péče, prázdnin a svátků pro bezkonfliktní organizaci času.',
+        icon: 'Calendar',
+      },
+      {
+        key: 'document_templates',
+        name: 'Právní dokumenty a vzory',
+        version: '1.0.0',
+        enabled: true,
+        public: true,
+        config: JSON.stringify({ allowPDFDownload: true, enableCustomFields: true }),
+        description: 'Generátor návrhů na úpravu poměrů k nezletilému dítěti, dohod a odvolání.',
+        icon: 'FileText',
+      },
+      {
+        key: 'volunteering',
+        name: 'Dobrovolnictví a mentoring',
+        version: '1.0.0',
+        enabled: true,
+        public: true,
+        config: JSON.stringify({ requireApproval: true, allowPeerChat: true }),
+        description: 'Spojení zkušených otců (mentorů) s táty v krizových opatrovnických situacích.',
+        icon: 'Users',
+      },
+      {
+        key: 'ai_assistant',
+        name: 'AI Právní & Psychologický Asistent',
+        version: '0.9.0',
+        enabled: false,
+        public: false,
+        config: JSON.stringify({ model: 'gemini-2.5-flash', disclaimerNoticeRequired: true }),
+        description: 'Inteligentní asistent navržený pro rychlou analýzu podání a přípravu na jednání OSPOD.',
+        icon: 'Bot',
+      },
+    ];
+
+    for (const mod of modulesData) {
+      await prisma.module.upsert({
+        where: { key: mod.key },
+        update: {},
+        create: mod,
+      });
+    }
+
+    // 7. Categories & CMS Pages / Articles / FAQ
+    const catJudikatura = await prisma.category.upsert({
+      where: { slug: 'judikatura' },
+      update: {},
+      create: { slug: 'judikatura', name: 'Judikatura', description: 'Nálezy Ústavního a Nejvyššího soudu ČR' },
+    });
+
+    const catRady = await prisma.category.upsert({
+      where: { slug: 'prakticke-rady' },
+      update: {},
+      create: { slug: 'prakticke-rady', name: 'Praktické rady', description: 'Metodiky pro komunikaci a postup' },
+    });
+
+    const catPsychologie = await prisma.category.upsert({
+      where: { slug: 'psychologie' },
+      update: {},
+      create: { slug: 'psychologie', name: 'Psychologie', description: 'Dopady na zájem a zdraví dítěte' },
+    });
+
+    const catPartneri = await prisma.category.upsert({
+      where: { slug: 'partneri-a-sponzori' },
+      update: {},
+      create: { slug: 'partneri-a-sponzori', name: 'Partneři a Sponzoři', description: 'Podporovatelé našeho projektu' },
+    });
+
+    // Pages
+    const pagesToSeed = [
+      {
+        slug: 'domu',
+        title: 'Táta má právo • Hlavní strana',
+        content: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.',
+        published: true,
+        seoTitle: 'Táta má právo | Opatrovnictví & Dítě v rozvodu',
+        seoDescription: 'Komplexní podpora otců v opatrovnickém řízení se zaměřením na nejlepší zájem dítěte.',
+      },
+      {
+        slug: 'o-projektu',
+        title: 'O projektu Táta má právo',
+        content: 'Projekt **Táta má právo** vznikl jako reakce na dlouhodobé nerovnosti v opatrovnickém soudnictví. Naším primárním cílem je obhajoba nezpochybnitelného práva každého dítěte na plnohodnotnou výchovu oběma rodiči.',
+        published: true,
+        seoTitle: 'O nás a našem poslání | Táta má právo',
+        seoDescription: 'Informace o projektu Táta má právo, našem poslání, hodnotách a týmu.',
+      },
+      {
+        slug: 'zivotni-situace',
+        title: 'Životní situace a právní průvodce',
+        content: 'Opatrovnické řízení vyžaduje chladnou hlavu, znalost zákona o rodině (občanského zákoníku) a aktivní součinnost s OSPOD. Zde naleznete základní metodiku krok za krokem.',
+        published: true,
+        seoTitle: 'Životní situace otců v opatrovnickém řízení | Táta má právo',
+        seoDescription: 'Průvodce opatrovnickým řízením, součinnost s OSPOD a soudní praxe v ČR.',
+      },
+      {
+        slug: 'clanky',
+        title: 'Články, judikatura a metodiky',
+        content: 'Odborné články, rozbory soudních rozhodnutí a praktická doporučení pro otce v opatrovnické praxi.',
+        published: true,
+        seoTitle: 'Články a judikatura k opatrovnictví | Táta má právo',
+        seoDescription: 'Aktuální judikáty Ústavního soudu, návody k OSPOD a odborná doporučení.',
+      },
+      {
+        slug: 'faq',
+        title: 'Časté dotazy (FAQ)',
+        content: 'Odpovědi na nejčastější otázky otců ohledně střídavé péče, výživného, OSPOD a soudu.',
+        published: true,
+        seoTitle: 'Časté otázky a odpovědi | Táta má právo',
+        seoDescription: 'Časté dotazy týkající se opatrovnického řízení, OSPOD a práv dětí.',
+      },
+      {
+        slug: 'kontakt',
+        title: 'Kontakt a bezplatná poradna',
+        content: 'Máte dotaz nebo potřebujete poradit? Napište nám přes náš kontaktní formulář nebo na info@tatovacesta.cz.',
+        published: true,
+        seoTitle: 'Kontaktujte nás | Táta má právo',
+        seoDescription: 'Kontaktní údaje a bezplatná poradna pro otce v krizové situaci.',
+      },
+      {
+        slug: 'podminky-uzivani',
+        title: 'Podmínky užívání portálu',
+        content: 'Všechny informace poskytované v rámci portálu Táta má právo mají informativní a osvětový charakter. Nenahrazují individuální právní nebo psychologickou péči poskytovanou advokáty či licencovanými terapeuty.',
+        published: true,
+        seoTitle: 'Podmínky užívání portálu | Táta má právo',
+        seoDescription: 'Právní informace o používání webového portálu Táta má právo.',
+      },
+      {
+        slug: 'gdpr',
+        title: 'Ochrana osobních údajů (GDPR)',
+        content: 'Portál Táta má právo zpracovává osobní údaje výhradně pro účely správy účtu, posílení bezpečnosti a umožnění využívání modulů. Vaše údaje nejsou předávány třetím stranám bez vašeho výslovného souhlasu.',
+        published: true,
+        seoTitle: 'Ochrana osobních údajů (GDPR) | Táta má právo',
+        seoDescription: 'Informace o zpracování a ochraně osobních údajů uživatelů.',
+      },
+      {
+        slug: 'dobrovolnictvi',
+        title: 'Dobrovolnictví a mentorská síť',
+        content: 'Propojujeme zkušené otce, kteří úspěšně prošli opatrovnickým řízením, s táty, kteří jsou na začátku a potřebují lidskou oporu a sdílení zkušeností.',
+        published: true,
+        seoTitle: 'Zapojte se do dobrovolnictví a mentoringu | Táta má právo',
+        seoDescription: 'Staňte se mentorem nebo požádejte o pomoc zkušeného otce.',
+      },
+      {
+        slug: 'ai-prohlaseni',
+        title: 'Prohlášení o využití umělé inteligence (AI)',
+        content: 'Výstupy generované AI asistentem jsou automatizovaným rozborem textových podkladů. Výstupy nemají charakter právní rady a vyžadují verifikaci lidským odborníkem.',
+        published: true,
+        seoTitle: 'Prohlášení o AI technologiích | Táta má právo',
+        seoDescription: 'Informace o využití a limitech AI nástrojů na portálu.',
+      },
+      {
+        slug: 'crisis',
+        title: 'Krizový Akční Plán SOS',
+        content: '# Krizový Akční Plán SOS\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Krizový Akční Plán SOS | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'forum',
+        title: 'Komunitní Diskuzní Fórum',
+        content: '# Komunitní Diskuzní Fórum\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Komunitní Diskuzní Fórum | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'stories',
+        title: 'Osobní Příběhy Tátů',
+        content: '# Osobní Příběhy Tátů\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Osobní Příběhy Tátů | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'memento',
+        title: 'Memento Opatrovnických Bojů',
+        content: '# Memento Opatrovnických Bojů\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Memento Opatrovnických Bojů | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'advice',
+        title: 'Právní Poradna & Zodpovězené Dotazy',
+        content: '# Právní Poradna & Zodpovězené Dotazy\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Právní Poradna & Zodpovězené Dotazy | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'support',
+        title: 'Podpora Projektu & Transparentní Dary',
+        content: '# Podpora Projektu & Transparentní Dary\n\n**Kategorie:** 🚨 KRIZOVÁ POMOC & KOMUNITA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Podpora Projektu & Transparentní Dary | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'opatrovnicka-agenda',
+        title: 'Opatrovnická agenda krok za krokem',
+        content: '# Opatrovnická agenda krok za krokem\n\n**Kategorie:** ⚖️ OPATROVNICTVÍ, PRÁVO & JUDIKATURA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Opatrovnická agenda krok za krokem | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'rights',
+        title: 'Práva Otců & Ústava ČR (LZPS)',
+        content: '# Práva Otců & Ústava ČR (LZPS)\n\n**Kategorie:** ⚖️ OPATROVNICTVÍ, PRÁVO & JUDIKATURA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Práva Otců & Ústava ČR (LZPS) | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'judikatura',
+        title: 'Precedenty & Judikatura ÚS/NS ČR',
+        content: '# Precedenty & Judikatura ÚS/NS ČR\n\n**Kategorie:** ⚖️ OPATROVNICTVÍ, PRÁVO & JUDIKATURA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Precedenty & Judikatura ÚS/NS ČR | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ke-stazeni',
+        title: 'Ke Stažení & Oficiální Dokumenty',
+        content: '# Ke Stažení & Oficiální Dokumenty\n\n**Kategorie:** ⚖️ OPATROVNICTVÍ, PRÁVO & JUDIKATURA\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Ke Stažení & Oficiální Dokumenty | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'state-laws',
+        title: 'e-Sbírka & e-Legislativa REST API Portal',
+        content: '# e-Sbírka & e-Legislativa REST API Portal\n\n**Kategorie:** 🏛️ STÁTNÍ DATA & REGISTRY\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'e-Sbírka & e-Legislativa REST API Portal | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'state-statistics',
+        title: 'ČSÚ & MPSV Demografické & Soudní Statistiky',
+        content: '# ČSÚ & MPSV Demografické & Soudní Statistiky\n\n**Kategorie:** 🏛️ STÁTNÍ DATA & REGISTRY\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'ČSÚ & MPSV Demografické & Soudní Statistiky | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'pripadova-databaze',
+        title: 'Případová Databáze Rozsudků',
+        content: '# Případová Databáze Rozsudků\n\n**Kategorie:** 🏛️ STÁTNÍ DATA & REGISTRY\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Případová Databáze Rozsudků | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'knihovna-studii',
+        title: 'Knihovna Vědeckých Studií & Psychologie',
+        content: '# Knihovna Vědeckých Studií & Psychologie\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Knihovna Vědeckých Studií & Psychologie | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'videoteka',
+        title: 'Edukační Videotéka & SmartVideoEmbed',
+        content: '# Edukační Videotéka & SmartVideoEmbed\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Edukační Videotéka & SmartVideoEmbed | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'vzdelavani',
+        title: 'Akademie Tátů & Interaktivní Kvízy',
+        content: '# Akademie Tátů & Interaktivní Kvízy\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Akademie Tátů & Interaktivní Kvízy | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'legal-wiki',
+        title: 'Právní Wiki & Slovník Pojmů',
+        content: '# Právní Wiki & Slovník Pojmů\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Právní Wiki & Slovník Pojmů | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'cesta-zakladatele',
+        title: 'Příběh Zakladatele Synthesis OS',
+        content: '# Příběh Zakladatele Synthesis OS\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Příběh Zakladatele Synthesis OS | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'user-portal',
+        title: 'Moje Pracovna & Osobní Složka',
+        content: '# Moje Pracovna & Osobní Složka\n\n**Kategorie:** 📂 OSOBNÍ PRACOVNA & SPRÁVA PŘÍPADU\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Moje Pracovna & Osobní Složka | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'profile',
+        title: 'Profil Hráče / Uživatele & Identity Hub',
+        content: '# Profil Hráče / Uživatele & Identity Hub\n\n**Kategorie:** 📂 OSOBNÍ PRACOVNA & SPRÁVA PŘÍPADU\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Profil Hráče / Uživatele & Identity Hub | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'coparent-hub',
+        title: 'Spolurodičovský Hub (CoParent)',
+        content: '# Spolurodičovský Hub (CoParent)\n\n**Kategorie:** 📂 OSOBNÍ PRACOVNA & SPRÁVA PŘÍPADU\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Spolurodičovský Hub (CoParent) | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ai-assistant',
+        title: 'AI Právní Asistent',
+        content: '# AI Právní Asistent\n\n**Kategorie:** 🤖 CHYTRÉ AI NÁSTROJE & VALIDACE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'AI Právní Asistent | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ai-guide',
+        title: 'Sémantický AI Průvodce Řízením',
+        content: '# Sémantický AI Průvodce Řízením\n\n**Kategorie:** 🤖 CHYTRÉ AI NÁSTROJE & VALIDACE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Sémantický AI Průvodce Řízením | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ai-case-manager',
+        title: 'Osobní Složka Případu & AI Strategický Asistent',
+        content: '# Osobní Složka Případu & AI Strategický Asistent\n\n**Kategorie:** 🤖 CHYTRÉ AI NÁSTROJE & VALIDACE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Osobní Složka Případu & AI Strategický Asistent | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'plan-pece',
+        title: 'Simulátor Péče & Sourozenecké Soudržnosti',
+        content: '# Simulátor Péče & Sourozenecké Soudržnosti\n\n**Kategorie:** 🤖 CHYTRÉ AI NÁSTROJE & VALIDACE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Simulátor Péče & Sourozenecké Soudržnosti | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'centrum-formularu',
+        title: 'Centrum Formulářů & Chytrý Editor',
+        content: '# Centrum Formulářů & Chytrý Editor\n\n**Kategorie:** 🤖 CHYTRÉ AI NÁSTROJE & VALIDACE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Centrum Formulářů & Chytrý Editor | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'news',
+        title: 'Novinky & Systémové Aktualizace',
+        content: '# Novinky & Systémové Aktualizace\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Novinky & Systémové Aktualizace | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'synthesis-hub',
+        title: 'Synthesis OS Rozcestník & Central Hub',
+        content: '# Synthesis OS Rozcestník & Central Hub\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Synthesis OS Rozcestník & Central Hub | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ai-admin',
+        title: 'Autonomní AI Admin & Moderátor',
+        content: '# Autonomní AI Admin & Moderátor\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Autonomní AI Admin & Moderátor | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'admin',
+        title: 'Administrace & Systémový Monitoring',
+        content: '# Administrace & Systémový Monitoring\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Administrace & Systémový Monitoring | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'ai-context',
+        title: 'AI Context & Strojový Index',
+        content: '# AI Context & Strojový Index\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'AI Context & Strojový Index | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'user-manual',
+        title: 'Nápověda & Uživatelský manuál',
+        content: '# Nápověda & Uživatelský manuál\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Nápověda & Uživatelský manuál | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+      {
+        slug: 'sitemap',
+        title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
+        content: '# Architektura & Vývoj Synthesis OS (Sitemap)\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+        published: true,
+        seoTitle: 'Architektura & Vývoj Synthesis OS (Sitemap) | Táta má právo',
+        seoDescription: 'Stránka je připravena pro budoucí obsah.',
+      },
+    ];
+
+    for (const p of pagesToSeed) {
+      await prisma.page.upsert({
+        where: { slug: p.slug },
+        update: {},
+        create: p,
+      });
+    }
+
+    // Articles
+    await prisma.article.upsert({
+      where: { slug: 'stridava-pece-v-praxi' },
+      update: {},
+      create: {
+        slug: 'stridava-pece-v-praxi',
+        title: 'Střídavá péče v judikatuře Ústavního soudu',
+        summary: 'Ústavní soud opakovaně potvrdil, že střídavá péče by měla být pravidlem, pokud jsou oba rodiče způsobilí dítě vychovávat.',
+        content: 'Při rozhodování o opatrovnictví je prioritním hlediskem nejlepší zájem dítěte. Dle nálezů Ústavního soudu ČR (např. I. ÚS 2482/13) je střídavá péče výchozím modelem, ze kterého by měly obecné soudy vycházet, pokud oba rodiče projevují o dítě opravdový zájem a mají k jeho výchově odpovídající předpoklady.',
+        published: true,
+        categoryName: 'Judikatura',
+        categoryId: catJudikatura.id,
+      },
+    });
+
+    await prisma.article.upsert({
+      where: { slug: 'jak-jednat-s-ospod' },
+      update: {},
+      create: {
+        slug: 'jak-jednat-s-ospod',
+        title: 'Jak efektivně komunikovat s OSPOD',
+        summary: 'Orgán sociálně-právní ochrany dětí hraje u soudu klíčovou roli kolizního opatrovníka. Jak s ním jednat profesionálně?',
+        content: '1. Vždy komunikujte věcně, písemně a slušně.\n2. Zdůrazňujte výhradně zájem dítěte, nikoli spory s bývalou partnerkou.\n3. Umožněte pracovníkům OSPOD nahlédnout do prostředí, ve kterém bude dítě pobývat.\n4. Záznamy ze schůzek si vyžadujte v písemné podobě.',
+        published: true,
+        categoryName: 'Praktické rady',
+        categoryId: catRady.id,
+      },
+    });
+
+    // FAQs
+    await prisma.fAQ.createMany({
+      data: [
+        {
+          question: 'Co dělat, když mi matka bezdůvodně odpírá styk s dítětem?',
+          answer: 'Okamžitě zdokumentujte každý neuskutečněný styk (SMS, e-mail, svědectví, přítomnost na místě). Podejte návrh na vydání předběžného opatření a informujte OSPOD a příslušný okresní soud.',
+          categoryName: 'Právní dotazy',
+          order: 1,
+          published: true,
+        },
+        {
+          question: 'Jak se počítá výživné při střídavé péči?',
+          answer: 'Při střídavé péči soud určuje výživné oběma rodičům podle jejich příjmů a rozsahu péče. Používají se doporučující tabulky Ministerstva spravedlnosti.',
+          categoryName: 'Finance & Výživné',
+          order: 2,
+          published: true,
+        },
+        {
+          question: 'Má otec stejná práva na informace o zdravotním stavu a škole?',
+          answer: 'Ano. Pokud nebyl otec zbaven rodičovské odpovědnosti nebo mu nebyla omezená, má plné právo nahlížet do zdravotní dokumentace dítěte a komunikovat se školou.',
+          categoryName: 'Rodičovská práva',
+          order: 3,
+          published: true,
+        },
+      ],
+    });
+
+    // Navigation Items
+    await prisma.navigationItem.deleteMany({}); // clear any stale nav items
+    
+    // Create main stand-alone items
+    const navHome = await prisma.navigationItem.create({
+      data: { id: 'nav-1', labelKey: 'Domů', url: '/', order: 1, target: '_self' },
+    });
+
+    // Parent Category 1: 🚨 Krizová pomoc & Komunita
+    const cat1 = await prisma.navigationItem.create({
+      data: { id: 'cat-1', labelKey: '🚨 Krizová pomoc & Komunita', url: '#', order: 10, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-1-1', labelKey: 'SOS plán', url: '/crisis', order: 11, target: '_self', parentId: cat1.id },
+        { id: 'sub-1-2', labelKey: 'Fórum', url: '/forum', order: 12, target: '_self', parentId: cat1.id },
+        { id: 'sub-1-3', labelKey: 'Příběhy', url: '/stories', order: 13, target: '_self', parentId: cat1.id },
+        { id: 'sub-1-4', labelKey: 'Memento', url: '/memento', order: 14, target: '_self', parentId: cat1.id },
+        { id: 'sub-1-5', labelKey: 'Právní poradna', url: '/advice', order: 15, target: '_self', parentId: cat1.id },
+        { id: 'sub-1-6', labelKey: 'Podpora', url: '/support', order: 16, target: '_self', parentId: cat1.id },
+      ],
+    });
+
+    // Parent Category 2: ⚖️ Opatrovnictví & Právo
+    const cat2 = await prisma.navigationItem.create({
+      data: { id: 'cat-2', labelKey: '⚖️ Opatrovnictví & Právo', url: '#', order: 20, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-2-1', labelKey: 'Agenda', url: '/opatrovnicka-agenda', order: 21, target: '_self', parentId: cat2.id },
+        { id: 'sub-2-2', labelKey: 'Práva', url: '/rights', order: 22, target: '_self', parentId: cat2.id },
+        { id: 'sub-2-3', labelKey: 'Judikatura', url: '/judikatura', order: 23, target: '_self', parentId: cat2.id },
+        { id: 'sub-2-4', labelKey: 'Dokumenty', url: '/ke-stazeni', order: 24, target: '_self', parentId: cat2.id },
+        { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', parentId: cat2.id },
+      ],
+    });
+
+    // Parent Category 3: 🏛️ Státní data & Projekt
+    const cat3 = await prisma.navigationItem.create({
+      data: { id: 'cat-3', labelKey: '🏛️ Státní data & Projekt', url: '#', order: 30, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-3-1', labelKey: 'e-Sbírka', url: '/state-laws', order: 31, target: '_self', parentId: cat3.id },
+        { id: 'sub-3-2', labelKey: 'Statistiky', url: '/state-statistics', order: 32, target: '_self', parentId: cat3.id },
+        { id: 'sub-3-3', labelKey: 'Databáze', url: '/pripadova-databaze', order: 33, target: '_self', parentId: cat3.id },
+        { id: 'sub-3-4', labelKey: '🤝 Partneři a sponzoři', url: '/sponzori', order: 34, target: '_self', parentId: cat3.id },
+      ],
+    });
+
+    // Parent Category 4: 🎓 Akademie
+    const cat4 = await prisma.navigationItem.create({
+      data: { id: 'cat-4', labelKey: '🎓 Akademie', url: '#', order: 40, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-4-1', labelKey: 'Studia', url: '/knihovna-studii', order: 41, target: '_self', parentId: cat4.id },
+        { id: 'sub-4-2', labelKey: 'Videotéka', url: '/videoteka', order: 42, target: '_self', parentId: cat4.id },
+        { id: 'sub-4-3', labelKey: 'Kvízy', url: '/vzdelavani', order: 43, target: '_self', parentId: cat4.id },
+        { id: 'sub-4-4', labelKey: 'Wiki', url: '/legal-wiki', order: 44, target: '_self', parentId: cat4.id },
+        { id: 'sub-4-5', labelKey: 'Zakladatel', url: '/cesta-zakladatele', order: 45, target: '_self', parentId: cat4.id },
+      ],
+    });
+
+    // Parent Category 5: 📂 Pracovna
+    const cat5 = await prisma.navigationItem.create({
+      data: { id: 'cat-5', labelKey: '📂 Pracovna', url: '#', order: 50, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-5-1', labelKey: 'Složka', url: '/user-portal', order: 51, target: '_self', parentId: cat5.id },
+        { id: 'sub-5-2', labelKey: 'Profil', url: '/profile', order: 52, target: '_self', parentId: cat5.id },
+        { id: 'sub-5-3', labelKey: 'CoParent', url: '/coparent-hub', order: 53, target: '_self', parentId: cat5.id },
+      ],
+    });
+
+    // Parent Category 6: 🤖 AI nástroje
+    const cat6 = await prisma.navigationItem.create({
+      data: { id: 'cat-6', labelKey: '🤖 AI nástroje', url: '#', order: 60, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-6-1', labelKey: 'Asistent', url: '/ai-assistant', order: 61, target: '_self', parentId: cat6.id },
+        { id: 'sub-6-2', labelKey: 'Průvodce', url: '/ai-guide', order: 62, target: '_self', parentId: cat6.id },
+        { id: 'sub-6-3', labelKey: 'Case manager', url: '/ai-case-manager', order: 63, target: '_self', parentId: cat6.id },
+        { id: 'sub-6-4', labelKey: 'Simulátor', url: '/plan-pece', order: 64, target: '_self', parentId: cat6.id },
+        { id: 'sub-6-5', labelKey: 'Formuláře', url: '/centrum-formularu', order: 65, target: '_self', parentId: cat6.id },
+      ],
+    });
+
+    // Parent Category 7: 🛠️ Systém
+    const cat7 = await prisma.navigationItem.create({
+      data: { id: 'cat-7', labelKey: '🛠️ Systém', url: '#', order: 70, target: '_self' },
+    });
+    await prisma.navigationItem.createMany({
+      data: [
+        { id: 'sub-7-1', labelKey: 'Novinky', url: '/news', order: 71, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-2', labelKey: 'Hub', url: '/synthesis-hub', order: 72, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-3', labelKey: 'AI admin', url: '/ai-admin', order: 73, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-4', labelKey: 'Admin', url: '/admin', order: 74, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-5', labelKey: 'Context', url: '/ai-context', order: 75, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-6', labelKey: 'Nápověda', url: '/user-manual', order: 76, target: '_self', parentId: cat7.id },
+        { id: 'sub-7-7', labelKey: 'Architektura', url: '/sitemap', order: 77, target: '_self', parentId: cat7.id },
+      ],
+    });
+
+    // 8. Legal Documents
+    const complianceDocsData = [
+      {
+        key: 'terms',
+        title: 'Podmínky užívání portálu',
+        type: 'TERMS',
+        description: 'Právní vymezení informativní povahy portálu a zřeknutí se odpovědnosti za právní rady',
+        content: `Podmínky užívání portálu Táta má právo (v1.0.0)
+
+1. VŠEOBECNÁ USTANOVENÍ
+Všechny informace, články, vzory podání a výstupy kalkulaček poskytované v rámci portálu Táta má právo mají výhradně informativní, edukativní a osvětový charakter.
+
+2. ODPOVĚDNOST A LIMITY SLUŽBY
+Nenahrazují individuální právní nebo psychologickou péči poskytovanou advokáty či licencovanými terapeuty. Provozovatelé portálu nenesou odpovědnost za jakékoli rozhodnutí nebo úkony učiněné uživatelem na základě informací z tohoto portálu.
+
+3. OCHRANA AUTORSKÝCH PRÁV
+Veškerý obsah, rozhraní a modulární nástroje jsou chráněny autorským právem. Jejich komerční šíření bez předchozího písemného souhlasu provozovatele je zakázáno.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'gdpr',
+        title: 'Ochrana osobních údajů (GDPR)',
+        type: 'PRIVACY',
+        description: 'Pravidla zpracování a ochrany osobních údajů uživatelů dle nařízení GDPR',
+        content: `Zásady ochrany osobních údajů (GDPR) - Táta má právo (v1.0.0)
+
+1. SPRÁVCE OSOBNÍCH ÚDAJŮ
+Portál Táta má právo zpracovává osobní údaje výhradně pro účely správy uživatelského účtu, posílení bezpečnosti a umožnění využívání interaktivních modulů.
+
+2. ROZSAH ZPRACOVÁVANÝCH ÚDAJŮ
+Zpracováváme jméno, e-mailovou adresu, IP adresu a údaje zadané uživatelem do soukromého portálu (např. spisy, poznámky, data v kalendáři péče).
+
+3. PRÁVA UŽIVATELE
+Každý uživatel má právo na přístup ke svým údajům, jejich opravu, výmaz (právo být zapomenut) a možnost odvolat udělený souhlas přes Compliance Center. Vaše údaje nejsou předávány třetím stranám bez vášho výslovného souhlasu.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'cookies',
+        title: 'Zásady používání souborů cookie',
+        type: 'COOKIES',
+        description: 'Informace o používání technických a preferenčních souborů cookie',
+        content: `Zásady používání souborů cookie (v1.0.0)
+
+1. CO JSOU SOUBORY COOKIE
+Soubory cookie jsou malé textové soubory ukládané ve vašem prohlížeči, které slouží k zajištění správného fungování webového portálu.
+
+2. POUŽÍVANÉ COOKIES
+Používáme výhradně nezbytné technické a relační cookies pro:
+- Uložení stavu přihlášení a bezpečnostních tokenů (JWT / relace)
+- Uložení vybraného barevného tématu (Theme Manager)
+- Zaznamenání potvrzených souhlasů s compliance dokumenty
+
+3. SPRÁVA COOKIES
+Technické cookies jsou nezbytné pro provoz portálu. Můžete je zakázat v nastavení prohlížeče, což však může narušit funkčnost přihlášení.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'legal',
+        title: 'Moje právní dokumenty & Právní výhrada',
+        type: 'LEGAL',
+        description: 'Právní výhrada k vygenerovaným návrhům na úpravu poměrů a vzorům podání',
+        content: `Právní výhrada k vygenerovaným dokumentům (v1.0.0)
+
+1. INFORMATIVNÍ CHARAKTER VZORŮ
+Všechny vzory podání k soudu (návrhy na střídavou péči, vyjádření k OSPOD, dohody rodičů) generované v modulu Právní dokumenty mají orientační charakter.
+
+2. DOPORUČENÁ VERIFIKACE
+Uživatel přebírá plnou odpovědnost za kontrolu a doplnění vygenerovaných právních dokumentů. Důrazně doporučujeme každý návrh před podáním k okresnímu soudu konzultovat s advokátem specializovaným na rodinné právo.
+
+3. ŽÁDNÝ VZNIK ADVOKÁTNÍHO VZTAHU
+Využitím generátoru dokumentů nevzniká mezi uživatelem a provozovatelem portálu vztah mezi advokátem a klientem.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'volunteer_code',
+        title: 'DOBROVOLNICKÝ KODEX • Táta má právo / Synthesis OS',
+        type: 'VOLUNTEER_CODE',
+        description: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS',
+        content: `DOBROVOLNICKÝ KODEX
+
+Táta má právo / Synthesis OS
+
+Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků
+
+Verze dokumentu: 1.0
+Účinnost od: 12. 8. 2026
+ID dokumentu: SYNTH-CODEX-VOL-2026-V1
+
+---
+
+I. ÚČEL KODEXU
+
+1. Tento kodex stanovuje základní pravidla chování všech dobrovolníků, spolupracovníků a osob s přístupem k projektu Táta má právo / Synthesis OS.
+
+
+2. Účelem kodexu je zajistit, aby projekt zůstal bezpečným, důvěryhodným a respektujícím prostředím pro rodiče, děti i všechny členy komunity.
+
+
+3. Dobrovolník přijímá skutečnost, že práce v projektu může mít přímý dopad na životní situace lidí, kteří se nacházejí v náročných rodinných, právních nebo psychických okolnostech.
+
+
+
+
+---
+
+II. POSLÁNÍ PROJEKTU
+
+Dobrovolník při své činnosti podporuje zejména:
+
+nejlepší zájem dítěte,
+
+zdravý vztah dítěte k oběma rodičům,
+
+respekt mezi rodiči,
+
+odpovědné rodičovství,
+
+dostupnost ověřených informací,
+
+lidský přístup k lidem v obtížné situaci.
+
+
+Projekt není založen na boji proti jednotlivým osobám, ale na podpoře řešení, informovanosti a odpovědnosti.
+
+
+---
+
+III. ZÁKLADNÍ HODNOTY DOBROVOLNÍKA
+
+1. Respekt
+
+Dobrovolník jedná s respektem ke každému člověku bez ohledu na:
+
+pohlaví,
+
+věk,
+
+rodinnou situaci,
+
+názory,
+
+životní zkušenosti.
+
+
+Nikdo nesmí být ponižován, zesměšňován nebo napadán.
+
+
+---
+
+2. Ochrana dítěte
+
+Dítě není nástroj konfliktu mezi dospělými.
+
+Dobrovolník:
+
+nezneužívá příběhy dětí pro argumentaci,
+
+chrání jejich soukromí,
+
+nepodporuje nenávist mezi rodiči,
+
+vždy zohledňuje dlouhodobý zájem dítěte.
+
+
+
+---
+
+3. Pravdivost a odpovědnost
+
+Dobrovolník:
+
+nepřidává neověřená tvrzení,
+
+nerozšiřuje fámy,
+
+odlišuje fakta od osobního názoru,
+
+uvádí zdroje, pokud pracuje s odbornými informacemi.
+
+
+
+---
+
+IV. KOMUNIKACE S UŽIVATELI
+
+Dobrovolník komunikuje:
+
+slušně,
+
+klidně,
+
+věcně,
+
+bez odsuzování.
+
+
+Je zakázáno:
+
+urážení,
+
+vyhrožování,
+
+zesměšňování,
+
+vyvolávání konfliktů,
+
+podněcování nenávisti.
+
+
+
+---
+
+V. PRÁCE S RODIČI V KRIZI
+
+Dobrovolník bere na vědomí, že uživatelé mohou být:
+
+pod silným stresem,
+
+v emoční krizi,
+
+po rozchodu,
+
+v probíhajícím soudním řízení.
+
+
+Proto:
+
+1. Nenahrazuje psychologa ani advokáta.
+
+
+2. Neposkytuje právní záruky typu:
+
+„Soud určitě rozhodne takto.“
+
+3. Nepodporuje impulzivní jednání.
+
+
+4. Pomáhá uživateli orientovat se, nikoliv eskalovat konflikt.
+
+
+
+
+---
+
+VI. ZÁSADA NEÚTOČENÍ NA DRUHÉHO RODIČE
+
+Dobrovolník nesmí využívat projekt k:
+
+veřejnému pranýřování druhého rodiče,
+
+zveřejňování osobních údajů,
+
+pomstě,
+
+nátlaku.
+
+
+Kritizovat lze:
+
+postupy,
+
+systémy,
+
+rozhodnutí,
+
+obecné problémy.
+
+
+Nelze útočit na konkrétní osoby bez oprávněného důvodu.
+
+
+---
+
+VII. OCHRANA SOUKROMÍ
+
+Dobrovolník:
+
+chrání identitu uživatelů,
+
+nezveřejňuje příběhy bez souhlasu,
+
+nesdílí screenshoty komunikace,
+
+nepřenáší informace mimo projekt.
+
+
+Platí zásada:
+
+„To, co člověk svěří projektu v těžké chvíli, není materiál pro veřejnou debatu.“
+
+
+---
+
+VIII. ODBORNOST A HRANICE ROLE
+
+Dobrovolník:
+
+nepředstírá odbornou kvalifikaci, kterou nemá,
+
+nepředstavuje se jako právník, psycholog nebo úředník, pokud jím není,
+
+přizná své limity.
+
+
+Pokud si není jistý, požádá o konzultaci Správce projektu.
+
+
+---
+
+IX. SOCIÁLNÍ SÍTĚ A VEŘEJNÉ VYSTUPOVÁNÍ
+
+Dobrovolník:
+
+nesmí vystupovat jménem projektu bez oprávnění,
+
+nesmí zveřejňovat interní informace,
+
+nesmí poškozovat pověst projektu.
+
+
+Při veřejném vyjadřování jasně rozlišuje:
+
+„Můj osobní názor“
+
+od
+
+„Stanovisko projektu Táta má právo“.
+
+
+---
+
+X. TECHNOLOGICKÁ ETIKA
+
+Dobrovolník pracující s technologií:
+
+chrání bezpečnost systému,
+
+nevyužívá chyby k vlastnímu prospěchu,
+
+nezkouší útoky bez povolení,
+
+chrání uživatelská data.
+
+
+Bezpečnost projektu znamená ochranu lidí, ne pouze ochranu systému.
+
+
+---
+
+XI. UMĚLÁ INTELIGENCE
+
+Dobrovolník využívající AI:
+
+kontroluje výsledky,
+
+nevkládá citlivé údaje do neschválených služeb,
+
+nepoužívá AI k vytváření falešných důkazů,
+
+zachovává lidskou odpovědnost.
+
+
+
+---
+
+XII. KONFLIKTY A NESOUHLAS
+
+Rozdílný názor je přípustný.
+
+Dobrovolník řeší neshody:
+
+věcně,
+
+přímo,
+
+s respektem.
+
+
+Není přípustné:
+
+osobní napadání,
+
+vytváření skupin proti konkrétním lidem,
+
+poškozování projektu zevnitř.
+
+
+
+---
+
+XIII. PORUŠENÍ KODEXU
+
+Porušení kodexu může vést k:
+
+upozornění,
+
+omezení oprávnění,
+
+odebrání přístupu,
+
+ukončení spolupráce.
+
+
+Při závažném porušení může být věc řešena podle platných právních předpisů.
+
+
+---
+
+XIV. SLIB DOBROVOLNÍKA
+
+Dobrovolník potvrzuje:
+
+„Přijímám odpovědnost za své jednání v projektu Táta má právo. Budu chránit soukromí lidí, respektovat důstojnost rodičů i dětí a využívat své schopnosti k pomoci, nikoliv k prohlubování konfliktů.“
+
+
+---
+
+ELEKTRONICKÉ POTVRZENÍ
+
+Jméno:
+
+{{USER_FULL_NAME}}
+
+ID účtu:
+
+{{USER_ID}}
+
+Datum:
+
+{{TIMESTAMP}}
+
+Potvrzení:
+
+☐ Seznámil(a) jsem se s kodexem a zavazuji se jej dodržovat.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'ai_statement',
+        title: 'Prohlášení o využití umělé inteligence (AI)',
+        type: 'AI_STATEMENT',
+        description: 'Prohlášení o vývoji portálu svépomocí s využitím AI, odborných zdrojů a právní výhradě',
+        content: `PROHLÁŠENÍ O VYUŽITÍ UMĚLÉ INTELIGENCE (AI) & PRÁVNÍ VÝHRADA
+
+Tento projekt a jeho webový portál vznikají svépomocí s využitím pokročilých technologií umělé inteligence (AI), odborných veřejných zdrojů, judikatury a vlastních životních zkušeností z opatrovnických řízení.
+
+UPOZORNĚNÍ A PRÁVNÍ VÝHRADA:
+1. Autor portálu ani provozovatelé nejsou licencovanými advokáty, právníky ani registrovanými klinickými psychology.
+2. Všechny informace, vzory dokumentů, výstupy AI asistenta a kalkulačky mají výhradně informativní, edukativní a osvětový charakter.
+3. Poskytované materiály nenahrazují individuální právní poradenství poskytované advokátem dle zákona o advokacii ani odbornou psychoterapeutickou péči.
+4. Před podáním jakéhokoli návrhu či podání k okresnímu soudu nebo jednáním s OSPOD důrazně doporučujeme konzultovat konkrétní případ s kvalifikovaným odborníkem.`,
+        version: '1.0.0',
+      },
+      {
+        key: 'dohoda-o-spolupraci',
+        title: 'Dohoda o dobrovolné spolupráci (e-Smlouva)',
+        type: 'VOLUNTEER_CODE',
+        description: 'Dohoda o dobrovolné spolupráci, mlčenlivosti (NDA), ochraně informací, licenci k výstupům a GDPR',
+        content: `DOHODA O DOBROVOLNÉ SPOLUPRÁCI, MLČENLIVOSTI, OCHRANĚ INFORMACÍ, LICENCI K VÝSTUPŮM A PRAVIDLECH PRÁCE S OSOBNÍMI ÚDAJI
+
+Elektronická e-Smlouva projektu Táta má právo / Synthesis OS
+
+Verze dokumentu: 1.0
+ID smlouvy: SYNTH-VOL-{{GENERATED_ID}}
+Datum uzavření: {{TIMESTAMP}}
+
+STRANA 1/5 - V/5 (Kompletní verze dostupná v modulu e-Smlouva)`,
+        version: '1.0.0',
+      },
+    ];
+
+    for (const c of complianceDocsData) {
+      const doc = await prisma.legalDocument.upsert({
+        where: { key: c.key },
+        update: {
+          title: c.title,
+          type: c.type,
+          description: c.description,
+        },
+        create: {
+          key: c.key,
+          title: c.title,
+          type: c.type,
+          description: c.description,
+        },
+      });
+
+      await prisma.legalDocumentVersion.upsert({
+        where: { documentId_version: { documentId: doc.id, version: c.version } },
+        update: {
+          content: c.content,
+          status: 'PUBLISHED',
+        },
+        create: {
+          documentId: doc.id,
+          version: c.version,
+          content: c.content,
+          status: 'PUBLISHED',
+          author: 'Hlavní Správce (Super Admin)',
+        },
+      });
+    }
+
+    // 9. System Settings
+    const systemSettingsData = [
+      { key: 'site_title', value: 'Táta má právo', category: 'general', description: 'Název portálu' },
+      { key: 'contact_email', value: 'info@tatovacesta.cz', category: 'general', description: 'Kontaktní email' },
+      { key: 'maintenance_mode', value: 'false', category: 'system', description: 'Stav údržby' },
+      { key: 'allow_registration', value: 'true', category: 'auth', description: 'Povolení registraci' },
+    ];
+
+    for (const s of systemSettingsData) {
+      await prisma.systemSetting.upsert({
+        where: { key: s.key },
+        update: {},
+        create: s,
+      });
+    }
+
+    // 10. State Statistics & Court Cases (Státní data)
+    console.log('[Prisma Seed] Seedování Státních dat (Statistiky, Judikatura, e-Sbírka)...');
+
+    const defaultStateStatisticsData = [
+      {
+        id: 'stat-1',
+        category: 'Péče o děti',
+        title: 'Podíl střídavé péče schválené soudy',
+        description: 'Procento dětí svěřených do střídavé péče obou rodičů po rozchodu rodičů v ČR.',
+        value: '32 %',
+        unit: '%',
+        period: '2024/2025',
+        source: 'Ministerstvo spravedlnosti ČR / ČSÚ',
+        chartData: {
+          labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+          datasets: [{ label: 'Střídavá péče (%)', data: [18, 21, 24, 27, 30, 32] }],
+        },
+      },
+      {
+        id: 'stat-2',
+        category: 'Péče o děti',
+        title: 'Péče jednoho rodiče (výhradní péče matky)',
+        description: 'Podíl rozhodnutí, kde bylo dítě svěřeno do výhradní péče matky.',
+        value: '58 %',
+        unit: '%',
+        period: '2024/2025',
+        source: 'Ministerstvo spravedlnosti ČR',
+        chartData: {
+          labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+          datasets: [{ label: 'Výhradní péče matky (%)', data: [72, 68, 65, 62, 60, 58] }],
+        },
+      },
+      {
+        id: 'stat-3',
+        category: 'Délka řízení',
+        title: 'Průměrná délka opatrovnického řízení u okresních soudů',
+        description: 'Průměrný počet dnů od podání návrhu na úpravu poměrů do vydání prvostupňového rozsudku.',
+        value: '215',
+        unit: 'dní',
+        period: '2024/2025',
+        source: 'Ministerstvo spravedlnosti ČR - Statistická ročenka',
+        chartData: {
+          labels: ['2021', '2022', '2023', '2024', '2025'],
+          datasets: [{ label: 'Délka řízení (dny)', data: [245, 238, 225, 220, 215] }],
+        },
+      },
+      {
+        id: 'stat-4',
+        category: 'Délka řízení',
+        title: 'Průměrná doba rozhodování o předběžném opatření (§ 452 ZVR)',
+        description: 'Doba rozhodování soudů o akutních návrzích na předběžnou úpravu poměrů dítěte.',
+        value: '7',
+        unit: 'dní',
+        period: '2025',
+        source: 'Ministerstvo spravedlnosti ČR',
+        chartData: {
+          labels: ['Zákonná lhůta', 'Průměrná praxe soudů'],
+          datasets: [{ label: 'Dny', data: [7, 6.8] }],
+        },
+      },
+      {
+        id: 'stat-5',
+        category: 'Výživné',
+        title: 'Průměrná stanovená výše výživného na jedno dítě',
+        description: 'Průměrné měsíční výživné určované soudy ČR podle věkových kategorií.',
+        value: '3 850',
+        unit: 'Kč',
+        period: '2024/2025',
+        source: 'Český statistický úřad (ČSÚ) / MS ČR',
+        chartData: {
+          labels: ['0-5 let', '6-11 let', '12-15 let', '16-26 let'],
+          datasets: [{ label: 'Průměrné výživné (Kč)', data: [2800, 3500, 4200, 4900] }],
+        },
+      },
+      {
+        id: 'stat-6',
+        category: 'Výživné',
+        title: 'Míra plnění vyživovací povinnosti a náhradní výživné',
+        description: 'Procento povinných rodičů hradících stanovené výživné řádně a včas.',
+        value: '84 %',
+        unit: '%',
+        period: '2024/2025',
+        source: 'Úřad práce ČR / Ministerstvo práce a sociálních věcí',
+        chartData: {
+          labels: ['Řádně placeno', 'Částečně placeno', 'Neplaceno'],
+          datasets: [{ label: 'Podíl (%)', data: [84, 10, 6] }],
+        },
+      },
+    ];
+
+    for (const stat of defaultStateStatisticsData) {
+      await prisma.stateStatistic.upsert({
+        where: { id: stat.id },
+        update: stat,
+        create: stat,
+      });
+    }
+
+    const defaultCourtCasesData = [
+      {
+        id: 'case-us-1506-23',
+        fileNumber: 'I. ÚS 1506/23',
+        court: 'Ústavní soud',
+        title: 'Právo dítěte na péči obou rodičů a presumpce střídavé péče',
+        summary: 'Stěžovatel (otec) se domáhal střídavé péče o nezletilého syna. Obecné soudy ji zamítly s odkazem na pracovní vytížení otce a nesouhlas matky. Ústavní soud rozhodnutí zrušil pro porušení článku 32 odst. 4 Listiny základních práv a svobod.',
+        legalRatio: 'Svěření dítěte do střídavé péče by mělo být pravidlem, pokud jsou oba rodiče způsobilí dítě vychovávat a mají o jeho výchovu zájem. Nesouhlas jednoho z rodičů nebo jeho subjektivní výhrady samy o sobě nemohou být důvodem pro vyloučení střídavé péče.',
+        tags: ['střídavá péče', 'základní práva', 'nesouhlas matky', 'rovnoprávnost rodičů'],
+        fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=1-1506-23',
+        publishedAt: new Date('2023-10-18'),
+      },
+      {
+        id: 'case-us-3242-22',
+        fileNumber: 'II. ÚS 3242/22',
+        court: 'Ústavní soud',
+        title: 'Předběžná opatření v opatrovnických věcech a bezdůvodné maření styku',
+        summary: 'Matka opakovaně znemožňovala otci styk s dcerou pod záminkou onemocnění bez lékařského potvrzení. Otec požádal o předběžné opatření k úpravě styku, které krajský soud zamítl.',
+        legalRatio: 'Pokud jeden z rodičů systematicky a bezdůvodně maří styk druhého rodiče s dítětem, je povinností obecných soudů zakročit pomocí předběžného opatření a zajistit obnovení a udržení rodičovské vazby bez zbytečného prodlení.',
+        tags: ['předběžné opatření', 'maření styku', 'vynutitelnost práva', 'rychlost řízení'],
+        fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=2-3242-22',
+        publishedAt: new Date('2023-03-14'),
+      },
+      {
+        id: 'case-us-1200-21',
+        fileNumber: 'III. ÚS 1200/21',
+        court: 'Ústavní soud',
+        title: 'Zjišťování názoru nezletilého dítěte a role OSPOD',
+        summary: 'Obecný soud neprovedl výslech 10letého dítěte ani nepřihlédl k jeho přání střídavé péče, přičemž se spolehl výhradně na stanovisko OSPOD, který střídavou péči nedoporučil.',
+        legalRatio: 'OSPOD je pouze kolizním opatrovníkem, jehož názor nezavazuje soud. Soud je povinen zjišťovat názor dítěte odpovídajícím způsobem vzhledem k jeho věku a rozvojové úrovni a přihlížet k němu.',
+        tags: ['názor dítěte', 'OSPOD', 'dokazování', 'vyslechnutí nezletilého'],
+        fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=3-1200-21',
+        publishedAt: new Date('2021-11-02'),
+      },
+      {
+        id: 'case-ns-1890-22',
+        fileNumber: '21 Cdo 1890/2022',
+        court: 'Nejvyšší soud',
+        title: 'Kritéria pro stanovení výživného při změně poměrů a střídavé péči',
+        summary: 'Přezkum rozhodnutí o výši výživného při přechodu z výhradní péče matky na střídavou péči s ohledem na odlišné příjmy rodičů a úhradu mimořádných nákladů.',
+        legalRatio: 'Při střídavé péči se výživné určuje oběma rodičům vzájemně tak, aby byla zajištěna srovnatelná životní úroveň dítěte u obou rodičů. Samotný fakt střídavé péče nevylučuje stanovení výživného rodiči s výrazně vyššími příjmy.',
+        tags: ['výživné', 'změna poměrů', 'životní úroveň', 'příjmy rodičů'],
+        fullTextUrl: 'https://www.nsoud.cz/Judikatura/judikatura_ns.nsf/WebSearch/21Cdo1890-2022',
+        publishedAt: new Date('2022-08-25'),
+      },
+      {
+        id: 'case-us-2482-24',
+        fileNumber: 'I. ÚS 2482/24',
+        court: 'Ústavní soud',
+        title: 'Vzdálenost bydlišť rodičů a střídavá péče při nástupu do školy',
+        summary: 'Matka se bez souhlasu otce odstěhovala s dítětem do vzdálenosti 120 km a tvrdila, že střídavá péče již není z důvodu vzdálenosti možná.',
+        legalRatio: 'Jednostranné odstěhování jednoho z rodičů bez souhlasu druhého rodiče či rozhodnutí soudu nemůže jít k tíži rodiče, který změnu nezpůsobil. Soudy musí zkoumat motivaci k odstěhování a možnost zachování střídavé péče či úpravy širšího styku.',
+        tags: ['odstěhování', 'vzdálenost bydlišť', 'školní docházka', 'střídavá péče'],
+        fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=1-2482-24',
+        publishedAt: new Date('2024-05-10'),
+      },
+    ];
+
+    for (const c of defaultCourtCasesData) {
+      await prisma.courtCase.upsert({
+        where: { fileNumber: c.fileNumber },
+        update: c,
+        create: c,
+      });
+    }
+
+    const defaultLawsData = [
+      {
+        code: '89/2012',
+        title: 'Zákon č. 89/2012 Sb., občanský zákoník',
+        content: JSON.stringify({ summary: 'Občanský zákoník upravuje osobnostní práva, rodinné právo, opatrovnictví a věcná práva.' }),
+      },
+      {
+        code: '359/1999',
+        title: 'Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí (zOSPOD)',
+        content: JSON.stringify({ summary: 'Zákon o sociálně-právní ochraně dětí upravuje ochranu práv dětí, OSPOD a pěstounskou péči.' }),
+      },
+      {
+        code: '292/2013',
+        title: 'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních',
+        content: JSON.stringify({ summary: 'Zákon o zvláštních řízeních soudních upravuje opatrovnické řízení a péči soudu o nezletilé.' }),
+      },
+      {
+        code: '99/1963',
+        title: 'Zákon č. 99/1963 Sb., občanský soudní řád',
+        content: JSON.stringify({ summary: 'Občanský soudní řád upravuje postupy soudů v občanském soudním řízení a dokazování.' }),
+      },
+    ];
+
+    for (const law of defaultLawsData) {
+      await prisma.law.upsert({
+        where: { code: law.code },
+        update: law,
+        create: law,
+      });
+    }
+
+    // 12. Partners
+    const defaultPartnersData = [
+      {
+        id: 'partner-1',
+        name: 'ALGOTECH a.s.',
+        description: 'Přední poskytovatel cloudových VPS, IT služeb a podnikových systémů.',
+        logoUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=128&auto=format&fit=crop&q=60',
+        websiteUrl: 'https://www.algotech.cz',
+        type: 'SPONSOR',
+        order: 1,
+        isActive: true,
+      },
+      {
+        id: 'partner-2',
+        name: 'WEDOS Internet, a.s.',
+        description: 'Největší poskytovatel webhostingu v ČR.',
+        logoUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=128&auto=format&fit=crop&q=60',
+        websiteUrl: 'https://www.wedos.cz',
+        type: 'SPONSOR',
+        order: 2,
+        isActive: true,
+      },
+      {
+        id: 'partner-3',
+        name: 'FORPSI',
+        description: 'Tradiční poskytovatel internetových služeb.',
+        logoUrl: 'https://images.unsplash.com/photo-1425421598808-4a22ce59cc97?w=128&auto=format&fit=crop&q=60',
+        websiteUrl: 'https://www.forpsi.com',
+        type: 'PARTNER',
+        order: 3,
+        isActive: true,
+      },
+    ];
+
+    for (const partner of defaultPartnersData) {
+      // @ts-ignore
+      await prisma.partner.upsert({
+        where: { id: partner.id },
+        update: partner,
+        create: partner,
+      });
+    }
+
+    // 11. Audit Log Initial Entry
+    await prisma.auditLog.create({
+      data: {
+        userId: 'usr-superadmin',
+        userEmail: 'superadmin@tatovacesta.cz',
+        action: 'SYSTEM_INIT',
+        module: 'CORE',
+        details: 'PostgreSQL + Prisma architektura úspěšně inicializována.',
+      },
+    });
+
+    console.log('[Prisma Seed] Seeding dokončen úspěšně!');
+  } catch (error) {
+    console.error('[Prisma Seed Error]:', error);
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Remix Táta má právo",
+  "description": "Modulární portál zaměřený na pomoc otcům v opatrovnických situacích - Nejlepší zájem dítěte",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
