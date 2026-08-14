@@ -23,6 +23,78 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const [newRequest, setNewRequest] = useState({ type: 'SCHEDULE_CHANGE', details: '' });
   const [newAgreement, setNewAgreement] = useState({ title: '', content: '' });
 
+  // Invite & Pairing states
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteResult, setInviteResult] = useState<any>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [pairCodeInput, setPairCodeInput] = useState('');
+  const [members, setMembers] = useState<any[]>([]);
+
+  const fetchMembers = async () => {
+    if (!space?.id) return;
+    try {
+      const res = await fetch(`/api/coparent/members?spaceId=${space.id}`, {
+        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (space?.id) {
+      fetchMembers();
+    }
+  }, [space?.id]);
+
+  const handleCreateInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!space || !inviteEmail) return;
+    try {
+      const res = await fetch('/api/coparent/invite/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer jwt_token_user_${Date.now()}`
+        },
+        body: JSON.stringify({ spaceId: space.id, email: inviteEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Chyba při vytváření pozvánky.');
+      setInviteResult(data);
+      setInviteEmail('');
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleAcceptInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pairCodeInput.trim()) return;
+    try {
+      const res = await fetch('/api/coparent/invite/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer jwt_token_user_${Date.now()}`
+        },
+        body: JSON.stringify({ code: pairCodeInput.trim().toUpperCase() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Chyba při přijímání pozvánky.');
+      alert('Úspěšně propojeno se spolurodičovským prostorem!');
+      setPairCodeInput('');
+      fetchCoParentData();
+      fetchMembers();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const fetchCoParentData = async () => {
     try {
       setLoading(true);
@@ -644,52 +716,224 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
 
       {/* TAB 14: SETTINGS */}
       {activeTab === 'settings' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-6">
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-blue-900" />
-            Nastavení prostoru & Režim konfliktu
-          </h2>
-          <p className="text-xs text-slate-600">Zde můžete přepínat mezi režimy komunikace podle stupně dohody rodičů.</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-            <button
-              onClick={() => handleConflictModeChange('COOPERATION')}
-              className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
-                conflictMode === 'COOPERATION' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <div className="text-emerald-700 font-bold text-sm flex items-center gap-2 mb-1">
-                <ShieldCheck className="w-4 h-4" />
-                🟢 Spolupracujeme
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-blue-900" />
+                  Spolurodičovské propojení & Pozvánky
+                </h2>
+                <p className="text-xs text-slate-600 mt-1">Pozvěte druhého rodiče nebo propojte svůj účet pomocí párovacího kódu.</p>
               </div>
-              <p className="text-xs text-slate-600">Volná komunikace, kalendář a běžná koordinace bez omezování.</p>
-            </button>
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="px-4 py-2.5 bg-blue-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md hover:bg-blue-800"
+              >
+                <Plus className="w-4 h-4" />
+                Pozvat spolurodiče
+              </button>
+            </div>
 
-            <button
-              onClick={() => handleConflictModeChange('DISAGREEMENT')}
-              className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
-                conflictMode === 'DISAGREEMENT' ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <div className="text-amber-700 font-bold text-sm flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4" />
-                🟡 Máme neshody
+            {/* Connection Status & Members List */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Stav propojení prostoru</span>
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Propojeno ({dashboard?.members?.length || members.length || 1} členové)
+                </span>
               </div>
-              <p className="text-xs text-slate-600">Důraz na strukturované schvalování výdajů a termínů.</p>
-            </button>
 
-            <button
-              onClick={() => handleConflictModeChange('HIGH_CONFLICT')}
-              className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
-                conflictMode === 'HIGH_CONFLICT' ? 'border-rose-500 bg-rose-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <div className="text-rose-700 font-bold text-sm flex items-center gap-2 mb-1">
-                <ShieldAlert className="w-4 h-4" />
-                🔴 Vysoký konflikt
+              <div className="space-y-2">
+                {(dashboard?.members || members)?.map((m: any) => (
+                  <div key={m.id || m.userId} className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-900 font-bold flex items-center justify-center text-xs">
+                        {m.user?.name?.[0] || 'R'}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">{m.user?.name || 'Rodič'}</div>
+                        <div className="text-2xs text-slate-500">{m.user?.email || 'Neznámý e-mail'}</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 bg-blue-50 text-blue-900 rounded-lg text-2xs font-bold">
+                      {m.role || 'PARENT'}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs text-slate-600">Vypnut přímý chat, veškerá komunikace probíhá přes auditované žádosti.</p>
-            </button>
+            </div>
+
+            {/* Form for entering code */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <h3 className="text-sm font-bold text-slate-900">Máte párovací kód od druhého rodiče?</h3>
+              <p className="text-xs text-slate-600">Zadejte 6místný kód (např. CP-XXXXXX) pro okamžité propojení se spolurodičovským prostorem.</p>
+              <form onSubmit={handleAcceptInvite} className="flex gap-2 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Vložit kód (např. CP-ABC123)"
+                  value={pairCodeInput}
+                  onChange={(e) => setPairCodeInput(e.target.value)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-900"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-indigo-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-800"
+                >
+                  Propojit účty
+                </button>
+              </form>
+            </div>
+
+            {/* Security Notice */}
+            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-blue-900">BEZPEČNOST & OCHRANA SOUKROMÍ</h4>
+                <p className="text-2xs text-blue-800 mt-0.5">
+                  Přijetí pozvánky udělí přístup POUZE ke sdíleným datům CoParent Hubu (kalendář, výdaje, zprávy o dětech). Druhý rodič NIKDY nemá přístup k vaší osobní případové složce (/muj-pripad) ani soukromým dokumentům.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Conflict Mode Settings */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-6">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-blue-900" />
+              Nastavení prostoru & Režim konfliktu
+            </h2>
+            <p className="text-xs text-slate-600">Zde můžete přepínat mezi režimy komunikace podle stupně dohody rodičů.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+              <button
+                onClick={() => handleConflictModeChange('COOPERATION')}
+                className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
+                  conflictMode === 'COOPERATION' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-emerald-700 font-bold text-sm flex items-center gap-2 mb-1">
+                  <ShieldCheck className="w-4 h-4" />
+                  🟢 Spolupracujeme
+                </div>
+                <p className="text-xs text-slate-600">Volná komunikace, kalendář a běžná koordinace bez omezování.</p>
+              </button>
+
+              <button
+                onClick={() => handleConflictModeChange('DISAGREEMENT')}
+                className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
+                  conflictMode === 'DISAGREEMENT' ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-amber-700 font-bold text-sm flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4" />
+                  🟡 Máme neshody
+                </div>
+                <p className="text-xs text-slate-600">Důraz na strukturované schvalování výdajů a termínů.</p>
+              </button>
+
+              <button
+                onClick={() => handleConflictModeChange('HIGH_CONFLICT')}
+                className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
+                  conflictMode === 'HIGH_CONFLICT' ? 'border-rose-500 bg-rose-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-rose-700 font-bold text-sm flex items-center gap-2 mb-1">
+                  <ShieldAlert className="w-4 h-4" />
+                  🔴 Vysoký konflikt
+                </div>
+                <p className="text-xs text-slate-600">Vypnut přímý chat, veškerá komunikace probíhá přes auditované žádosti.</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INVITE MODAL */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-900" />
+                Pozvat spolurodiče do prostoru
+              </h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              Vygenerujte párovací kód a pozvánku pro druhého rodiče. Platnost kódu je 48 hodin.
+            </p>
+
+            <form onSubmit={handleCreateInvite} className="space-y-4">
+              <div>
+                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  E-mail druhého rodiče
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="rodic@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-900"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-blue-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-blue-800 shadow-md"
+              >
+                Vygenerovat kód a pozvánku
+              </button>
+            </form>
+
+            {inviteResult && (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-center">
+                <div className="text-2xs font-bold uppercase tracking-wider text-slate-500">Vygenerovaný párovací kód</div>
+                <div className="text-3xl font-extrabold font-mono tracking-widest text-blue-900 bg-white py-3 px-4 rounded-xl border border-slate-200 shadow-xs inline-block">
+                  {inviteResult.code}
+                </div>
+
+                {/* QR Code Mock / Visual */}
+                <div className="flex justify-center">
+                  <div className="w-32 h-32 bg-white p-2 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center justify-center">
+                    <div className="w-24 h-24 bg-slate-900 text-white flex items-center justify-center rounded text-2xs font-mono font-bold text-center p-1">
+                      [ QR KÓD PRO PÁROVÁNÍ ]
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-2xs text-slate-500">
+                  Pozvánka byla odeslána na e-mail <span className="font-bold text-slate-800">{inviteResult.email}</span>. Platí do {new Date(inviteResult.expiresAt).toLocaleString()}.
+                </p>
+
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteResult.code);
+                    alert('Kód byl zkopírován do schránky!');
+                  }}
+                  className="px-4 py-2 bg-slate-200 text-slate-800 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-300"
+                >
+                  Zkopírovat kód do schránky
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-200"
+              >
+                Zavřít
+              </button>
+            </div>
           </div>
         </div>
       )}
