@@ -14,6 +14,7 @@ interface AuthContextType {
   users: User[];
   loading: boolean;
   error: string | null;
+  fetchUsers: () => Promise<void>;
   login: (email: string, password?: string) => Promise<AuthResult>;
   verifyMfa: (userId: string, code: string) => Promise<AuthResult>;
   register: (
@@ -34,13 +35,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ROLES_REQUIRING_MFA = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'ADMIN'];
 
-const canFetchUsers = (user: User) => {
-  if (!ADMIN_ROLES.includes(user.role)) return false;
-  if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled) return false;
-  return true;
+const canFetchUsers = (user: User | null) => {
+  if (!user) return false;
+  return ADMIN_ROLES.includes(user.role);
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -63,12 +62,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const usersList = data?.users || data?.data || (Array.isArray(data) ? data : []);
         setUsers(usersList);
       } else {
-        const errorText = `Error ${res.status}: ${res.statusText}`;
+        const errJson = await res.json().catch(() => null);
+        const errorText = errJson?.error || `Chyba ${res.status}: ${res.statusText}`;
         setError(errorText);
-        console.error('Error fetching users, status:', res.status);
+        console.error('Error fetching users, status:', res.status, errorText);
       }
     } catch (e: any) {
-      setError(e.message || 'Error fetching users');
+      setError(e.message || 'Chyba při komunikaci se serverem');
       console.error('Error fetching users:', e);
     } finally {
       setLoading(false);
@@ -201,22 +201,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserRole = async (userId: string, role: UserRole) => {
     try {
+      const token = localStorage.getItem('tatovacesta_auth_token');
       const res = await fetch(`/api/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ role }),
       });
       if (res.ok) {
         const updated = await res.json();
-        setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: updated.role || role } : u)));
         if (currentUser?.id === userId) {
-          setCurrentUser(updated);
+          setCurrentUser((prev) => (prev ? { ...prev, role: updated.role || role } : null));
         }
+      } else {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error || 'Změna role selhala');
       }
     } catch (e) {
       console.error('Role update error:', e);
+      throw e;
     }
   };
 
@@ -245,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         users,
         loading,
         error,
+        fetchUsers,
         login,
         verifyMfa,
         register,

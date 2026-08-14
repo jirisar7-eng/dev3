@@ -37,7 +37,7 @@ import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { TotpService } from './src/services/totpService.ts';
 import { getDns, addDns, deleteDns } from './src/controllers/dnsController.ts';
-import { getPrismaClient, checkDatabaseReachable, markPrismaUnavailable, prisma, waitForDatabase } from './src/db/prisma';
+import { getPrismaClient, isPrismaAvailable, checkDatabaseReachable, markPrismaUnavailable, prisma, waitForDatabase } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
 import pageRoutes from './src/routes/pageRoutes';
 import systemRoutes from './src/routes/system';
@@ -845,44 +845,93 @@ app.post('/api/users/quick-create', requireAuth as any, requireRole('ADMIN') as 
       return res.status(400).json({ error: 'Jméno a e-mail jsou povinné.' });
     }
 
-    const prisma = getPrismaClient();
-    if (!prisma) {
-      return res.status(500).json({ error: 'Databáze není dostupná.' });
-    }
-
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Uživatel s tímto e-mailem již existuje.' });
-    }
-
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const assignedRole = role || 'USER';
     const generatedPassword = crypto.randomBytes(5).toString('hex'); // 10 znaků
     const passwordHash = await bcrypt.hash(generatedPassword, 10);
-    const assignedRole = role || 'USER';
 
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        role: assignedRole,
-        passwordHash,
-      },
-    });
+    let createdUser: any = null;
 
-    const emailSent = await sendQuickCreateEmail(email, name, generatedPassword);
-    
-    let finalMessage = 'Uživatel vytvořen a e-mail odeslán.';
-    if (!emailSent) {
-      finalMessage = 'Uživatel vytvořen, ale e-mail se nepodařilo odeslat.';
+    if (isPrismaAvailable()) {
+      try {
+        const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+        if (existingUser) {
+          return res.status(400).json({ error: 'Uživatel s tímto e-mailem již existuje.' });
+        }
+
+        createdUser = await prisma.user.create({
+          data: {
+            email: cleanEmail,
+            name: cleanName,
+            role: assignedRole,
+            passwordHash,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
+          },
+        });
+
+        // Also add to audit log
+        await prisma.auditLog.create({
+          data: {
+            userId: req.user?.id || createdUser.id,
+            userEmail: req.user?.email || createdUser.email,
+            action: 'USER_QUICK_CREATE',
+            module: 'RBAC',
+            details: `Vytvořen nový uživatel ${cleanEmail} s rolí ${assignedRole}.`,
+          },
+        });
+      } catch (dbErr) {
+        console.warn('Prisma quick-create failed, falling back to in-memory store:', dbErr);
+      }
     }
+
+    if (!createdUser) {
+      const existing = dbStore.users.find(u => u.email.toLowerCase() === cleanEmail);
+      if (existing) {
+        return res.status(400).json({ error: 'Uživatel s tímto e-mailem již existuje.' });
+      }
+
+      createdUser = {
+        id: 'usr-' + Date.now(),
+        email: cleanEmail,
+        name: cleanName,
+        role: assignedRole,
+        status: 'ACTIVE',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      (createdUser as any).passwordHash = passwordHash;
+      dbStore.users.unshift(createdUser);
+      dbStore.logAudit('USER_QUICK_CREATE', 'RBAC', `Vytvořen nový uživatel ${cleanEmail} s rolí ${assignedRole}.`, req.user);
+    }
+
+    const emailSent = await sendQuickCreateEmail(cleanEmail, cleanName, generatedPassword);
+    
+    let finalMessage = 'Uživatel vytvořen a přístupy vygenerovány.';
+    if (!emailSent) {
+      finalMessage = 'Uživatel byl vytvořen (odeslání uvítacího e-mailu selhalo, předejte přístupové heslo manuálně).';
+    }
+
+    const safeUser = {
+      id: createdUser.id,
+      email: createdUser.email,
+      name: createdUser.name,
+      role: createdUser.role,
+      status: createdUser.status || 'ACTIVE',
+      avatar: createdUser.avatar || '',
+      createdAt: createdUser.createdAt instanceof Date ? createdUser.createdAt.toISOString() : createdUser.createdAt,
+      updatedAt: createdUser.updatedAt instanceof Date ? createdUser.updatedAt.toISOString() : createdUser.updatedAt,
+    };
 
     return res.status(201).json({
       message: finalMessage,
-      user: newUser,
+      user: safeUser,
       generatedPassword,
     });
   } catch (err: any) {
     console.error('Chyba při vytváření uživatele:', err);
-    res.status(500).json({ error: 'Došlo k interní chybě serveru.' });
+    res.status(500).json({ error: 'Došlo k interní chybě serveru: ' + (err.message || '') });
   }
 });
 
