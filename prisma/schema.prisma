@@ -67,6 +67,10 @@ model User {
   cookieConsents           CookieConsent[]
   legalAuditLogs           LegalAuditLog[]
   clientCases              Case[]
+  coparentSpaces           CoParentSpace[]     @relation("CoParentSpaceOwner")
+  coparentMemberships      CoParentMember[]
+  coparentMessages         CoParentMessage[]
+  coparentRequests         CoParentRequest[]
 
   @@index([email])
 }
@@ -1091,4 +1095,213 @@ model CareArrangement {
   updatedAt          DateTime  @updatedAt
 
   @@index([caseId])
+}
+
+// ------------------------------------------------------
+// COPARENT HUB (SPOLURODIČOVSKÝ HUB)
+// ------------------------------------------------------
+
+enum ConflictMode {
+  COOPERATION
+  DISAGREEMENT
+  HIGH_CONFLICT
+}
+
+model CoParentSpace {
+  id           String         @id @default(uuid())
+  title        String         @default("Spolurodičovský prostor")
+  conflictMode ConflictMode   @default(COOPERATION)
+  ownerId      String
+  owner        User           @relation("CoParentSpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  members      CoParentMember[]
+  children     CoParentChild[]
+  events       CoParentEvent[]
+  handovers    CoParentHandover[]
+  messages     CoParentMessage[]
+  agreements   CoParentAgreement[]
+  expenses     CoParentExpense[]
+  dailyUpdates CoParentDailyUpdate[]
+  items        CoParentItem[]
+  requests     CoParentRequest[]
+  auditLogs    CoParentAuditLog[]
+  documents    CoParentDocument[]
+
+  @@index([ownerId])
+}
+
+model CoParentMember {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String        @default("PARENT") // "FATHER", "MOTHER", "MEDIATOR", "LAWYER"
+  createdAt DateTime      @default(now())
+
+  @@unique([spaceId, userId])
+  @@index([spaceId])
+  @@index([userId])
+}
+
+model CoParentChild {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  birthDate   String?
+  notes       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  dailyUpdates CoParentDailyUpdate[]
+
+  @@index([spaceId])
+}
+
+model CoParentEvent {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title       String
+  description String?       @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  category    String        @default("CARE") // "CARE", "SCHOOL", "DOCTOR", "HANDOVER"
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentHandover {
+  id                 String        @id @default(uuid())
+  spaceId            String
+  space              CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  scheduledAt        DateTime
+  location           String?
+  status             String        @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "DISPUTED"
+  notes              String?       @db.Text
+  confirmedByFather  Boolean       @default(false)
+  confirmedByMother  Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentMessage {
+  id         String        @id @default(uuid())
+  spaceId    String
+  space      CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content    String        @db.Text
+  isApproved Boolean       @default(true) // In HIGH_CONFLICT, messages might need moderation/audit
+  createdAt  DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentAgreement {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title     String
+  content   String        @db.Text
+  status    String        @default("PROPOSED") // "PROPOSED", "ACCEPTED", "REJECTED"
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentExpense {
+  id         String        @id @default(uuid())
+  spaceId    String
+  space      CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title      String
+  amount     Float
+  currency   String        @default("CZK")
+  category   String        @default("GENERAL") // "SCHOOL", "DOCTOR", "CLOTHING", "EXTRA"
+  receiptUrl String?
+  status     String        @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdBy  String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentDailyUpdate {
+  id           String        @id @default(uuid())
+  spaceId      String
+  space        CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  childId      String
+  child        CoParentChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+  date         DateTime      @default(now())
+  mood         String        @default("HAPPY") // "HAPPY", "CALM", "TIRED", "SAD", "ANGRY"
+  healthNotes  String?       @db.Text
+  schoolNotes  String?       @db.Text
+  createdAt    DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentItem {
+  id       String        @id @default(uuid())
+  spaceId  String
+  space    CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  name     String        // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
+  holderId String        // User ID of who currently has the item
+  location String?       // e.g., "U tatínka", "U maminky"
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentRequest {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  type        String        // "SCHEDULE_CHANGE", "EXPENSE_APPROVAL", "AGREEMENT_MODIFICATION"
+  details     String        @db.Text
+  status      String        @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentAuditLog {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String        // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
+  entity    String        // e.g., "CoParentAgreement", "CoParentExpense"
+  entityId  String?
+  details   String        @db.Text
+  createdAt DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentDocument {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title       String
+  fileUrl     String?
+  category    String        @default("COURT_ORDER")
+  uploadedBy  String
+  createdAt   DateTime      @default(now())
+
+  @@index([spaceId])
 }

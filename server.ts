@@ -47,6 +47,7 @@ import forumRoutes from './src/routes/forumRoutes';
 import customModuleRoutes from './src/routes/customModuleRoutes';
 import subjektRoutes from './src/routes/subjektRoutes';
 import caseRoutes from './src/routes/caseRoutes';
+import coparentRoutes from './src/routes/coparentRoutes';
 
 dotenv.config();
 
@@ -173,6 +174,7 @@ app.use('/api/forum', forumRoutes);
 app.use('/api/custom-modules', customModuleRoutes);
 app.use('/api/subjekty', subjektRoutes);
 app.use('/api/cases', caseRoutes);
+app.use('/api/coparent', coparentRoutes);
 
 // Pracovnici community proposal & moderation endpoints
 app.get('/api/pracovnici/pending', async (_req, res) => {
