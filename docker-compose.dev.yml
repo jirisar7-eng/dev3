@@ -25,6 +25,7 @@ services:
       - "mail.tatovacesta.cz:${MAILCOW_INTERNAL_IP:-172.22.1.14}"
     networks:
       - app_network
+      - mailcow_network
     depends_on:
       - postgres
 
@@ -46,6 +47,9 @@ services:
 networks:
   app_network:
     external: true
+  mailcow_network:
+    external: true
+    name: mailcow-dockerized_mailcow-network
 
 volumes:
   postgres_data_dev:

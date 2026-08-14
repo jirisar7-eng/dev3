@@ -22,6 +22,7 @@ services:
     networks:
       - default
       - caddy_net
+      - mailcow_network
     depends_on:
       - postgres
 
@@ -46,4 +47,7 @@ networks:
   caddy_net:
     external: true
     name: tatovacesta_app_network
+  mailcow_network:
+    external: true
+    name: mailcow-dockerized_mailcow-network
 
