@@ -1,9 +1,17 @@
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
+import crypto from 'crypto';
 
 export class TotpService {
   /**
-   * Generates a TOTP secret and 8 alphanumeric backup codes.
+   * Hashes a backup code using SHA-256 for secure comparison.
+   */
+  static hashBackupCode(code: string): string {
+    return crypto.createHash('sha256').update(code.trim().toUpperCase()).digest('hex');
+  }
+
+  /**
+   * Generates a TOTP secret and 8 cryptographically secure backup codes.
    */
   static generateSecret(email: string) {
     const secret = speakeasy.generateSecret({
@@ -11,10 +19,11 @@ export class TotpService {
       issuer: 'TataMaPravo',
     });
 
-    // Generate 8-character backup codes
+    // Generate 8 cryptographically secure 8-character backup codes using crypto
     const backupCodes: string[] = [];
     for (let i = 0; i < 8; i++) {
-      backupCodes.push(Math.random().toString(36).substring(2, 10).toUpperCase());
+      const buf = crypto.randomBytes(5).toString('hex').substring(0, 8).toUpperCase();
+      backupCodes.push(buf);
     }
 
     return {
@@ -48,3 +57,4 @@ export class TotpService {
     });
   }
 }
+

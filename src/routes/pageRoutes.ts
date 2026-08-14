@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../db/prisma';
 import { dbStore } from '../services/dbStore';
 import { ensureAllModulePagesExist, convertAllPagesToPuck } from '../services/PageService';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ const router = Router();
  * POST /api/pages/sync-modules
  * Synchronizuje všech 33 modulů z menu do databáze/dbStore stránek.
  */
-router.post('/sync-modules', async (_req: Request, res: Response) => {
+router.post('/sync-modules', requireAuth as any, requireRole('ADMIN') as any, async (_req: Request, res: Response) => {
   try {
     const result = await ensureAllModulePagesExist();
     return res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync-modules', async (_req: Request, res: Response) => {
  * POST /api/pages/convert-all-to-puck
  * Převede všechny stávající stránky v databázi/dbStore do formátu Puck editoru.
  */
-router.post('/convert-all-to-puck', async (_req: Request, res: Response) => {
+router.post('/convert-all-to-puck', requireAuth as any, requireRole('ADMIN') as any, async (_req: Request, res: Response) => {
   try {
     const result = await convertAllPagesToPuck();
     return res.json(result);
@@ -110,7 +111,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
  * POST /api/pages
  * Vytvoří nebo aktualizuje stránku se zadaným slugem přes upsert.
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth as any, requireRole('ADMIN') as any, async (req: Request, res: Response) => {
   try {
     const { title, slug, content } = req.body;
 
@@ -193,7 +194,7 @@ router.post('/', async (req: Request, res: Response) => {
  * DELETE /api/pages/:id
  * Smaže stránku podle ID nebo slugu.
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

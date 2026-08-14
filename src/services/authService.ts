@@ -8,12 +8,31 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 if (!process.env.JWT_SECRET) {
-  console.error("FATAL: JWT_SECRET environment variable is not set!");
+  console.error("FATAL: JWT_SECRET environment variable is missing.");
   process.exit(1);
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export class AuthService {
+  /**
+   * Cleans sensitive security fields (passwords, TOTP secrets, backup codes)
+   * before returning user objects across API endpoints.
+   */
+  static sanitizeUser(u: any): User {
+    if (!u) return u;
+    return {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role as UserRole,
+      status: u.status || 'ACTIVE',
+      totpEnabled: !!u.totpEnabled,
+      avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name || u.email || 'user')}`,
+      createdAt: u.createdAt instanceof Date ? u.createdAt.toISOString() : (u.createdAt || new Date().toISOString()),
+      updatedAt: u.updatedAt instanceof Date ? u.updatedAt.toISOString() : (u.updatedAt || new Date().toISOString()),
+    };
+  }
+
   static generateToken(user: { id: string; role: string }): string {
     return jwt.sign(
       {
@@ -21,88 +40,52 @@ export class AuthService {
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { algorithm: 'HS256', expiresIn: '7d' }
     );
   }
 
-  static async login(email: string, password?: string): Promise<{ token: string; user: User } | null> {
+  static generateMfaToken(userId: string): string {
+    return jwt.sign(
+      {
+        sub: userId,
+        type: 'mfa_pending',
+      },
+      JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '5m' }
+    );
+  }
+
+  static verifyMfaToken(mfaToken: string): { userId: string } | null {
+    try {
+      const decoded = jwt.verify(mfaToken, JWT_SECRET, { algorithms: ['HS256'] }) as any;
+      if (decoded && decoded.type === 'mfa_pending' && decoded.sub) {
+        return { userId: decoded.sub };
+      }
+      return null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  static async login(email: string, password?: string): Promise<{ token?: string; user?: User; mfaRequired?: boolean; mfaToken?: string } | null> {
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !password) {
       return null;
     }
 
-    if (cleanEmail === 'sarji@seznam.cz') {
-      // Ensure sarji@seznam.cz always succeeds regardless of prisma errors
-      let user: any = null;
-      if (isPrismaAvailable()) {
-        try {
-          user = await prisma.user.findUnique({ where: { email: cleanEmail } });
-          if (!user) {
-            try {
-              await prisma.role.upsert({
-                where: { key: 'SUPER_ADMIN' },
-                update: {},
-                create: { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Plný systémový přístup do všech vrstev' },
-              });
-              const passwordHash = await hash("159753");
-              user = await prisma.user.create({
-                data: {
-                  id: 'usr-sarji-superadmin',
-                  email: 'sarji@seznam.cz',
-                  name: 'Sarji (Super Admin)',
-                  role: 'SUPER_ADMIN',
-                  passwordHash,
-                  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-                },
-              });
-            } catch (createErr) {
-              console.warn('Prisma sarji create fallback:', createErr);
-            }
-          }
-        } catch (prismaErr) {
-          console.warn('Prisma sarji lookup error:', prismaErr);
-        }
-      }
-
-      if (!user) {
-        user = dbStore.users.find((u) => u.email.toLowerCase() === 'sarji@seznam.cz');
-        if (!user) {
-          user = {
-            id: 'usr-sarji-superadmin',
-            email: 'sarji@seznam.cz',
-            name: 'Sarji (Super Admin)',
-            role: 'SUPER_ADMIN',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          dbStore.users.push(user);
-        }
-      }
-
-      console.log("[AUTH OK] Přihlášen superadmin sarji@seznam.cz.");
-      const token = AuthService.generateToken(user);
-      const sanitizedUser: User = {
-        id: user.id || 'usr-sarji-superadmin',
-        email: user.email || 'sarji@seznam.cz',
-        name: user.name || 'Sarji (Super Admin)',
-        role: (user.role as UserRole) || 'SUPER_ADMIN',
-        avatar: user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-        createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : (user.createdAt || new Date().toISOString()),
-        updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : (user.updatedAt || new Date().toISOString()),
-      };
-      return { token, user: sanitizedUser };
-    }
-
     if (isPrismaAvailable()) {
       try {
-        let user = await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: cleanEmail },
         });
 
         if (!user) {
           console.log("[AUTH ERROR] Uživatel nenalezen:", cleanEmail);
           return null;
+        }
+
+        if (user.status === 'SUSPENDED') {
+          throw new Error('Účet je pozastaven.');
         }
 
         if (user.passwordHash) {
@@ -130,39 +113,45 @@ export class AuthService {
             userEmail: user.email,
             action: 'USER_LOGIN',
             module: 'AUTH',
-            details: `Uživatel ${user.email} se přihlásil do systému přes Prisma.`,
+            details: `Uživatel ${user.email} se přihlásil do systému.`,
           },
         });
 
         console.log("[AUTH OK] Přihlášen uživatel:", cleanEmail);
-        const token = AuthService.generateToken(user);
-        const sanitizedUser: User = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as UserRole,
-          status: user.status || 'ACTIVE',
-          totpEnabled: user.totpEnabled ?? false,
-          totpSecret: user.totpSecret || undefined,
-          totpBackupCodes: user.totpBackupCodes || [],
-          avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`,
-          createdAt: user.createdAt.toISOString(),
-          updatedAt: user.updatedAt.toISOString(),
-        };
 
-        return { token, user: sanitizedUser };
-      } catch (err) {
-        console.warn('Prisma login error, falling back to dbStore:', err);
+        // If 2FA is enabled, do NOT issue session JWT yet! Issue short-lived mfaToken instead.
+        if (user.totpEnabled) {
+          const mfaToken = AuthService.generateMfaToken(user.id);
+          return { mfaRequired: true, mfaToken, user: AuthService.sanitizeUser(user) };
+        }
+
+        const token = AuthService.generateToken(user);
+        return { token, user: AuthService.sanitizeUser(user) };
+      } catch (err: any) {
+        if (err.message === 'Účet je pozastaven.') throw err;
+        console.error('[Prisma Auth Error] Database error during login:', err);
+        // Fail securely when DB error occurs (P0-16: DB unavailable -> 503/error, NOT fallback user login success)
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
 
-    // Fallback to dbStore
+    // Fallback in-memory ONLY if Prisma is explicitly not initialized/available
     let user = dbStore.users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (!user) return null;
 
+    if (user.status === 'SUSPENDED') {
+      throw new Error('Účet je pozastaven.');
+    }
+
     dbStore.logAudit('USER_LOGIN', 'AUTH', `Uživatel ${user.email} se přihlásil do systému.`, user);
+
+    if (user.totpEnabled) {
+      const mfaToken = AuthService.generateMfaToken(user.id);
+      return { mfaRequired: true, mfaToken, user: AuthService.sanitizeUser(user) };
+    }
+
     const token = AuthService.generateToken(user);
-    return { token, user };
+    return { token, user: AuthService.sanitizeUser(user) };
   }
 
   static async register(
@@ -181,7 +170,6 @@ export class AuthService {
     },
     childrenData?: Array<{ name: string; firstName?: string; lastName?: string; birthDate?: string; notes?: string }>
   ): Promise<{ token: string; user: User }> {
-    // 1. Server-side Input Validation
     const cleanEmail = (email || '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!cleanEmail || !emailRegex.test(cleanEmail)) {
@@ -207,7 +195,6 @@ export class AuthService {
       }
     }
 
-    // Force default role USER for public registration
     const userRole: UserRoleType = 'USER';
     const passwordHash = await hash(password);
     const displayName = (name || '').trim() || (profileData?.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : cleanEmail.split('@')[0]);
@@ -229,7 +216,6 @@ export class AuthService {
           },
         });
 
-        // Create UserProfile if profileData provided or default empty profile
         await (prisma as any).userProfile.create({
           data: {
             userId: newUser.id,
@@ -244,7 +230,6 @@ export class AuthService {
           },
         });
 
-        // Create Children if provided
         if (Array.isArray(childrenData) && childrenData.length > 0) {
           for (const child of childrenData) {
             if (child.name || child.firstName) {
@@ -263,7 +248,6 @@ export class AuthService {
           }
         }
 
-        // PII-Safe Audit Log (NO actual PII values logged)
         await prisma.auditLog.create({
           data: {
             userId: newUser.id,
@@ -275,26 +259,16 @@ export class AuthService {
         });
 
         const token = AuthService.generateToken(newUser);
-        const sanitizedUser: User = {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          role: newUser.role as UserRole,
-          avatar: newUser.avatar || '',
-          createdAt: newUser.createdAt.toISOString(),
-          updatedAt: newUser.updatedAt.toISOString(),
-        };
-
-        return { token, user: sanitizedUser };
+        return { token, user: AuthService.sanitizeUser(newUser) };
       } catch (err: any) {
         if (err.message?.includes('existuje') || err.message?.includes('heslo') || err.message?.includes('e-mail') || err.message?.includes('telefonní') || err.message?.includes('PSČ')) {
           throw err;
         }
-        console.warn('Prisma register error, falling back to dbStore:', err);
+        console.error('Prisma register error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
 
-    // Fallback in-memory registration
     const existing = dbStore.users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existing) {
       throw new Error('Uživatel s tímto e-mailem již existuje.');
@@ -314,7 +288,7 @@ export class AuthService {
     dbStore.logAudit('USER_REGISTER', 'AUTH', `Registrován nový uživatel.`, newUser);
 
     const token = AuthService.generateToken(newUser);
-    return { token, user: newUser };
+    return { token, user: AuthService.sanitizeUser(newUser) };
   }
 
   static async getUsers(): Promise<User[]> {
@@ -323,70 +297,57 @@ export class AuthService {
         const users = await prisma.user.findMany({
           orderBy: { createdAt: 'desc' },
         });
-        return users.map((u) => ({
-          id: u.id,
-          email: u.email,
-          name: u.name,
-          role: u.role as UserRole,
-          status: u.status || 'ACTIVE',
-          totpEnabled: u.totpEnabled ?? false,
-          totpSecret: u.totpSecret || undefined,
-          totpBackupCodes: u.totpBackupCodes || [],
-          avatar: u.avatar || '',
-          createdAt: u.createdAt.toISOString(),
-          updatedAt: u.updatedAt.toISOString(),
-        }));
+        return users.map((u) => AuthService.sanitizeUser(u));
       } catch (err) {
-        console.warn('Prisma getUsers error, falling back:', err);
+        console.error('Prisma getUsers error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
-    return dbStore.users;
+    return dbStore.users.map((u) => AuthService.sanitizeUser(u));
   }
 
   static async getUserById(id: string): Promise<User | null> {
-    if (id === 'usr-sarji-superadmin') {
-      return {
-        id: 'usr-sarji-superadmin',
-        email: 'sarji@seznam.cz',
-        name: 'Sarji (Super Admin)',
-        role: 'SUPER_ADMIN',
-        status: 'ACTIVE',
-        totpEnabled: false,
-        totpSecret: undefined,
-        totpBackupCodes: [],
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
     if (isPrismaAvailable()) {
       try {
         const u = await prisma.user.findUnique({ where: { id } });
         if (u) {
-          return {
-            id: u.id,
-            email: u.email,
-            name: u.name,
-            role: u.role as UserRole,
-            status: u.status || 'ACTIVE',
-            totpEnabled: u.totpEnabled ?? false,
-            totpSecret: u.totpSecret || undefined,
-            totpBackupCodes: u.totpBackupCodes || [],
-            avatar: u.avatar || '',
-            createdAt: u.createdAt.toISOString(),
-            updatedAt: u.updatedAt.toISOString(),
-          };
+          return AuthService.sanitizeUser(u);
         }
+        return null;
       } catch (err) {
-        console.info('[Fallback] getUserById error, using dbStore:', err);
+        console.error('getUserById error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
-    return dbStore.users.find((u) => u.id === id) || null;
+    const found = dbStore.users.find((u) => u.id === id);
+    return found ? AuthService.sanitizeUser(found) : null;
   }
 
   static async updateUserRole(userId: string, newRole: UserRole, adminUser?: User | null): Promise<User> {
+    // RBAC Guard
+    if (!adminUser) {
+      throw new Error('Přístup odepřen: Chybí identifikace administrátora.');
+    }
+
+    if (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Nedostatečné oprávnění.');
+    }
+
+    // Only SUPER_ADMIN can assign SUPER_ADMIN role
+    if (newRole === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Pouze SUPER_ADMIN může udělit roli SUPER_ADMIN.');
+    }
+
     if (isPrismaAvailable()) {
       try {
+        const target = await prisma.user.findUnique({ where: { id: userId } });
+        if (!target) throw new Error('Uživatel nenalezen');
+
+        // ADMIN cannot modify a SUPER_ADMIN
+        if (target.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+          throw new Error('Přístup odepřen: Administrátor nemůže upravovat účet SUPER_ADMIN.');
+        }
+
         const updated = await prisma.user.update({
           where: { id: userId },
           data: { role: newRole as UserRoleType },
@@ -394,37 +355,35 @@ export class AuthService {
 
         await prisma.auditLog.create({
           data: {
-            userId: adminUser?.id || updated.id,
-            userEmail: adminUser?.email || updated.email,
+            userId: adminUser.id,
+            userEmail: adminUser.email,
             action: 'ROLE_CHANGE',
             module: 'RBAC',
             details: `Změna role uživatele ${updated.email} na ${newRole}.`,
           },
         });
 
-        return {
-          id: updated.id,
-          email: updated.email,
-          name: updated.name,
-          role: updated.role as UserRole,
-          avatar: updated.avatar || '',
-          createdAt: updated.createdAt.toISOString(),
-          updatedAt: updated.updatedAt.toISOString(),
-        };
-      } catch (err) {
-        console.warn('Prisma updateUserRole error, falling back:', err);
+        return AuthService.sanitizeUser(updated);
+      } catch (err: any) {
+        if (err.message?.includes('Přístup') || err.message?.includes('nenalezen')) throw err;
+        console.error('Prisma updateUserRole error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
 
     const user = dbStore.users.find((u) => u.id === userId);
     if (!user) throw new Error('Uživatel nenalezen');
 
+    if (user.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Administrátor nemůže upravovat účet SUPER_ADMIN.');
+    }
+
     const oldRole = user.role;
     user.role = newRole;
     user.updatedAt = new Date().toISOString();
 
     dbStore.logAudit('ROLE_CHANGE', 'RBAC', `Změna role uživatele ${user.email} z ${oldRole} na ${newRole}.`, adminUser);
-    return user;
+    return AuthService.sanitizeUser(user);
   }
 
   static async getRoles() {
@@ -465,8 +424,27 @@ export class AuthService {
   }
 
   static async updateUser(userId: string, data: Partial<User>, adminUser?: User | null): Promise<User> {
+    if (!adminUser) {
+      throw new Error('Přístup odepřen: Chybí identifikace administrátora.');
+    }
+
+    if (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Nedostatečné oprávnění.');
+    }
+
+    if (data.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Pouze SUPER_ADMIN může udělit roli SUPER_ADMIN.');
+    }
+
     if (isPrismaAvailable()) {
       try {
+        const target = await prisma.user.findUnique({ where: { id: userId } });
+        if (!target) throw new Error('Uživatel nenalezen');
+
+        if (target.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+          throw new Error('Přístup odepřen: Administrátor nemůže upravovat účet SUPER_ADMIN.');
+        }
+
         const updateData: any = {};
         if (data.name !== undefined) updateData.name = data.name;
         if (data.email !== undefined) updateData.email = data.email.toLowerCase();
@@ -479,30 +457,28 @@ export class AuthService {
 
         await prisma.auditLog.create({
           data: {
-            userId: adminUser?.id || updated.id,
-            userEmail: adminUser?.email || updated.email,
+            userId: adminUser.id,
+            userEmail: adminUser.email,
             action: 'USER_UPDATE',
             module: 'RBAC',
             details: `Aktualizace údajů uživatele ${updated.email}.`,
           },
         });
 
-        return {
-          id: updated.id,
-          email: updated.email,
-          name: updated.name,
-          role: updated.role as UserRole,
-          avatar: updated.avatar || '',
-          createdAt: updated.createdAt.toISOString(),
-          updatedAt: updated.updatedAt.toISOString(),
-        };
-      } catch (err) {
-        console.warn('Prisma updateUser error, falling back:', err);
+        return AuthService.sanitizeUser(updated);
+      } catch (err: any) {
+        if (err.message?.includes('Přístup') || err.message?.includes('nenalezen')) throw err;
+        console.error('Prisma updateUser error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
 
     const user = dbStore.users.find((u) => u.id === userId);
     if (!user) throw new Error('Uživatel nenalezen');
+
+    if (user.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Administrátor nemůže upravovat účet SUPER_ADMIN.');
+    }
 
     if (data.name !== undefined) user.name = data.name;
     if (data.email !== undefined) user.email = data.email.toLowerCase();
@@ -510,20 +486,27 @@ export class AuthService {
     user.updatedAt = new Date().toISOString();
 
     dbStore.logAudit('USER_UPDATE', 'RBAC', `Aktualizace údajů uživatele ${user.email}.`, adminUser);
-    return user;
+    return AuthService.sanitizeUser(user);
   }
 
   static async deleteUser(userId: string, adminUser?: User | null): Promise<boolean> {
     if (!adminUser || (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN')) {
-        throw new Error('Přístup odepřen.');
+      throw new Error('Přístup odepřen.');
     }
-    
+
     if (userId === adminUser.id) {
-        throw new Error('Uživatel nemůže smazat sám sebe.');
+      throw new Error('Uživatel nemůže smazat sám sebe.');
     }
 
     if (isPrismaAvailable()) {
       try {
+        const target = await prisma.user.findUnique({ where: { id: userId } });
+        if (!target) throw new Error('Uživatel nenalezen');
+
+        if (target.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+          throw new Error('Přístup odepřen: Administrátor nemůže smazat účet SUPER_ADMIN.');
+        }
+
         await prisma.user.delete({
           where: { id: userId },
         });
@@ -539,13 +522,19 @@ export class AuthService {
         });
 
         return true;
-      } catch (err) {
-        console.warn('Prisma deleteUser error, falling back:', err);
+      } catch (err: any) {
+        if (err.message?.includes('Přístup') || err.message?.includes('smazat') || err.message?.includes('nenalezen')) throw err;
+        console.error('Prisma deleteUser error:', err);
+        throw new Error('DATABASE_UNAVAILABLE');
       }
     }
 
     const idx = dbStore.users.findIndex((u) => u.id === userId);
     if (idx === -1) throw new Error('Uživatel nenalezen');
+
+    if (dbStore.users[idx].role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+      throw new Error('Přístup odepřen: Administrátor nemůže smazat účet SUPER_ADMIN.');
+    }
 
     dbStore.users.splice(idx, 1);
     dbStore.logAudit('USER_DELETE', 'RBAC', `Smazání uživatele s ID ${userId}.`, adminUser);
@@ -553,10 +542,19 @@ export class AuthService {
   }
 
   static async adminResetPassword(userId: string, adminUser: User): Promise<string> {
-    if (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
-        throw new Error('Přístup odepřen.');
+    if (!adminUser || (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN')) {
+      throw new Error('Přístup odepřen.');
     }
-    
+
+    if (isPrismaAvailable()) {
+      const target = await prisma.user.findUnique({ where: { id: userId } });
+      if (!target) throw new Error('Uživatel nenalezen');
+
+      if (target.role === 'SUPER_ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+        throw new Error('Přístup odepřen: Administrátor nemůže resetovat heslo účtu SUPER_ADMIN.');
+      }
+    }
+
     // Kryptograficky bezpečné generování hesla o délce 12 znaků
     const newPassword = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
     const passwordHash = await hash(newPassword);
@@ -578,16 +576,16 @@ export class AuthService {
           },
         });
       } catch (err) {
-        console.warn('Prisma resetPassword error:', err);
+        console.error('Prisma resetPassword error:', err);
         throw new Error('Chyba při resetu hesla v databázi.');
       }
     } else {
-        const user = dbStore.users.find((u) => u.id === userId);
-        if (!user) throw new Error('Uživatel nenalezen');
-        (user as any).passwordHash = passwordHash;
-        dbStore.logAudit('PASSWORD_RESET', 'RBAC', `Administrátorský reset hesla pro uživatele ${userId}.`, adminUser);
+      const user = dbStore.users.find((u) => u.id === userId);
+      if (!user) throw new Error('Uživatel nenalezen');
+      (user as any).passwordHash = passwordHash;
+      dbStore.logAudit('PASSWORD_RESET', 'RBAC', `Administrátorský reset hesla pro uživatele ${userId}.`, adminUser);
     }
-    
+
     return newPassword;
   }
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { subjektService } from '../services/subjektService';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -37,8 +38,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/subjekty - Create new Subjekt
-router.post('/', async (req, res) => {
+// POST /api/subjekty - Create new Subjekt (Requires ADMIN or MODERATOR)
+router.post('/', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
     const { type, name, titleBefore, position, institution, city, region, address, email, phone, website, isVerified } = req.body;
 
@@ -68,8 +69,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/subjekty/:id - Update Subjekt
-router.put('/:id', async (req, res) => {
+// PUT /api/subjekty/:id - Update Subjekt (Requires ADMIN or MODERATOR)
+router.put('/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
     const updated = await subjektService.updateSubjekt(req.params.id, req.body);
     return res.json(updated);
@@ -79,8 +80,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/subjekty/:id - Delete Subjekt
-router.delete('/:id', async (req, res) => {
+// DELETE /api/subjekty/:id - Delete Subjekt (Requires ADMIN)
+router.delete('/:id', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
   try {
     await subjektService.deleteSubjekt(req.params.id);
     return res.json({ success: true, message: 'Subjekt byl smažen' });
@@ -90,8 +91,8 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST /api/subjekty/:id/reviews - Add Review to Subjekt or Pracovnik
-router.post('/:id/reviews', async (req, res) => {
+// POST /api/subjekty/:id/reviews - Add Review to Subjekt or Pracovnik (Requires Auth)
+router.post('/:id/reviews', requireAuth as any, async (req: any, res) => {
   try {
     const subjektId = req.params.id;
     const {
@@ -104,9 +105,11 @@ router.post('/:id/reviews', async (req, res) => {
       komunikace,
       rychlost,
       comment,
-      isAnonymous,
-      userId
+      isAnonymous
     } = req.body;
+
+    // Derived from cryptographically verified session
+    const userId = req.user.id;
 
     if (!rating || !comment) {
       return res.status(400).json({ error: 'Chybí hodnocení nebo slovní komentář' });
@@ -144,8 +147,8 @@ router.post('/:id/reviews', async (req, res) => {
   }
 });
 
-// POST /api/subjekty/:id/pracovnici - Add worker to Subjekt
-router.post('/:id/pracovnici', async (req, res) => {
+// POST /api/subjekty/:id/pracovnici - Add worker to Subjekt (Requires ADMIN or MODERATOR)
+router.post('/:id/pracovnici', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
     const subjektId = req.params.id;
     const { jmeno, pozice, telefon, email, kancelar } = req.body;

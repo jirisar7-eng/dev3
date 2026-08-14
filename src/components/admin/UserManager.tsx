@@ -61,7 +61,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         body: JSON.stringify({ name: quickCreateName, email: quickCreateEmail }),
       });
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         alert('Relace vypršela. Přihlaste se prosím znovu.');
         window.location.href = '/prihlaseni';
         return;
@@ -98,7 +98,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         alert('Relace vypršela. Přihlaste se prosím znovu.');
         window.location.href = '/prihlaseni';
         return;
@@ -131,7 +131,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         body: JSON.stringify({ name: editingUser.name, email: editingUser.email, role: editingUser.role }),
       });
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         alert('Relace vypršela. Přihlaste se prosím znovu.');
         window.location.href = '/prihlaseni';
         return;
@@ -196,7 +196,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         alert('Relace vypršela. Přihlaste se prosím znovu.');
         window.location.href = '/prihlaseni';
         return;
@@ -232,7 +232,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
         },
       });
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         alert('Relace vypršela. Přihlaste se prosím znovu.');
         window.location.href = '/prihlaseni';
         return;

@@ -36,9 +36,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'ADMIN'];
+const ROLES_REQUIRING_MFA = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'];
 
 const canFetchUsers = (user: User | null) => {
   if (!user) return false;
+  if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled) return false;
   return ADMIN_ROLES.includes(user.role);
 };
 
@@ -65,7 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const errJson = await res.json().catch(() => null);
         const errorText = errJson?.error || `Chyba ${res.status}: ${res.statusText}`;
         setError(errorText);
-        console.error('Error fetching users, status:', res.status, errorText);
+        if (res.status === 403) {
+          console.warn('[AuthContext] Načtení uživatelů odepřeno (403):', errorText);
+        } else {
+          console.error('Error fetching users, status:', res.status, errorText);
+        }
       }
     } catch (e: any) {
       setError(e.message || 'Chyba při komunikaci se serverem');

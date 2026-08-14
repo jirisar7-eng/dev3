@@ -7,6 +7,7 @@ import {
   deleteTemplate,
   seedSystemTemplates,
 } from '../services/templateService';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -45,9 +46,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /api/templates
- * Vytvoří novou opodstatněnou šablonu
+ * Vytvoří novou opodstatněnou šablonu (Requires ADMIN)
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth as any, requireRole('ADMIN') as any, async (req: Request, res: Response) => {
   try {
     const { name, category, description, puckDataJson, thumbnailUrl, isSystem } = req.body;
 
@@ -76,9 +77,9 @@ router.post('/', async (req: Request, res: Response) => {
 
 /**
  * PUT /api/templates/:id
- * Aktualizuje existující šablonu
+ * Aktualizuje existující šablonu (Requires ADMIN)
  */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, category, description, puckDataJson, thumbnailUrl } = req.body;
@@ -107,9 +108,9 @@ router.put('/:id', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/templates/:id
- * Smaže šablonu podle ID
+ * Smaže šablonu podle ID (Requires ADMIN)
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await deleteTemplate(id);
@@ -122,9 +123,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /api/templates/seed
- * Znovu inicializuje systémové šablony
+ * Znovu inicializuje systémové šablony (Requires ADMIN)
  */
-router.post('/seed', async (_req: Request, res: Response) => {
+router.post('/seed', requireAuth as any, requireRole('ADMIN') as any, async (_req: Request, res: Response) => {
   try {
     await seedSystemTemplates();
     return res.json({ success: true, message: 'Systémové šablony byly úspěšně inicializovány.' });

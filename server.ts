@@ -8,6 +8,7 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { verify } from '@node-rs/argon2';
 import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountDeletedEmail, sendQuickCreateEmail } from './src/services/emailService.ts';
 import { getMailcowMailboxes, createMailcowMailbox, deleteMailcowMailbox, updateMailcowPassword, checkMailcowHealth, getMailcowDomains } from './src/services/mailcowService.ts';
 import { AuthService } from './src/services/authService.ts';
@@ -407,8 +408,8 @@ app.post('/api/auth/login', authRateLimiter as any, async (req: AuthenticatedReq
       return res.status(401).json({ error: 'Neplatný e-mail nebo heslo.' });
     }
 
-    if (result.user.totpEnabled) {
-      return res.json({ mfaRequired: true, userId: result.user.id });
+    if (result.mfaRequired) {
+      return res.json({ mfaRequired: true, mfaToken: result.mfaToken });
     }
 
     // Regenerate session if helper is present
@@ -416,11 +417,18 @@ app.post('/api/auth/login', authRateLimiter as any, async (req: AuthenticatedReq
       req.session.regenerate();
     }
 
-    // Set signed HttpOnly secure cookie
-    res.cookie('userId', result.user.id, cookieOptions(result.user.role));
-    res.json({ token: result.token, user: result.user });
-  } catch (err: any) {
+    if (result.token && result.user) {
+      res.cookie('token', result.token, cookieOptions(result.user.role));
+      res.cookie('userId', result.user.id, cookieOptions(result.user.role));
+      return res.json({ token: result.token, user: result.user });
+    }
+
     res.status(401).json({ error: 'Neplatný e-mail nebo heslo.' });
+  } catch (err: any) {
+    if (err.message === 'DATABASE_UNAVAILABLE') {
+      return res.status(503).json({ error: 'Databázová služba je dočasně nedostupná.' });
+    }
+    res.status(401).json({ error: err.message || 'Neplatný e-mail nebo heslo.' });
   }
 });
 
@@ -462,6 +470,7 @@ app.post('/api/auth/register', authRateLimiter as any, async (req: Authenticated
       }
 
       // Set cookie for logged in registered user
+      res.cookie('token', result.token, cookieOptions(result.user.role));
       res.cookie('userId', result.user.id, cookieOptions(result.user.role));
       return res.json({ token: result.token, user: result.user });
     }
@@ -518,6 +527,7 @@ app.post('/api/auth/logout', (req: AuthenticatedRequest, res) => {
     req.session.destroy();
   }
   res.clearCookie('userId');
+  res.clearCookie('token');
   res.json({ success: true, message: 'Uživatel byl úspěšně odhlášen.' });
 });
 
@@ -531,6 +541,9 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
     const secretData = TotpService.generateSecret(user.email);
     const qrCodeUrl = await TotpService.generateQrCodeDataUrl(secretData.otpauthUrl || '');
 
+    // Hash backup codes before storing for security (P0-7)
+    const hashedBackupCodes = secretData.backupCodes.map(c => TotpService.hashBackupCode(c));
+
     // Save secret and backup codes to DB
     if (getPrismaClient()) {
       try {
@@ -538,11 +551,11 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
           where: { id: user.id },
           data: {
             totpTempSecret: secretData.base32,
-            totpBackupCodes: secretData.backupCodes,
+            totpBackupCodes: hashedBackupCodes,
           },
         });
       } catch (prismaErr) {
-        console.warn('[2FA Generate] Prisma update failed, using dbStore:', prismaErr);
+        console.warn('[2FA Generate] Prisma update failed:', prismaErr);
       }
     }
 
@@ -550,13 +563,13 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
     const dbUserSync = dbStore.users.find(u => u.id === user.id);
     if (dbUserSync) {
       dbUserSync.totpTempSecret = secretData.base32;
-      dbUserSync.totpBackupCodes = secretData.backupCodes;
+      dbUserSync.totpBackupCodes = hashedBackupCodes;
     }
 
     res.json({
       qrCode: qrCodeUrl,
       secret: secretData.base32,
-      backupCodes: secretData.backupCodes,
+      backupCodes: secretData.backupCodes, // Plain backup codes returned ONLY ONCE during generation
     });
   } catch (err: any) {
     console.error('Chyba při generování 2FA:', err);
@@ -572,14 +585,12 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       return res.status(401).json({ error: 'Uživatel není přihlášen.' });
     }
 
-    // Get current secret - ALWAYS FETCH FRESH FROM DB
     const freshUser = await getPrismaClient().user.findUnique({
       where: { id: user.id }
     });
     
     let secret = freshUser?.totpTempSecret;
     
-    // Fallback to dbStore if not found in Prisma
     if (!secret) {
       const dbUser = dbStore.users.find(u => u.id === user.id);
       secret = dbUser?.totpTempSecret;
@@ -594,7 +605,6 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       return res.status(400).json({ error: 'Neplatný kód. Zkuste to prosím znovu.' });
     }
 
-    // Enable 2FA in DB
     if (getPrismaClient()) {
       try {
         await getPrismaClient().user.update({
@@ -606,11 +616,10 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
           },
         });
       } catch (prismaErr) {
-        console.warn('[2FA Enable] Prisma update failed, using dbStore:', prismaErr);
+        console.warn('[2FA Enable] Prisma update failed:', prismaErr);
       }
     }
 
-    // Sync to dbStore
     const dbUserEnable = dbStore.users.find(u => u.id === user.id);
     if (dbUserEnable) {
       dbUserEnable.totpEnabled = true;
@@ -618,7 +627,6 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       dbUserEnable.totpTempSecret = undefined;
     }
 
-    // Log action
     if (getPrismaClient()) {
       try {
         await getPrismaClient().auditLog.create({
@@ -630,9 +638,7 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
             details: `Uživatel ${user.email} si aktivoval dvoufázové ověření.`,
           },
         });
-      } catch (logErr) {
-        console.warn('Audit log create error:', logErr);
-      }
+      } catch (logErr) {}
     }
     dbStore.logAudit('2FA_ENABLED', 'AUTH', `Uživatel ${user.email} si aktivoval dvoufázové ověření.`, user);
 
@@ -643,26 +649,40 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
   }
 });
 
-app.post('/api/auth/2fa/verify', async (req: AuthenticatedRequest, res) => {
+app.post('/api/auth/2fa/verify', authRateLimiter as any, async (req: AuthenticatedRequest, res) => {
   try {
-    const { userId, code } = req.body;
-    if (!userId || !code) {
-      return res.status(400).json({ error: 'Chybí ID uživatele nebo ověřovací kód.' });
+    const { mfaToken, userId: bodyUserId, code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'Chybí ověřovací kód.' });
     }
 
-    const user = await AuthService.getUserById(userId);
+    let targetUserId = bodyUserId;
+    if (mfaToken) {
+      const verifiedMfa = AuthService.verifyMfaToken(mfaToken);
+      if (!verifiedMfa) {
+        return res.status(401).json({ error: 'Neplatný nebo vypršený MFA token. Přihlaste se prosím znovu.' });
+      }
+      targetUserId = verifiedMfa.userId;
+    }
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'Chybí ověření identity pro 2FA.' });
+    }
+
+    let user: any = null;
+    if (getPrismaClient()) {
+      user = await getPrismaClient().user.findUnique({ where: { id: targetUserId } });
+    }
+    if (!user) {
+      user = dbStore.users.find((u) => u.id === targetUserId);
+    }
+
     if (!user) {
       return res.status(404).json({ error: 'Uživatel nebyl nalezen.' });
     }
 
     let secret = user.totpSecret;
-    let backupCodes = user.totpBackupCodes || [];
-
-    if (!secret) {
-      const dbUser = dbStore.users.find(u => u.id === userId);
-      secret = dbUser?.totpSecret;
-      backupCodes = dbUser?.totpBackupCodes || [];
-    }
+    let backupCodes: string[] = user.totpBackupCodes || [];
 
     if (!secret) {
       return res.status(400).json({ error: 'Pro tohoto uživatele není 2FA aktivní.' });
@@ -671,25 +691,32 @@ app.post('/api/auth/2fa/verify', async (req: AuthenticatedRequest, res) => {
     let verified = TotpService.verifyToken(secret, code);
     let isBackupUsed = false;
 
-    if (!verified && backupCodes.includes(code.toUpperCase())) {
-      verified = true;
-      isBackupUsed = true;
-      // Remove used backup code
-      const updatedBackupCodes = backupCodes.filter(c => c !== code.toUpperCase());
-      
-      if (getPrismaClient()) {
-        try {
-          await getPrismaClient().user.update({
-            where: { id: userId },
-            data: { totpBackupCodes: updatedBackupCodes },
-          });
-        } catch (prismaErr) {
-          console.warn('[2FA Verify] Prisma backup codes update failed:', prismaErr);
+    if (!verified && backupCodes.length > 0) {
+      const inputHash = TotpService.hashBackupCode(code.trim().toUpperCase());
+      for (const bc of backupCodes) {
+        if (bc === code.trim().toUpperCase() || bc === inputHash) {
+          verified = true;
+          isBackupUsed = true;
+          backupCodes = backupCodes.filter((c) => c !== bc && c !== inputHash);
+          break;
         }
       }
-      const dbUser = dbStore.users.find(u => u.id === userId);
-      if (dbUser) {
-        dbUser.totpBackupCodes = updatedBackupCodes;
+
+      if (isBackupUsed) {
+        if (getPrismaClient()) {
+          try {
+            await getPrismaClient().user.update({
+              where: { id: user.id },
+              data: { totpBackupCodes: backupCodes },
+            });
+          } catch (prismaErr) {
+            console.warn('[2FA Verify] Prisma backup codes update failed:', prismaErr);
+          }
+        }
+        const dbUser = dbStore.users.find((u) => u.id === user.id);
+        if (dbUser) {
+          dbUser.totpBackupCodes = backupCodes;
+        }
       }
     }
 
@@ -697,7 +724,6 @@ app.post('/api/auth/2fa/verify', async (req: AuthenticatedRequest, res) => {
       return res.status(401).json({ error: 'Neplatný ověřovací kód.' });
     }
 
-    // Log action
     if (getPrismaClient()) {
       try {
         await getPrismaClient().auditLog.create({
@@ -711,46 +737,88 @@ app.post('/api/auth/2fa/verify', async (req: AuthenticatedRequest, res) => {
         });
       } catch (logErr) {}
     }
-    dbStore.logAudit('2FA_VERIFIED', 'AUTH', `Uživatel ${user.email} se úspěšně přihlásil s 2FA.`, user);
 
-    // Perform login (generate JWT and set session cookie)
     if (req.session && req.session.regenerate) {
       req.session.regenerate();
     }
 
     const token = AuthService.generateToken(user);
+    const sanitizedUser = AuthService.sanitizeUser(user);
+
+    res.cookie('token', token, cookieOptions(user.role));
     res.cookie('userId', user.id, cookieOptions(user.role));
-    res.json({ token, user });
+    res.json({ token, user: sanitizedUser });
   } catch (err: any) {
     console.error('Chyba při ověřování 2FA:', err);
     res.status(500).json({ error: 'Chyba při ověřování 2FA.' });
   }
 });
 
-app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+app.post('/api/auth/2fa/disable', authRateLimiter as any, requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
-    const { code } = req.body;
+    const { password, code } = req.body;
     const user = req.user;
     if (!user) {
       return res.status(401).json({ error: 'Uživatel není přihlášen.' });
     }
 
-    // Optional verification code check for disable
-    if (code) {
-      let secret = user.totpSecret;
-      if (!secret) {
-        const dbUser = dbStore.users.find(u => u.id === user.id);
-        secret = dbUser?.totpSecret;
+    if (!password || !code) {
+      return res.status(400).json({ error: 'Pro vypnutí 2FA musíte zadat vaše heslo a 2FA kód.' });
+    }
+
+    let freshUser: any = null;
+    if (getPrismaClient()) {
+      freshUser = await getPrismaClient().user.findUnique({ where: { id: user.id } });
+    }
+    if (!freshUser) {
+      freshUser = dbStore.users.find((u) => u.id === user.id);
+    }
+
+    if (!freshUser) {
+      return res.status(404).json({ error: 'Uživatel nebyl nalezen.' });
+    }
+
+    // Verify Password
+    if (freshUser.passwordHash) {
+      let isPasswordValid = false;
+      try {
+        isPasswordValid = await verify(freshUser.passwordHash, password);
+      } catch (argonErr) {
+        try {
+          isPasswordValid = await bcrypt.compare(password, freshUser.passwordHash);
+        } catch (bcryptErr) {
+          const pbkdf2Hash = crypto.pbkdf2Sync(password, 'tatovacesta_salt_2026', 1000, 64, 'sha512').toString('hex');
+          isPasswordValid = (freshUser.passwordHash === pbkdf2Hash);
+        }
       }
-      if (secret) {
-        const isValid = TotpService.verifyToken(secret, code);
-        if (!isValid) {
-          return res.status(400).json({ error: 'Neplatný ověřovací kód.' });
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Neplatné heslo.' });
+      }
+    }
+
+    // Verify 2FA Code
+    const secret = freshUser.totpSecret;
+    if (!secret) {
+      return res.status(400).json({ error: '2FA není aktivní.' });
+    }
+
+    let isCodeValid = TotpService.verifyToken(secret, code);
+    if (!isCodeValid && freshUser.totpBackupCodes) {
+      const backupCodes: string[] = freshUser.totpBackupCodes;
+      const inputHash = TotpService.hashBackupCode(code.trim().toUpperCase());
+      for (const bc of backupCodes) {
+        if (bc === code.trim().toUpperCase() || bc === inputHash) {
+          isCodeValid = true;
+          break;
         }
       }
     }
 
-    // Disable 2FA in DB
+    if (!isCodeValid) {
+      return res.status(400).json({ error: 'Neplatný ověřovací kód.' });
+    }
+
+    // Disable 2FA
     if (getPrismaClient()) {
       try {
         await getPrismaClient().user.update({
@@ -758,23 +826,22 @@ app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedR
           data: {
             totpEnabled: false,
             totpSecret: null,
+            totpTempSecret: null,
             totpBackupCodes: [],
           },
         });
       } catch (prismaErr) {
-        console.warn('[2FA Disable] Prisma update failed, using dbStore:', prismaErr);
+        console.warn('[2FA Disable] Prisma update failed:', prismaErr);
       }
     }
 
-    // Sync to dbStore
-    const dbUser = dbStore.users.find(u => u.id === user.id);
+    const dbUser = dbStore.users.find((u) => u.id === user.id);
     if (dbUser) {
       dbUser.totpEnabled = false;
       dbUser.totpSecret = undefined;
       dbUser.totpBackupCodes = [];
     }
 
-    // Log action
     if (getPrismaClient()) {
       try {
         await getPrismaClient().auditLog.create({
@@ -783,14 +850,13 @@ app.post('/api/auth/2fa/disable', requireAuth as any, async (req: AuthenticatedR
             userEmail: user.email,
             action: '2FA_DISABLED',
             module: 'AUTH',
-            details: `Uživatel ${user.email} si vypnul dvoufázové ověření.`,
+            details: `Uživatel ${user.email} si po ověření heslem a kódem vypnul dvoufázové ověření.`,
           },
         });
       } catch (logErr) {}
     }
-    dbStore.logAudit('2FA_DISABLED', 'AUTH', `Uživatel ${user.email} si vypnul dvoufázové ověření.`, user);
 
-    res.json({ success: true, message: 'Dvoufázové ověření bylo vypnuto.' });
+    res.json({ success: true, message: 'Dvoufázové ověření bylo úspěšně vypnuto.' });
   } catch (err: any) {
     console.error('Chyba při vypínání 2FA:', err);
     res.status(500).json({ error: 'Chyba při vypínání 2FA.' });

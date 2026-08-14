@@ -48,33 +48,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
       where: { email: targetEmail },
     });
 
-    // Special handling for sarji@seznam.cz
-    if (targetEmail === 'sarji@seznam.cz') {
-        const passwordHash = await hashPassword("159753");
-        if (!existingUser) {
-           existingUser = await prisma.user.create({
-            data: {
-              id: 'usr-sarji-superadmin',
-              email: targetEmail,
-              name: 'Sarji (Super Admin)',
-              role: 'SUPER_ADMIN',
-              passwordHash,
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
-            },
-          });
-        } else {
-             // UPDATE ONLY ROLE AND PASSWORD - NEVER TOUCH 2FA/TOTP FIELDS
-             existingUser = await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { 
-                role: 'SUPER_ADMIN', 
-                passwordHash 
-                // Do NOT add totpEnabled, totpSecret, etc here
-              },
-            });
-        }
-    }
-
+    // Ensure superadmin account if ADMIN_INITIAL_PASSWORD is defined or user exists
     if (existingUser) {
       let roleUpdated = false;
       let passwordUpdated = false;

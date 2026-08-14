@@ -14,42 +14,59 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export async function parseAuthToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  let userId = req.signedCookies ? req.signedCookies.userId : undefined;
+  let userId: string | undefined = undefined;
 
-  if (!userId && req.headers['x-user-id']) {
-    userId = req.headers['x-user-id'] as string;
-  }
-
-  if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    const token = req.headers.authorization.split(' ')[1];
-    if (token && token !== 'null') {
+  // 1. Try Bearer header
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    if (token && token !== 'null' && token !== 'undefined') {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string, { algorithms: ['HS256'] }) as any;
         if (decoded && (decoded.sub || decoded.userId || decoded.id)) {
-           userId = decoded.sub || decoded.userId || decoded.id;
-        } else {
-           console.log('[Auth] JWT decoded but missing sub/id:', decoded);
+          userId = decoded.sub || decoded.userId || decoded.id;
         }
       } catch (err) {
-        if (token.startsWith('jwt_token_')) {
-          const parts = token.split('_');
-          if (parts.length >= 3) {
-            userId = parts[2];
-          }
+        // Token invalid or expired - do NOT set userId
+      }
+    }
+  }
+
+  // 2. Try signed or regular HttpOnly cookie if no Bearer token
+  if (!userId) {
+    const cookieToken = (req.signedCookies && req.signedCookies.token) || 
+                        (req.cookies && req.cookies.token) || 
+                        (req.signedCookies && req.signedCookies.userId) ||
+                        (req.cookies && req.cookies.userId);
+    if (cookieToken) {
+      try {
+        const decoded = jwt.verify(cookieToken, process.env.JWT_SECRET as string, { algorithms: ['HS256'] }) as any;
+        if (decoded && (decoded.sub || decoded.userId || decoded.id)) {
+          userId = decoded.sub || decoded.userId || decoded.id;
         } else {
-          console.error('[Auth] JWT decode error:', err);
+          // If cookieToken was directly a userId string (legacy cookie), resolve user
+          userId = cookieToken;
+        }
+      } catch (err) {
+        // If cookieToken was raw userId string without JWT wrap
+        if (typeof cookieToken === 'string' && cookieToken.length < 100) {
+          userId = cookieToken;
         }
       }
     }
   }
 
+  // NOTE: x-user-id header is explicitly IGNORED for identity resolution.
+
   req.session = {
     userId,
     regenerate: () => {
       res.clearCookie('userId');
+      res.clearCookie('token');
     },
     destroy: () => {
       res.clearCookie('userId');
+      res.clearCookie('token');
       if (req.session) {
         req.session.userId = undefined;
       }
@@ -71,7 +88,7 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
 
 const ROLES_REQUIRING_MFA = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'CONTENT_MANAGER', 'LEGAL_EDITOR', 'MODERATOR', 'ADMIN'];
 
-function checkUserStatusAndMfa(user: any, req: Request, res: Response): boolean {
+function checkUserStatusAndMfa(user: User, req: Request, res: Response): boolean {
   // 1. Account status check
   if (user.status === 'BANNED' || user.status === 'SUSPENDED') {
     res.status(403).json({ error: 'Přístup odepřen. Váš účet byl zablokován nebo pozastaven.' });
@@ -80,15 +97,13 @@ function checkUserStatusAndMfa(user: any, req: Request, res: Response): boolean 
 
   // 2. MFA requirement check for administrative roles (except during MFA configuration/me routes)
   const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
-  
-  const isDevOrPreview = process.env.NODE_ENV !== 'production' || 
-                         req.get('host')?.includes('dev3') || 
-                         req.get('host')?.includes('ais-') || 
-                         req.get('host')?.includes('localhost');
-  
+
+  // Only allow explicit ALLOW_AUTH_BYPASS flag in non-production environments
+  const isExplicitBypassAllowed = process.env.NODE_ENV !== 'production' && process.env.ALLOW_AUTH_BYPASS === 'true';
+
   if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled && !isMfaSetupRoute) {
-    if (isDevOrPreview || user.email === 'sarji@seznam.cz') {
-      console.warn('[Auth] Bypass 2FA requirement pro účet ' + user.email);
+    if (isExplicitBypassAllowed) {
+      console.warn('[Auth] Explicit ALLOW_AUTH_BYPASS active for ' + user.email);
     } else {
       res.status(403).json({
         code: 'MFA_REQUIRED',
@@ -192,11 +207,10 @@ export function requirePermission(permissionKey: string) {
       next();
     } catch (err) {
       console.error('Error in requirePermission database query:', err);
-      if (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN') {
+      if (req.user && (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN')) {
         return next();
       }
       return res.status(403).json({ error: `Přístup odepřen. Vyžadováno oprávnění '${permissionKey}'.` });
     }
   };
 }
-
