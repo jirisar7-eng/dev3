@@ -6,6 +6,7 @@ import {
   Plus, Check, X, FileText, ChevronRight, AlertCircle, RefreshCw, Sparkles, Upload
 } from 'lucide-react';
 import { JudgmentImportModal } from '../../components/coparent/JudgmentImportModal';
+import { InviteModal } from '../../components/coparent/InviteModal';
 import { AuditPrintView } from '../../components/coparent/AuditPrintView';
 
 interface CoParentPageProps {
@@ -914,109 +915,19 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
       )}
 
       {/* INVITE MODAL */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-900" />
-                Pozvat spolurodiče do prostoru
-              </h3>
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600">
-              Vygenerujte párovací kód a pozvánku pro druhého rodiče. Platnost kódu je 48 hodin.
-            </p>
-
-            <form onSubmit={handleCreateInvite} className="space-y-4">
-              <div>
-                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  E-mail druhého rodiče
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="rodic@example.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-900"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-blue-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-blue-800 shadow-md"
-              >
-                Vygenerovat kód a pozvánku
-              </button>
-            </form>
-
-            {inviteResult && (
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-center">
-                <div className="text-2xs font-bold uppercase tracking-wider text-slate-500">Vygenerovaný párovací kód</div>
-                <div className="text-3xl font-extrabold font-mono tracking-widest text-blue-900 bg-white py-3 px-4 rounded-xl border border-slate-200 shadow-xs inline-block">
-                  {inviteResult.code}
-                </div>
-
-                {/* QR Code Mock / Visual */}
-                <div className="flex justify-center">
-                  <div className="w-32 h-32 bg-white p-2 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center justify-center">
-                    <div className="w-24 h-24 bg-slate-900 text-white flex items-center justify-center rounded text-2xs font-mono font-bold text-center p-1">
-                      [ QR KÓD PRO PÁROVÁNÍ ]
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-2xs text-slate-500">
-                  Pozvánka byla odeslána na e-mail <span className="font-bold text-slate-800">{inviteResult.email}</span>. Platí do {new Date(inviteResult.expiresAt).toLocaleString()}.
-                </p>
-
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(inviteResult.code);
-                    alert('Kód byl zkopírován do schránky!');
-                  }}
-                  className="px-4 py-2 bg-slate-200 text-slate-800 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-300"
-                >
-                  Zkopírovat kód do schránky
-                </button>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-200"
-              >
-                Zavřít
-              </button>
-            </div>
-            {/* AI Judgment Import Section in Settings */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-700" />
-                  AI Analýza rozsudku & Automatické nastavení
-                </h4>
-                <p className="text-xs text-indigo-700 mt-0.5">Automaticky vytvořte kalendář péče, předání a výživné z textu rozsudku.</p>
-              </div>
-              <button
-                onClick={() => setShowJudgmentModal(true)}
-                className="px-4 py-2.5 bg-indigo-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-800 shadow-md flex items-center gap-2 shrink-0"
-              >
-                <FileText className="w-4 h-4" />
-                📄 Nahrát rozsudek / dohodu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        spaceId={space?.id}
+        onOpenJudgmentImport={() => {
+          setShowInviteModal(false);
+          setShowJudgmentModal(true);
+        }}
+        onSuccess={() => {
+          fetchMembers();
+          fetchCoParentData();
+        }}
+      />
 
       {/* Judgment Import Modal */}
       <JudgmentImportModal

@@ -188,13 +188,42 @@ export class CoParentController {
 
   public static async createInvite(req: AuthenticatedRequest, res: Response) {
     try {
-      const { spaceId, email } = req.body;
-      if (!spaceId || !email) {
-        return res.status(400).json({ error: 'Chybí spaceId nebo email.' });
+      let { spaceId, email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Chybí e-mail pro pozvání.' });
       }
+
+      if (!spaceId) {
+        const p = prisma;
+        if (!isPrismaAvailable() || !p) {
+          return res.status(500).json({ error: "Databáze není dostupná." });
+        }
+        const spaceDelegate = (p as any).coParentSpace || (p as any).coparentSpace;
+        let space = await spaceDelegate.findFirst({
+          where: {
+            members: { some: { userId: req.user!.id } }
+          }
+        });
+
+        if (!space) {
+          space = await spaceDelegate.create({
+            data: {
+              title: `Spolurodičovský prostor`,
+              conflictMode: 'COOPERATION',
+              ownerId: req.user!.id,
+              members: {
+                create: { userId: req.user!.id, role: 'FATHER' }
+              }
+            }
+          });
+        }
+        spaceId = space.id;
+      }
+
       const invite = await CoParentService.createInvite(spaceId, req.user!.id, email);
       res.status(201).json(invite);
     } catch (err: any) {
+      console.error('[CoParentController.createInvite error]:', err);
       res.status(500).json({ error: err.message || 'Chyba při vytváření pozvánky.' });
     }
   }
