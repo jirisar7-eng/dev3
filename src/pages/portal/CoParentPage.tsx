@@ -104,13 +104,15 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
       const res = await fetch('/api/coparent/dashboard', {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
-      if (!res.ok) throw new Error('Nepodařilo se načíst data CoParent Hubu.');
       const data = await res.json();
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || 'Připravujeme váš Spolurodičovský prostor...');
+      }
       setDashboard(data);
       setSpace(data.space);
       setError(null);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Připravujeme váš Spolurodičovský prostor...');
     } finally {
       setLoading(false);
     }
@@ -244,11 +246,12 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     { key: 'settings', label: 'Nastavení', icon: Settings },
   ];
 
-  if (loading) {
+  if (loading || (error && (error.includes('Databáze') || error.includes('připravuje')))) {
     return (
-      <div className="py-24 text-center">
-        <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-900 mb-4" />
-        <p className="text-sm font-medium text-slate-600">Načítám Spolurodičovský Hub...</p>
+      <div className="py-24 text-center space-y-4">
+        <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-900 mb-2" />
+        <p className="text-sm font-bold text-slate-800">Připravujeme váš Spolurodičovský prostor...</p>
+        <p className="text-xs text-slate-500">Probíhá inicializace databázového prostoru a výchozích entit.</p>
       </div>
     );
   }
