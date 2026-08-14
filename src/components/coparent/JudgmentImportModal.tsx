@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, FileText, Upload, CheckCircle2, X, AlertCircle } from 'lucide-react';
 
 interface JudgmentImportModalProps {
@@ -20,6 +20,41 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
   const [loadingText, setLoadingText] = useState('AI analyzuje právní dokument...');
   const [extractedData, setExtractedData] = useState<any>(null);
   const [step, setStep] = useState<'upload' | 'review'>('upload');
+
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading && step === 'upload') {
+      const startTime = Date.now();
+      setProgress(0);
+      setSecondsElapsed(0);
+      
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        setSecondsElapsed(elapsed);
+        
+        setProgress(() => {
+          // Linear progress up to 95% over 15 seconds
+          const linear = ((now - startTime) / 15000) * 95;
+          return Math.min(linear, 95);
+        });
+      }, 100);
+    } else if (!loading) {
+      setProgress(100);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loading, step]);
+
+  const getAnalyzingText = (seconds: number) => {
+    if (seconds <= 3) return "📄 Načítání a čtení textové vrstvy z dokumentu...";
+    if (seconds <= 8) return "🤖 Gemini AI analyzuje střídavou péči, časy a výživné...";
+    return "✨ Extrahují se strukturovaná data a připravuje se formulář...";
+  };
 
   if (!isOpen) return null;
 
@@ -103,9 +138,29 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
         </div>
 
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center space-y-4">
+          <div className="py-16 flex flex-col items-center justify-center space-y-6">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-bold text-slate-700 animate-pulse">{loadingText}</p>
+            
+            {step === 'upload' ? (
+              <div className="w-full max-w-sm space-y-4 text-center">
+                <p className="text-sm font-bold text-slate-800 animate-pulse">
+                  {getAnalyzingText(secondsElapsed)}
+                </p>
+                
+                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-100 ease-linear" 
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                
+                <p className="text-xs text-slate-500 font-mono">
+                  Čas analýzy: 00:{secondsElapsed.toString().padStart(2, '0')} / odhadem ~15 s
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm font-bold text-slate-700 animate-pulse">{loadingText}</p>
+            )}
           </div>
         ) : step === 'upload' ? (
           <form onSubmit={handleAnalyze} className="space-y-6">
