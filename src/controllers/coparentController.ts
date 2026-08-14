@@ -227,12 +227,18 @@ export class CoParentController {
 
   public static async parseJudgment(req: AuthenticatedRequest, res: Response) {
     try {
-      const { text, content } = req.body;
-      const docText = text || content || 'Soudní rozsudek o úpravě poměrů nezletilého dítěte a výživném.';
-      const extracted = await JudgmentParserService.parseJudgmentText(docText);
+      const { text } = req.body;
+      const file = req.file;
+
+      if (!text && !file) {
+        return res.status(400).json({ success: false, error: "Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné." });
+      }
+
+      const extracted = await JudgmentParserService.parseJudgmentFile(file, text);
       res.json(extracted);
     } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Chyba při AI analýze rozsudku.' });
+      console.error('[CoParentController.parseJudgment error]:', err);
+      res.status(400).json({ success: false, error: err.message || "Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné." });
     }
   }
 

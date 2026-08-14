@@ -29,31 +29,21 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
     setLoadingText('AI analyzuje právní dokument a extrahuje data...');
 
     try {
-      // Simulate file reading or text submission
-      let textToSend = docText;
+      const formData = new FormData();
       if (file) {
-        try {
-          const fileText = await file.text();
-          if (fileText && fileText.trim().length > 10) {
-            textToSend = fileText;
-          } else {
-            textToSend = `Dokument: ${file.name}. Obsah: Rozsudek Okresního soudu o úpravě poměrů nezletilého dítěte, střídavá péče týden A / týden B, předání v neděli v 18:00, výživné 4500 Kč splatné do 15. dne v měsíci.`;
-          }
-        } catch {
-          textToSend = `Dokument: ${file.name}. Obsah: Rozsudek Okresního soudu o úpravě poměrů nezletilého dítěte, střídavá péče týden A / týden B, předání v neděli v 18:00, výživné 4500 Kč splatné do 15. dne v měsíci.`;
-        }
-      }
-      if (!textToSend.trim()) {
-        textToSend = 'Soudní rozsudek o střídavé péči pro nezletilého Jan Novák, nar. 2018-05-12, výživné 4000 Kč, předání neděle 18:00.';
+        formData.append('document', file);
+      } else if (docText.trim()) {
+        formData.append('text', docText.trim());
+      } else {
+        throw new Error('Musíte nahrát soubor nebo zadat text.');
       }
 
       const res = await fetch('/api/coparent/parse-judgment', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer jwt_token_user_${Date.now()}`
         },
-        body: JSON.stringify({ text: textToSend })
+        body: formData
       });
 
       const data = await res.json();
@@ -191,7 +181,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
                 <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Jméno dítěte</label>
                 <input
                   type="text"
-                  value={extractedData.childName}
+                  value={extractedData.childName || ''}
                   onChange={(e) => setExtractedData({ ...extractedData, childName: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold"
                 />
@@ -210,7 +200,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
               <div>
                 <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Typ péče</label>
                 <select
-                  value={extractedData.custodyType}
+                  value={extractedData.custodyType || 'SHARED'}
                   onChange={(e) => setExtractedData({ ...extractedData, custodyType: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 >
@@ -224,7 +214,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
               <div>
                 <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Rozvrh střídání</label>
                 <select
-                  value={extractedData.scheduleType}
+                  value={extractedData.scheduleType || 'WEEK_A_B'}
                   onChange={(e) => setExtractedData({ ...extractedData, scheduleType: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 >
@@ -238,17 +228,17 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
                 <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Den předání</label>
                 <input
                   type="text"
-                  value={extractedData.handoverDay}
+                  value={extractedData.handoverDay || ''}
                   onChange={(e) => setExtractedData({ ...extractedData, handoverDay: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas předání</label>
+                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas předání (HH:MM)</label>
                 <input
-                  type="text"
-                  value={extractedData.handoverTime}
+                  type="time"
+                  value={extractedData.handoverTime || ''}
                   onChange={(e) => setExtractedData({ ...extractedData, handoverTime: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
