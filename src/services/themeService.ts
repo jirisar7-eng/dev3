@@ -208,7 +208,7 @@ export class ThemeService {
 
     const newThemeId = 'thm-' + Date.now();
     const newVars: ThemeVariable[] = DEFAULT_THEME_VARIABLES.map((item) => ({
-      id: 'var-' + Math.random().toString(36).substr(2, 9),
+      id: 'var-' + crypto.randomUUID(),
       themeId: newThemeId,
       key: item.key,
       value: (data.variables && data.variables[item.key]) || item.value,

@@ -203,7 +203,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="např. sarji@seznam.cz"
+                placeholder="např. admin@tatovacesta.cz"
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm outline-hidden transition-all bg-slate-50/50 focus:bg-white"
               />
             </div>

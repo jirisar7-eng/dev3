@@ -23,7 +23,7 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
     if (token && token !== 'null' && token !== 'undefined') {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string, { algorithms: ['HS256'] }) as any;
-        if (decoded && (decoded.sub || decoded.userId || decoded.id)) {
+        if (decoded && decoded.type !== 'mfa_pending' && (decoded.sub || decoded.userId || decoded.id)) {
           userId = decoded.sub || decoded.userId || decoded.id;
         }
       } catch (err) {
@@ -32,31 +32,23 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
     }
   }
 
-  // 2. Try signed or regular HttpOnly cookie if no Bearer token
+  // 2. Try signed or regular HttpOnly JWT token cookie if no Bearer token
   if (!userId) {
     const cookieToken = (req.signedCookies && req.signedCookies.token) || 
-                        (req.cookies && req.cookies.token) || 
-                        (req.signedCookies && req.signedCookies.userId) ||
-                        (req.cookies && req.cookies.userId);
+                        (req.cookies && req.cookies.token);
     if (cookieToken) {
       try {
         const decoded = jwt.verify(cookieToken, process.env.JWT_SECRET as string, { algorithms: ['HS256'] }) as any;
-        if (decoded && (decoded.sub || decoded.userId || decoded.id)) {
+        if (decoded && decoded.type !== 'mfa_pending' && (decoded.sub || decoded.userId || decoded.id)) {
           userId = decoded.sub || decoded.userId || decoded.id;
-        } else {
-          // If cookieToken was directly a userId string (legacy cookie), resolve user
-          userId = cookieToken;
         }
       } catch (err) {
-        // If cookieToken was raw userId string without JWT wrap
-        if (typeof cookieToken === 'string' && cookieToken.length < 100) {
-          userId = cookieToken;
-        }
+        // Token invalid or expired - do NOT set userId
       }
     }
   }
 
-  // NOTE: x-user-id header is explicitly IGNORED for identity resolution.
+  // NOTE: x-user-id header and raw userId cookies are explicitly IGNORED for identity resolution.
 
   req.session = {
     userId,
@@ -98,19 +90,12 @@ function checkUserStatusAndMfa(user: User, req: Request, res: Response): boolean
   // 2. MFA requirement check for administrative roles (except during MFA configuration/me routes)
   const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
 
-  // Only allow explicit ALLOW_AUTH_BYPASS flag in non-production environments
-  const isExplicitBypassAllowed = process.env.NODE_ENV !== 'production' && process.env.ALLOW_AUTH_BYPASS === 'true';
-
   if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled && !isMfaSetupRoute) {
-    if (isExplicitBypassAllowed) {
-      console.warn('[Auth] Explicit ALLOW_AUTH_BYPASS active for ' + user.email);
-    } else {
-      res.status(403).json({
-        code: 'MFA_REQUIRED',
-        error: 'Tato role vyžaduje aktivní dvoufázové ověření (2FA). Chcete-li pokračovat, aktivujte si 2FA v nastavení zabezpečení profilu.',
-      });
-      return false;
-    }
+    res.status(403).json({
+      code: 'MFA_REQUIRED',
+      error: 'Tato role vyžaduje aktivní dvoufázové ověření (2FA). Chcete-li pokračovat, aktivujte si 2FA v nastavení zabezpečení profilu.',
+    });
+    return false;
   }
 
   return true;

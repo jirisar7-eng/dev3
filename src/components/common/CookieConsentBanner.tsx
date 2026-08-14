@@ -47,7 +47,7 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({ forceO
 
     // Log to backend if user is authenticated or guest
     try {
-      const sessionHash = localStorage.getItem('session_hash') || 'sess_' + Math.random().toString(36).substring(2, 15);
+      const sessionHash = localStorage.getItem('session_hash') || 'sess_' + (typeof window !== 'undefined' && window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString(36));
       if (!localStorage.getItem('session_hash')) {
         localStorage.setItem('session_hash', sessionHash);
       }

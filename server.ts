@@ -60,8 +60,8 @@ if (process.env.GITHUB_TOKEN) {
 }
 
 if (!process.env.JWT_SECRET) {
-  console.warn('[System] JWT_SECRET není v env, používá se výchozí vývojový klíč.');
-  process.env.JWT_SECRET = 'dev3_super_secret_jwt_key_tatovacesta';
+  console.error('FATAL ERROR: JWT_SECRET environment variable is missing!');
+  process.exit(1);
 }
 
 // Helper for __dirname in ESM
@@ -87,7 +87,7 @@ app.use(parseAuthToken as any);
 
 // Session Cookie Options Helper
 const cookieOptions = (role: string) => {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === 'production' || process.env.HTTPS === 'true';
   const maxAge = (role === 'ADMIN' || role === 'SUPER_ADMIN')
     ? 2 * 60 * 60 * 1000 // 2 hodiny
     : 24 * 60 * 60 * 1000; // 24 hodin
@@ -98,6 +98,7 @@ const cookieOptions = (role: string) => {
     sameSite: 'lax' as const,
     signed: true,
     maxAge,
+    path: '/',
   };
 };
 
@@ -419,7 +420,6 @@ app.post('/api/auth/login', authRateLimiter as any, async (req: AuthenticatedReq
 
     if (result.token && result.user) {
       res.cookie('token', result.token, cookieOptions(result.user.role));
-      res.cookie('userId', result.user.id, cookieOptions(result.user.role));
       return res.json({ token: result.token, user: result.user });
     }
 
@@ -471,7 +471,6 @@ app.post('/api/auth/register', authRateLimiter as any, async (req: Authenticated
 
       // Set cookie for logged in registered user
       res.cookie('token', result.token, cookieOptions(result.user.role));
-      res.cookie('userId', result.user.id, cookieOptions(result.user.role));
       return res.json({ token: result.token, user: result.user });
     }
     res.status(400).json({ error: 'Registrace selhala.' });
@@ -694,10 +693,10 @@ app.post('/api/auth/2fa/verify', authRateLimiter as any, async (req: Authenticat
     if (!verified && backupCodes.length > 0) {
       const inputHash = TotpService.hashBackupCode(code.trim().toUpperCase());
       for (const bc of backupCodes) {
-        if (bc === code.trim().toUpperCase() || bc === inputHash) {
+        if (bc === inputHash) {
           verified = true;
           isBackupUsed = true;
-          backupCodes = backupCodes.filter((c) => c !== bc && c !== inputHash);
+          backupCodes = backupCodes.filter((c) => c !== bc);
           break;
         }
       }
@@ -746,7 +745,6 @@ app.post('/api/auth/2fa/verify', authRateLimiter as any, async (req: Authenticat
     const sanitizedUser = AuthService.sanitizeUser(user);
 
     res.cookie('token', token, cookieOptions(user.role));
-    res.cookie('userId', user.id, cookieOptions(user.role));
     res.json({ token, user: sanitizedUser });
   } catch (err: any) {
     console.error('Chyba při ověřování 2FA:', err);
@@ -807,7 +805,7 @@ app.post('/api/auth/2fa/disable', authRateLimiter as any, requireAuth as any, as
       const backupCodes: string[] = freshUser.totpBackupCodes;
       const inputHash = TotpService.hashBackupCode(code.trim().toUpperCase());
       for (const bc of backupCodes) {
-        if (bc === code.trim().toUpperCase() || bc === inputHash) {
+        if (bc === inputHash) {
           isCodeValid = true;
           break;
         }
@@ -1017,7 +1015,6 @@ app.put('/api/users/:id/role', requireAuth as any, requireRole('ADMIN') as any, 
     const user = await AuthService.updateUserRole(id, role, req.user);
     if (req.session?.userId === id && req.session.regenerate) {
       req.session.regenerate();
-      res.cookie('userId', id, cookieOptions(role));
     }
     res.json(user);
   } catch (err: any) {
@@ -2535,7 +2532,7 @@ const handlePollVote = async (req: any, res: any) => {
       });
     } else {
       inMemoryPollVotes.push({
-        id: `vote-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        id: `vote-${Date.now()}-${crypto.randomUUID()}`,
         pollId,
         optionIndex,
         ipAddress,
@@ -2635,7 +2632,7 @@ const handleFormSubmit = async (req: any, res: any) => {
       });
       createdRecordId = created.id;
     } else {
-      const newId = `submission-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const newId = `submission-${Date.now()}-${crypto.randomUUID()}`;
       inMemoryFormSubmissions.push({
         id: newId,
         formId,

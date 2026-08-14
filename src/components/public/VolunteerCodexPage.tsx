@@ -26,7 +26,9 @@ export const VolunteerCodexPage: React.FC<VolunteerCodexPageProps> = ({ onNaviga
   const [volunteerName, setVolunteerName] = useState<string>(
     currentUser?.name || currentUser?.email?.split('@')[0] || ''
   );
-  const [userId, setUserId] = useState<string>(currentUser?.id || `usr_${Math.floor(Math.random() * 899999 + 100000)}`);
+  const [userId, setUserId] = useState<string>(
+    currentUser?.id || `usr_${typeof window !== 'undefined' && window.crypto?.randomUUID ? window.crypto.randomUUID().substring(0, 8) : Date.now().toString(36)}`
+  );
   const [email, setEmail] = useState<string>(currentUser?.email || 'dobrovolnik@tatavacesta.cz');
 
   const [agreed, setAgreed] = useState<boolean>(false);

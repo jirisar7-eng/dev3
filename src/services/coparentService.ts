@@ -1,5 +1,6 @@
 import { prisma, isPrismaAvailable } from '../lib/prisma';
 import { User } from '../types';
+import crypto from 'crypto';
 
 function getDelegate(p: any, ...names: string[]) {
   if (!p) return undefined;
@@ -425,7 +426,7 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const randomStr = crypto.randomBytes(4).toString('hex').toUpperCase();
     const code = `CP-${randomStr}`;
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
 

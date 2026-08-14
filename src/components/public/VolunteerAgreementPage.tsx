@@ -86,7 +86,9 @@ export const VolunteerAgreementPage: React.FC<VolunteerAgreementPageProps> = ({ 
 
   // Generate stable contract ID and timestamp
   const [contractId] = useState<string>(() => {
-    const rand = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const rand = (typeof window !== 'undefined' && window.crypto?.randomUUID) 
+      ? window.crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase() 
+      : Date.now().toString(36).substring(0, 8).toUpperCase();
     return `SYNTH-VOL-${rand}`;
   });
 

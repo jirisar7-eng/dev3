@@ -104,6 +104,20 @@ export class AuthService {
             console.log("[AUTH ERROR] Nesprávné heslo pro:", cleanEmail);
             return null;
           }
+
+          // If matched using legacy hash (bcrypt or PBKDF2), transparently upgrade hash to Argon2id
+          if (!user.passwordHash.startsWith('$argon2id$')) {
+            try {
+              const upgradedHash = await hash(password);
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { passwordHash: upgradedHash },
+              });
+              console.log("[AUTH INFO] Upgraded user password hash to Argon2id for:", cleanEmail);
+            } catch (upgradeErr) {
+              console.warn('[AUTH WARN] Failed to upgrade password hash to Argon2id:', upgradeErr);
+            }
+          }
         }
 
         // Record Audit Log

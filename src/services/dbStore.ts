@@ -353,11 +353,11 @@ const defaultModules: Module[] = [
 
 const defaultUsers: User[] = [
   {
-    id: 'usr-sarji-admin',
-    email: 'sarji@seznam.cz',
-    name: 'Sarji (Super Admin)',
+    id: 'usr-admin',
+    email: 'admin@tatovacesta.cz',
+    name: 'Správce (Super Admin)',
     role: 'SUPER_ADMIN',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

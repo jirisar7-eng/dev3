@@ -13,12 +13,12 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | 'updated' | 'skipped' | 'error'; email: string; details: string }> {
-  if (!prisma || !isPrismaAvailable()) {
-    return { action: 'skipped', email: 'sarji@seznam.cz', details: 'Prisma klient není k dispozici.' };
-  }
-
-  const targetEmail = 'sarji@seznam.cz';
+  const targetEmail = process.env.ADMIN_INITIAL_EMAIL || process.env.SUPERADMIN_EMAIL || 'superadmin@tatovacesta.cz';
   const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
+
+  if (!prisma || !isPrismaAvailable()) {
+    return { action: 'skipped', email: targetEmail, details: 'Prisma klient není k dispozici.' };
+  }
 
   try {
     // 1. Ensure Roles exist in DB so FK constraints work
@@ -43,20 +43,24 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
       });
     }
 
-    // 2. Check if user already exists
-    let existingUser = await prisma.user.findUnique({
-      where: { email: targetEmail },
+    // Check if ANY super admin user already exists
+    const existingSuperAdmin = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { role: 'SUPER_ADMIN' },
+          { email: targetEmail },
+        ]
+      },
     });
 
-    // Ensure superadmin account if ADMIN_INITIAL_PASSWORD is defined or user exists
-    if (existingUser) {
+    // If super admin exists, DO NOT overwrite password or reset 2FA upon restart.
+    if (existingSuperAdmin) {
       let roleUpdated = false;
-      let passwordUpdated = false;
 
-      // Update role if not SUPER_ADMIN
-      if (existingUser.role !== 'SUPER_ADMIN') {
+      // Ensure role is set to SUPER_ADMIN if email matched
+      if (existingSuperAdmin.role !== 'SUPER_ADMIN') {
         await prisma.user.update({
-          where: { id: existingUser.id },
+          where: { id: existingSuperAdmin.id },
           data: { role: 'SUPER_ADMIN' },
         });
         roleUpdated = true;
@@ -66,44 +70,33 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
       const superAdminRole = await prisma.role.findUnique({ where: { key: 'SUPER_ADMIN' } });
       if (superAdminRole) {
         await prisma.userRole.upsert({
-          where: { userId_roleId: { userId: existingUser.id, roleId: superAdminRole.id } },
+          where: { userId_roleId: { userId: existingSuperAdmin.id, roleId: superAdminRole.id } },
           update: {},
-          create: { userId: existingUser.id, roleId: superAdminRole.id },
+          create: { userId: existingSuperAdmin.id, roleId: superAdminRole.id },
         });
       }
 
-      // Update password hash if ADMIN_INITIAL_PASSWORD is provided and differs
-      if (initialPassword && initialPassword.trim().length > 0) {
-        const newHash = await hashPassword(initialPassword.trim());
-        if (existingUser.passwordHash !== newHash) {
-          await prisma.user.update({
-            where: { id: existingUser.id },
-            data: { passwordHash: newHash },
-          });
-          passwordUpdated = true;
-        }
-      }
-
-      const msg = `Uživatel ${targetEmail} nalezen v DB. Role: SUPER_ADMIN (aktualizována: ${roleUpdated ? 'ano' : 'ne'}), Heslo (aktualizováno: ${passwordUpdated ? 'ano' : 'ne'}).`;
+      const msg = `Super admin účet (${existingSuperAdmin.email}) již existuje. Heslo a 2FA zachovány bez úprav. (Role aktualizována: ${roleUpdated ? 'ano' : 'ne'}).`;
       console.log(`[Admin Seed] ${msg}`);
-      return { action: 'updated', email: targetEmail, details: msg };
+      return { action: 'updated', email: existingSuperAdmin.email, details: msg };
     } else {
-      // User does NOT exist yet
+      // User does NOT exist yet - bootstrap only if ADMIN_INITIAL_PASSWORD is explicitly set
       if (!initialPassword || initialPassword.trim().length === 0) {
-        const warning = `Uživatel ${targetEmail} neexistuje a ADMIN_INITIAL_PASSWORD není v env proměnných nastaveno. Účet nebyl vytvořen.`;
+        const warning = `Super admin neexistuje a ADMIN_INITIAL_PASSWORD není v env nastaveno. Účet nebyl vytvořen.`;
         console.warn(`[Admin Seed] ${warning}`);
         return { action: 'skipped', email: targetEmail, details: warning };
       }
 
       const passwordHash = await hashPassword(initialPassword.trim());
+      const newUserId = `usr-superadmin-${crypto.randomUUID()}`;
       const newUser = await prisma.user.create({
         data: {
-          id: 'usr-sarji-superadmin',
+          id: newUserId,
           email: targetEmail,
-          name: 'Sarji (Super Admin)',
+          name: 'Super Admin',
           role: 'SUPER_ADMIN',
           passwordHash,
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarji',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SuperAdmin',
         },
       });
 
@@ -120,7 +113,7 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
         await (prisma as any).userProfile.create({
           data: {
             userId: newUser.id,
-            firstName: 'Sarji',
+            firstName: 'Super',
             lastName: 'Admin',
             autoFillDocs: true,
           },
@@ -136,11 +129,11 @@ export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | '
           userEmail: newUser.email,
           action: 'SUPERADMIN_INITIALIZED',
           module: 'AUTH',
-          details: `Vytvořen nový SUPER_ADMIN účet ${targetEmail} přes DEV inicializaci.`,
+          details: `Vytvořen nový SUPER_ADMIN účet ${targetEmail} přes inicializaci.`,
         },
       });
 
-      const msg = `Úspěšně vytvořen novostavěný SUPER_ADMIN účet ${targetEmail} v Prisma databázi.`;
+      const msg = `Úspěšně vytvořen nový SUPER_ADMIN účet ${targetEmail} v databázi.`;
       console.log(`[Admin Seed] ${msg}`);
       return { action: 'created', email: targetEmail, details: msg };
     }
@@ -175,7 +168,7 @@ export async function seedDatabaseIfEmpty() {
   }
 
   try {
-    // 0. Ensure Super Admin sarji@seznam.cz is present or updated
+    // 0. Ensure Super Admin is present or updated
     const adminResult = await ensureSuperAdminAccount();
     if (adminResult.action === 'error' || !isPrismaAvailable()) {
       console.log('[Prisma Seed] Nastala chyba při inicializaci databáze nebo připojení selhalo, přeskakuji seeding.');

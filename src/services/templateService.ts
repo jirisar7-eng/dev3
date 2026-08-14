@@ -366,7 +366,7 @@ export async function createTemplate(data: {
   thumbnailUrl?: string;
   isSystem?: boolean;
 }): Promise<PageTemplateData> {
-  const id = `tpl-custom-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const id = `tpl-custom-${Date.now()}-${crypto.randomUUID()}`;
   const category = data.category || 'CUSTOM';
   const name = data.name || 'Nová šablona';
   const description = data.description || null;
