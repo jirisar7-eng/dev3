@@ -62,9 +62,9 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
 
   // Parent Category 5: 📂 Pracovna
   { id: 'cat-5', labelKey: '📂 Pracovna', url: '#', order: 50, target: '_self', isExternal: false },
-  { id: 'sub-5-1', labelKey: 'Složka', url: '/user-portal', order: 51, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-2', labelKey: 'Profil', url: '/profile', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-3', labelKey: 'CoParent', url: '/coparent-hub', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-1', labelKey: '📁 Můj případ (Spis)', url: '/muj-pripad', order: 51, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-2', labelKey: 'Portál & Přehled', url: '/portal', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-3', labelKey: 'Profil & Nastavení', url: '/portal/profil', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
 
   // Parent Category 6: 🤖 AI nástroje
   { id: 'cat-6', labelKey: '🤖 AI nástroje', url: '#', order: 60, target: '_self', isExternal: false },

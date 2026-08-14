@@ -66,6 +66,207 @@ export interface UserCase {
   updatedAt: string;
 }
 
+// ------------------------------------------------------
+// OSOBNÍ KLIENTSKÁ SLOŽKA OTCE - DATA INTERFACES
+// ------------------------------------------------------
+
+export type CaseStatusType = 'ACTIVE' | 'CLOSED' | 'ARCHIVED' | 'DRAFT';
+export type CasePriorityType = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TaskStatusType = 'TODO' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+export type NoteVisibilityType = 'PRIVATE' | 'CASE';
+export type CaseEventType = 'COURT' | 'OSPOD' | 'CHILD_HANDOVER' | 'SCHOOL' | 'MEDICAL' | 'COMMUNICATION' | 'OTHER';
+export type EvidenceKindType = 'DOCUMENT' | 'PHOTO' | 'EMAIL' | 'MESSAGE' | 'RECORD' | 'OTHER';
+export type CareArrangementType = 'STRIDAVA' | 'SPOLECNA' | 'VYHRADNI_OTEC' | 'VYHRADNI_MATKA' | 'UPRAVA_STYKU' | 'JINE';
+export type ParticipantRoleType = 'OTEC' | 'MATKA' | 'OSPOD' | 'SOUDCE' | 'KOLIZNI_OPATROVNIK' | 'ADVOKAT_OTCE' | 'ADVOKAT_MATKY' | 'ZNALEC' | 'JINY';
+
+export interface CaseParticipant {
+  id: string;
+  caseId: string;
+  name: string;
+  role: ParticipantRoleType | string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  institution?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseChild {
+  id: string;
+  caseId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string;
+  birthNumber?: string;
+  schoolName?: string;
+  pediatrician?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseEvent {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  title: string;
+  description?: string;
+  category: CaseEventType | string;
+  eventDate: string;
+  endDate?: string;
+  location?: string;
+  attachments?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseDeadline {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  title: string;
+  description?: string;
+  dueDate: string;
+  type: string;
+  isCompleted: boolean;
+  priority: CasePriorityType | string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseTask {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  priority: CasePriorityType | string;
+  status: TaskStatusType | string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseNote {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  title: string;
+  content: string;
+  category?: string;
+  visibility: NoteVisibilityType | string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseDocument {
+  id: string;
+  caseId: string;
+  uploadedBy: string;
+  name: string;
+  category: string;
+  fileUrl?: string;
+  s3Bucket?: string;
+  s3ObjectKey?: string;
+  fileType: string;
+  mimeType: string;
+  size: number;
+  fileHash?: string;
+  storageProvider: string;
+  scanStatus: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseEvidence {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  title: string;
+  description?: string;
+  date?: string;
+  type: EvidenceKindType | string;
+  documentId?: string;
+  document?: CaseDocument;
+  eventId?: string;
+  event?: CaseEvent;
+  relevance?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CaseCommunication {
+  id: string;
+  caseId: string;
+  createdBy: string;
+  participantName: string;
+  channel: string;
+  date: string;
+  summary: string;
+  tone?: string;
+  attachments?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CareArrangement {
+  id: string;
+  caseId: string;
+  title: string;
+  type: CareArrangementType | string;
+  intervalDays: number;
+  handoverDay?: string;
+  handoverLocation?: string;
+  childSupportAmount?: number;
+  notes?: string;
+  validFrom?: string;
+  validTo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientCase {
+  id: string;
+  ownerId: string;
+  title: string;
+  caseNumber?: string;
+  court?: string;
+  caseType: string;
+  status: CaseStatusType | string;
+  description?: string;
+  currentCareType?: CareArrangementType | string;
+  createdAt: string;
+  updatedAt: string;
+
+  participants?: CaseParticipant[];
+  children?: CaseChild[];
+  events?: CaseEvent[];
+  deadlines?: CaseDeadline[];
+  tasks?: CaseTask[];
+  notes?: CaseNote[];
+  documents?: CaseDocument[];
+  evidence?: CaseEvidence[];
+  communications?: CaseCommunication[];
+  careArrangements?: CareArrangement[];
+}
+
+export interface CaseTimelineItem {
+  id: string;
+  type: 'EVENT' | 'DEADLINE' | 'DOCUMENT' | 'TASK' | 'COMMUNICATION' | 'NOTE';
+  date: string;
+  title: string;
+  description?: string;
+  category?: string;
+  badge?: string;
+  status?: string;
+  priority?: string;
+  meta?: any;
+}
+
+
 export interface UserChild {
   id: string;
   userId: string;

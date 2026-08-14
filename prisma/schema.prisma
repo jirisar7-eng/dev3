@@ -66,6 +66,7 @@ model User {
   gdprDeletionRequests     GdprDeletionRequest[]
   cookieConsents           CookieConsent[]
   legalAuditLogs           LegalAuditLog[]
+  clientCases              Case[]
 
   @@index([email])
 }
@@ -867,10 +868,227 @@ model LegalAuditLog {
   createdAt    DateTime @default(now())
 }
 
+// ------------------------------------------------------
+// OSOBNÍ KLIENTSKÁ SLOŽKA OTCE (SYNTHESIS CLIENT CASE)
+// ------------------------------------------------------
 
+model Case {
+  id               String              @id @default(uuid())
+  ownerId          String
+  owner            User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title            String
+  caseNumber       String?
+  court            String?
+  caseType         String              @default("OPATROVNICKE")
+  status           String              @default("ACTIVE")
+  description      String?             @db.Text
+  currentCareType  String?             @default("STRIDAVA")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
+  participants     CaseParticipant[]
+  children         Child[]
+  events           CaseEvent[]
+  deadlines        CaseDeadline[]
+  tasks            CaseTask[]
+  notes            CaseNote[]
+  documents        CaseDocument[]
+  evidence         CaseEvidence[]
+  communications   CaseCommunication[]
+  careArrangements CareArrangement[]
 
+  @@index([ownerId])
+  @@index([status])
+}
 
+model CaseParticipant {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  name        String
+  role        String   @default("MATKA")
+  email       String?
+  phone       String?
+  address     String?
+  institution String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  @@index([caseId])
+}
 
+model Child {
+  id           String   @id @default(uuid())
+  caseId       String
+  case         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  dateOfBirth  String?
+  birthNumber  String?
+  schoolName   String?
+  pediatrician String?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
+  @@index([caseId])
+}
+
+model CaseEvent {
+  id          String         @id @default(uuid())
+  caseId      String
+  case        Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?        @db.Text
+  category    String         @default("OTHER")
+  eventDate   DateTime
+  endDate     DateTime?
+  location    String?
+  attachments Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  evidence    CaseEvidence[]
+
+  @@index([caseId])
+  @@index([eventDate])
+  @@index([category])
+}
+
+model CaseDeadline {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?  @db.Text
+  dueDate     DateTime
+  type        String   @default("COURT")
+  isCompleted Boolean  @default(false)
+  priority    String   @default("HIGH")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([dueDate])
+}
+
+model CaseTask {
+  id          String    @id @default(uuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?   @db.Text
+  dueDate     DateTime?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model CaseNote {
+  id         String   @id @default(uuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy  String
+  title      String
+  content    String   @db.Text
+  category   String?  @default("GENERAL")
+  visibility String   @default("PRIVATE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([visibility])
+}
+
+model CaseDocument {
+  id              String         @id @default(uuid())
+  caseId          String
+  case            Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploadedBy      String
+  name            String
+  category        String         @default("OTHER")
+  fileUrl         String?
+  s3Bucket        String?
+  s3ObjectKey     String?
+  fileType        String         @default("pdf")
+  mimeType        String         @default("application/pdf")
+  size            Int            @default(0)
+  fileHash        String?
+  storageProvider String         @default("MinIO")
+  scanStatus      String         @default("CLEAN")
+  notes           String?        @db.Text
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  evidence        CaseEvidence[]
+
+  @@index([caseId])
+  @@index([category])
+}
+
+model CaseEvidence {
+  id          String        @id @default(uuid())
+  caseId      String
+  case        Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?       @db.Text
+  date        DateTime?
+  type        String        @default("DOCUMENT")
+  documentId  String?
+  document    CaseDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  eventId     String?
+  event       CaseEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  relevance   String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([caseId])
+  @@index([type])
+}
+
+model CaseCommunication {
+  id              String   @id @default(uuid())
+  caseId          String
+  case            Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy       String
+  participantName String
+  channel         String   @default("EMAIL")
+  date            DateTime @default(now())
+  summary         String   @db.Text
+  tone            String?  @default("NEUTRAL")
+  attachments     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([date])
+}
+
+model CareArrangement {
+  id                 String    @id @default(uuid())
+  caseId             String
+  case               Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title              String
+  type               String    @default("STRIDAVA")
+  intervalDays       Int       @default(7)
+  handoverDay        String?   @default("Pátek 16:00")
+  handoverLocation   String?
+  childSupportAmount Float?    @default(0)
+  notes              String?   @db.Text
+  validFrom          DateTime?
+  validTo            DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([caseId])
+}

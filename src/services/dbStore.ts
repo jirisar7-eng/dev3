@@ -31,6 +31,17 @@ import {
   CustomModule,
   Subjekt,
   Review,
+  ClientCase,
+  CaseParticipant,
+  CaseChild,
+  CaseEvent,
+  CaseDeadline,
+  CaseTask,
+  CaseNote,
+  CaseDocument,
+  CaseEvidence,
+  CaseCommunication,
+  CareArrangement,
 } from '../types';
 
 // Initial Seed Data for "Táta má právo"
@@ -1685,6 +1696,277 @@ class MemoryStore {
   userEvents: UserCalendarEvent[] = [...defaultUserEvents];
   userNotes: UserNote[] = [...defaultUserNotes];
   userDocuments: UserDocument[] = [...defaultUserDocuments];
+  
+  // Osobní klientská složka otce (Client cases & sub-entities)
+  cases: ClientCase[] = [
+    {
+      id: 'case-demo-1',
+      ownerId: 'user-1',
+      title: 'Opatrovnická složka - Jan Novák',
+      caseNumber: '12 P 45/2026',
+      court: 'Obvodní soud pro Prahu 4',
+      caseType: 'OPATROVNICKE',
+      status: 'ACTIVE',
+      description: 'Řízení o úpravě péče a výživy k nezl. synovi Jakubovi Novákovi. Návrh na střídavou péči v intervalu 7/7.',
+      currentCareType: 'STRIDAVA',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-03-01T14:30:00.000Z',
+    },
+    {
+      id: 'case-demo-2',
+      ownerId: 'user-2',
+      title: 'Opatrovnická složka - Petr Svoboda',
+      caseNumber: '34 Nc 120/2025',
+      court: 'Městský soud v Brně',
+      caseType: 'OPATROVNICKE',
+      status: 'ACTIVE',
+      description: 'Řízení o rozšíření styku a stanovení střídavé péče.',
+      currentCareType: 'STRIDAVA',
+      createdAt: '2026-01-15T09:00:00.000Z',
+      updatedAt: '2026-02-28T11:20:00.000Z',
+    },
+  ];
+
+  caseParticipants: CaseParticipant[] = [
+    {
+      id: 'part-1',
+      caseId: 'case-demo-1',
+      name: 'Jan Novák',
+      role: 'OTEC',
+      email: 'jan.novak@tatamapravo.cz',
+      phone: '+420 777 123 456',
+      address: 'Pod lipami 12, Praha 4',
+      institution: 'Otec',
+      notes: 'Plně připravený domov, samostatný pokoj pro dítě.',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    },
+    {
+      id: 'part-2',
+      caseId: 'case-demo-1',
+      name: 'Mgr. Eva Nováková',
+      role: 'MATKA',
+      email: 'eva.novakova@email.cz',
+      phone: '+420 777 654 321',
+      address: 'Slunečná 8, Praha 4',
+      institution: 'Matka',
+      notes: 'Zastoupena advokátkou JUDr. Dvořákovou.',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    },
+    {
+      id: 'part-3',
+      caseId: 'case-demo-1',
+      name: 'Bc. Martina Veselá',
+      role: 'OSPOD',
+      email: 'm.vesela@praha4.cz',
+      phone: '+420 261 197 111',
+      address: 'Antala Staška 2059/80b, Praha 4',
+      institution: 'ÚMČ Praha 4, Odbor sociálních věcí a zdravotnictví',
+      notes: 'Kolizní opatrovník nezletilého.',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    },
+  ];
+
+  caseChildren: CaseChild[] = [
+    {
+      id: 'child-1',
+      caseId: 'case-demo-1',
+      firstName: 'Jakub',
+      lastName: 'Novák',
+      dateOfBirth: '2019-06-15',
+      birthNumber: '190615/1234',
+      schoolName: 'ZŠ Filosofská, Praha 4 (1. třída)',
+      pediatrician: 'MUDr. Helena Malá, Poliklinika Budějovická',
+      notes: 'Velmi dobrý vztah s otcem i matkou. Rád staví Lego a plave.',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    },
+  ];
+
+  caseEvents: CaseEvent[] = [
+    {
+      id: 'event-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Jednání na OSPOD Praha 4',
+      description: 'Pohovor s kolizním opatrovníkem Bc. Veselou k návrhu úpravy péče.',
+      category: 'OSPOD',
+      eventDate: '2026-03-20T09:00:00.000Z',
+      endDate: '2026-03-20T10:30:00.000Z',
+      location: 'ÚMČ Praha 4, Antala Staška, kancelář 312',
+      createdAt: '2026-02-15T10:00:00.000Z',
+      updatedAt: '2026-02-15T10:00:00.000Z',
+    },
+    {
+      id: 'event-2',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Předání Jakuba do péče otce',
+      description: 'Pravidelné páteční předání u školy.',
+      category: 'CHILD_HANDOVER',
+      eventDate: '2026-03-27T15:00:00.000Z',
+      endDate: '2026-03-27T15:30:00.000Z',
+      location: 'Před ZŠ Filosofská',
+      createdAt: '2026-02-20T10:00:00.000Z',
+      updatedAt: '2026-02-20T10:00:00.000Z',
+    },
+    {
+      id: 'event-3',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Soudní jednání - Obvodní soud pro Prahu 4',
+      description: 'Hlavní líčení ve věci péče a výživy. Místnost č. 104, přízemí.',
+      category: 'COURT',
+      eventDate: '2026-04-15T10:00:00.000Z',
+      endDate: '2026-04-15T12:00:00.000Z',
+      location: '28. pluku 1533/29b, Praha 10',
+      createdAt: '2026-02-25T11:00:00.000Z',
+      updatedAt: '2026-02-25T11:00:00.000Z',
+    },
+  ];
+
+  caseDeadlines: CaseDeadline[] = [
+    {
+      id: 'dead-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Doplnění vyjádření k návrhu protistrany',
+      description: 'Lhůta 15 dnů od doručení výzvy soudu pro zaslání vyjádření.',
+      dueDate: '2026-03-25T23:59:59.000Z',
+      type: 'COURT',
+      isCompleted: false,
+      priority: 'URGENT',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+    {
+      id: 'dead-2',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Úhrada poplatku za vyžádání lékařské zprávy',
+      description: 'Zaslat potvrzení o platbě pediatrovi.',
+      dueDate: '2026-03-18T12:00:00.000Z',
+      type: 'PAYMENT',
+      isCompleted: true,
+      priority: 'MEDIUM',
+      createdAt: '2026-02-28T09:00:00.000Z',
+      updatedAt: '2026-03-05T14:00:00.000Z',
+    },
+  ];
+
+  caseTasks: CaseTask[] = [
+    {
+      id: 'task-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Připravit doklady o příjmech za poslední rok',
+      description: 'Daňové přiznání za rok 2025, potvrzení od zaměstnavatele a výpisy z bankovního účtu.',
+      dueDate: '2026-03-22T18:00:00.000Z',
+      priority: 'HIGH',
+      status: 'IN_PROGRESS',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-02T12:00:00.000Z',
+    },
+    {
+      id: 'task-2',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Sestavit kalendář kroužků a rozvrhu Jakuba',
+      description: 'Zaznamenat časy plavání (úterý) a angličtiny (čtvrtek).',
+      dueDate: '2026-03-19T20:00:00.000Z',
+      priority: 'MEDIUM',
+      status: 'TODO',
+      createdAt: '2026-03-03T11:00:00.000Z',
+      updatedAt: '2026-03-03T11:00:00.000Z',
+    },
+  ];
+
+  caseNotes: CaseNote[] = [
+    {
+      id: 'note-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'Poznatky ze schůzky s advokátem',
+      content: 'Advokát doporučuje klást důraz na stabilní režim dítěte, vzdálenost školky/školy a dodržování principu rovné péče podle nálezu ÚS I. ÚS 2482/13.',
+      category: 'LEGAL_STRATEGY',
+      visibility: 'PRIVATE',
+      createdAt: '2026-02-18T16:00:00.000Z',
+      updatedAt: '2026-02-18T16:00:00.000Z',
+    },
+  ];
+
+  caseDocuments: CaseDocument[] = [
+    {
+      id: 'doc-1',
+      caseId: 'case-demo-1',
+      uploadedBy: 'user-1',
+      name: 'Navrh_na_stridavou_peci_2026.pdf',
+      category: 'COURT',
+      fileUrl: '/documents/navrh_na_stridavou_peci_2026.pdf',
+      s3Bucket: 'tatovacesta-vault',
+      s3ObjectKey: 'cases/case-demo-1/navrh_na_stridavou_peci_2026.pdf',
+      fileType: 'pdf',
+      mimeType: 'application/pdf',
+      size: 420000,
+      fileHash: 'sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+      storageProvider: 'MinIO',
+      scanStatus: 'CLEAN',
+      notes: 'Finální podání doručené soudu dne 12.01.2026.',
+      createdAt: '2026-01-12T14:20:00.000Z',
+      updatedAt: '2026-01-12T14:20:00.000Z',
+    },
+  ];
+
+  caseEvidence: CaseEvidence[] = [
+    {
+      id: 'evi-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      title: 'E-mailová komunikace o kroužcích',
+      description: 'Důkaz o aktivním zapojení otce do volnočasových aktivit a úhrady nákladů.',
+      date: '2026-02-10T10:00:00.000Z',
+      type: 'EMAIL',
+      documentId: 'doc-1',
+      relevance: 'Prokazuje plnohodnotnou péči a zajištění zájmové činnosti dítěte.',
+      createdAt: '2026-02-10T10:00:00.000Z',
+      updatedAt: '2026-02-10T10:00:00.000Z',
+    },
+  ];
+
+  caseCommunications: CaseCommunication[] = [
+    {
+      id: 'comm-1',
+      caseId: 'case-demo-1',
+      createdBy: 'user-1',
+      participantName: 'Mgr. Eva Nováková (Matka)',
+      channel: 'EMAIL',
+      date: '2026-03-02T14:15:00.000Z',
+      summary: 'Dohoda o termínu lékařské prohlídky u zubaře a rozdělení jarních prázdnin.',
+      tone: 'BIFF_COMPLIANT',
+      createdAt: '2026-03-02T14:15:00.000Z',
+      updatedAt: '2026-03-02T14:15:00.000Z',
+    },
+  ];
+
+  careArrangements: CareArrangement[] = [
+    {
+      id: 'care-1',
+      caseId: 'case-demo-1',
+      title: 'Střídavá péče 7/7 (Týden / Týden)',
+      type: 'STRIDAVA',
+      intervalDays: 7,
+      handoverDay: 'Pátek 15:30',
+      handoverLocation: 'Před školou / bydlištěm',
+      childSupportAmount: 0,
+      notes: 'Rovnoměrné střídání po týdnu v pátek odpoledne.',
+      validFrom: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-10T10:00:00.000Z',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    },
+  ];
+
   studies: Study[] = [...defaultStudies];
   stateStatistics: StateStatistic[] = [...defaultStateStatistics];
   courtCases: CourtCase[] = [...defaultCourtCases];

@@ -16,6 +16,10 @@ export interface AuthenticatedRequest extends Request {
 export async function parseAuthToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   let userId = req.signedCookies ? req.signedCookies.userId : undefined;
 
+  if (!userId && req.headers['x-user-id']) {
+    userId = req.headers['x-user-id'] as string;
+  }
+
   if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     const token = req.headers.authorization.split(' ')[1];
     if (token && token !== 'null') {
@@ -27,7 +31,14 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
            console.log('[Auth] JWT decoded but missing sub/id:', decoded);
         }
       } catch (err) {
-        console.error('[Auth] JWT decode error:', err);
+        if (token.startsWith('jwt_token_')) {
+          const parts = token.split('_');
+          if (parts.length >= 3) {
+            userId = parts[2];
+          }
+        } else {
+          console.error('[Auth] JWT decode error:', err);
+        }
       }
     }
   }

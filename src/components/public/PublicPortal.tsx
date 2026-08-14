@@ -20,6 +20,7 @@ import { ContactView } from './ContactView';
 import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
 import { LegalHubPage } from '../../pages/LegalHubPage';
+import { MyCasePage } from '../../pages/MyCasePage';
 import {
   CrisisCommunityPortal,
   SosPlanView,
@@ -96,6 +97,20 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   // 0. Volunteers Route (/dobrovolnici)
   if (slug === 'dobrovolnici' || slug === 'hledame-kolegy') {
     return <VolunteersPage onNavigate={onNavigate} />;
+  }
+
+  // 0.1 My Case / Osobní spis otce (/muj-pripad)
+  if (slug === 'muj-pripad' || slug === 'pripad' || slug === 'moje-slozka') {
+    return (
+      <div className="space-y-4 pt-2">
+        <SeoHead
+          title="Můj případ • Osobní klientská složka otce"
+          description="Komplexní digitální spis otce pro správu dětí, termínů, soudních řízení, zpráv OSPOD a důkazních materiálů."
+          canonicalPath="/muj-pripad"
+        />
+        <MyCasePage onNavigate={onNavigate} />
+      </div>
+    );
   }
 
   // 1. Homepage Route

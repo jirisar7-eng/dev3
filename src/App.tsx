@@ -24,7 +24,7 @@ function MainApp() {
   const getViewFromPath = (path: string): AppView => {
     if (path === '/login') return 'login';
     if (path === '/registrace' || path === '/register') return 'register';
-    if (path.startsWith('/portal')) return 'private';
+    if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/user-portal')) return 'private';
     if (path.startsWith('/administrace') || path.startsWith('/admin')) return 'admin';
     return 'public';
   };
