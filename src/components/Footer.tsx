@@ -147,16 +147,22 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
               </ul>
             </div>
 
-            {/* Column 3: Právní informace */}
+            {/* Column 3: Informace */}
             <div>
               <h4 className="font-bold text-white text-sm mb-4 tracking-wide uppercase text-slate-200">
-                Právní informace
+                Informace
               </h4>
               <ul className="space-y-2.5 text-slate-300">
                 <li>
-                  <button onClick={() => handleNav('/pravni-dokumenty')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
-                    <span>🛡️</span>
-                    <span className="font-bold text-blue-400">Právní rozcestník</span>
+                  <button onClick={() => handleNav('/clanky')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
+                    <span>📄</span>
+                    <span>Články</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleCompliance('gdpr', '/ochrana-osobnich-udaju')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
+                    <span>🔐</span>
+                    <span>Ochrana osobních údajů</span>
                   </button>
                 </li>
                 <li>
@@ -166,27 +172,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleCompliance('gdpr', '/gdpr')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
-                    <span>🔐</span>
-                    <span>Ochrana osobních údajů</span>
-                  </button>
-                </li>
-                <li>
                   <button onClick={() => handleCompliance('cookies')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
                     <span>🍪</span>
                     <span>Cookies</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleCompliance('volunteer_code')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
-                    <span>👥</span>
-                    <span>Dobrovolnický kodex</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleCompliance('ai_statement')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
-                    <span>🤖</span>
-                    <span>AI Prohlášení</span>
                   </button>
                 </li>
               </ul>
@@ -202,10 +190,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
                 <span>Projekt zaměřený na podporu otců a nejlepší zájem dítěte.</span>
               </div>
               <div className="flex items-center gap-3 text-slate-400 font-medium">
-                <button onClick={() => handleNav('/pravni-dokumenty')} className="hover:text-slate-200 transition-colors cursor-pointer text-blue-400 font-bold">
-                  Právní rozcestník
-                </button>
-                <span>·</span>
                 <button onClick={() => handleNav('/kontakt')} className="hover:text-slate-200 transition-colors cursor-pointer">
                   Kontakt
                 </button>
@@ -214,7 +198,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
                   Podmínky
                 </button>
                 <span>·</span>
-                <button onClick={() => handleCompliance('gdpr', '/gdpr')} className="hover:text-slate-200 transition-colors cursor-pointer">
+                <button onClick={() => handleCompliance('gdpr', '/ochrana-osobnich-udaju')} className="hover:text-slate-200 transition-colors cursor-pointer">
                   Ochrana osobních údajů
                 </button>
                 <span>·</span>
