@@ -59,7 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (res.ok) {
         const data = await res.json();
-        const usersList = Array.isArray(data) ? data : (data.users || data.data || []);
+        // Zabrání ztrátě dat při parsování odpovědi API
+        const usersList = data?.users || data?.data || (Array.isArray(data) ? data : []);
         setUsers(usersList);
       } else {
         const errorText = `Error ${res.status}: ${res.statusText}`;

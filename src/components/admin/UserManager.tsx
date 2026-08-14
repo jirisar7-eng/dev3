@@ -135,7 +135,19 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
     }
   };
 
-  const roles: UserRole[] = ['USER', 'VOLUNTEER', 'MODERATOR', 'ADMIN', 'SUPER_ADMIN'];
+  const roles: UserRole[] = [
+    'USER', 
+    'REGISTERED_USER', 
+    'VERIFIED_USER', 
+    'VOLUNTEER', 
+    'VERIFIED_CONTRIBUTOR', 
+    'MODERATOR', 
+    'LEGAL_EDITOR', 
+    'CONTENT_MANAGER', 
+    'SYSTEM_ADMIN', 
+    'ADMIN', 
+    'SUPER_ADMIN'
+  ];
 
   const filteredUsers = userList.filter(
     (u) =>
@@ -225,6 +237,9 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
           <p className="text-xs text-slate-500 mt-1">
             Server-side správa uživatelských účtů, rolí (RBAC), stavů blokování a auditních protokólů.
           </p>
+          <div className="mt-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full inline-block border border-blue-100">
+            Počet načtených uživatelů: {users.length}
+          </div>
         </div>
 
         {/* Search */}

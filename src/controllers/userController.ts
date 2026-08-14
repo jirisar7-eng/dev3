@@ -5,20 +5,22 @@ import { hash } from 'bcryptjs';
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        avatar: true,
-        isActive: true,
-      }
+      orderBy: { createdAt: 'desc' }
     });
 
-    res.json({ users });
+    console.log(`[RBAC Admin API] Načteno z DB celkem ${users.length} uživatelů.`);
+
+    // Clean sensitive data
+    const safeUsers = users.map(user => {
+      const { password, totpSecret, totpTempSecret, ...safe } = user as any;
+      return safe;
+    });
+
+    res.json({ 
+      success: true, 
+      count: safeUsers.length, 
+      users: safeUsers 
+    });
   } catch (err: any) {
     console.error("Error fetching users:", err);
     
