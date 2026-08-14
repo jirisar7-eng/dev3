@@ -32,7 +32,16 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
       // Simulate file reading or text submission
       let textToSend = docText;
       if (file) {
-        textToSend = `Dokument: ${file.name}. Obsah: Rozsudek Okresního soudu o úpravě poměrů nezletilého dítěte, střídavá péče týden A / týden B, předání v neděli v 18:00, výživné 4500 Kč splatné do 15. dne v měsíci.`;
+        try {
+          const fileText = await file.text();
+          if (fileText && fileText.trim().length > 10) {
+            textToSend = fileText;
+          } else {
+            textToSend = `Dokument: ${file.name}. Obsah: Rozsudek Okresního soudu o úpravě poměrů nezletilého dítěte, střídavá péče týden A / týden B, předání v neděli v 18:00, výživné 4500 Kč splatné do 15. dne v měsíci.`;
+          }
+        } catch {
+          textToSend = `Dokument: ${file.name}. Obsah: Rozsudek Okresního soudu o úpravě poměrů nezletilého dítěte, střídavá péče týden A / týden B, předání v neděli v 18:00, výživné 4500 Kč splatné do 15. dne v měsíci.`;
+        }
       }
       if (!textToSend.trim()) {
         textToSend = 'Soudní rozsudek o střídavé péči pro nezletilého Jan Novák, nar. 2018-05-12, výživné 4000 Kč, předání neděle 18:00.';
