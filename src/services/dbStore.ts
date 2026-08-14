@@ -1,4 +1,5 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
+import { NAVIGATION_ITEMS } from '../config/navigation';
 import {
   User,
   TextItem,
@@ -1193,72 +1194,7 @@ const defaultFaqs: Faq[] = [
   },
 ];
 
-const defaultNavItems: NavItem[] = [
-  { id: 'nav-1', labelKey: 'Domů', url: '/', order: 1, target: '_self', isExternal: false },
-
-  // Parent Category 1: 🚨 Krizová pomoc & Komunita
-  { id: 'cat-1', labelKey: '🚨 Krizová pomoc & Komunita', url: '#', order: 10, target: '_self', isExternal: false },
-  { id: 'sub-1-1', labelKey: 'SOS plán', url: '/crisis', order: 11, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-2', labelKey: 'Fórum', url: '/forum', order: 12, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-3', labelKey: 'Příběhy', url: '/stories', order: 13, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-4', labelKey: 'Memento', url: '/memento', order: 14, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-5', labelKey: 'Právní poradna', url: '/advice', order: 15, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-6', labelKey: 'Podpora', url: '/support', order: 16, target: '_self', isExternal: false, parentId: 'cat-1' },
-
-  // Parent Category 2: ⚖️ Opatrovnictví & Právo
-  { id: 'cat-2', labelKey: '⚖️ Opatrovnictví & Právo', url: '#', order: 20, target: '_self', isExternal: false },
-  { id: 'sub-2-1', labelKey: 'Agenda', url: '/opatrovnicka-agenda', order: 21, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-2', labelKey: 'Práva', url: '/rights', order: 22, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-3', labelKey: 'Judikatura', url: '/judikatura', order: 23, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-4', labelKey: 'Dokumenty', url: '/ke-stazeni', order: 24, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', isExternal: false, parentId: 'cat-2' },
-
-  // Parent Category 3: 🏛️ Státní data & Projekt
-  { id: 'cat-3', labelKey: '🏛️ Státní data & Projekt', url: '#', order: 30, target: '_self', isExternal: false },
-  { id: 'sub-3-1', labelKey: 'e-Sbírka', url: '/state-laws', order: 31, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-2', labelKey: 'Statistiky', url: '/state-statistics', order: 32, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-3', labelKey: 'Databáze', url: '/pripadova-databaze', order: 33, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-4', labelKey: '🤝 Partneři a sponzoři', url: '/sponzori', order: 34, target: '_self', isExternal: false, parentId: 'cat-3' },
-
-  // Parent Category 4: 🎓 Akademie
-  { id: 'cat-4', labelKey: '🎓 Akademie', url: '#', order: 40, target: '_self', isExternal: false },
-  { id: 'sub-4-1', labelKey: 'Studia', url: '/knihovna-studii', order: 41, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-2', labelKey: 'Videotéka', url: '/videoteka', order: 42, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-3', labelKey: 'Kvízy', url: '/vzdelavani', order: 43, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-4', labelKey: 'Wiki', url: '/legal-wiki', order: 44, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-5', labelKey: 'Zakladatel', url: '/cesta-zakladatele', order: 45, target: '_self', isExternal: false, parentId: 'cat-4' },
-
-  // Parent Category 5: 📂 Pracovna
-  { id: 'cat-5', labelKey: '📂 Pracovna', url: '#', order: 50, target: '_self', isExternal: false },
-  { id: 'sub-5-1', labelKey: 'Složka', url: '/user-portal', order: 51, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-2', labelKey: 'Profil', url: '/profile', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-3', labelKey: 'CoParent', url: '/coparent-hub', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
-
-  // Parent Category 6: 🤖 AI nástroje
-  { id: 'cat-6', labelKey: '🤖 AI nástroje', url: '#', order: 60, target: '_self', isExternal: false },
-  { id: 'sub-6-1', labelKey: 'Asistent', url: '/ai-assistant', order: 61, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-2', labelKey: 'Průvodce', url: '/ai-guide', order: 62, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-3', labelKey: 'Case manager', url: '/ai-case-manager', order: 63, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-4', labelKey: 'Simulátor', url: '/plan-pece', order: 64, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-5', labelKey: 'Formuláře', url: '/centrum-formularu', order: 65, target: '_self', isExternal: false, parentId: 'cat-6' },
-
-  // Parent Category 7: 🛠️ Systém
-  { id: 'cat-7', labelKey: '🛠️ Systém', url: '#', order: 70, target: '_self', isExternal: false },
-  { id: 'sub-7-1', labelKey: 'Novinky', url: '/news', order: 71, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-2', labelKey: 'Hub', url: '/synthesis-hub', order: 72, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-3', labelKey: 'AI admin', url: '/ai-admin', order: 73, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-4', labelKey: 'Admin', url: '/admin', order: 74, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-5', labelKey: 'Context', url: '/ai-context', order: 75, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-6', labelKey: 'Nápověda', url: '/user-manual', order: 76, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-7', labelKey: 'Architektura', url: '/sitemap', order: 77, target: '_self', isExternal: false, parentId: 'cat-7' },
-
-  // Parent Category 8: ℹ️ O projektu tatovacesta.cz
-  { id: 'cat-8', labelKey: 'ℹ️ O projektu tatovacesta.cz', url: '#', order: 80, target: '_self', isExternal: false },
-  { id: 'sub-8-1', labelKey: 'O nás', url: '/o-nas', order: 81, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-2', labelKey: 'Kontakt', url: '/kontakt', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-3', labelKey: 'Sponzoři', url: '/sponzori', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-4', labelKey: 'Partneři', url: '/partneri', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
-];
+const defaultNavItems: NavItem[] = NAVIGATION_ITEMS;
 
 const defaultComplianceDocs: ComplianceDoc[] = [
   {

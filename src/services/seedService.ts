@@ -1,4 +1,5 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
+import { NAVIGATION_ITEMS } from '../config/navigation';
 import { prisma, isPrismaAvailable } from '../db/prisma.ts';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -913,108 +914,35 @@ export async function seedDatabaseIfEmpty() {
     // Navigation Items
     await prisma.navigationItem.deleteMany({}); // clear any stale nav items
     
-    // Create main stand-alone items
-    const navHome = await prisma.navigationItem.create({
-      data: { id: 'nav-1', labelKey: 'Domů', url: '/', order: 1, target: '_self' },
-    });
+    const parents = NAVIGATION_ITEMS.filter((item) => !item.parentId);
+    const children = NAVIGATION_ITEMS.filter((item) => item.parentId);
 
-    // Parent Category 1: 🚨 Krizová pomoc & Komunita
-    const cat1 = await prisma.navigationItem.create({
-      data: { id: 'cat-1', labelKey: '🚨 Krizová pomoc & Komunita', url: '#', order: 10, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-1-1', labelKey: 'SOS plán', url: '/crisis', order: 11, target: '_self', parentId: cat1.id },
-        { id: 'sub-1-2', labelKey: 'Fórum', url: '/forum', order: 12, target: '_self', parentId: cat1.id },
-        { id: 'sub-1-3', labelKey: 'Příběhy', url: '/stories', order: 13, target: '_self', parentId: cat1.id },
-        { id: 'sub-1-4', labelKey: 'Memento', url: '/memento', order: 14, target: '_self', parentId: cat1.id },
-        { id: 'sub-1-5', labelKey: 'Právní poradna', url: '/advice', order: 15, target: '_self', parentId: cat1.id },
-        { id: 'sub-1-6', labelKey: 'Podpora', url: '/support', order: 16, target: '_self', parentId: cat1.id },
-      ],
-    });
+    for (const parent of parents) {
+      await prisma.navigationItem.create({
+        data: {
+          id: parent.id,
+          labelKey: parent.labelKey,
+          url: parent.url,
+          order: parent.order,
+          target: parent.target || '_self',
+          isExternal: parent.isExternal || false,
+        },
+      });
+    }
 
-    // Parent Category 2: ⚖️ Opatrovnictví & Právo
-    const cat2 = await prisma.navigationItem.create({
-      data: { id: 'cat-2', labelKey: '⚖️ Opatrovnictví & Právo', url: '#', order: 20, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-2-1', labelKey: 'Agenda', url: '/opatrovnicka-agenda', order: 21, target: '_self', parentId: cat2.id },
-        { id: 'sub-2-2', labelKey: 'Práva', url: '/rights', order: 22, target: '_self', parentId: cat2.id },
-        { id: 'sub-2-3', labelKey: 'Judikatura', url: '/judikatura', order: 23, target: '_self', parentId: cat2.id },
-        { id: 'sub-2-4', labelKey: 'Dokumenty', url: '/ke-stazeni', order: 24, target: '_self', parentId: cat2.id },
-        { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', parentId: cat2.id },
-      ],
-    });
-
-    // Parent Category 3: 🏛️ Státní data & Projekt
-    const cat3 = await prisma.navigationItem.create({
-      data: { id: 'cat-3', labelKey: '🏛️ Státní data & Projekt', url: '#', order: 30, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-3-1', labelKey: 'e-Sbírka', url: '/state-laws', order: 31, target: '_self', parentId: cat3.id },
-        { id: 'sub-3-2', labelKey: 'Statistiky', url: '/state-statistics', order: 32, target: '_self', parentId: cat3.id },
-        { id: 'sub-3-3', labelKey: 'Databáze', url: '/pripadova-databaze', order: 33, target: '_self', parentId: cat3.id },
-        { id: 'sub-3-4', labelKey: '🤝 Partneři a sponzoři', url: '/sponzori', order: 34, target: '_self', parentId: cat3.id },
-      ],
-    });
-
-    // Parent Category 4: 🎓 Akademie
-    const cat4 = await prisma.navigationItem.create({
-      data: { id: 'cat-4', labelKey: '🎓 Akademie', url: '#', order: 40, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-4-1', labelKey: 'Studia', url: '/knihovna-studii', order: 41, target: '_self', parentId: cat4.id },
-        { id: 'sub-4-2', labelKey: 'Videotéka', url: '/videoteka', order: 42, target: '_self', parentId: cat4.id },
-        { id: 'sub-4-3', labelKey: 'Kvízy', url: '/vzdelavani', order: 43, target: '_self', parentId: cat4.id },
-        { id: 'sub-4-4', labelKey: 'Wiki', url: '/legal-wiki', order: 44, target: '_self', parentId: cat4.id },
-        { id: 'sub-4-5', labelKey: 'Zakladatel', url: '/cesta-zakladatele', order: 45, target: '_self', parentId: cat4.id },
-      ],
-    });
-
-    // Parent Category 5: 📂 Pracovna
-    const cat5 = await prisma.navigationItem.create({
-      data: { id: 'cat-5', labelKey: '📂 Pracovna', url: '#', order: 50, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-5-1', labelKey: 'Složka', url: '/user-portal', order: 51, target: '_self', parentId: cat5.id },
-        { id: 'sub-5-2', labelKey: 'Profil', url: '/profile', order: 52, target: '_self', parentId: cat5.id },
-        { id: 'sub-5-3', labelKey: 'CoParent', url: '/coparent-hub', order: 53, target: '_self', parentId: cat5.id },
-      ],
-    });
-
-    // Parent Category 6: 🤖 AI nástroje
-    const cat6 = await prisma.navigationItem.create({
-      data: { id: 'cat-6', labelKey: '🤖 AI nástroje', url: '#', order: 60, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-6-1', labelKey: 'Asistent', url: '/ai-assistant', order: 61, target: '_self', parentId: cat6.id },
-        { id: 'sub-6-2', labelKey: 'Průvodce', url: '/ai-guide', order: 62, target: '_self', parentId: cat6.id },
-        { id: 'sub-6-3', labelKey: 'Case manager', url: '/ai-case-manager', order: 63, target: '_self', parentId: cat6.id },
-        { id: 'sub-6-4', labelKey: 'Simulátor', url: '/plan-pece', order: 64, target: '_self', parentId: cat6.id },
-        { id: 'sub-6-5', labelKey: 'Formuláře', url: '/centrum-formularu', order: 65, target: '_self', parentId: cat6.id },
-      ],
-    });
-
-    // Parent Category 7: 🛠️ Systém
-    const cat7 = await prisma.navigationItem.create({
-      data: { id: 'cat-7', labelKey: '🛠️ Systém', url: '#', order: 70, target: '_self' },
-    });
-    await prisma.navigationItem.createMany({
-      data: [
-        { id: 'sub-7-1', labelKey: 'Novinky', url: '/news', order: 71, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-2', labelKey: 'Hub', url: '/synthesis-hub', order: 72, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-3', labelKey: 'AI admin', url: '/ai-admin', order: 73, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-4', labelKey: 'Admin', url: '/admin', order: 74, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-5', labelKey: 'Context', url: '/ai-context', order: 75, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-6', labelKey: 'Nápověda', url: '/user-manual', order: 76, target: '_self', parentId: cat7.id },
-        { id: 'sub-7-7', labelKey: 'Architektura', url: '/sitemap', order: 77, target: '_self', parentId: cat7.id },
-      ],
-    });
+    for (const child of children) {
+      await prisma.navigationItem.create({
+        data: {
+          id: child.id,
+          labelKey: child.labelKey,
+          url: child.url,
+          order: child.order,
+          target: child.target || '_self',
+          isExternal: child.isExternal || false,
+          parentId: child.parentId,
+        },
+      });
+    }
 
     // 8. Legal Documents
     const complianceDocsData = [

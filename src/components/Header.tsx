@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
+import { NAVIGATION_ITEMS } from '../config/navigation';
 import { RegisterModal } from './public/RegisterModal';
 import { Logo } from './common/Logo';
 import {
@@ -24,74 +25,7 @@ interface HeaderProps {
   onNavigate?: (path: string) => void;
 }
 
-const FALLBACK_NAV_ITEMS: NavItem[] = [
-  { id: 'nav-1', labelKey: 'Domů', url: '/', order: 1, target: '_self', isExternal: false },
-
-  // Parent Category 1: 🚨 Krizová pomoc & Komunita
-  { id: 'cat-1', labelKey: '🚨 Krizová pomoc & Komunita', url: '/krizova-pomoc', order: 10, target: '_self', isExternal: false },
-  { id: 'sub-1-0', labelKey: 'Rozcestník', url: '/krizova-pomoc', order: 11, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-1', labelKey: 'SOS plán', url: '/sos-plan', order: 12, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-2', labelKey: 'Fórum', url: '/forum', order: 13, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-3', labelKey: 'Příběhy', url: '/pribehy', order: 14, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-4', labelKey: 'Memento', url: '/memento', order: 15, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-5', labelKey: 'Právní poradna', url: '/pravni-poradna', order: 16, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-6', labelKey: 'Podpora', url: '/podpora', order: 17, target: '_self', isExternal: false, parentId: 'cat-1' },
-
-  // Parent Category 2: ⚖️ Opatrovnictví & Právo
-  { id: 'cat-2', labelKey: '⚖️ Opatrovnictví & Právo', url: '/agenda', order: 20, target: '_self', isExternal: false },
-  { id: 'sub-2-1', labelKey: 'Agenda', url: '/agenda', order: 21, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-2', labelKey: 'Práva', url: '/prava', order: 22, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-3', labelKey: 'Judikatura', url: '/judikatura', order: 23, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-4', labelKey: 'Dokumenty', url: '/dokumenty', order: 24, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', isExternal: false, parentId: 'cat-2' },
-  { id: 'sub-2-6', labelKey: 'Registr Subjektů & Hodnocení', url: '/registr-subjektu', order: 26, target: '_self', isExternal: false, parentId: 'cat-2' },
-
-  // Parent Category 3: 🏛️ Státní data & Projekt
-  { id: 'cat-3', labelKey: '🏛️ Státní data & Projekt', url: '#', order: 30, target: '_self', isExternal: false },
-  { id: 'sub-3-1', labelKey: 'e-Sbírka', url: '/state-laws', order: 31, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-2', labelKey: 'Statistiky', url: '/state-statistics', order: 32, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-3', labelKey: 'Databáze', url: '/pripadova-databaze', order: 33, target: '_self', isExternal: false, parentId: 'cat-3' },
-  { id: 'sub-3-4', labelKey: '🤝 Partneři a sponzoři', url: '/sponzori', order: 34, target: '_self', isExternal: false, parentId: 'cat-3' },
-
-  // Parent Category 4: 🎓 Akademie
-  { id: 'cat-4', labelKey: '🎓 Akademie', url: '/studia', order: 40, target: '_self', isExternal: false },
-  { id: 'sub-4-1', labelKey: 'Studia', url: '/studia', order: 41, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-2', labelKey: 'Videotéka', url: '/videoteka', order: 42, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-3', labelKey: 'Kvízy', url: '/kvizy', order: 43, target: '_self', isExternal: false, parentId: 'cat-4' },
-  { id: 'sub-4-4', labelKey: 'Wiki', url: '/wiki', order: 44, target: '_self', isExternal: false, parentId: 'cat-4' },
-
-  // Parent Category 5: 📂 Pracovna
-  { id: 'cat-5', labelKey: '📂 Pracovna', url: '#', order: 50, target: '_self', isExternal: false },
-  { id: 'sub-5-1', labelKey: '📁 Můj případ (Spis)', url: '/muj-pripad', order: 51, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-2', labelKey: 'Portál & Přehled', url: '/portal', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-3', labelKey: 'Profil & Nastavení', url: '/portal/profil', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
-
-  // Parent Category 6: 🤖 AI nástroje
-  { id: 'cat-6', labelKey: '🤖 AI nástroje', url: '#', order: 60, target: '_self', isExternal: false },
-  { id: 'sub-6-1', labelKey: 'AI Asistent & BIFF', url: '/ai-asistent', order: 61, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-2', labelKey: 'AI Průvodce', url: '/ai-pruvodce', order: 62, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-3', labelKey: 'AI Case Manager', url: '/ai-case-manager', order: 63, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-4', labelKey: 'AI Simulátor', url: '/ai-simulator', order: 64, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-5', labelKey: 'AI Formuláře', url: '/ai-formulare', order: 65, target: '_self', isExternal: false, parentId: 'cat-6' },
-
-  // Parent Category 7: 🛠️ Systém
-  { id: 'cat-7', labelKey: '🛠️ Systém', url: '#', order: 70, target: '_self', isExternal: false },
-  { id: 'sub-7-1', labelKey: 'Novinky', url: '/news', order: 71, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-2', labelKey: 'Hub', url: '/synthesis-hub', order: 72, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-3', labelKey: 'AI admin', url: '/ai-admin', order: 73, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-4', labelKey: 'Admin', url: '/admin', order: 74, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-5', labelKey: 'Context', url: '/ai-context', order: 75, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-6', labelKey: 'Nápověda', url: '/user-manual', order: 76, target: '_self', isExternal: false, parentId: 'cat-7' },
-  { id: 'sub-7-7', labelKey: 'Architektura', url: '/sitemap', order: 77, target: '_self', isExternal: false, parentId: 'cat-7' },
-
-  // Parent Category 8: ℹ️ O projektu tatovacesta.cz
-  { id: 'cat-8', labelKey: 'ℹ️ O projektu tatovacesta.cz', url: '#', order: 80, target: '_self', isExternal: false },
-  { id: 'sub-8-1', labelKey: 'O nás', url: '/o-nas', order: 81, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-2', labelKey: 'Kontakt', url: '/kontakt', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-3', labelKey: 'Sponzoři', url: '/sponzori', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-4', labelKey: 'Partneři', url: '/partneri', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-5', labelKey: 'Podpořte nás & Vznik spolku', url: '/podporte-nas', order: 85, target: '_self', isExternal: false, parentId: 'cat-8' },
-];
+const FALLBACK_NAV_ITEMS: NavItem[] = NAVIGATION_ITEMS;
 
 export const Header: React.FC<HeaderProps> = ({
   currentView,
@@ -106,18 +40,31 @@ export const Header: React.FC<HeaderProps> = ({
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
 
-  const isAdmin = hasRole('ADMIN');
+  const isAuthorizedAdmin =
+    hasRole('ADMIN') ||
+    hasRole('SUPER_ADMIN') ||
+    hasRole('SYSTEM_ADMIN') ||
+    hasRole('MODERATOR') ||
+    hasRole('LEGAL_EDITOR') ||
+    hasRole('CONTENT_MANAGER');
+  const isSuperAdmin = hasRole('SUPER_ADMIN') || hasRole('SYSTEM_ADMIN') || hasRole('ADMIN');
+
   const effectiveNavItems = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
 
   const allowedNavItems = effectiveNavItems.filter((item) => {
-    const isSystemOrAdmin =
-      item.id === 'cat-7' ||
-      item.parentId === 'cat-7' ||
+    const isCategory7 = item.id === 'cat-7' || item.parentId === 'cat-7';
+    const isAdminRoute =
       item.url === '/admin' ||
       item.url.startsWith('/admin/') ||
       item.url === '/administrace' ||
-      item.url.startsWith('/administrace/');
-    if (isSystemOrAdmin && !isAdmin) {
+      item.url.startsWith('/administrace/') ||
+      item.url === '/ai-admin' ||
+      item.url === '/ai-context';
+
+    if ((isCategory7 || isAdminRoute) && !isAuthorizedAdmin) {
+      return false;
+    }
+    if (item.url === '/admin/vps' && !isSuperAdmin) {
       return false;
     }
     return true;
@@ -203,11 +150,13 @@ export const Header: React.FC<HeaderProps> = ({
               return acc;
             }, {} as Record<string, NavItem[]>);
 
-            return parentItems.map((item) => {
+            return parentItems.map((item, idx) => {
               const children = childItemsMap[item.id] || [];
               const isActive =
                 currentView === 'public' &&
                 (currentPath === item.url || (item.url !== '/' && currentPath.startsWith(item.url)));
+
+              const isRightAligned = idx >= parentItems.length - 2;
 
               if (children.length > 0) {
                 return (
@@ -222,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>{getLabelForNavKey(item.labelKey)}</span>
                       <ChevronDown className="w-3.5 h-3.5 opacity-60 transition-transform group-hover:rotate-180" />
                     </button>
-                    <div className="absolute left-0 mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200">
+                    <div className={`absolute mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200 ${isRightAligned ? 'right-0' : 'left-0'}`}>
                       {children.map((subItem) => {
                         const isSubActive = currentView === 'public' && currentPath === subItem.url;
                         return (

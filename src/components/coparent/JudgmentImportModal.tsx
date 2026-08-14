@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, FileText, Upload, CheckCircle2, X, AlertCircle } from 'lucide-react';
 
 interface JudgmentImportModalProps {
-  spaceId: string;
+  spaceId?: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -99,13 +99,19 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
     setLoadingText('Aplikuji pravidla a generuji kalendář v CoParent Hubu...');
 
     try {
+      const activeSpaceId = spaceId || null;
+      const formData = extractedData;
+
       const res = await fetch('/api/coparent/apply-judgment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer jwt_token_user_${Date.now()}`
         },
-        body: JSON.stringify({ spaceId, extractedData })
+        body: JSON.stringify({
+          spaceId: activeSpaceId || null,
+          extractedData: formData
+        })
       });
 
       const data = await res.json();

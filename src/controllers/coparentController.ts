@@ -244,13 +244,42 @@ export class CoParentController {
 
   public static async applyJudgmentSetup(req: AuthenticatedRequest, res: Response) {
     try {
-      const { spaceId, extractedData } = req.body;
-      if (!spaceId || !extractedData) {
-        return res.status(400).json({ error: 'Chybí spaceId nebo extractedData.' });
+      let { spaceId, extractedData } = req.body;
+      if (!extractedData) {
+        return res.status(400).json({ error: 'Chybí extractedData.' });
       }
+
+      if (!spaceId) {
+        const p = prisma;
+        if (!isPrismaAvailable() || !p) {
+          return res.status(500).json({ error: "Databáze není dostupná." });
+        }
+        const spaceDelegate = (p as any).coParentSpace || (p as any).coparentSpace;
+        let space = await spaceDelegate.findFirst({
+          where: {
+            members: { some: { userId: req.user!.id } }
+          }
+        });
+
+        if (!space) {
+          space = await spaceDelegate.create({
+            data: {
+              title: `Spolurodičovský prostor`,
+              conflictMode: 'COOPERATION',
+              ownerId: req.user!.id,
+              members: {
+                create: { userId: req.user!.id, role: 'FATHER' }
+              }
+            }
+          });
+        }
+        spaceId = space.id;
+      }
+
       const result = await CoParentService.applyJudgmentSetup(spaceId, req.user!.id, extractedData);
       res.json(result);
     } catch (err: any) {
+      console.error('[CoParentController.applyJudgmentSetup error]:', err);
       res.status(500).json({ error: err.message || 'Chyba při aplikaci rozsudku do CoParent Hubu.' });
     }
   }
