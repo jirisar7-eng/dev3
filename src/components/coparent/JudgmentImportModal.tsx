@@ -274,30 +274,79 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 >
                   <option value="WEEK_A_B">Týden A / Týden B</option>
+                  <option value="EVEN_ODD_WEEKS">Sudý / Lichý týden</option>
                   <option value="EVERY_OTHER_WEEKEND">Lichý víkend</option>
+                  <option value="STANDARD">Standardní</option>
                   <option value="CUSTOM">Vlastní rozvrh</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Den předání</label>
-                <input
-                  type="text"
-                  value={extractedData.handoverDay || ''}
-                  onChange={(e) => setExtractedData({ ...extractedData, handoverDay: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
-                />
-              </div>
+              {extractedData.scheduleType === 'EVEN_ODD_WEEKS' ? (
+                <>
+                  <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">📅 Sudý týden</label>
+                      <input
+                        type="text"
+                        value={extractedData.evenWeek?.summary || ''}
+                        onChange={(e) => setExtractedData({ ...extractedData, evenWeek: { ...extractedData.evenWeek, summary: e.target.value } })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                        placeholder="Např. Po 8:45 - Út 15:30, Pá 8:45 - 15:30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">📅 Lichý týden</label>
+                      <input
+                        type="text"
+                        value={extractedData.oddWeek?.summary || ''}
+                        onChange={(e) => setExtractedData({ ...extractedData, oddWeek: { ...extractedData.oddWeek, summary: e.target.value } })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                        placeholder="Např. Po, St, Pá 8:45 - 15:30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas od (HH:MM)</label>
+                      <input
+                        type="time"
+                        value={extractedData.handoverStartTime || ''}
+                        onChange={(e) => setExtractedData({ ...extractedData, handoverStartTime: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas do (HH:MM)</label>
+                      <input
+                        type="time"
+                        value={extractedData.handoverEndTime || ''}
+                        onChange={(e) => setExtractedData({ ...extractedData, handoverEndTime: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Den předání</label>
+                    <input
+                      type="text"
+                      value={extractedData.handoverDay || ''}
+                      onChange={(e) => setExtractedData({ ...extractedData, handoverDay: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas předání (HH:MM)</label>
-                <input
-                  type="time"
-                  value={extractedData.handoverTime || ''}
-                  onChange={(e) => setExtractedData({ ...extractedData, handoverTime: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
-                />
-              </div>
+                  <div>
+                    <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Čas předání (HH:MM)</label>
+                    <input
+                      type="time"
+                      value={extractedData.handoverTime || ''}
+                      onChange={(e) => setExtractedData({ ...extractedData, handoverTime: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="sm:col-span-2">
                 <label className="block text-2xs font-bold uppercase tracking-wider text-slate-500 mb-1">Místo předání</label>

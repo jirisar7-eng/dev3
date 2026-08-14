@@ -508,14 +508,72 @@ export class CoParentService {
     }
 
     // 4. Create Agreement summary
+    let contentStr = `Typ péče: ${data.custodyType}\nRozvrh: ${data.scheduleType}\nPředání: ${data.handoverDay || 'Neuvedeno'} v ${data.handoverTime || 'Neuvedeno'}\nMísto: ${data.handoverLocation || 'Neuvedeno'}\nVýživné: ${data.alimonyAmount || 0} Kč (splatné ${data.alimonyDueDate}.)\nPravidla pro prázdniny: ${data.holidaysRule || 'Není určeno'}`;
+    
+    if (data.scheduleType === 'EVEN_ODD_WEEKS') {
+      contentStr += `\nSudý týden: ${data.evenWeek?.summary || 'Neuvedeno'}\nLichý týden: ${data.oddWeek?.summary || 'Neuvedeno'}\nČas od-do: ${data.handoverStartTime} - ${data.handoverEndTime}`;
+    }
+
     await (p as any).coparentAgreement.create({
       data: {
         spaceId,
         title: `Soudní rozsudek / Dohoda o péči - ${firstName} ${lastName}`,
-        content: `Typ péče: ${data.custodyType}\\nRozvrh: ${data.scheduleType}\\nPředání: ${data.handoverDay} v ${data.handoverTime}\\nMísto: ${data.handoverLocation || 'Neuvedeno'}\\nVýživné: ${data.alimonyAmount || 0} Kč (splatné ${data.alimonyDueDate}.)\\nPravidla pro prázdniny: ${data.holidaysRule || 'Není určeno'}`,
+        content: contentStr,
         status: 'ACCEPTED'
       }
     });
+
+    // 4b. Generate Events for EVEN_ODD_WEEKS (Next 60 days)
+    if (data.scheduleType === 'EVEN_ODD_WEEKS' && (data.evenWeek?.days || data.oddWeek?.days)) {
+      const getWeekNumber = (d: Date) => {
+        const date = new Date(d.getTime());
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      };
+      
+      const dayNamesCZ = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
+      
+      for (let i = 0; i < 60; i++) {
+        const curDate = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+        const weekNum = getWeekNumber(curDate);
+        const isEven = weekNum % 2 === 0;
+        const dayName = dayNamesCZ[curDate.getDay()];
+        
+        let shouldHaveCare = false;
+        
+        if (isEven && data.evenWeek?.days && Array.isArray(data.evenWeek.days)) {
+          shouldHaveCare = data.evenWeek.days.some((d: string) => d.toLowerCase() === dayName);
+        } else if (!isEven && data.oddWeek?.days && Array.isArray(data.oddWeek.days)) {
+          shouldHaveCare = data.oddWeek.days.some((d: string) => d.toLowerCase() === dayName);
+        }
+        
+        if (shouldHaveCare) {
+          const startTime = data.handoverStartTime || '08:00';
+          const endTime = data.handoverEndTime || '18:00';
+          
+          const startDate = new Date(curDate);
+          const [sh, sm] = startTime.split(':');
+          startDate.setHours(parseInt(sh || '8', 10), parseInt(sm || '0', 10), 0, 0);
+          
+          const endDate = new Date(curDate);
+          const [eh, em] = endTime.split(':');
+          endDate.setHours(parseInt(eh || '18', 10), parseInt(em || '0', 10), 0, 0);
+          
+          await (p as any).coparentEvent.create({
+            data: {
+              spaceId,
+              title: `Péče (${isEven ? 'Sudý' : 'Lichý'} týden)`,
+              description: isEven ? data.evenWeek?.summary : data.oddWeek?.summary,
+              startDate,
+              endDate,
+              category: 'CARE'
+            }
+          });
+        }
+      }
+    }
 
     // 5. Audit Log
     await (p as any).coparentAuditLog.create({

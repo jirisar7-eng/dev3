@@ -7,9 +7,13 @@ export interface JudgmentExtractedData {
   childName: string | null;
   childBirthDate: string | null;
   custodyType: "SHARED" | "SOLE_FATHER" | "SOLE_MOTHER" | "CUSTOM" | null;
-  scheduleType: "WEEK_A_B" | "EVERY_OTHER_WEEKEND" | "CUSTOM" | null;
+  scheduleType: "EVEN_ODD_WEEKS" | "WEEK_A_B" | "EVERY_OTHER_WEEKEND" | "CUSTOM" | "STANDARD" | null;
+  evenWeek?: { days: string[]; summary: string } | null;
+  oddWeek?: { days: string[]; summary: string } | null;
   handoverDay: string | null; // např. "NEDELE" nebo "PONDELI"
   handoverTime: string | null; // např. "18:00"
+  handoverStartTime?: string | null;
+  handoverEndTime?: string | null;
   handoverLocation: string | null;
   alimonyAmount: number | null;
   alimonyDueDate: number | null; // den v měsíci
@@ -50,16 +54,22 @@ export class JudgmentParserService {
 
   private static getPrompt(): string {
     return `
-Extrahuj ze zadaného rozsudku přesná fakta: jméno dítěte, datum narození, typ péče, den a čas předání (ve formátu HH:MM), místo a výživné. Pokud údaj v dokumentu CHYBÍ, vrať u daného pole NULL. NIKDY si nevymýšlej fiktivní jména ani neplatné časy.
+Extrahuj ze zadaného rozsudku přesná fakta: jméno dítěte, datum narození, typ péče, dny a časy předání, místo a výživné. Pokud údaj v dokumentu CHYBÍ, vrať u daného pole NULL. NIKDY si nevymýšlej fiktivní jména ani neplatné časy.
+
+Pokud detekuješ složitější střídavou péči podle sudých a lichých týdnů (např. slova "v sudém kalendářním týdnu" a "v lichém kalendářním týdnu"), extrahuj přesné dny a časová rozmezí do evenWeek a oddWeek a nastav scheduleType na "EVEN_ODD_WEEKS". Pro jednoduché režimy použij handoverDay a handoverTime.
 
 Požadované JSON schéma:
 {
   "childName": "Jméno a příjmení dítěte (string) nebo null",
   "childBirthDate": "Datum narození ve formátu YYYY-MM-DD nebo null",
   "custodyType": "SHARED" (střídavá), "SOLE_FATHER" (výhradní otec), "SOLE_MOTHER" (výhradní matka) nebo "CUSTOM",
-  "scheduleType": "WEEK_A_B" (týden A / týden B), "EVERY_OTHER_WEEKEND" (lichý víkend) nebo "CUSTOM",
+  "scheduleType": "EVEN_ODD_WEEKS", "WEEK_A_B", "EVERY_OTHER_WEEKEND", "STANDARD", nebo "CUSTOM",
+  "evenWeek": { "days": ["Pondělí", "Úterý", "Pátek"], "summary": "Sudý týden: Po 8:45 - Út 15:30, Pá 8:45 - 15:30" } (pokud je scheduleType EVEN_ODD_WEEKS),
+  "oddWeek": { "days": ["Pondělí", "Středa", "Pátek"], "summary": "Lichý týden: Po, St, Pá 8:45 - 15:30" } (pokud je scheduleType EVEN_ODD_WEEKS),
   "handoverDay": "Den předání, např. NEDELE, PONDELI, PATEK nebo null",
-  "handoverTime": "Čas předání, např. 17:00 nebo 18:00 nebo null",
+  "handoverTime": "Čas předání, např. 17:00 nebo null",
+  "handoverStartTime": "Čas od (HH:MM), např. 08:45 nebo null",
+  "handoverEndTime": "Čas do (HH:MM), např. 15:30 nebo null",
   "handoverLocation": "Místo předání nebo null",
   "alimonyAmount": Částka výživného jako číslo (např. 4000) nebo null,
   "alimonyDueDate": Den v měsíci splatnosti výživného (např. 15) nebo null,
@@ -78,8 +88,12 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
       childBirthDate: parsed.childBirthDate || null,
       custodyType: parsed.custodyType || null,
       scheduleType: parsed.scheduleType || null,
+      evenWeek: parsed.evenWeek || null,
+      oddWeek: parsed.oddWeek || null,
       handoverDay: parsed.handoverDay || null,
       handoverTime: parsed.handoverTime || null,
+      handoverStartTime: parsed.handoverStartTime || null,
+      handoverEndTime: parsed.handoverEndTime || null,
       handoverLocation: parsed.handoverLocation || null,
       alimonyAmount: typeof parsed.alimonyAmount === 'number' ? parsed.alimonyAmount : null,
       alimonyDueDate: typeof parsed.alimonyDueDate === 'number' ? parsed.alimonyDueDate : null,
