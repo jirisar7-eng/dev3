@@ -11,6 +11,8 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev3@postgres_dev3:5432/tatovacesta_dev3?schema=public}
       - JWT_SECRET=${JWT_SECRET:-dev3_super_secret_jwt_key}
+      - MAILCOW_URL=${MAILCOW_URL:-https://mail.tatovacesta.cz}
+      - MAILCOW_API_KEY=${MAILCOW_API_KEY:-}
     restart: always
     networks:
       - default

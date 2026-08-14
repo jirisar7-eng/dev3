@@ -9,11 +9,15 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - PORT=3000
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev@postgres_db_dev:5432/tatovacesta_dev?schema=public}
       - JWT_SECRET=${JWT_SECRET:-dev_super_secret_jwt_key_tatovacesta}
+      - MAILCOW_URL=${MAILCOW_URL:-https://mail.tatovacesta.cz}
+      - MAILCOW_API_KEY=${MAILCOW_API_KEY:-}
     networks:
       - app_network
     depends_on:

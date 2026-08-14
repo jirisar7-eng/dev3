@@ -978,158 +978,119 @@ app.get('/api/permissions', async (_req, res) => {
 });
 
 // --- MAILCOW API PROXY ---
-const translateMailcowError = (msg: string): string => {
-  if (!msg) return 'Neznámá chyba Mailcow API';
-  const lowercaseMsg = msg.toLowerCase();
-  if (lowercaseMsg.includes('password_complexity') || lowercaseMsg.includes('complexity')) {
-    return "Heslo je příliš jednoduché. Musí obsahovat velká i malá písmena, čísla a speciální znaky (např. !@#$%^&*).";
-  }
-  if (lowercaseMsg.includes('invalid_quota') || lowercaseMsg.includes('quota')) {
-    return "Zadaná neplatná velikost schránky.";
-  }
-  if (lowercaseMsg.includes('mailbox_exists') || lowercaseMsg.includes('exists') || lowercaseMsg.includes('already exists')) {
-    return "Tato e-mailová schránka již existuje.";
-  }
-  return msg;
-};
-
-app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
+app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
-    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
-    const mailcowApiKey = process.env.MAILCOW_API_KEY;
-    if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
-    }
-
-    const response = await fetch(`${mailcowUrl}/api/v1/get/mailbox/all`, {
-      headers: { 'X-API-Key': mailcowApiKey }
+    const mailboxes = await getMailcowMailboxes();
+    return res.json({
+      success: true,
+      count: mailboxes.length,
+      mailboxes,
     });
+  } catch (err: any) {
+    const errorMsg = err.message || 'Chyba při komunikaci s Mailcow API.';
+    let statusCode = 503;
 
-    if (!response.ok) {
-      return res.status(503).json({ success: false, error: `Mailcow API vrátilo chybu: ${response.status}` });
+    if (errorMsg.includes('odmítlo autorizaci') || errorMsg.includes('API klíč')) {
+      statusCode = 401;
+    } else if (errorMsg.includes('endpoint nebyl nalezen')) {
+      statusCode = 404;
+    } else if (errorMsg.includes('není nakonfigurováno')) {
+      statusCode = 503;
     }
 
-    const data = await response.json();
-    res.json(data);
-  } catch (err: any) {
-    console.error('[Mailcow API Error]:', err);
-    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
+    return res.status(statusCode).json({
+      success: false,
+      error: errorMsg,
+      mailboxes: [],
+    });
   }
 });
 
-app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
+app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
-    const { local_part, domain, name, password, quota } = req.body;
-    if (!local_part) {
-      return res.status(400).json({ error: 'Chybí název schránky (local_part).' });
-    }
-    const formattedLocalPart = local_part.toLowerCase().trim();
-    const formattedQuota = parseInt(quota, 10) || 3072;
-
-    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
-    const mailcowApiKey = process.env.MAILCOW_API_KEY;
-    if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
+    const { local_part, domain, name, password, quota, email } = req.body;
+    
+    let targetEmail = email;
+    if (!targetEmail) {
+      if (!local_part) {
+        return res.status(400).json({ success: false, error: 'Chybí název schránky (local_part).' });
+      }
+      targetEmail = `${local_part.toLowerCase().trim()}@${(domain || 'tatovacesta.cz').toLowerCase().trim()}`;
     }
 
-    const response = await fetch(`${mailcowUrl}/api/v1/add/mailbox`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': mailcowApiKey,
-      },
-      body: JSON.stringify({
-        local_part: formattedLocalPart,
-        domain: domain || 'tatovacesta.cz',
-        name,
-        password,
-        quota: formattedQuota,
-        active: 1
-      }),
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Heslo pro schránku je povinné.' });
+    }
+
+    const result = await createMailcowMailbox(targetEmail, name || '', password, quota || 3072);
+    return res.status(201).json({
+      success: true,
+      message: `Schránka ${targetEmail} byla úspěšně vytvořena.`,
+      result,
     });
-
-    if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
-    }
-
-    const data = await response.json();
-    if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
-    }
-
-    res.json(data);
   } catch (err: any) {
-    console.error('[Mailcow Create Error]:', err);
-    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
+    const errorMsg = err.message || 'Chyba při vytváření schránky v Mailcow.';
+    let statusCode = 400;
+    if (errorMsg.includes('odmítlo autorizaci')) statusCode = 401;
+    else if (errorMsg.includes('není nakonfigurováno') || errorMsg.includes('serveru')) statusCode = 503;
+
+    return res.status(statusCode).json({
+      success: false,
+      error: errorMsg,
+    });
   }
 });
 
-app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
+app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { email } = req.params;
-    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
-    const mailcowApiKey = process.env.MAILCOW_API_KEY;
-    if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Chybí identifikátor schránky (e-mail).' });
     }
 
-    const response = await fetch(`${mailcowUrl}/api/v1/delete/mailbox`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': mailcowApiKey,
-      },
-      body: JSON.stringify({ items: [email] }),
+    const result = await deleteMailcowMailbox(email);
+    return res.json({
+      success: true,
+      message: `Schránka ${email} byla smazána.`,
+      result,
     });
-
-    if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
-    }
-
-    const data = await response.json();
-    if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
-    }
-
-    res.json(data);
   } catch (err: any) {
-    console.error('[Mailcow Delete Error]:', err);
-    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
+    const errorMsg = err.message || 'Chyba při mazání schránky v Mailcow.';
+    let statusCode = 400;
+    if (errorMsg.includes('odmítlo autorizaci')) statusCode = 401;
+    else if (errorMsg.includes('není nakonfigurováno')) statusCode = 503;
+
+    return res.status(statusCode).json({
+      success: false,
+      error: errorMsg,
+    });
   }
 });
 
-app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRole('ADMIN') as any, async (req, res) => {
+app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { email } = req.params;
     const { password } = req.body;
-    const mailcowUrl = process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
-    const mailcowApiKey = process.env.MAILCOW_API_KEY;
-    if (!mailcowApiKey) {
-      return res.status(503).json({ success: false, error: "Mailcow API není nakonfigurováno." });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'E-mail a nové heslo jsou povinné.' });
     }
 
-    const response = await fetch(`${mailcowUrl}/api/v1/edit/mailbox`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': mailcowApiKey,
-      },
-      body: JSON.stringify({ items: [email], attr: { password } }),
+    const result = await updateMailcowPassword(email, password);
+    return res.json({
+      success: true,
+      message: `Heslo pro schránku ${email} bylo úspěšně změněno.`,
+      result,
     });
-
-    if (!response.ok) {
-      return res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
-    }
-
-    const data = await response.json();
-    if (Array.isArray(data) && data[0]?.type === 'danger') {
-      return res.status(400).json({ success: false, error: translateMailcowError(data[0].msg) });
-    }
-
-    res.json(data);
   } catch (err: any) {
-    console.error('[Mailcow Password Error]:', err);
-    res.status(503).json({ success: false, error: "Mailcow služba je momentálně nedostupná." });
+    const errorMsg = err.message || 'Chyba při změně hesla v Mailcow.';
+    let statusCode = 400;
+    if (errorMsg.includes('odmítlo autorizaci')) statusCode = 401;
+    else if (errorMsg.includes('není nakonfigurováno')) statusCode = 503;
+
+    return res.status(statusCode).json({
+      success: false,
+      error: errorMsg,
+    });
   }
 });
 
