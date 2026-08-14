@@ -21,6 +21,7 @@ import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
 import { LegalHubPage } from '../../pages/LegalHubPage';
 import { MyCasePage } from '../../pages/MyCasePage';
+import { CoParentHubPage } from '../../pages/CoParentHubPage';
 import {
   CrisisCommunityPortal,
   SosPlanView,
@@ -113,6 +114,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     );
   }
 
+  // 0.2 CoParent Hub (/coparent-hub, /coparent)
+  if (slug === 'coparent-hub' || slug === 'coparent' || slug === 'spolurodicovsky-hub') {
+    return <CoParentHubPage onNavigate={onNavigate} />;
+  }
+
   // 1. Homepage Route
   if (cleanPath === '/' || slug === 'domu') {
     return (
@@ -125,7 +131,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <Hero />
         <CorePrincipleCard />
         <ArticlesSection onNavigate={onNavigate} />
-        <ModulesSection />
+        <ModulesSection onNavigate={onNavigate} />
         <FaqSection />
       </div>
     );
