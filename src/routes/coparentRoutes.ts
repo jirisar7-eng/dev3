@@ -16,5 +16,8 @@ router.get('/export', CoParentController.exportAuditData);
 router.post('/expenses', CoParentController.createExpense);
 router.put('/expenses/status', CoParentController.updateExpenseStatus);
 router.post('/agreements', CoParentController.createAgreement);
+router.post('/invite/create', CoParentController.createInvite);
+router.post('/invite/accept', CoParentController.acceptInvite);
+router.get('/members', CoParentController.getMembers);
 
 export default router;

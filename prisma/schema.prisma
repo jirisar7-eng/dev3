@@ -1128,6 +1128,7 @@ model CoParentSpace {
   requests     CoParentRequest[]
   auditLogs    CoParentAuditLog[]
   documents    CoParentDocument[]
+  invites      CoParentInvite[]
 
   @@index([ownerId])
 }
@@ -1304,4 +1305,19 @@ model CoParentDocument {
   createdAt   DateTime      @default(now())
 
   @@index([spaceId])
+}
+
+model CoParentInvite {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  invitedBy String
+  email     String
+  code      String        @unique
+  status    String        @default("PENDING") // "PENDING", "ACCEPTED", "EXPIRED"
+  expiresAt DateTime
+  createdAt DateTime      @default(now())
+
+  @@index([spaceId])
+  @@index([code])
 }

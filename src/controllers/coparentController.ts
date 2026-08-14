@@ -119,4 +119,43 @@ export class CoParentController {
       res.status(500).json({ error: err.message || 'Chyba při vytváření dohody.' });
     }
   }
+
+  public static async createInvite(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { spaceId, email } = req.body;
+      if (!spaceId || !email) {
+        return res.status(400).json({ error: 'Chybí spaceId nebo email.' });
+      }
+      const invite = await CoParentService.createInvite(spaceId, req.user!.id, email);
+      res.status(201).json(invite);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Chyba při vytváření pozvánky.' });
+    }
+  }
+
+  public static async acceptInvite(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { code, role } = req.body;
+      if (!code) {
+        return res.status(400).json({ error: 'Chybí kód pozvánky.' });
+      }
+      const result = await CoParentService.acceptInvite(code, req.user!, role);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || 'Chyba při přijímání pozvánky.' });
+    }
+  }
+
+  public static async getMembers(req: AuthenticatedRequest, res: Response) {
+    try {
+      const spaceId = req.query.spaceId as string;
+      if (!spaceId) {
+        return res.status(400).json({ error: 'Chybí parameter spaceId.' });
+      }
+      const members = await CoParentService.getMembers(spaceId);
+      res.json(members);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Chyba při načítání členů.' });
+    }
+  }
 }

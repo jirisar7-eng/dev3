@@ -351,4 +351,110 @@ export class CoParentService {
 
     return agreement;
   }
+
+  /**
+   * Create Invitation
+   */
+  public static async createInvite(spaceId: string, userId: string, email: string) {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
+
+    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const code = `CP-${randomStr}`;
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+    const invite = await (p as any).coparentInvite.create({
+      data: {
+        spaceId,
+        invitedBy: userId,
+        email,
+        code,
+        status: 'PENDING',
+        expiresAt
+      }
+    });
+
+    await (p as any).coparentAuditLog.create({
+      data: {
+        spaceId,
+        userId,
+        action: 'INVITE_CREATED',
+        entity: 'CoParentInvite',
+        entityId: invite.id,
+        details: `Vytvořena pozvánka pro email ${email} s kódem ${code}`
+      }
+    });
+
+    return invite;
+  }
+
+  /**
+   * Accept Invitation
+   */
+  public static async acceptInvite(code: string, user: User, role: string = 'PARENT') {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
+
+    const invite = await (p as any).coparentInvite.findUnique({
+      where: { code }
+    });
+
+    if (!invite) throw new Error('Pozvánka s tímto kódém nebyla nalezena.');
+    if (invite.status !== 'PENDING') throw new Error('Tato pozvánka již byla využita nebo vypršela.');
+    if (new Date() > new Date(invite.expiresAt)) {
+      await (p as any).coparentInvite.update({
+        where: { id: invite.id },
+        data: { status: 'EXPIRED' }
+      });
+      throw new Error('Platnost pozvánky vypršela (48h).');
+    }
+
+    // Check if user is already member of this space
+    const existingMember = await (p as any).coparentMember.findFirst({
+      where: { spaceId: invite.spaceId, userId: user.id }
+    });
+
+    if (!existingMember) {
+      await (p as any).coparentMember.create({
+        data: {
+          spaceId: invite.spaceId,
+          userId: user.id,
+          role: role || 'PARENT'
+        }
+      });
+    }
+
+    await (p as any).coparentInvite.update({
+      where: { id: invite.id },
+      data: { status: 'ACCEPTED' }
+    });
+
+    await (p as any).coparentAuditLog.create({
+      data: {
+        spaceId: invite.spaceId,
+        userId: user.id,
+        action: 'INVITE_ACCEPTED',
+        entity: 'CoParentInvite',
+        entityId: invite.id,
+        details: `Uživatel ${user.email} přijal pozvánku ${code} a připojil se do prostoru.`
+      }
+    });
+
+    return { success: true, spaceId: invite.spaceId };
+  }
+
+  /**
+   * Get Members of Space
+   */
+  public static async getMembers(spaceId: string) {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
+
+    const members = await (p as any).coparentMember.findMany({
+      where: { spaceId },
+      include: { user: true }
+    });
+
+    return members;
+  }
 }
