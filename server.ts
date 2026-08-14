@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountDeletedEmail, sendQuickCreateEmail } from './src/services/emailService.ts';
-import { getMailcowMailboxes, createMailcowMailbox, deleteMailcowMailbox, updateMailcowPassword } from './src/services/mailcowService.ts';
+import { getMailcowMailboxes, createMailcowMailbox, deleteMailcowMailbox, updateMailcowPassword, checkMailcowHealth, getMailcowDomains } from './src/services/mailcowService.ts';
 import { AuthService } from './src/services/authService.ts';
 import { TextService } from './src/services/textService.ts';
 import { ThemeService } from './src/services/themeService.ts';
@@ -978,6 +978,38 @@ app.get('/api/permissions', async (_req, res) => {
 });
 
 // --- MAILCOW API PROXY ---
+app.get('/api/mailcow/health', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const health = await checkMailcowHealth();
+    return res.json({
+      success: health.healthy,
+      health,
+    });
+  } catch (err: any) {
+    return res.status(503).json({
+      success: false,
+      error: 'MAILCOW_UNAVAILABLE',
+      message: err.message || 'Chyba při diagnostice Mailcow.',
+    });
+  }
+});
+
+app.get('/api/mailcow/domains', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const domains = await getMailcowDomains();
+    return res.json({
+      success: true,
+      domains,
+    });
+  } catch (err: any) {
+    return res.status(503).json({
+      success: false,
+      error: 'MAILCOW_UNAVAILABLE',
+      message: err.message || 'Chyba při načítání domén z Mailcow.',
+    });
+  }
+});
+
 app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const mailboxes = await getMailcowMailboxes();
@@ -989,18 +1021,26 @@ app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as an
   } catch (err: any) {
     const errorMsg = err.message || 'Chyba při komunikaci s Mailcow API.';
     let statusCode = 503;
+    let errorCode = 'MAILCOW_UNAVAILABLE';
 
     if (errorMsg.includes('odmítlo autorizaci') || errorMsg.includes('API klíč')) {
       statusCode = 401;
+      errorCode = 'MAILCOW_UNAUTHORIZED';
     } else if (errorMsg.includes('endpoint nebyl nalezen')) {
       statusCode = 404;
+      errorCode = 'MAILCOW_NOT_FOUND';
+    } else if (errorMsg.includes('včas') || errorMsg.includes('limit')) {
+      statusCode = 504;
+      errorCode = 'MAILCOW_TIMEOUT';
     } else if (errorMsg.includes('není nakonfigurováno')) {
       statusCode = 503;
+      errorCode = 'MAILCOW_MISCONFIGURED';
     }
 
     return res.status(statusCode).json({
       success: false,
-      error: errorMsg,
+      error: errorCode,
+      message: errorMsg,
       mailboxes: [],
     });
   }
@@ -1013,16 +1053,26 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
     let targetEmail = email;
     if (!targetEmail) {
       if (!local_part) {
-        return res.status(400).json({ success: false, error: 'Chybí název schránky (local_part).' });
+        return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: 'Chybí název schránky (local_part).' });
       }
       targetEmail = `${local_part.toLowerCase().trim()}@${(domain || 'tatovacesta.cz').toLowerCase().trim()}`;
     }
 
     if (!password) {
-      return res.status(400).json({ success: false, error: 'Heslo pro schránku je povinné.' });
+      return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: 'Heslo pro schránku je povinné.' });
     }
 
     const result = await createMailcowMailbox(targetEmail, name || '', password, quota || 3072);
+
+    // Audit log
+    await AuditService.recordLog(
+      'MAILCOW_MAILBOX_CREATED',
+      'Mailcow',
+      `Vytvořena schránka: ${targetEmail} (kapacita: ${quota || 3072} MB)`,
+      req.user,
+      req.ip || '127.0.0.1'
+    );
+
     return res.status(201).json({
       success: true,
       message: `Schránka ${targetEmail} byla úspěšně vytvořena.`,
@@ -1036,7 +1086,8 @@ app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as a
 
     return res.status(statusCode).json({
       success: false,
-      error: errorMsg,
+      error: 'MAILCOW_CREATE_FAILED',
+      message: errorMsg,
     });
   }
 });
@@ -1045,10 +1096,20 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
   try {
     const { email } = req.params;
     if (!email) {
-      return res.status(400).json({ success: false, error: 'Chybí identifikátor schránky (e-mail).' });
+      return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: 'Chybí identifikátor schránky (e-mail).' });
     }
 
     const result = await deleteMailcowMailbox(email);
+
+    // Audit log
+    await AuditService.recordLog(
+      'MAILCOW_MAILBOX_DELETED',
+      'Mailcow',
+      `Smazána schránka: ${email}`,
+      req.user,
+      req.ip || '127.0.0.1'
+    );
+
     return res.json({
       success: true,
       message: `Schránka ${email} byla smazána.`,
@@ -1062,7 +1123,8 @@ app.delete('/api/mailcow/mailboxes/:email', requireAuth as any, requireRole('ADM
 
     return res.status(statusCode).json({
       success: false,
-      error: errorMsg,
+      error: 'MAILCOW_DELETE_FAILED',
+      message: errorMsg,
     });
   }
 });
@@ -1072,10 +1134,20 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
     const { email } = req.params;
     const { password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'E-mail a nové heslo jsou povinné.' });
+      return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: 'E-mail a nové heslo jsou povinné.' });
     }
 
     const result = await updateMailcowPassword(email, password);
+
+    // Audit log
+    await AuditService.recordLog(
+      'MAILCOW_PASSWORD_CHANGED',
+      'Mailcow',
+      `Změněno heslo pro schránku: ${email}`,
+      req.user,
+      req.ip || '127.0.0.1'
+    );
+
     return res.json({
       success: true,
       message: `Heslo pro schránku ${email} bylo úspěšně změněno.`,
@@ -1089,7 +1161,8 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
 
     return res.status(statusCode).json({
       success: false,
-      error: errorMsg,
+      error: 'MAILCOW_PASSWORD_FAILED',
+      message: errorMsg,
     });
   }
 });
