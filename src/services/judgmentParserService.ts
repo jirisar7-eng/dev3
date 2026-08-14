@@ -1,4 +1,6 @@
 import { AiService } from './AiService';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
 export interface JudgmentExtractedData {
@@ -98,7 +100,7 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
 
   private static async parseWithVision(file: Express.Multer.File): Promise<JudgmentExtractedData> {
     // Import inside so we don't break if not needed
-    const { GoogleGenAI } = require('@google/genai');
+    const { GoogleGenAI } = await import('@google/genai');
     const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2;
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is required for image/PDF vision processing.");

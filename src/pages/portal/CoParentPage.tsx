@@ -6,6 +6,7 @@ import {
   Plus, Check, X, FileText, ChevronRight, AlertCircle, RefreshCw, Sparkles, Upload
 } from 'lucide-react';
 import { JudgmentImportModal } from '../../components/coparent/JudgmentImportModal';
+import { AuditPrintView } from '../../components/coparent/AuditPrintView';
 
 interface CoParentPageProps {
   onNavigate?: (path: string) => void;
@@ -31,6 +32,10 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const [showJudgmentModal, setShowJudgmentModal] = useState(false);
   const [pairCodeInput, setPairCodeInput] = useState('');
   const [members, setMembers] = useState<any[]>([]);
+
+  // Print view state
+  const [isPrintingAudit, setIsPrintingAudit] = useState<boolean>(false);
+  const [auditDataForPrint, setAuditDataForPrint] = useState<any>(null);
 
 
   const fetchMembers = async () => {
@@ -224,6 +229,21 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
       a.href = url;
       a.download = `coparent-audit-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleShowPrintAudit = async () => {
+    if (!space) return;
+    try {
+      const res = await fetch(`/api/coparent/export?spaceId=${space.id}`, {
+        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+      });
+      if (!res.ok) throw new Error('Chyba při načítání dat pro audit.');
+      const data = await res.json();
+      setAuditDataForPrint(data);
+      setIsPrintingAudit(true);
     } catch (err: any) {
       alert(err.message);
     }
@@ -736,15 +756,24 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
           <Download className="w-12 h-12 text-blue-900 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900">Export auditních záznamů pro soud a OSPOD</h2>
           <p className="text-xs text-slate-600 max-w-md mx-auto mt-2">
-            Stáhněte kompletní neměnný auditní log zpráv, změn termínů a výdajů v JSON/PDF struktuře pro právní účely.
+            Zobrazte nebo stáhněte kompletní neměnný auditní log zpráv, změn termínů a výdajů struktuře pro právní účely.
           </p>
-          <button
-            onClick={handleExportData}
-            className="mt-6 px-6 py-3 bg-blue-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer hover:bg-blue-800"
-          >
-            <Download className="w-4 h-4" />
-            Stáhnout oficiální auditní export
-          </button>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={handleShowPrintAudit}
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer hover:bg-blue-500"
+            >
+              <FileText className="w-4 h-4" />
+              Zobrazit a vytisknout PDF
+            </button>
+            <button
+              onClick={handleExportData}
+              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer hover:bg-slate-800"
+            >
+              <Download className="w-4 h-4" />
+              Stáhnout JSON export
+            </button>
+          </div>
         </div>
       )}
 
@@ -998,6 +1027,16 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
           fetchCoParentData();
         }}
       />
+
+      {isPrintingAudit && auditDataForPrint && (
+        <AuditPrintView 
+          auditData={auditDataForPrint} 
+          onClose={() => {
+            setIsPrintingAudit(false);
+            setAuditDataForPrint(null);
+          }} 
+        />
+      )}
     </div>
   );
 };

@@ -42,7 +42,8 @@ import { TemplateManager } from './TemplateManager';
 import { CustomModuleManager } from './CustomModuleManager';
 import { SubjektManager } from './SubjektManager';
 import { ContactModerationManager } from './ContactModerationManager';
-import { Code, Building2 } from 'lucide-react';
+import { VpsManagement } from './VpsManagement';
+import { Code, Building2, Terminal } from 'lucide-react';
 
 type AdminTab =
   | 'overview'
@@ -63,7 +64,8 @@ type AdminTab =
   | 'settings'
   | 'sponsors'
   | 'dns'
-  | 'github';
+  | 'github'
+  | 'vps';
 
 
 interface AdminDashboardProps {
@@ -433,6 +435,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
                 SUPER_ADMIN
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('vps')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between mt-1 ${
+                activeTab === 'vps' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <Terminal className="w-4 h-4 text-rose-500" />
+                VPS & Systém
+              </span>
+              <span className="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">
+                SUPER_ADMIN
+              </span>
+            </button>
           </div>
         </div>
 
@@ -523,6 +539,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'dns' && <DnsManagementPage />}
           {activeTab === 'sponsors' && <PartnerManager />}
           {activeTab === 'github' && <GitHubPublisher />}
+          {activeTab === 'vps' && <VpsManagement />}
         </div>
       </div>
     </div>
