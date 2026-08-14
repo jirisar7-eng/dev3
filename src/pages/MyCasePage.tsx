@@ -59,11 +59,13 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   const [newCaseNumber, setNewCaseNumber] = useState<string>('');
   const [newCourt, setNewCourt] = useState<string>('');
 
-  const authHeaders = {
+  const token = localStorage.getItem('tatovacesta_auth_token');
+  const authHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer jwt_token_${currentUser?.id || 'demo'}_${Date.now()}`,
-    'x-user-id': currentUser?.id || 'user_father_1',
   };
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   const loadCases = async () => {
     if (!currentUser) return;

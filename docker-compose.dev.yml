@@ -15,7 +15,7 @@ services:
       - PORT=3000
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev@postgres_db_dev:5432/tatovacesta_dev?schema=public}
-      - JWT_SECRET=${JWT_SECRET:-dev_super_secret_jwt_key_tatovacesta}
+      - JWT_SECRET=${JWT_SECRET}
       - MAILCOW_PUBLIC_URL=${MAILCOW_PUBLIC_URL:-https://mail.tatovacesta.cz}
       - MAILCOW_URL=${MAILCOW_URL:-https://mail.tatovacesta.cz}
       - MAILCOW_INTERNAL_URL=${MAILCOW_INTERNAL_URL:-https://172.22.1.14}

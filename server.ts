@@ -525,8 +525,7 @@ app.post('/api/auth/logout', (req: AuthenticatedRequest, res) => {
   if (req.session && req.session.destroy) {
     req.session.destroy();
   }
-  res.clearCookie('userId');
-  res.clearCookie('token');
+  res.clearCookie('token', { path: '/' });
   res.json({ success: true, message: 'Uživatel byl úspěšně odhlášen.' });
 });
 

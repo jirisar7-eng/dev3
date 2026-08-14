@@ -9,12 +9,23 @@ import { ensureAllModulePagesExist } from './PageService.ts';
 export { ensureAllModulePagesExist };
 
 export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 10);
+  return await argonHash(password, {
+    memoryCost: 19456,
+    timeCost: 2,
+    outputLen: 32,
+    parallelism: 1,
+  });
 }
 
 export async function ensureSuperAdminAccount(): Promise<{ action: 'created' | 'updated' | 'skipped' | 'error'; email: string; details: string }> {
-  const targetEmail = process.env.ADMIN_INITIAL_EMAIL || process.env.SUPERADMIN_EMAIL || 'superadmin@tatovacesta.cz';
-  const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  const targetEmail = (process.env.ADMIN_INITIAL_EMAIL || process.env.SUPERADMIN_EMAIL || '').trim();
+  const initialPassword = (process.env.ADMIN_INITIAL_PASSWORD || '').trim();
+
+  if (!targetEmail) {
+    const warning = `ADMIN_INITIAL_EMAIL ani SUPERADMIN_EMAIL není v env nastaveno. Bootstrap super admin účtu nebyl proveden.`;
+    console.log(`[Admin Seed] ${warning}`);
+    return { action: 'skipped', email: '', details: warning };
+  }
 
   if (!prisma || !isPrismaAvailable()) {
     return { action: 'skipped', email: targetEmail, details: 'Prisma klient není k dispozici.' };
@@ -264,25 +275,7 @@ export async function seedDatabaseIfEmpty() {
       }
     }
 
-    // 3. Default Users
-    const defaultPasswordHash = await hashPassword('Heslo123!');
-    const usersData = [
-      {
-        id: 'usr-superadmin',
-        email: 'superadmin@tatovacesta.cz',
-        name: 'Hlavní Správce (Super Admin)',
-        role: 'SUPER_ADMIN' as const,
-        passwordHash: defaultPasswordHash,
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-      }
-    ];
-
-    for (const u of usersData) {
-      const existingUser = await prisma.user.findUnique({ where: { email: u.email } });
-      if (!existingUser) {
-        await prisma.user.create({ data: u });
-      }
-    }
+    // 3. Default Users handled safely by ensureSuperAdminAccount via env variables
 
     // 4. Default ContentStrings
     const textData = [

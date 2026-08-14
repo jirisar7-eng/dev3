@@ -53,12 +53,10 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
   req.session = {
     userId,
     regenerate: () => {
-      res.clearCookie('userId');
-      res.clearCookie('token');
+      res.clearCookie('token', { path: '/' });
     },
     destroy: () => {
-      res.clearCookie('userId');
-      res.clearCookie('token');
+      res.clearCookie('token', { path: '/' });
       if (req.session) {
         req.session.userId = undefined;
       }
