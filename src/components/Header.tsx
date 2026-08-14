@@ -5,6 +5,7 @@ import { NavItem } from '../types';
 import { NAVIGATION_ITEMS } from '../config/navigation';
 import { RegisterModal } from './public/RegisterModal';
 import { Logo } from './common/Logo';
+import { MegaMenu } from './layout/MegaMenu';
 import {
   Shield,
   User as UserIcon,
@@ -12,7 +13,6 @@ import {
   Check,
   Menu,
   X,
-  Compass,
   UserPlus,
   LogIn,
   LogOut,
@@ -367,142 +367,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Dynamic Portal Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="bg-white border-b border-slate-200 px-4 pt-4 pb-6 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                <span>HLAVNÍ MENU PORTÁLU (33 MODULŮ V 7 KATEGORIÍCH)</span>
-              </div>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                aria-label="Zavřít menu"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Domů Button */}
-            <div>
-              <button
-                onClick={() => {
-                  handleNavClick('/');
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
-                  currentView === 'public' && currentPath === '/'
-                    ? 'bg-blue-900 text-white shadow-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-800 hover:bg-slate-100'
-                }`}
-              >
-                <span>🏠</span>
-                <span>Domů</span>
-              </button>
-            </div>
-
-            {/* Grid container with 7 categories */}
-            {(() => {
-              const parentCategories = allowedNavItems.filter(
-                (item) => item.parentId === undefined && item.id !== 'nav-1'
-              );
-              const childItemsMap = allowedNavItems.reduce((acc, item) => {
-                if (item.parentId) {
-                  if (!acc[item.parentId]) acc[item.parentId] = [];
-                  acc[item.parentId].push(item);
-                }
-                return acc;
-              }, {} as Record<string, NavItem[]>);
-
-              return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-1">
-                  {parentCategories.map((cat) => {
-                    const children = childItemsMap[cat.id] || [];
-                    return (
-                      <div
-                        key={cat.id}
-                        className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-3 shadow-2xs flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="font-extrabold text-xs text-slate-900 border-b border-slate-200 pb-2 mb-2 flex items-center gap-1.5">
-                            <span>{getLabelForNavKey(cat.labelKey)}</span>
-                          </div>
-                          <div className="flex flex-col space-y-1">
-                            {children.map((subItem) => {
-                              const isSubActive =
-                                currentView === 'public' && currentPath === subItem.url;
-                              return (
-                                <button
-                                  key={subItem.id}
-                                  onClick={() => {
-                                    handleNavClick(subItem.url);
-                                    setMobileMenuOpen(false);
-                                  }}
-                                  className={`text-left px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                                    isSubActive
-                                      ? 'bg-blue-600 text-white font-bold shadow-2xs'
-                                      : 'text-slate-700 hover:bg-white hover:text-blue-900'
-                                  }`}
-                                >
-                                  {getLabelForNavKey(subItem.labelKey)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Mobile Layer Buttons */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Přepnout sekci:</span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => {
-                  setCurrentView('public');
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                  currentView === 'public' ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                Veřejnost
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentView('private');
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                  currentView === 'private' ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                Můj Účet
-              </button>
-              {hasRole('ADMIN') && (
-                <button
-                  onClick={() => {
-                    setCurrentView('admin');
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    currentView === 'admin' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  CMS
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Dynamic Portal Navigation MegaMenu Overlay */}
+      <MegaMenu
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        currentPath={currentPath}
+        onNavigate={handleNavClick}
+        isAuthorizedAdmin={isAuthorizedAdmin}
+        isSuperAdmin={isSuperAdmin}
+        items={allowedNavItems}
+      />
       {/* Register Wizard Modal */}
       <RegisterModal
         isOpen={registerModalOpen}

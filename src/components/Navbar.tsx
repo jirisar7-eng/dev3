@@ -1,3 +1,3 @@
-import { Header as Navbar } from './Header';
+import { Navbar } from './layout/Navbar';
 export { Navbar };
 export default Navbar;

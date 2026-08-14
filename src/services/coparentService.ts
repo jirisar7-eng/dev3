@@ -1,5 +1,19 @@
-import { prisma, isPrismaAvailable } from '../db/prisma';
+import { prisma, isPrismaAvailable } from '../lib/prisma';
 import { User } from '../types';
+
+function getDelegate(p: any, ...names: string[]) {
+  if (!p) return undefined;
+  for (const n of names) {
+    if (p[n]) return p[n];
+  }
+  const lower = names[0]?.toLowerCase();
+  if (lower) {
+    for (const k of Object.keys(p)) {
+      if (k.toLowerCase() === lower) return p[k];
+    }
+  }
+  return undefined;
+}
 
 export class CoParentService {
   /**
@@ -11,8 +25,10 @@ export class CoParentService {
       throw new Error('Databáze není dostupná.');
     }
 
-    // Check if user is member of any space or owner
-    let space = await (p as any).coparentSpace.findFirst({
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+
+    let space = await spaceDelegate.findFirst({
       where: {
         OR: [
           { ownerId: user.id },
@@ -27,8 +43,7 @@ export class CoParentService {
     });
 
     if (!space) {
-      // Create default space
-      space = await (p as any).coparentSpace.create({
+      space = await spaceDelegate.create({
         data: {
           title: `Spolurodičovský prostor - ${user.name}`,
           conflictMode: 'COOPERATION',
@@ -51,16 +66,19 @@ export class CoParentService {
         }
       });
 
-      await (p as any).coparentAuditLog.create({
-        data: {
-          spaceId: space.id,
-          userId: user.id,
-          action: 'SPACE_CREATED',
-          entity: 'CoParentSpace',
-          entityId: space.id,
-          details: `Vytvořen nový spolurodičovský prostor uživatelem ${user.email}`
-        }
-      });
+      const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+      if (auditLogDelegate) {
+        await auditLogDelegate.create({
+          data: {
+            spaceId: space.id,
+            userId: user.id,
+            action: 'SPACE_CREATED',
+            entity: 'CoParentSpace',
+            entityId: space.id,
+            details: `Vytvořen nový spolurodičovský prostor uživatelem ${user.email}`
+          }
+        });
+      }
     }
 
     return space;
@@ -73,7 +91,10 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const space = await (p as any).coparentSpace.findUnique({
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+
+    const space = await spaceDelegate.findUnique({
       where: { id: spaceId },
       include: {
         children: true,
@@ -96,13 +117,13 @@ export class CoParentService {
         ownerId: space.ownerId
       },
       conflictMode: space.conflictMode,
-      children: space.children,
-      members: space.members,
-      upcomingHandovers: space.handovers,
-      pendingExpenses: space.expenses,
-      pendingRequests: space.requests,
-      recentMessages: space.messages,
-      agreementsCount: space.agreements.length
+      children: space.children || [],
+      members: space.members || [],
+      upcomingHandovers: space.handovers || [],
+      pendingExpenses: space.expenses || [],
+      pendingRequests: space.requests || [],
+      recentMessages: space.messages || [],
+      agreementsCount: (space.agreements || []).length
     };
   }
 
@@ -113,33 +134,42 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const updated = await (p as any).coparentSpace.update({
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+
+    const updated = await spaceDelegate.update({
       where: { id: spaceId },
       data: { conflictMode }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId: user.id,
-        action: 'CONFLICT_MODE_CHANGED',
-        entity: 'CoParentSpace',
-        entityId: spaceId,
-        details: `Režim konfliktu změněn na: ${conflictMode} uživatelem ${user.email}`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId: user.id,
+          action: 'CONFLICT_MODE_CHANGED',
+          entity: 'CoParentSpace',
+          entityId: spaceId,
+          details: `Režim konfliktu změněn na: ${conflictMode} uživatelem ${user.email}`
+        }
+      });
+    }
 
     return updated;
   }
 
   /**
-   * Create structured request (Schedule change, expense approval, agreement modification)
+   * Create structured request
    */
   public static async createRequest(spaceId: string, userId: string, type: string, details: string) {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const request = await (p as any).coparentRequest.create({
+    const requestDelegate = getDelegate(p, 'coParentRequest', 'coparentRequest');
+    if (!requestDelegate) throw new Error('Prisma model coParentRequest není dostupný.');
+
+    const request = await requestDelegate.create({
       data: {
         spaceId,
         requesterId: userId,
@@ -149,35 +179,44 @@ export class CoParentService {
       }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'REQUEST_CREATED',
-        entity: 'CoParentRequest',
-        entityId: request.id,
-        details: `Nová strukturovaná žádost [${type}]: ${details}`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'REQUEST_CREATED',
+          entity: 'CoParentRequest',
+          entityId: request.id,
+          details: `Nová strukturovaná žádost [${type}]: ${details}`
+        }
+      });
+    }
 
     return request;
   }
 
   /**
-   * Send message (Blocks direct chat if HIGH_CONFLICT)
+   * Send message
    */
   public static async sendMessage(spaceId: string, userId: string, content: string) {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const space = await (p as any).coparentSpace.findUnique({ where: { id: spaceId } });
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+
+    const space = await spaceDelegate.findUnique({ where: { id: spaceId } });
     if (!space) throw new Error('Prostor nenalezen.');
 
     if (space.conflictMode === 'HIGH_CONFLICT') {
       throw new Error('V režimu vysokého konfliktu (HIGH_CONFLICT) je přímý chat deaktivován. Použijte prosím strukturované žádosti.');
     }
 
-    const message = await (p as any).coparentMessage.create({
+    const messageDelegate = getDelegate(p, 'coParentMessage', 'coparentMessage');
+    if (!messageDelegate) throw new Error('Prisma model coParentMessage není dostupný.');
+
+    const message = await messageDelegate.create({
       data: {
         spaceId,
         senderId: userId,
@@ -187,16 +226,19 @@ export class CoParentService {
       include: { sender: true }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'MESSAGE_SENT',
-        entity: 'CoParentMessage',
-        entityId: message.id,
-        details: `Odeslána zpráva v chatu.`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'MESSAGE_SENT',
+          entity: 'CoParentMessage',
+          entityId: message.id,
+          details: `Odeslána zpráva v chatu.`
+        }
+      });
+    }
 
     return message;
   }
@@ -208,7 +250,10 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const space = await (p as any).coparentSpace.findUnique({
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+
+    const space = await spaceDelegate.findUnique({
       where: { id: spaceId },
       include: {
         members: { include: { user: true } },
@@ -226,16 +271,19 @@ export class CoParentService {
 
     if (!space) throw new Error('Prostor nenalezen.');
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'AUDIT_DATA_EXPORTED',
-        entity: 'CoParentSpace',
-        entityId: spaceId,
-        details: `Exportován kompletní auditní záznam pro právní / mediační účely.`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'AUDIT_DATA_EXPORTED',
+          entity: 'CoParentSpace',
+          entityId: spaceId,
+          details: `Exportován kompletní auditní záznam pro právní / mediační účely.`
+        }
+      });
+    }
 
     return {
       exportVersion: '1.0.0',
@@ -266,7 +314,10 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const expense = await (p as any).coparentExpense.create({
+    const expenseDelegate = getDelegate(p, 'coParentExpense', 'coparentExpense');
+    if (!expenseDelegate) throw new Error('Prisma model coParentExpense není dostupný.');
+
+    const expense = await expenseDelegate.create({
       data: {
         spaceId,
         createdBy: userId,
@@ -279,16 +330,19 @@ export class CoParentService {
       }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'EXPENSE_CREATED',
-        entity: 'CoParentExpense',
-        entityId: expense.id,
-        details: `Přidán nový výdaj: ${expense.title} (${expense.amount} ${expense.currency})`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'EXPENSE_CREATED',
+          entity: 'CoParentExpense',
+          entityId: expense.id,
+          details: `Přidán nový výdaj: ${expense.title} (${expense.amount} ${expense.currency})`
+        }
+      });
+    }
 
     return expense;
   }
@@ -300,24 +354,30 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const expense = await (p as any).coparentExpense.findUnique({ where: { id: expenseId } });
+    const expenseDelegate = getDelegate(p, 'coParentExpense', 'coparentExpense');
+    if (!expenseDelegate) throw new Error('Prisma model coParentExpense není dostupný.');
+
+    const expense = await expenseDelegate.findUnique({ where: { id: expenseId } });
     if (!expense) throw new Error('Výdaj nenalezen.');
 
-    const updated = await (p as any).coparentExpense.update({
+    const updated = await expenseDelegate.update({
       where: { id: expenseId },
       data: { status }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId: expense.spaceId,
-        userId,
-        action: `EXPENSE_${status}`,
-        entity: 'CoParentExpense',
-        entityId: expenseId,
-        details: `Výdaj "${expense.title}" byl ${status === 'APPROVED' ? 'schválen' : 'zamítnut'}.`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId: expense.spaceId,
+          userId,
+          action: `EXPENSE_${status}`,
+          entity: 'CoParentExpense',
+          entityId: expenseId,
+          details: `Výdaj "${expense.title}" byl ${status === 'APPROVED' ? 'schválen' : 'zamítnut'}.`
+        }
+      });
+    }
 
     return updated;
   }
@@ -329,7 +389,10 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const agreement = await (p as any).coparentAgreement.create({
+    const agreementDelegate = getDelegate(p, 'coParentAgreement', 'coparentAgreement');
+    if (!agreementDelegate) throw new Error('Prisma model coParentAgreement není dostupný.');
+
+    const agreement = await agreementDelegate.create({
       data: {
         spaceId,
         title: data.title,
@@ -338,16 +401,19 @@ export class CoParentService {
       }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'AGREEMENT_CREATED',
-        entity: 'CoParentAgreement',
-        entityId: agreement.id,
-        details: `Navržena nová dohoda: ${agreement.title}`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'AGREEMENT_CREATED',
+          entity: 'CoParentAgreement',
+          entityId: agreement.id,
+          details: `Navržena nová dohoda: ${agreement.title}`
+        }
+      });
+    }
 
     return agreement;
   }
@@ -363,7 +429,10 @@ export class CoParentService {
     const code = `CP-${randomStr}`;
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
 
-    const invite = await (p as any).coparentInvite.create({
+    const inviteDelegate = getDelegate(p, 'coParentInvite', 'coparentInvite');
+    if (!inviteDelegate) throw new Error('Prisma model coParentInvite není dostupný.');
+
+    const invite = await inviteDelegate.create({
       data: {
         spaceId,
         invitedBy: userId,
@@ -374,16 +443,19 @@ export class CoParentService {
       }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'INVITE_CREATED',
-        entity: 'CoParentInvite',
-        entityId: invite.id,
-        details: `Vytvořena pozvánka pro email ${email} s kódem ${code}`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'INVITE_CREATED',
+          entity: 'CoParentInvite',
+          entityId: invite.id,
+          details: `Vytvořena pozvánka pro email ${email} s kódem ${code}`
+        }
+      });
+    }
 
     return invite;
   }
@@ -395,27 +467,32 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const invite = await (p as any).coparentInvite.findUnique({
+    const inviteDelegate = getDelegate(p, 'coParentInvite', 'coparentInvite');
+    if (!inviteDelegate) throw new Error('Prisma model coParentInvite není dostupný.');
+
+    const invite = await inviteDelegate.findUnique({
       where: { code }
     });
 
     if (!invite) throw new Error('Pozvánka s tímto kódém nebyla nalezena.');
     if (invite.status !== 'PENDING') throw new Error('Tato pozvánka již byla využita nebo vypršela.');
     if (new Date() > new Date(invite.expiresAt)) {
-      await (p as any).coparentInvite.update({
+      await inviteDelegate.update({
         where: { id: invite.id },
         data: { status: 'EXPIRED' }
       });
       throw new Error('Platnost pozvánky vypršela (48h).');
     }
 
-    // Check if user is already member of this space
-    const existingMember = await (p as any).coparentMember.findFirst({
+    const memberDelegate = getDelegate(p, 'coParentMember', 'coparentMember');
+    if (!memberDelegate) throw new Error('Prisma model coParentMember není dostupný.');
+
+    const existingMember = await memberDelegate.findFirst({
       where: { spaceId: invite.spaceId, userId: user.id }
     });
 
     if (!existingMember) {
-      await (p as any).coparentMember.create({
+      await memberDelegate.create({
         data: {
           spaceId: invite.spaceId,
           userId: user.id,
@@ -424,21 +501,24 @@ export class CoParentService {
       });
     }
 
-    await (p as any).coparentInvite.update({
+    await inviteDelegate.update({
       where: { id: invite.id },
       data: { status: 'ACCEPTED' }
     });
 
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId: invite.spaceId,
-        userId: user.id,
-        action: 'INVITE_ACCEPTED',
-        entity: 'CoParentInvite',
-        entityId: invite.id,
-        details: `Uživatel ${user.email} přijal pozvánku ${code} a připojil se do prostoru.`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId: invite.spaceId,
+          userId: user.id,
+          action: 'INVITE_ACCEPTED',
+          entity: 'CoParentInvite',
+          entityId: invite.id,
+          details: `Uživatel ${user.email} přijal pozvánku ${code} a připojil se do prostoru.`
+        }
+      });
+    }
 
     return { success: true, spaceId: invite.spaceId };
   }
@@ -450,7 +530,10 @@ export class CoParentService {
     const p = prisma;
     if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
 
-    const members = await (p as any).coparentMember.findMany({
+    const memberDelegate = getDelegate(p, 'coParentMember', 'coparentMember');
+    if (!memberDelegate) throw new Error('Prisma model coParentMember není dostupný.');
+
+    const members = await memberDelegate.findMany({
       where: { spaceId },
       include: { user: true }
     });
@@ -470,31 +553,40 @@ export class CoParentService {
     const lastName = nameParts.slice(1).join(' ') || 'Nováková';
 
     // 1. Create or update child
-    const child = await (p as any).coparentChild.create({
-      data: {
-        spaceId,
-        firstName,
-        lastName,
-        birthDate: data.childBirthDate || null,
-        notes: `Režim péče: ${data.custodyType}, Rozvrh: ${data.scheduleType}. Prázdniny: ${data.holidaysRule || 'Neuvedeno'}`
-      }
-    });
+    const childDelegate = getDelegate(p, 'coParentChild', 'coparentChild');
+    let child;
+    if (childDelegate) {
+      child = await childDelegate.create({
+        data: {
+          spaceId,
+          firstName,
+          lastName,
+          birthDate: data.childBirthDate || null,
+          notes: `Režim péče: ${data.custodyType}, Rozvrh: ${data.scheduleType}. Prázdniny: ${data.holidaysRule || 'Neuvedeno'}`
+        }
+      });
+    }
 
     // 2. Generate handover
+    const handoverDelegate = getDelegate(p, 'coParentHandover', 'coparentHandover');
     const now = new Date();
-    const handover = await (p as any).coparentHandover.create({
-      data: {
-        spaceId,
-        scheduledAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days later as next handover
-        location: data.handoverLocation || 'Předávací místo / Bydliště',
-        status: 'SCHEDULED',
-        notes: `Čas předání dle rozsudku: ${data.handoverTime} (${data.handoverDay})`
-      }
-    });
+    let handover;
+    if (handoverDelegate) {
+      handover = await handoverDelegate.create({
+        data: {
+          spaceId,
+          scheduledAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days later
+          location: data.handoverLocation || 'Předávací místo / Bydliště',
+          status: 'SCHEDULED',
+          notes: `Čas předání dle rozsudku: ${data.handoverTime} (${data.handoverDay})`
+        }
+      });
+    }
 
     // 3. Create Alimony expense rule
-    if (data.alimonyAmount && data.alimonyAmount > 0) {
-      await (p as any).coparentExpense.create({
+    const expenseDelegate = getDelegate(p, 'coParentExpense', 'coparentExpense');
+    if (data.alimonyAmount && data.alimonyAmount > 0 && expenseDelegate) {
+      await expenseDelegate.create({
         data: {
           spaceId,
           title: `Měsíční výživné na ${firstName} (${data.alimonyDueDate}. den v měsíci)`,
@@ -514,17 +606,21 @@ export class CoParentService {
       contentStr += `\nSudý týden: ${data.evenWeek?.summary || 'Neuvedeno'}\nLichý týden: ${data.oddWeek?.summary || 'Neuvedeno'}\nČas od-do: ${data.handoverStartTime} - ${data.handoverEndTime}`;
     }
 
-    await (p as any).coparentAgreement.create({
-      data: {
-        spaceId,
-        title: `Soudní rozsudek / Dohoda o péči - ${firstName} ${lastName}`,
-        content: contentStr,
-        status: 'ACCEPTED'
-      }
-    });
+    const agreementDelegate = getDelegate(p, 'coParentAgreement', 'coparentAgreement');
+    if (agreementDelegate) {
+      await agreementDelegate.create({
+        data: {
+          spaceId,
+          title: `Soudní rozsudek / Dohoda o péči - ${firstName} ${lastName}`,
+          content: contentStr,
+          status: 'ACCEPTED'
+        }
+      });
+    }
 
     // 4b. Generate Events for EVEN_ODD_WEEKS (Next 60 days)
-    if (data.scheduleType === 'EVEN_ODD_WEEKS' && (data.evenWeek?.days || data.oddWeek?.days)) {
+    const eventDelegate = getDelegate(p, 'coParentEvent', 'coparentEvent');
+    if (data.scheduleType === 'EVEN_ODD_WEEKS' && (data.evenWeek?.days || data.oddWeek?.days) && eventDelegate) {
       const getWeekNumber = (d: Date) => {
         const date = new Date(d.getTime());
         date.setHours(0, 0, 0, 0);
@@ -561,7 +657,7 @@ export class CoParentService {
           const [eh, em] = endTime.split(':');
           endDate.setHours(parseInt(eh || '18', 10), parseInt(em || '0', 10), 0, 0);
           
-          await (p as any).coparentEvent.create({
+          await eventDelegate.create({
             data: {
               spaceId,
               title: `Péče (${isEven ? 'Sudý' : 'Lichý'} týden)`,
@@ -576,18 +672,20 @@ export class CoParentService {
     }
 
     // 5. Audit Log
-    await (p as any).coparentAuditLog.create({
-      data: {
-        spaceId,
-        userId,
-        action: 'JUDGMENT_IMPORTED',
-        entity: 'CoParentChild',
-        entityId: child.id,
-        details: `Úspěšně importován rozsudek / dohoda pro dítě ${firstName} ${lastName} (AI Extractor).`
-      }
-    });
+    const auditLogDelegate = getDelegate(p, 'coParentAuditLog', 'coparentAuditLog');
+    if (auditLogDelegate) {
+      await auditLogDelegate.create({
+        data: {
+          spaceId,
+          userId,
+          action: 'JUDGMENT_IMPORTED',
+          entity: 'CoParentChild',
+          entityId: child?.id || 'NO_CHILD_ID',
+          details: `Úspěšně importován rozsudek / dohoda pro dítě ${firstName} ${lastName} (AI Extractor).`
+        }
+      });
+    }
 
     return { success: true, child, handover };
   }
 }
-
