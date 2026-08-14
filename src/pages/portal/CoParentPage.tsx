@@ -3,8 +3,9 @@ import {
   Users, Home, Calendar, Handshake, MessageSquare, Repeat, DollarSign, 
   Folder, Backpack, BookOpen, Send, BarChart2, Download, Settings, 
   ShieldCheck, AlertTriangle, ShieldAlert, CheckCircle, Clock, MapPin, 
-  Plus, Check, X, FileText, ChevronRight, AlertCircle, RefreshCw
+  Plus, Check, X, FileText, ChevronRight, AlertCircle, RefreshCw, Sparkles, Upload
 } from 'lucide-react';
+import { JudgmentImportModal } from '../../components/coparent/JudgmentImportModal';
 
 interface CoParentPageProps {
   onNavigate?: (path: string) => void;
@@ -23,12 +24,14 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const [newRequest, setNewRequest] = useState({ type: 'SCHEDULE_CHANGE', details: '' });
   const [newAgreement, setNewAgreement] = useState({ title: '', content: '' });
 
-  // Invite & Pairing states
+  // Invite & Pairing & AI Judgment Import states
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showJudgmentModal, setShowJudgmentModal] = useState(false);
   const [pairCodeInput, setPairCodeInput] = useState('');
   const [members, setMembers] = useState<any[]>([]);
+
 
   const fetchMembers = async () => {
     if (!space?.id) return;
@@ -337,6 +340,26 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
       {/* TAB 1: OVERVIEW & DASHBOARD */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* AI Judgment Import Banner */}
+          <div className="bg-gradient-to-r from-indigo-900 to-purple-900 rounded-3xl p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                <Sparkles className="w-8 h-8 text-indigo-300" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold">Automatické nastavení z rozsudku nebo dohody</h3>
+                <p className="text-xs text-indigo-200 mt-0.5">Nahrajte PDF či text rozsudku a AI za vás nastaví kalendář, předání i výživné.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowJudgmentModal(true)}
+              className="px-5 py-3 bg-white text-indigo-900 rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-50 shadow-md transition-all shrink-0 flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4 text-indigo-700" />
+              📄 Nahrát rozsudek / dohodu pro automatické nastavení
+            </button>
+          </div>
+
           {/* Today Section */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
             <div className="flex items-center justify-between mb-6">
@@ -934,9 +957,37 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
                 Zavřít
               </button>
             </div>
+            {/* AI Judgment Import Section in Settings */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-700" />
+                  AI Analýza rozsudku & Automatické nastavení
+                </h4>
+                <p className="text-xs text-indigo-700 mt-0.5">Automaticky vytvořte kalendář péče, předání a výživné z textu rozsudku.</p>
+              </div>
+              <button
+                onClick={() => setShowJudgmentModal(true)}
+                className="px-4 py-2.5 bg-indigo-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-800 shadow-md flex items-center gap-2 shrink-0"
+              >
+                <FileText className="w-4 h-4" />
+                📄 Nahrát rozsudek / dohodu
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Judgment Import Modal */}
+      <JudgmentImportModal
+        spaceId={space?.id}
+        isOpen={showJudgmentModal}
+        onClose={() => setShowJudgmentModal(false)}
+        onSuccess={() => {
+          fetchCoParentData();
+        }}
+      />
     </div>
   );
 };
+

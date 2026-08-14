@@ -457,4 +457,79 @@ export class CoParentService {
 
     return members;
   }
+
+  /**
+   * Apply AI Extracted Judgment Setup
+   */
+  public static async applyJudgmentSetup(spaceId: string, userId: string, data: any) {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) throw new Error('Databáze není dostupná.');
+
+    const nameParts = (data.childName || 'Dítě Novák').trim().split(' ');
+    const firstName = nameParts[0] || 'Dítě';
+    const lastName = nameParts.slice(1).join(' ') || 'Nováková';
+
+    // 1. Create or update child
+    const child = await (p as any).coparentChild.create({
+      data: {
+        spaceId,
+        firstName,
+        lastName,
+        birthDate: data.childBirthDate || null,
+        notes: `Režim péče: ${data.custodyType}, Rozvrh: ${data.scheduleType}. Prázdniny: ${data.holidaysRule || 'Neuvedeno'}`
+      }
+    });
+
+    // 2. Generate handover
+    const now = new Date();
+    const handover = await (p as any).coparentHandover.create({
+      data: {
+        spaceId,
+        scheduledAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days later as next handover
+        location: data.handoverLocation || 'Předávací místo / Bydliště',
+        status: 'SCHEDULED',
+        notes: `Čas předání dle rozsudku: ${data.handoverTime} (${data.handoverDay})`
+      }
+    });
+
+    // 3. Create Alimony expense rule
+    if (data.alimonyAmount && data.alimonyAmount > 0) {
+      await (p as any).coparentExpense.create({
+        data: {
+          spaceId,
+          title: `Měsíční výživné na ${firstName} (${data.alimonyDueDate}. den v měsíci)`,
+          amount: Number(data.alimonyAmount),
+          currency: 'CZK',
+          category: 'ALIMONY' as any,
+          status: 'APPROVED',
+          createdBy: userId
+        }
+      });
+    }
+
+    // 4. Create Agreement summary
+    await (p as any).coparentAgreement.create({
+      data: {
+        spaceId,
+        title: `Soudní rozsudek / Dohoda o péči - ${firstName} ${lastName}`,
+        content: `Typ péče: ${data.custodyType}\\nRozvrh: ${data.scheduleType}\\nPředání: ${data.handoverDay} v ${data.handoverTime}\\nMísto: ${data.handoverLocation || 'Neuvedeno'}\\nVýživné: ${data.alimonyAmount || 0} Kč (splatné ${data.alimonyDueDate}.)\\nPravidla pro prázdniny: ${data.holidaysRule || 'Není určeno'}`,
+        status: 'ACCEPTED'
+      }
+    });
+
+    // 5. Audit Log
+    await (p as any).coparentAuditLog.create({
+      data: {
+        spaceId,
+        userId,
+        action: 'JUDGMENT_IMPORTED',
+        entity: 'CoParentChild',
+        entityId: child.id,
+        details: `Úspěšně importován rozsudek / dohoda pro dítě ${firstName} ${lastName} (AI Extractor).`
+      }
+    });
+
+    return { success: true, child, handover };
+  }
 }
+

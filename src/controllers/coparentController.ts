@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { CoParentService } from '../services/coparentService';
+import { JudgmentParserService } from '../services/judgmentParserService';
 
 export class CoParentController {
   public static async getSpace(req: AuthenticatedRequest, res: Response) {
@@ -158,4 +159,29 @@ export class CoParentController {
       res.status(500).json({ error: err.message || 'Chyba při načítání členů.' });
     }
   }
+
+  public static async parseJudgment(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { text, content } = req.body;
+      const docText = text || content || 'Soudní rozsudek o úpravě poměrů nezletilého dítěte a výživném.';
+      const extracted = await JudgmentParserService.parseJudgmentText(docText);
+      res.json(extracted);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Chyba při AI analýze rozsudku.' });
+    }
+  }
+
+  public static async applyJudgmentSetup(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { spaceId, extractedData } = req.body;
+      if (!spaceId || !extractedData) {
+        return res.status(400).json({ error: 'Chybí spaceId nebo extractedData.' });
+      }
+      const result = await CoParentService.applyJudgmentSetup(spaceId, req.user!.id, extractedData);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Chyba při aplikaci rozsudku do CoParent Hubu.' });
+    }
+  }
 }
+
