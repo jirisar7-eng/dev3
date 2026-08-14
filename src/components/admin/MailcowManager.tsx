@@ -42,11 +42,18 @@ interface HealthInfo {
   latencyMs?: number;
   publicUrl: string;
   internalUrl?: string;
+  dnsHostname?: string;
+  resolvedPublicIp?: string;
+  internalTargetIp?: string;
+  targetPort?: number;
+  sniHostname?: string;
+  tlsValidation?: boolean;
   targetAddress: string;
   apiKeyConfigured: boolean;
   apiKeyLength: number;
   mailboxesCount?: number;
   message: string;
+  errorDetails?: string;
 }
 
 export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName = '' }) => {
@@ -775,23 +782,35 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
 
                 <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2 font-mono text-[11px]">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Cílová adresa / SNI:</span>
-                    <span className="font-bold text-slate-800">{healthInfo.targetAddress}</span>
+                    <span className="text-slate-500">DNS hostname:</span>
+                    <span className="font-bold text-slate-800">{healthInfo.dnsHostname || 'mail.tatovacesta.cz'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Veřejná URL:</span>
-                    <span className="text-slate-800">{healthInfo.publicUrl}</span>
-                  </div>
-                  {healthInfo.internalUrl && (
+                  {healthInfo.resolvedPublicIp && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Interní URL:</span>
-                      <span className="text-slate-800">{healthInfo.internalUrl}</span>
+                      <span className="text-slate-500">Resolved public IP:</span>
+                      <span className="text-slate-800">{healthInfo.resolvedPublicIp} (veřejné DNS)</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-500">API klíč nakonfigurován:</span>
+                    <span className="text-slate-500">Internal target IP:</span>
+                    <span className="font-bold text-blue-700">{healthInfo.internalTargetIp || '172.22.1.14'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Target port:</span>
+                    <span className="text-slate-800">{healthInfo.targetPort || 443}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">TLS SNI / Servername:</span>
+                    <span className="font-bold text-slate-800">{healthInfo.sniHostname || 'mail.tatovacesta.cz'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">TLS validace:</span>
+                    <span className="text-emerald-700 font-bold">ZAPNUTA (strict Let's Encrypt SAN)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">API klíč:</span>
                     <span className={healthInfo.apiKeyConfigured ? 'text-emerald-700 font-bold' : 'text-red-700 font-bold'}>
-                      {healthInfo.apiKeyConfigured ? `ANO (${healthInfo.apiKeyLength} znaků)` : 'NE'}
+                      {healthInfo.apiKeyConfigured ? `Nakonfigurován (${healthInfo.apiKeyLength} znaků)` : 'NENÍ nakonfigurován'}
                     </span>
                   </div>
                   {healthInfo.latencyMs !== undefined && (
@@ -802,7 +821,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                   )}
                   {healthInfo.mailboxesCount !== undefined && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Počet schránek:</span>
+                      <span className="text-slate-500">Načtené schránky:</span>
                       <span className="font-bold text-blue-700">{healthInfo.mailboxesCount}</span>
                     </div>
                   )}

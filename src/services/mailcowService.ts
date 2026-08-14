@@ -1,5 +1,6 @@
 import https from 'https';
 import http from 'http';
+import dns from 'dns';
 import { URL } from 'url';
 
 export interface MailcowConfig {
@@ -9,7 +10,8 @@ export interface MailcowConfig {
   apiUrl: string;
   apiKey: string;
   effectiveHost: string;
-  effectiveTargetIp?: string;
+  effectiveTargetIp: string;
+  effectivePort: number;
 }
 
 export interface MailcowMailbox {
@@ -32,12 +34,18 @@ export interface MailcowHealthResult {
   latencyMs?: number;
   publicUrl: string;
   internalUrl?: string;
+  dnsHostname: string;
+  resolvedPublicIp?: string;
+  internalTargetIp: string;
+  targetPort: number;
+  sniHostname: string;
+  tlsValidation: boolean;
   targetAddress: string;
   apiKeyConfigured: boolean;
   apiKeyLength: number;
   mailboxesCount?: number;
   message: string;
-  details?: any;
+  errorDetails?: string;
 }
 
 export const translateMailcowError = (msg: string | string[]): string => {
@@ -67,7 +75,7 @@ export const translateMailcowError = (msg: string | string[]): string => {
 };
 
 /**
- * Reads Mailcow configuration from environment variables
+ * Reads Mailcow configuration from environment variables with fallback to internal Docker bridge IP
  */
 export const getMailcowConfig = (): MailcowConfig => {
   const publicUrlRaw = process.env.MAILCOW_PUBLIC_URL || process.env.MAILCOW_URL || 'https://mail.tatovacesta.cz';
@@ -76,11 +84,9 @@ export const getMailcowConfig = (): MailcowConfig => {
   const internalUrlRaw = process.env.MAILCOW_INTERNAL_URL || '';
   const cleanInternalUrl = internalUrlRaw ? internalUrlRaw.trim().replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '') : undefined;
 
-  let internalIp = (process.env.MAILCOW_INTERNAL_IP || '').trim() || undefined;
+  let internalIp = (process.env.MAILCOW_INTERNAL_IP || process.env.MAILCOW_IP || '').trim() || undefined;
 
-  // If internal URL contains an IP address, extract it
-  let effectiveUrl = cleanPublicUrl;
-  let effectiveTargetIp = internalIp;
+  let effectiveTargetIp = internalIp || '172.22.1.14';
 
   if (cleanInternalUrl) {
     try {
@@ -88,27 +94,32 @@ export const getMailcowConfig = (): MailcowConfig => {
       // Check if hostname is an IPv4 address (e.g. 172.22.1.14)
       if (/^(\d{1,3}\.){3}\d{1,3}$/.test(parsedInternal.hostname)) {
         effectiveTargetIp = parsedInternal.hostname;
-        // Keep domain name in effectiveUrl for TLS SNI validation
-        effectiveUrl = cleanPublicUrl;
-      } else {
-        effectiveUrl = cleanInternalUrl;
       }
     } catch {
-      effectiveUrl = cleanInternalUrl;
+      // Keep default
     }
   }
 
+  let parsedPublic: URL;
+  try {
+    parsedPublic = new URL(cleanPublicUrl);
+  } catch {
+    parsedPublic = new URL('https://mail.tatovacesta.cz');
+  }
+
+  const effectiveHost = (process.env.MAILCOW_SNI || process.env.MAILCOW_HOST || parsedPublic.hostname || 'mail.tatovacesta.cz').trim();
+  const effectivePort = parseInt(parsedPublic.port || '443', 10);
   const apiKey = (process.env.MAILCOW_API_KEY || '').trim();
-  const parsedEffective = new URL(effectiveUrl);
 
   return {
     publicUrl: cleanPublicUrl,
     internalUrl: cleanInternalUrl,
     internalIp,
-    apiUrl: `${effectiveUrl}/api/v1`,
+    apiUrl: `${cleanPublicUrl}/api/v1`,
     apiKey,
-    effectiveHost: parsedEffective.hostname,
+    effectiveHost,
     effectiveTargetIp,
+    effectivePort,
   };
 };
 
@@ -123,9 +134,7 @@ export const safeLogMailcow = (
   extra?: { mailboxesCount?: number; errorMsg?: string; durationMs?: number }
 ) => {
   const config = getMailcowConfig();
-  const targetInfo = config.effectiveTargetIp
-    ? `Direct IP ${config.effectiveTargetIp} (SNI: ${config.effectiveHost})`
-    : config.effectiveHost;
+  const targetInfo = `${config.effectiveHost} -> ${config.effectiveTargetIp}:${config.effectivePort}`;
 
   let logLine = `[Mailcow] Request: ${endpoint} | Target: ${targetInfo} | Status: ${statusCode ?? 'N/A'}`;
   if (extra?.durationMs !== undefined) logLine += ` (${extra.durationMs}ms)`;
@@ -148,6 +157,40 @@ interface HttpResponse {
   data: any;
   durationMs: number;
 }
+
+/**
+ * Creates a compliant lookup function for Node.js https/http requests that routes
+ * DNS resolution directly to target IP while keeping TLS SNI and cert verification intact.
+ */
+export const createTargetLookup = (targetIp: string) => {
+  return (hostname: string, options: any, callback: any) => {
+    let cb = callback;
+    let opts = options;
+    if (typeof options === 'function') {
+      cb = options;
+      opts = {};
+    }
+    if (typeof cb !== 'function') return;
+
+    if (!targetIp || typeof targetIp !== 'string' || !targetIp.trim()) {
+      const err: any = new Error('MAILCOW_TARGET_IP_UNAVAILABLE');
+      err.code = 'ENOTFOUND';
+      return cb(err);
+    }
+
+    const cleanIp = targetIp.trim();
+    const isIpv6 = cleanIp.includes(':');
+    const family = isIpv6 ? 6 : 4;
+
+    // Node.js 19+ (and autoSelectFamily) passes { all: true }
+    // When options.all is true, callback MUST receive an array of objects: [{ address, family }]
+    if (opts && opts.all) {
+      return cb(null, [{ address: cleanIp, family }]);
+    } else {
+      return cb(null, cleanIp, family);
+    }
+  };
+};
 
 /**
  * Performs a secure HTTP/HTTPS request to Mailcow API with strict TLS certificate verification,
@@ -173,13 +216,13 @@ export const makeMailcowRequest = async (opts: HttpRequestOptions): Promise<Http
   return new Promise((resolve, reject) => {
     const reqOptions: https.RequestOptions = {
       method: opts.method,
-      hostname: url.hostname,
-      port: url.port || (isHttps ? 443 : 80),
+      hostname: config.effectiveHost,
+      port: config.effectivePort,
       path: url.pathname + url.search,
       headers: {
         'X-API-Key': config.apiKey,
         'Accept': 'application/json',
-        'Host': url.hostname,
+        'Host': config.effectiveHost,
         ...(payload
           ? {
               'Content-Type': 'application/json',
@@ -193,10 +236,8 @@ export const makeMailcowRequest = async (opts: HttpRequestOptions): Promise<Http
     // If direct internal IP is configured (e.g. 172.22.1.14 on docker bridge),
     // map the DNS lookup to the internal IP while preserving standard strict TLS SNI & Cert validation.
     if (config.effectiveTargetIp && isHttps) {
-      reqOptions.lookup = (_hostname, _lookupOpts, callback) => {
-        callback(null, config.effectiveTargetIp!, 4);
-      };
-      reqOptions.servername = url.hostname;
+      reqOptions.lookup = createTargetLookup(config.effectiveTargetIp);
+      reqOptions.servername = config.effectiveHost;
     }
 
     const req = transport.request(reqOptions, (res) => {
@@ -434,9 +475,17 @@ export const updateMailcowPassword = async (email: string, password: string): Pr
  */
 export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
   const config = getMailcowConfig();
-  const targetAddress = config.effectiveTargetIp
-    ? `${config.effectiveHost} -> ${config.effectiveTargetIp}:443`
-    : config.effectiveHost;
+  const targetAddress = `${config.effectiveHost} -> ${config.effectiveTargetIp}:${config.effectivePort}`;
+
+  let resolvedPublicIp: string | undefined = undefined;
+  try {
+    const dnsRes = await dns.promises.lookup(config.effectiveHost).catch(() => null);
+    if (dnsRes && dnsRes.address) {
+      resolvedPublicIp = dnsRes.address;
+    }
+  } catch {
+    // DNS resolution failed or unavailable
+  }
 
   if (!config.apiKey) {
     return {
@@ -444,6 +493,12 @@ export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
       healthy: false,
       publicUrl: config.publicUrl,
       internalUrl: config.internalUrl,
+      dnsHostname: config.effectiveHost,
+      resolvedPublicIp,
+      internalTargetIp: config.effectiveTargetIp,
+      targetPort: config.effectivePort,
+      sniHostname: config.effectiveHost,
+      tlsValidation: true,
       targetAddress,
       apiKeyConfigured: false,
       apiKeyLength: 0,
@@ -466,6 +521,12 @@ export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
         latencyMs: response.durationMs,
         publicUrl: config.publicUrl,
         internalUrl: config.internalUrl,
+        dnsHostname: config.effectiveHost,
+        resolvedPublicIp,
+        internalTargetIp: config.effectiveTargetIp,
+        targetPort: config.effectivePort,
+        sniHostname: config.effectiveHost,
+        tlsValidation: true,
         targetAddress,
         apiKeyConfigured: true,
         apiKeyLength: config.apiKey.length,
@@ -485,6 +546,12 @@ export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
         latencyMs: response.durationMs,
         publicUrl: config.publicUrl,
         internalUrl: config.internalUrl,
+        dnsHostname: config.effectiveHost,
+        resolvedPublicIp,
+        internalTargetIp: config.effectiveTargetIp,
+        targetPort: config.effectivePort,
+        sniHostname: config.effectiveHost,
+        tlsValidation: true,
         targetAddress,
         apiKeyConfigured: true,
         apiKeyLength: config.apiKey.length,
@@ -500,6 +567,12 @@ export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
       latencyMs: response.durationMs,
       publicUrl: config.publicUrl,
       internalUrl: config.internalUrl,
+      dnsHostname: config.effectiveHost,
+      resolvedPublicIp,
+      internalTargetIp: config.effectiveTargetIp,
+      targetPort: config.effectivePort,
+      sniHostname: config.effectiveHost,
+      tlsValidation: true,
       targetAddress,
       apiKeyConfigured: true,
       apiKeyLength: config.apiKey.length,
@@ -512,10 +585,17 @@ export const checkMailcowHealth = async (): Promise<MailcowHealthResult> => {
       healthy: false,
       publicUrl: config.publicUrl,
       internalUrl: config.internalUrl,
+      dnsHostname: config.effectiveHost,
+      resolvedPublicIp,
+      internalTargetIp: config.effectiveTargetIp,
+      targetPort: config.effectivePort,
+      sniHostname: config.effectiveHost,
+      tlsValidation: true,
       targetAddress,
       apiKeyConfigured: true,
       apiKeyLength: config.apiKey.length,
       message: err.message || 'Nepodařilo se navázat spojení s Mailcow serverem.',
+      errorDetails: err.stack,
     };
   }
 };
