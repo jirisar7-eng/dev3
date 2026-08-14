@@ -11,9 +11,11 @@ import {
   RefreshCw,
   Copy,
   Check,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
+import { extractTextFromFile } from '../../../utils/documentParser';
 
 interface AnalysisResult {
   summary: string;
@@ -31,6 +33,9 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
   const [docText, setDocText] = useState('');
   const [docType, setDocType] = useState('zprava-ospod');
   const [loading, setLoading] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'contradictions' | 'arguments'>('summary');
   const [copied, setCopied] = useState(false);
 
@@ -113,16 +118,27 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setDocText(content || '');
-    };
-    reader.readAsText(file);
+    setFileLoading(true);
+    setFileError(null);
+    setUploadedFileName(file.name);
+
+    try {
+      const extractedText = await extractTextFromFile(file);
+      if (!extractedText.trim()) {
+        throw new Error('Ze souboru se nepodařilo získat žádný text.');
+      }
+      setDocText(extractedText);
+    } catch (err: any) {
+      setFileError(err.message || 'Nepodařilo se extrahovat text ze souboru.');
+    } finally {
+      setFileLoading(false);
+      // Reset input value so the same file can be re-uploaded if desired
+      e.target.value = '';
+    }
   };
 
   const handleCopyReport = () => {
@@ -213,13 +229,48 @@ ${analysis.counterArguments.map((a, i) => `${i + 1}. ${a}`).join('\n')}`;
 
             <div>
               <label className="block font-bold text-slate-700 mb-1">
-                Nahrajte soubor (.txt / text):
+                Nahrajte soubor (.pdf, .docx, .txt):
               </label>
-              <label className="flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 transition-all cursor-pointer font-semibold text-slate-600">
-                <Upload className="w-4 h-4 text-blue-600" />
-                <span>Vybrat soubor z počítače</span>
-                <input type="file" accept=".txt,.doc,.docx" onChange={handleFileUpload} className="hidden" />
+              <label className={`flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed transition-all cursor-pointer font-semibold text-xs ${
+                fileLoading
+                  ? 'border-blue-400 bg-blue-50/70 text-blue-800'
+                  : 'border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-slate-600'
+              }`}>
+                {fileLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+                    <span>Načítám a extrahuji text ze souboru...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>{uploadedFileName ? `Zvolen: ${uploadedFileName} (Kliknutím změnit)` : 'Vybrat soubor (.pdf, .docx, .txt) z počítače'}</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleFileUpload}
+                  disabled={fileLoading}
+                  className="hidden"
+                />
               </label>
+
+              {fileError && (
+                <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{fileError}</span>
+                </div>
+              )}
+
+              {uploadedFileName && !fileLoading && !fileError && (
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
+                  <span className="flex items-center gap-1 text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Text úspěšně extrahován z {uploadedFileName} ({docText.length} znaků)
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
