@@ -1,8 +1,46 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { exec } from 'child_process';
+import { prisma } from '../db/prisma';
 
 const router = Router();
+
+/**
+ * POST /api/system/support-interest
+ * Endpoint pro přijetí formuláře podpory a zájmu o členství
+ */
+router.post('/support-interest', async (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, interestType, amountOrNote } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Jméno a e-mail jsou povinné údaje.' });
+    }
+    
+    if (prisma) {
+      await (prisma as any).formSubmission.create({
+        data: {
+          formId: 'SUPPORT_INTEREST',
+          formName: 'Podpora a členství ve spolku',
+          dataJson: JSON.stringify({
+            name,
+            email,
+            phone,
+            interestType,
+            amountOrNote
+          })
+        }
+      });
+    } else {
+      console.warn('[Support Interest] Prisma není dostupná, formulář nebyl uložen do DB:', req.body);
+    }
+    
+    res.json({ success: true, message: 'Děkujeme za Váš zájem! Ozveme se Vám co nejdříve.' });
+  } catch (error: any) {
+    console.error('[Support Interest] Chyba:', error);
+    res.status(500).json({ error: 'Chyba při zpracování požadavku.' });
+  }
+});
 
 /**
  * POST /api/system/webhook-deploy

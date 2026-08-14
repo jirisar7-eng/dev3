@@ -16,6 +16,8 @@ import { ComplianceModal } from './components/public/ComplianceModal';
 import { UserDashboard } from './components/private/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 
+import SupportUsPage from './pages/SupportUsPage';
+
 type AppView = 'public' | 'private' | 'admin' | 'login' | 'register';
 
 function MainApp() {

@@ -23,6 +23,7 @@ import { LegalHubPage } from '../../pages/LegalHubPage';
 import { MyCasePage } from '../../pages/MyCasePage';
 import { CoParentHubPage } from '../../pages/CoParentHubPage';
 import {
+import SupportUsPage from "../../pages/SupportUsPage";
   CrisisCommunityPortal,
   SosPlanView,
   ForumView,
@@ -271,9 +272,8 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'kontakt') {
     return <ContactView onNavigate={onNavigate} />;
   }
-  if (slug === 'sponzori') {
-    return <SponsorsView onNavigate={onNavigate} />;
-  }
+  if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') { return <SupportUsPage />; }
+
   if (slug === 'partneri' || slug === 'partners') {
     return <PartnersView />;
   }

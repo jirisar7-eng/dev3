@@ -154,6 +154,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
               </h4>
               <ul className="space-y-2.5 text-slate-300">
                 <li>
+                  <button onClick={() => handleNav('/podporte-nas')} className="hover:text-rose-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
+                    <span>❤️</span>
+                    <span className="font-semibold text-rose-300 group-hover:text-rose-400">Podpořte nás & Vznik spolku</span>
+                  </button>
+                </li>
+                <li>
                   <button onClick={() => handleNav('/clanky')} className="hover:text-blue-400 transition-colors flex items-center gap-2 group text-left cursor-pointer">
                     <span>📄</span>
                     <span>Články</span>
@@ -266,6 +272,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
                 className="p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-left text-rose-300 hover:text-rose-200 font-medium transition-colors cursor-pointer"
               >
                 🚨 Krizová pomoc
+              </button>
+              <button
+                onClick={() => handleNav('/podporte-nas')}
+                className="col-span-2 p-2.5 rounded-lg bg-rose-900/30 border border-rose-800/30 hover:bg-rose-900/50 text-center text-rose-300 hover:text-rose-200 font-medium transition-colors cursor-pointer"
+              >
+                ❤️ Podpořte nás & Vznik spolku
               </button>
               <button
                 onClick={() => handleNav('/pravni-poradna')}

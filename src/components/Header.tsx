@@ -90,6 +90,7 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
   { id: 'sub-8-2', labelKey: 'Kontakt', url: '/kontakt', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
   { id: 'sub-8-3', labelKey: 'Sponzoři', url: '/sponzori', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
   { id: 'sub-8-4', labelKey: 'Partneři', url: '/partneri', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-5', labelKey: 'Podpořte nás & Vznik spolku', url: '/podporte-nas', order: 85, target: '_self', isExternal: false, parentId: 'cat-8' },
 ];
 
 export const Header: React.FC<HeaderProps> = ({
