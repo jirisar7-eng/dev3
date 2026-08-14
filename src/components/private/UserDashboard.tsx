@@ -5,7 +5,8 @@ import { UserProfileView } from './UserProfileView';
 import { UserSettingsView } from './UserSettingsView';
 import { UserDocumentsView } from './UserDocumentsView';
 import { MyCasePage } from '../../pages/MyCasePage';
-import { Lock, LayoutDashboard, User as UserIcon, Settings, FolderOpen, LogOut, Briefcase } from 'lucide-react';
+import { CoParentPage } from '../../pages/portal/CoParentPage';
+import { Lock, LayoutDashboard, User as UserIcon, Settings, FolderOpen, LogOut, Briefcase, Users } from 'lucide-react';
 
 interface UserDashboardProps {
   currentPath?: string;
@@ -16,7 +17,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
   const { currentUser, logout, switchUser } = useAuth();
 
   // Determine active tab based on path
-  const getTabFromPath = (path: string): 'case' | 'overview' | 'profile' | 'settings' | 'documents' => {
+  const getTabFromPath = (path: string): 'case' | 'coparent' | 'overview' | 'profile' | 'settings' | 'documents' => {
+    if (path.includes('/portal/coparent')) return 'coparent';
     if (path.startsWith('/muj-pripad') || path.includes('/portal/pripad') || path.includes('/portal/muj-pripad')) return 'case';
     if (path.includes('/portal/profil')) return 'profile';
     if (path.includes('/portal/nastaveni')) return 'settings';
@@ -24,7 +26,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
     return 'case'; // Default to My Case module
   };
 
-  const [activeTab, setActiveTab] = useState<'case' | 'overview' | 'profile' | 'settings' | 'documents'>(
+  const [activeTab, setActiveTab] = useState<'case' | 'coparent' | 'overview' | 'profile' | 'settings' | 'documents'>(
     getTabFromPath(currentPath)
   );
 
@@ -32,7 +34,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
     setActiveTab(getTabFromPath(currentPath));
   }, [currentPath]);
 
-  const handleTabClick = (tab: 'case' | 'overview' | 'profile' | 'settings' | 'documents', path: string) => {
+  const handleTabClick = (tab: 'case' | 'coparent' | 'overview' | 'profile' | 'settings' | 'documents', path: string) => {
     setActiveTab(tab);
     if (onNavigate) {
       onNavigate(path);
@@ -95,6 +97,18 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
           >
             <Briefcase className="w-4 h-4" />
             Osobní spis otce (/muj-pripad)
+          </button>
+
+          <button
+            onClick={() => handleTabClick('coparent', '/portal/coparent')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'coparent'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Spolurodičovský Hub
           </button>
 
           <button
@@ -165,6 +179,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
       {/* Tab Content Rendering */}
       <div>
         {activeTab === 'case' && <MyCasePage onNavigate={onNavigate} />}
+        {activeTab === 'coparent' && <CoParentPage onNavigate={onNavigate} />}
         {activeTab === 'overview' && <UserOverviewView user={currentUser} />}
         {activeTab === 'profile' && <UserProfileView user={currentUser} onProfileUpdated={(u) => switchUser(u)} />}
         {activeTab === 'settings' && <UserSettingsView user={currentUser} />}
