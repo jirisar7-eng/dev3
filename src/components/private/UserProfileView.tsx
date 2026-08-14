@@ -945,7 +945,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                       if (!res.ok) {
                         const data = await res.json();
                         if (data.error === '2FA nebyla inicializována') {
-                           setMfaSetupStep(1);
+                           setMfaSetupStep(0);
                            setMfaError('Platnost relace klíče vypršela. Vygenerujte prosím nový QR kód.');
                         } else {
                            throw new Error(data.error || 'Neplatný kód. Zkuste to prosím znovu.');

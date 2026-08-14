@@ -531,6 +531,7 @@ app.post('/api/auth/2fa/generate', requireAuth as any, async (req: Authenticated
         await getPrismaClient().user.update({
           where: { id: user.id },
           data: {
+            totpTempSecret: secretData.base32,
             totpBackupCodes: secretData.backupCodes,
           },
         });
@@ -570,10 +571,13 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
       where: { id: user.id }
     });
     
-    let secret;
-    // Fallback to dbStore
-    const dbUser = dbStore.users.find(u => u.id === user.id);
-    secret = dbUser?.totpTempSecret;
+    let secret = freshUser?.totpTempSecret;
+    
+    // Fallback to dbStore if not found in Prisma
+    if (!secret) {
+      const dbUser = dbStore.users.find(u => u.id === user.id);
+      secret = dbUser?.totpTempSecret;
+    }
 
     if (!secret) {
       return res.status(400).json({ error: '2FA nebyla inicializována. Vygenerujte nejprve klíč.' });
@@ -592,6 +596,7 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
           data: {
             totpEnabled: true,
             totpSecret: secret,
+            totpTempSecret: null,
           },
         });
       } catch (prismaErr) {
