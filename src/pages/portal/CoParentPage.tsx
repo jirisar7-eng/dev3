@@ -246,12 +246,12 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     { key: 'settings', label: 'Nastavení', icon: Settings },
   ];
 
-  if (loading || (error && (error.includes('Databáze') || error.includes('připravuje')))) {
+  if (loading) {
     return (
       <div className="py-24 text-center space-y-4">
         <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-900 mb-2" />
-        <p className="text-sm font-bold text-slate-800">Připravujeme váš Spolurodičovský prostor...</p>
-        <p className="text-xs text-slate-500">Probíhá inicializace databázového prostoru a výchozích entit.</p>
+        <p className="text-sm font-bold text-slate-800">Načítám Spolurodičovský Hub...</p>
+        <p className="text-xs text-slate-500">Probíhá inicializace databázového prostoru.</p>
       </div>
     );
   }
@@ -262,12 +262,20 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
         <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-slate-900 mb-2">Chyba při načítání</h2>
         <p className="text-sm text-slate-600 mb-6">{error}</p>
-        <button 
-          onClick={fetchCoParentData}
-          className="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold cursor-pointer"
-        >
-          Zkusit znovu
-        </button>
+        <div className="flex gap-4 justify-center">
+          <button 
+            onClick={fetchCoParentData}
+            className="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold cursor-pointer"
+          >
+            Zkusit znovu
+          </button>
+          <button 
+            onClick={() => { setError(null); /* ruční vytvoření logic */ }}
+            className="px-4 py-2 bg-white text-blue-900 border border-blue-900 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-50"
+          >
+            Založit prostor ručně
+          </button>
+        </div>
       </div>
     );
   }

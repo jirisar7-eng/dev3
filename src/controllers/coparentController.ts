@@ -9,7 +9,7 @@ export class CoParentController {
     try {
       const p = prisma;
       if (!isPrismaAvailable() || !p) {
-        return res.status(200).json({ success: false, error: "Databáze se připravuje" });
+        return res.status(500).json({ success: false, error: "Databáze se připravuje" });
       }
 
       let space = await (p as any).coparentSpace.findFirst({
@@ -44,10 +44,10 @@ export class CoParentController {
         });
       }
 
-      res.json(space);
+      res.json({ success: true, space });
     } catch (err: any) {
       console.error('[CoParentController.getSpace error]:', err);
-      res.status(200).json({ success: false, error: "Databáze se připravuje" });
+      res.status(500).json({ success: false, error: err.message || "Chyba při inicializaci prostoru" });
     }
   }
 
@@ -55,7 +55,7 @@ export class CoParentController {
     try {
       const p = prisma;
       if (!isPrismaAvailable() || !p) {
-        return res.status(200).json({ success: false, error: "Databáze se připravuje" });
+        return res.status(500).json({ success: false, error: "Databáze se připravuje" });
       }
 
       let space = await (p as any).coparentSpace.findFirst({
@@ -81,10 +81,10 @@ export class CoParentController {
       }
 
       const dashboard = await CoParentService.getDashboard(space.id, req.user!.id);
-      res.json(dashboard);
+      res.json({ success: true, ...dashboard });
     } catch (err: any) {
       console.error('[CoParentController.getDashboard error]:', err);
-      res.status(200).json({ success: false, error: "Databáze se připravuje" });
+      res.status(500).json({ success: false, error: err.message || "Chyba při načítání dashboardu" });
     }
   }
 
