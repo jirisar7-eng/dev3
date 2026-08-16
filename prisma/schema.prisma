@@ -1,0 +1,1599 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ------------------------------------------------------
+// IDENTITY
+// ------------------------------------------------------
+
+enum UserRoleType {
+  USER
+  VOLUNTEER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+  SYSTEM_ADMIN
+  CONTENT_MANAGER
+  LEGAL_EDITOR
+  VERIFIED_CONTRIBUTOR
+  REGISTERED_USER
+  VERIFIED_USER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  email              String        @unique
+  passwordHash       String?
+  name               String
+  gender             String?       // "MALE", "FEMALE"
+  hasChildrenInitial Boolean?      @default(false)
+  role               UserRoleType  @default(USER)
+  status             AccountStatus @default(ACTIVE)
+  totpEnabled     Boolean       @default(false)
+  totpSecret      String?
+  totpTempSecret  String?
+  totpBackupCodes String[]
+  phone           String?
+  bio             String?
+  avatar          String?
+  googleId        String?       @unique
+  microsoftId     String?       @unique
+  lastLoginAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relationships
+  profile      UserProfile?
+  documentData UserDocumentData[]
+  userRoles    UserRole[]
+  articles     Article[]           @relation("UserArticles")
+  auditLogs    AuditLog[]
+  consents     Consent[]
+  cases        UserCase[]
+  children     UserChild[]
+  events       UserCalendarEvent[]
+  notes        UserNote[]
+  documents    UserDocument[]
+  volunteerCodexAgreements VolunteerCodexAgreement[]
+  userConsentLogs          UserConsentLog[]
+  sensitiveAccessLogs      SensitiveAccessLog[]
+  gdprDeletionRequests     GdprDeletionRequest[]
+  cookieConsents           CookieConsent[]
+  legalAuditLogs           LegalAuditLog[]
+  clientCases              Case[]
+  coparentSpaces           CoParentSpace[]     @relation("CoParentSpaceOwner")
+  coparentMemberships      CoParentMember[]
+  coparentMessages         CoParentMessage[]
+  coparentRequests         CoParentRequest[]
+  passkeys                 Passkey[]
+
+  @@index([email])
+}
+
+model Passkey {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String?
+  credentialId String   @unique
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  transports   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName          String?
+  lastName           String?
+  birthDate          String?
+  gender             String?
+  hasChildrenInitial Boolean? @default(false)
+  phone              String?
+  address            String?
+  city               String?
+  postalCode         String?
+  autoFillDocs       Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserDocumentData {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fieldKey   String
+  fieldValue String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, fieldKey])
+  @@index([userId])
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "SUPER_ADMIN", "ADMIN", "USER"
+  name        String
+  description String?
+  requiresMfa Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@index([key])
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "cms:edit", "user:manage"
+  name        String
+  category    String   @default("system")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  rolePermissions RolePermission[]
+
+  @@index([key])
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+// ------------------------------------------------------
+// CMS
+// ------------------------------------------------------
+
+model Page {
+  id             String   @id @default(uuid())
+  title          String
+  slug           String   @unique
+  content        Json
+  published      Boolean  @default(true)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  sections PageSection[]
+
+  @@index([slug])
+}
+
+model PageSection {
+  id         String   @id @default(uuid())
+  pageId     String
+  page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  sectionKey String // e.g., "hero", "features", "cta"
+  title      String?
+  content    String?
+  order      Int      @default(0)
+  config     String?  @default("{}") // JSON config
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([pageId])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?
+  type        String   @default("article") // "article", "faq", etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  articles Article[]
+  faqs     FAQ[]
+
+  @@index([slug])
+}
+
+model Article {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  title        String
+  summary      String
+  content      String
+  published    Boolean   @default(true)
+  categoryName String    @default("obecne")
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  authorId     String?
+  author       User?     @relation("UserArticles", fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model FAQ {
+  id           String    @id @default(uuid())
+  question     String
+  answer       String
+  categoryName String    @default("general")
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  order        Int       @default(0)
+  published    Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([categoryId])
+}
+
+model NavigationItem {
+  id         String           @id @default(uuid())
+  labelKey   String
+  url        String
+  order      Int              @default(0)
+  target     String           @default("_self")
+  isExternal Boolean          @default(false)
+  parentId   String?
+  parent     NavigationItem?  @relation("NavHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   NavigationItem[] @relation("NavHierarchy")
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([parentId])
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  type      String   @default("image") // "image", "document", etc.
+  mimeType  String?
+  size      Int      @default(0)
+  alt       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// CONTENT
+// ------------------------------------------------------
+
+model ContentString {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  category     String   @default("general")
+  valueCzech   String
+  valueEnglish String?
+  description  String?
+  active       Boolean  @default(true)
+  updatedBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+}
+
+// ------------------------------------------------------
+// THEME
+// ------------------------------------------------------
+
+model Theme {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "default", "dark", "high_contrast"
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  active      Boolean  @default(true)
+  context     String   @default("GLOBAL") // "PUBLIC", "PRIVATE", "ADMIN", "GLOBAL"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  variables ThemeVariable[]
+
+  @@index([key])
+  @@index([context])
+}
+
+model ThemeVariable {
+  id        String   @id @default(uuid())
+  themeId   String?
+  theme     Theme?   @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  key       String   // e.g., "primary", "background"
+  value     String   // e.g., "#1e3a8a"
+  label     String
+  category  String   @default("color")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([themeId, key])
+  @@index([key])
+}
+
+// ------------------------------------------------------
+// MODULES
+// ------------------------------------------------------
+
+model Module {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "system-test-module", "child_support_calc"
+  name        String
+  version     String   @default("1.0.0")
+  enabled     Boolean  @default(true)
+  public      Boolean  @default(true)
+  config      String   @default("{}") // JSON string for module configuration
+  description String?
+  icon        String?  @default("Package")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  settings    ModuleSetting[]
+  permissions ModulePermission[]
+
+  @@index([key])
+}
+
+model ModuleSetting {
+  id          String   @id @default(uuid())
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  key         String
+  value       String
+  type        String   @default("string") // "string", "number", "boolean", "json"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([moduleId, key])
+  @@index([moduleId])
+}
+
+model ModulePermission {
+  id          String   @id @default(uuid())
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  key         String   // e.g., "calc:execute", "calc:export"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([moduleId, key])
+  @@index([moduleId])
+}
+
+// ------------------------------------------------------
+// COMPLIANCE
+// ------------------------------------------------------
+
+model LegalDocument {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "terms", "gdpr", "cookies", "volunteer_code"
+  title       String
+  type        String   @default("terms") // "terms", "gdpr", "privacy", "code"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  versions LegalDocumentVersion[]
+
+  @@index([key])
+}
+
+model LegalDocumentVersion {
+  id            String        @id @default(uuid())
+  documentId    String
+  document      LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version       String        @default("1.0.0")
+  content       String
+  status        String        @default("PUBLISHED") // "DRAFT", "PUBLISHED", "ARCHIVED"
+  effectiveDate DateTime      @default(now())
+  author        String?       @default("Administrátor")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relationships
+  consents Consent[]
+
+  @@unique([documentId, version])
+  @@index([documentId])
+  @@index([status])
+}
+
+model Consent {
+  id          String                @id @default(uuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionId   String?
+  version     LegalDocumentVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  docKey      String                // e.g. "terms", "privacy", "cookies", "legal", "volunteer_code", "ai_statement"
+  docVersion  String                // e.g. "1.0.0"
+  status      String                @default("ACCEPTED") // "ACCEPTED", "REVOKED"
+  ipAddress   String?               @default("127.0.0.1")
+  consentedAt DateTime              @default(now())
+
+  @@unique([userId, docKey, docVersion])
+  @@index([userId])
+  @@index([versionId])
+}
+
+// ------------------------------------------------------
+// SYSTEM
+// ------------------------------------------------------
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  category    String   @default("system")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
+
+// ------------------------------------------------------
+// AUDIT
+// ------------------------------------------------------
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail String?
+  action    String
+  module    String
+  details   String
+  ipAddress String?  @default("127.0.0.1")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+}
+
+// ------------------------------------------------------
+// PRIVATE USER PORTAL ENTITIES
+// ------------------------------------------------------
+
+model UserCase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  caseNumber  String?
+  courtName   String?
+  status      String   @default("active") // "active", "pending", "closed"
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserChild {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  firstName   String?
+  lastName    String?
+  birthDate   String?
+  isStudying  Boolean? @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserCalendarEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  eventDate   String
+  category    String   @default("court") // "court", "handover", "ospod", "meeting", "other"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserNote {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  category    String   @default("general")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserDocument {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  fileUrl     String?
+  fileType    String   @default("pdf")
+  size        Int      @default(0)
+  category    String   @default("court_filing")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ------------------------------------------------------
+// STUDIES (CMS Knihovna vědeckých studií)
+// ------------------------------------------------------
+
+model Study {
+  id              String   @id @default(uuid())
+  slug            String   @unique
+  title           String
+  originalTitle   String?
+  authors         String
+  publicationYear Int?
+  publisher       String?
+  doi             String?
+  sourceUrl       String?
+  abstract        String?
+  summary         String?
+  methodology     String?
+  findings        String?
+  limitations     String?
+  relevance       String?
+  keywords        String?
+  category        String   @default("stridava_pece")
+  status          String   @default("DRAFT") // "DRAFT", "PUBLISHED", "ARCHIVED"
+  featured        Boolean  @default(false)
+  pdfUrl          String?
+  pdfMediaId      String?
+  pdfSize         Int?     @default(0)
+  s3Bucket        String?
+  s3ObjectKey     String?
+  storageProvider String?  @default("MinIO")
+  mimeType        String?  @default("application/pdf")
+  fileHash        String?
+  createdBy       String?
+  updatedBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+}
+
+// ------------------------------------------------------
+// LAWS & STATE DATA (e-Sbírka, Statistiky, Případová databáze)
+// ------------------------------------------------------
+
+model Law {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+}
+
+model StateStatistic {
+  id          String   @id @default(uuid())
+  category    String   // "Péče o děti", "Délka řízení", "Výživné"
+  title       String
+  description String?  @db.Text
+  value       String   // Např. "32 %"
+  unit        String?  // "%", "dní", "Kč"
+  period      String   // "2025/2026"
+  source      String   // "Ministerstvo spravedlnosti ČR / ČSÚ"
+  chartData   Json?    // Strukturovaná data pro grafy
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+}
+
+model CourtCase {
+  id          String   @id @default(uuid())
+  fileNumber  String   @unique // Např. "I. ÚS 1506/23"
+  court       String   // "Ústavní soud", "Nejvyšší soud"
+  title       String
+  summary     String   @db.Text // Stručný popis případu
+  legalRatio  String   @db.Text // Klíčová právní věta / Precedent
+  tags        String[] // ["střídavá péče", "předběžné opatření", "maření styku"]
+  fullTextUrl String?
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([court])
+  @@index([fileNumber])
+}
+
+enum PartnerType {
+  SPONSOR
+  PARTNER
+}
+
+model Partner {
+  id          String      @id @default(uuid())
+  name        String      // Např. "ALGOTECH a.s."
+  type        PartnerType @default(PARTNER)
+  description String      // Např. "Cloud VPS"
+  logoUrl     String?     // Odkaz na logo v MinIO nebo externí URL
+  websiteUrl  String?     // Odkaz na web partnera
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model VolunteerCodexAgreement {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentVersion String   @default("1.0")
+  agreedAt        DateTime @default(now())
+  ipAddress       String?
+
+  @@unique([userId, documentVersion])
+}
+
+model VolunteerApplication {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  birthDate   String?
+  address     String?
+  motivation  String   @db.Text
+  linkedin    String?
+  position    String
+  createdAt   DateTime @default(now())
+}
+
+model UserConsentLog {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentType    String   // "PRIVACY_POLICY", "TERMS", "VOLUNTEER_CODEX", "VOLUNTEER_AGREEMENT", "COOKIES"
+  documentVersion String   // Např. "0.5.1"
+  agreedAt        DateTime @default(now())
+  ipAddress       String?
+  userAgent       String?
+}
+
+model SensitiveAccessLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String   // Např. "VIEW_SENSITIVE_CASE", "EXPORT_GDPR_DATA", "AI_PROCESSING"
+  resource   String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+}
+
+model GdprDeletionRequest {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, REJECTED
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  notes       String?
+}
+
+model PollVote {
+  id          String   @id @default(uuid())
+  pollId      String   // Identifikátor ankety na stránce
+  optionIndex Int      // Index zvolené možnosti
+  ipAddress   String?
+  userId      String?
+  createdAt   DateTime @default(now())
+}
+
+model FormSubmission {
+  id        String   @id @default(uuid())
+  formId    String   // Identifikátor formuláře
+  formName  String
+  dataJson  String   @db.Text // JSON s vyplněnými poli
+  createdAt DateTime @default(now())
+}
+
+model PageTemplate {
+  id           String   @id @default(uuid())
+  name         String
+  category     String   // "LANDING", "ARTICLE", "LEGAL", "FORM", "CUSTOM"
+  description  String?
+  puckDataJson String   @db.Text
+  isSystem     Boolean  @default(false)
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ForumThread {
+  id        String      @id @default(uuid())
+  category  String      @default("care")
+  title     String
+  content   String      @db.Text
+  author    String      @default("AnonymniOtec")
+  userId    String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  posts     ForumPost[]
+
+  @@index([category])
+  @@index([createdAt])
+}
+
+model ForumPost {
+  id        String      @id @default(uuid())
+  threadId  String
+  thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    String      @default("AnonymniOtec")
+  userId    String?
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([threadId])
+}
+
+model CustomModule {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  category    String   @default("Krizová pomoc & Komunita")
+  icon        String   @default("Box")
+  showInMenu  Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  contentJson String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum EntityType {
+  SOUD
+  OSPOD
+  ZNALEC
+  ADVOKAT
+  PORADNA_CHARITA
+}
+
+model Subjekt {
+  id            String       @id @default(uuid())
+  type          EntityType
+  name          String       // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore   String?      // Např. "PhDr.", "JUDr."
+  position      String?      // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution   String?      // Název pracoviště / Úřadu / Kanceláře
+  city          String       // Např. "Pardubice", "Přelouč"
+  region        String       // Např. "Pardubický kraj"
+  address       String?
+  email         String?      @unique
+  phone         String?
+  website       String?
+  avgRating     Float        @default(0.0)
+  reviewCount   Int          @default(0)
+  isVerified    Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  reviews       Review[]
+  pracovnici    Pracovnik[]
+}
+
+model Pracovnik {
+  id          String   @id @default(uuid())
+  jmeno       String
+  pozice      String?
+  telefon     String?
+  email       String?
+  kancelar    String?
+  subjektId   String
+  subjekt     Subjekt  @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  status      String   @default("APPROVED")
+  createdById String?
+  createdAt   DateTime @default(now())
+  reviews     Review[]
+}
+
+model Review {
+  id                   String     @id @default(uuid())
+  subjektId            String
+  subjekt              Subjekt    @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  pracovnikId          String?
+  pracovnik            Pracovnik? @relation(fields: [pracovnikId], references: [id], onDelete: Cascade)
+  userId               String?
+  rating               Int        // Overall 1-5 hvězdiček
+  // Strukturovaná věcná kritéria (1-5):
+  supportSharedCare    Int        // Podpora střídavé/společné péče
+  professionalism      Int        // Věcnost a odbornost
+  speedAndDeadlines    Int        // Dodržování lhůt a rychlost
+  objektivita          Int?
+  komunikace           Int?
+  rychlost             Int?
+  status               String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  comment              String     @db.Text
+  isAnonymous          Boolean    @default(true)
+  createdAt            DateTime   @default(now())
+}
+
+model CookieConsent {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionHash String?
+  essential   Boolean  @default(true)
+  functional  Boolean  @default(false)
+  analytics   Boolean  @default(false)
+  marketing   Boolean  @default(false)
+  version     String   @default("1.0")
+  consentAt   DateTime @default(now())
+  ipAddress   String?
+}
+
+model LegalAuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action       String   // e.g., "DOCUMENT_CREATED", "DOCUMENT_PUBLISHED", "CONSENT_RECORDED"
+  entity       String   // e.g., "LegalDocument", "CookieConsent"
+  entityId     String?
+  metadataJson String?  @db.Text // Store custom metadata as JSON string
+  createdAt    DateTime @default(now())
+}
+
+// ------------------------------------------------------
+// OSOBNÍ KLIENTSKÁ SLOŽKA OTCE (SYNTHESIS CLIENT CASE)
+// ------------------------------------------------------
+
+model Case {
+  id               String              @id @default(uuid())
+  ownerId          String
+  owner            User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title            String
+  caseNumber       String?
+  court            String?
+  caseType         String              @default("OPATROVNICKE")
+  status           String              @default("ACTIVE")
+  description      String?             @db.Text
+  currentCareType  String?             @default("STRIDAVA")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  participants     CaseParticipant[]
+  children         Child[]
+  events           CaseEvent[]
+  deadlines        CaseDeadline[]
+  tasks            CaseTask[]
+  notes            CaseNote[]
+  documents        CaseDocument[]
+  evidence         CaseEvidence[]
+  communications   CaseCommunication[]
+  careArrangements CareArrangement[]
+  carePlans        CarePlan[]
+  careComparisons  CareSimulationComparison[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model CaseParticipant {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  name        String
+  role        String   @default("MATKA")
+  email       String?
+  phone       String?
+  address     String?
+  institution String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([caseId])
+}
+
+model Child {
+  id           String   @id @default(uuid())
+  caseId       String
+  case         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  dateOfBirth  String?
+  birthNumber  String?
+  schoolName   String?
+  pediatrician String?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  carePlans    CarePlanChild[]
+
+  @@index([caseId])
+}
+
+model CaseEvent {
+  id          String         @id @default(uuid())
+  caseId      String
+  case        Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?        @db.Text
+  category    String         @default("OTHER")
+  eventDate   DateTime
+  endDate     DateTime?
+  location    String?
+  attachments Json?
+  sourceType  String?        @default("MANUAL") // "MANUAL", "CARE_PLAN"
+  carePlanId  String?
+  carePlan    CarePlan?      @relation("CarePlanEvents", fields: [carePlanId], references: [id], onDelete: Cascade)
+  careDayId   String?
+  careDay     CareDay?       @relation("CareDayEvents", fields: [careDayId], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  evidence    CaseEvidence[]
+
+  @@index([caseId])
+  @@index([eventDate])
+  @@index([category])
+  @@index([carePlanId])
+  @@index([careDayId])
+  @@index([sourceType])
+}
+
+model CaseDeadline {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?  @db.Text
+  dueDate     DateTime
+  type        String   @default("COURT")
+  isCompleted Boolean  @default(false)
+  priority    String   @default("HIGH")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([dueDate])
+}
+
+model CaseTask {
+  id          String    @id @default(uuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?   @db.Text
+  dueDate     DateTime?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model CaseNote {
+  id         String   @id @default(uuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy  String
+  title      String
+  content    String   @db.Text
+  category   String?  @default("GENERAL")
+  visibility String   @default("PRIVATE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([visibility])
+}
+
+model CaseDocument {
+  id              String         @id @default(uuid())
+  caseId          String
+  case            Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploadedBy      String
+  name            String
+  category        String         @default("OTHER")
+  fileUrl         String?
+  s3Bucket        String?
+  s3ObjectKey     String?
+  fileType        String         @default("pdf")
+  mimeType        String         @default("application/pdf")
+  size            Int            @default(0)
+  fileHash        String?
+  storageProvider String         @default("MinIO")
+  scanStatus      String         @default("CLEAN")
+  notes           String?        @db.Text
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  evidence        CaseEvidence[]
+
+  @@index([caseId])
+  @@index([category])
+}
+
+model CaseEvidence {
+  id          String        @id @default(uuid())
+  caseId      String
+  case        Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy   String
+  title       String
+  description String?       @db.Text
+  date        DateTime?
+  type        String        @default("DOCUMENT")
+  documentId  String?
+  document    CaseDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  eventId     String?
+  event       CaseEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  relevance   String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([caseId])
+  @@index([type])
+}
+
+model CaseCommunication {
+  id              String   @id @default(uuid())
+  caseId          String
+  case            Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy       String
+  participantName String
+  channel         String   @default("EMAIL")
+  date            DateTime @default(now())
+  summary         String   @db.Text
+  tone            String?  @default("NEUTRAL")
+  attachments     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([date])
+}
+
+model CareArrangement {
+  id                 String    @id @default(uuid())
+  caseId             String
+  case               Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title              String
+  type               String    @default("STRIDAVA")
+  intervalDays       Int       @default(7)
+  handoverDay        String?   @default("Pátek 16:00")
+  handoverLocation   String?
+  childSupportAmount Float?    @default(0)
+  notes              String?   @db.Text
+  validFrom          DateTime?
+  validTo            DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([caseId])
+}
+
+// ------------------------------------------------------
+// COPARENT HUB (SPOLURODIČOVSKÝ HUB)
+// ------------------------------------------------------
+
+enum ConflictMode {
+  COOPERATION
+  DISAGREEMENT
+  HIGH_CONFLICT
+}
+
+model CoParentSpace {
+  id           String         @id @default(uuid())
+  title        String         @default("Spolurodičovský prostor")
+  conflictMode ConflictMode   @default(COOPERATION)
+  ownerId      String
+  owner        User           @relation("CoParentSpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  members      CoParentMember[]
+  children     CoParentChild[]
+  events       CoParentEvent[]
+  handovers    CoParentHandover[]
+  messages     CoParentMessage[]
+  agreements   CoParentAgreement[]
+  expenses     CoParentExpense[]
+  dailyUpdates CoParentDailyUpdate[]
+  items        CoParentItem[]
+  requests     CoParentRequest[]
+  auditLogs    CoParentAuditLog[]
+  documents    CoParentDocument[]
+  invites      CoParentInvite[]
+
+  @@index([ownerId])
+}
+
+model CoParentMember {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String        @default("PARENT") // "FATHER", "MOTHER", "MEDIATOR", "LAWYER"
+  createdAt DateTime      @default(now())
+
+  @@unique([spaceId, userId])
+  @@index([spaceId])
+  @@index([userId])
+}
+
+model CoParentChild {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  birthDate   String?
+  notes       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  dailyUpdates CoParentDailyUpdate[]
+
+  @@index([spaceId])
+}
+
+model CoParentEvent {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title       String
+  description String?       @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  category    String        @default("CARE") // "CARE", "SCHOOL", "DOCTOR", "HANDOVER"
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentHandover {
+  id                 String        @id @default(uuid())
+  spaceId            String
+  space              CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  scheduledAt        DateTime
+  location           String?
+  status             String        @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "DISPUTED"
+  notes              String?       @db.Text
+  confirmedByFather  Boolean       @default(false)
+  confirmedByMother  Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentMessage {
+  id         String        @id @default(uuid())
+  spaceId    String
+  space      CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content    String        @db.Text
+  isApproved Boolean       @default(true) // In HIGH_CONFLICT, messages might need moderation/audit
+  createdAt  DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentAgreement {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title     String
+  content   String        @db.Text
+  status    String        @default("PROPOSED") // "PROPOSED", "ACCEPTED", "REJECTED"
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentExpense {
+  id         String        @id @default(uuid())
+  spaceId    String
+  space      CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title      String
+  amount     Float
+  currency   String        @default("CZK")
+  category   String        @default("GENERAL") // "SCHOOL", "DOCTOR", "CLOTHING", "EXTRA"
+  receiptUrl String?
+  status     String        @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdBy  String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentDailyUpdate {
+  id           String        @id @default(uuid())
+  spaceId      String
+  space        CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  childId      String
+  child        CoParentChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+  date         DateTime      @default(now())
+  mood         String        @default("HAPPY") // "HAPPY", "CALM", "TIRED", "SAD", "ANGRY"
+  healthNotes  String?       @db.Text
+  schoolNotes  String?       @db.Text
+  createdAt    DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentItem {
+  id       String        @id @default(uuid())
+  spaceId  String
+  space    CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  name     String        // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
+  holderId String        // User ID of who currently has the item
+  location String?       // e.g., "U tatínka", "U maminky"
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentRequest {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  type        String        // "SCHEDULE_CHANGE", "EXPENSE_APPROVAL", "AGREEMENT_MODIFICATION"
+  details     String        @db.Text
+  status      String        @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([spaceId])
+}
+
+model CoParentAuditLog {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String        // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
+  entity    String        // e.g., "CoParentAgreement", "CoParentExpense"
+  entityId  String?
+  details   String        @db.Text
+  createdAt DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentDocument {
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title       String
+  fileUrl     String?
+  category    String        @default("COURT_ORDER")
+  uploadedBy  String
+  createdAt   DateTime      @default(now())
+
+  @@index([spaceId])
+}
+
+model CoParentInvite {
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  invitedBy String
+  email     String
+  code      String        @unique
+  status    String        @default("PENDING") // "PENDING", "ACCEPTED", "EXPIRED"
+  expiresAt DateTime
+  createdAt DateTime      @default(now())
+
+  @@index([spaceId])
+  @@index([code])
+}
+
+// ------------------------------------------------------
+// CARE & PARENTING HUB (SIMULÁTOR A PLÁNOVAČ PÉČE)
+// ------------------------------------------------------
+
+enum CarePlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CarePlanType {
+  CURRENT
+  PROPOSED
+  SIMULATION
+}
+
+enum CarePlanSource {
+  MANUAL
+  JUDGMENT_IMPORT
+  SIMULATION_TEMPLATE
+}
+
+enum CareLocationType {
+  PARENT_A_HOME
+  PARENT_B_HOME
+  SCHOOL
+  KINDERGARTEN
+  NEUTRAL
+  CUSTOM
+}
+
+model CarePlan {
+  id                   String           @id @default(uuid())
+  caseId               String
+  case                 Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title                String
+  description          String?          @db.Text
+  status               CarePlanStatus   @default(DRAFT)
+  type                 CarePlanType     @default(PROPOSED)
+  source               CarePlanSource   @default(MANUAL)
+  startDate            DateTime?
+  endDate              DateTime?
+  rotationPattern      String?          @default("7/7")
+  rotationIntervalDays Int              @default(7)
+  version              Int              @default(1)
+  isSharedWithCoParent Boolean          @default(false)
+  createdBy            String?
+  parentAName          String?          @default("Otec")
+  parentBName          String?          @default("Matka")
+  parentAAddress       String?
+  parentBAddress       String?
+  parentALat           Float?
+  parentALng           Float?
+  parentBLat           Float?
+  parentBLng           Float?
+  parentAPreferences   String?          @db.Text
+  parentBPreferences   String?          @db.Text
+  defaultHandoverTime  String?          @default("16:00")
+  metricsJson          String?          @db.Text
+  notes                String?          @db.Text
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  children             CarePlanChild[]
+  locations            CareLocation[]
+  days                 CareDay[]
+  holidayRules         CareHolidayRule[]
+  generatedEvents      CaseEvent[]      @relation("CarePlanEvents")
+
+  @@index([caseId])
+  @@index([status])
+  @@index([type])
+}
+
+model CarePlanChild {
+  id         String   @id @default(uuid())
+  carePlanId String
+  carePlan   CarePlan @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  childId    String
+  child      Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([carePlanId, childId])
+  @@index([carePlanId])
+  @@index([childId])
+}
+
+model CareLocation {
+  id          String           @id @default(uuid())
+  carePlanId  String
+  carePlan    CarePlan         @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  name        String
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  type        CareLocationType @default(NEUTRAL)
+  notes       String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  careDays    CareDay[]
+
+  @@index([carePlanId])
+  @@index([type])
+}
+
+model CareDay {
+  id                 String        @id @default(uuid())
+  carePlanId         String
+  carePlan           CarePlan      @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  date               DateTime
+  dayOfWeek          Int
+  assignedParent     String        @default("PARENT_A")
+  isOvernight        Boolean       @default(true)
+  overnightParent    String?       @default("PARENT_A")
+  schoolParent       String?
+  isHandover         Boolean       @default(false)
+  handoverTime       String?
+  handoverLocationId String?
+  handoverLocation   CareLocation? @relation(fields: [handoverLocationId], references: [id], onDelete: SetNull)
+  travelDistanceKm   Float?        @default(0)
+  travelDurationMin  Int?          @default(0)
+  isHoliday          Boolean       @default(false)
+  holidayName        String?
+  notes              String?       @db.Text
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  generatedEvents    CaseEvent[]   @relation("CareDayEvents")
+
+  @@index([carePlanId])
+  @@index([date])
+}
+
+model CareHolidayRule {
+  id              String   @id @default(uuid())
+  carePlanId      String
+  carePlan        CarePlan @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  holidayType     String
+  name            String
+  startDate       DateTime?
+  endDate         DateTime?
+  allocationModel String   @default("ALTERNATING_YEARS")
+  evenYearParent  String?  @default("PARENT_A")
+  oddYearParent   String?  @default("PARENT_B")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([carePlanId])
+  @@index([holidayType])
+}
+
+model CareSimulationComparison {
+  id           String   @id @default(uuid())
+  caseId       String
+  case         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title        String
+  variantsJson String   @db.Text
+  notes        String?  @db.Text
+  createdBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([caseId])
+}
+
+// --- QA & Audit Models ---
+
+model QAProject {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  modules   QAModule[]
+  runs      QARun[]
+}
+
+model QAModule {
+  id          String       @id @default(uuid())
+  projectId   String
+  project     QAProject    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  endpoints   QAEndpoint[]
+}
+
+model QAEndpoint {
+  id         String    @id @default(uuid())
+  moduleId   String
+  module     QAModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  method     String
+  path       String
+  sourceFile String
+  status     String
+  createdAt  DateTime  @default(now())
+}
+
+model QARun {
+  id               String      @id @default(uuid())
+  projectId        String
+  project          QAProject   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status           String      // RUNNING, COMPLETED, FAILED
+  runDate          DateTime    @default(now())
+  commitSha        String?     @default("main-HEAD")
+  branch           String?     @default("main")
+  environment      String?     @default("development")
+  
+  // Quality Scores (0 - 100)
+  functionalScore  Float       @default(100.0)
+  securityScore    Float       @default(100.0)
+  apiScore         Float       @default(100.0)
+  persistenceScore Float       @default(100.0)
+  e2eScore         Float       @default(100.0)
+  overallScore     Float       @default(100.0)
+
+  // Counts & Stats stored as JSON
+  statsJson        String?     @db.Text
+  
+  // AI Analyst Report & Verdict
+  aiReportJson     String?     @db.Text
+  verdict          String?     @default("PRODUCTION READY")
+
+  findings         QAFinding[]
+}
+
+model QAFinding {
+  id         String   @id @default(uuid())
+  runId      String
+  run        QARun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  severity   String   // P0, P1, P2, P3 or CRITICAL, HIGH, MEDIUM, LOW
+  category   String?  @default("FUNCTIONAL") // FUNCTIONAL, SECURITY, API, PERSISTENCE, E2E, INTEGRATION, INVARIANT, STATIC
+  message    String   @db.Text
+  endpointId String?
+  createdAt  DateTime @default(now())
+}
