@@ -1,5 +1,6 @@
 import { prisma, isPrismaAvailable } from '../db/prisma';
 import { AuditService } from './auditService';
+import { CarePlanService } from './care/carePlanService';
 
 const getPrismaClient = () => prisma;
 import {
@@ -1101,6 +1102,86 @@ export class ClientCaseService {
 
     // Sort chronologically descending (newest first)
     return timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  // ----------------------------------------------------
+  // JUDGMENT IMPORT & CASE SYNC
+  // ----------------------------------------------------
+  public static async applyJudgmentToCase(caseId: string, requestingUser: User, data: any) {
+    const prisma = getPrismaClient();
+    if (!prisma) throw new Error("Databáze není dostupná.");
+
+    // 1. Update Case
+    await prisma.case.update({
+      where: { id: caseId },
+      data: {
+        caseNumber: data.caseNumber || undefined,
+        court: data.court || undefined,
+        currentCareType: data.custodyType || undefined,
+        description: data.otherDuties ? `Další povinnosti: ${data.otherDuties}` : undefined,
+        updatedAt: new Date()
+      }
+    });
+
+    // 2. Create or update child
+    let child;
+    if (data.childName) {
+      const parts = data.childName.trim().split(' ');
+      const firstName = parts[0] || 'Dítě';
+      const lastName = parts.slice(1).join(' ') || '';
+
+      const existingChildren = await prisma.child.findMany({ where: { caseId } });
+      if (existingChildren.length > 0) {
+        child = await prisma.child.update({
+          where: { id: existingChildren[0].id },
+          data: {
+            firstName,
+            lastName: lastName || existingChildren[0].lastName,
+            birthDate: data.childBirthDate ? new Date(data.childBirthDate) : undefined,
+            notes: `Režim: ${data.custodyType}, Rozvrh: ${data.scheduleType}`
+          }
+        });
+      } else {
+        child = await prisma.child.create({
+          data: {
+            caseId,
+            firstName,
+            lastName: lastName || 'Nováková',
+            birthDate: data.childBirthDate ? new Date(data.childBirthDate) : null,
+            notes: `Režim: ${data.custodyType}, Rozvrh: ${data.scheduleType}`
+          }
+        });
+      }
+    }
+
+    // 3. Create CarePlan using CarePlanService
+    let carePlan;
+    try {
+      const childrenList = await prisma.child.findMany({ where: { caseId } });
+      carePlan = await CarePlanService.createPlan(caseId, {
+        title: `Soudní rozsudek / Dohoda (${data.scheduleType || 'Standard'})`,
+        type: data.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+        rotationPattern: data.scheduleType || '7/7',
+        startDate: new Date().toISOString().split('T')[0],
+        rotationIntervalDays: 28,
+        defaultHandoverTime: data.handoverTime || '16:00',
+        status: 'ACTIVE',
+        children: childrenList.map(c => ({ childId: c.id })),
+        holidayRules: data.holidaysRule ? [{ name: 'Pravidla pro prázdniny a svátky', holidayType: 'SUMMER', evenYearParent: 'FATHER', oddYearParent: 'MOTHER', notes: data.holidaysRule }] : undefined
+      }, requestingUser);
+    } catch (cpErr) {
+      console.warn('[applyJudgmentToCase] CarePlan creation warning:', cpErr);
+    }
+
+    // 4. Audit Log
+    await AuditService.recordLog(
+      'JUDGMENT_APPLIED',
+      'ClientCase',
+      `Aplikován rozsudek pro spis ${data.caseNumber || caseId} (Dítě: ${data.childName || 'Neuvedeno'})`,
+      requestingUser
+    );
+
+    return { success: true, caseId, child, carePlan };
   }
 
   // ----------------------------------------------------

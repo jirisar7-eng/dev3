@@ -3,12 +3,15 @@ import { requireAuth, AuthenticatedRequest } from '../middleware/authMiddleware'
 import { ClientCaseService } from '../services/clientCaseService';
 import { ClamAvService } from '../services/clamAvService';
 import { MinioStorageService } from '../services/minioStorageService';
+import { JudgmentParserService } from '../services/judgmentParserService';
+import multer from 'multer';
 
 import { CarePlanService } from '../services/care/carePlanService';
 import { AgeEngine } from '../services/care/ageEngine';
 import { GeoRoutingService } from '../services/care/geoRoutingService';
 import { AuditService } from '../services/auditService';
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 // Apply requireAuth to all /api/cases routes
@@ -665,6 +668,39 @@ router.get('/:caseId/care/history', async (req: AuthenticatedRequest, res) => {
     const logs = await AuditService.getLogs('CARE_PLAN');
     const caseLogs = logs.filter(l => !l.details || l.details.includes(caseId) || l.details.includes('plán') || l.details.includes('péč') || l.userEmail === req.user!.email);
     res.json({ success: true, data: caseLogs });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/parse-judgment -> parse judgment file or text for central case data
+router.post('/:caseId/parse-judgment', upload.single('document'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    await ClientCaseService.authorizeCaseAccess(caseId, req.user!);
+    const file = req.file;
+    const { text } = req.body;
+    if (!file && !text) {
+      return res.status(400).json({ error: 'Musíte nahrát soubor nebo vložit text rozsudku.' });
+    }
+    const extracted = await JudgmentParserService.parseJudgmentFile(file, text);
+    res.json({ success: true, ...extracted });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/apply-judgment -> apply extracted judgment data to case, child, care plan and calendar
+router.post('/:caseId/apply-judgment', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    await ClientCaseService.authorizeCaseAccess(caseId, req.user!);
+    const { extractedData } = req.body;
+    if (!extractedData) {
+      return res.status(400).json({ error: 'Chybí extractedData.' });
+    }
+    const result = await ClientCaseService.applyJudgmentToCase(caseId, req.user!, extractedData);
+    res.json({ success: true, ...result });
   } catch (err: any) {
     handleCareError(res, err);
   }

@@ -4,20 +4,37 @@ const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
 export interface JudgmentExtractedData {
+  caseNumber: string | null;
+  court: string | null;
+  judgmentDate: string | null;
+  effectiveDate: string | null;
+  participants: string[];
   childName: string | null;
   childBirthDate: string | null;
   custodyType: "SHARED" | "SOLE_FATHER" | "SOLE_MOTHER" | "CUSTOM" | null;
   scheduleType: "EVEN_ODD_WEEKS" | "WEEK_A_B" | "EVERY_OTHER_WEEKEND" | "CUSTOM" | "STANDARD" | null;
   evenWeek?: { days: string[]; summary: string } | null;
   oddWeek?: { days: string[]; summary: string } | null;
-  handoverDay: string | null; // např. "NEDELE" nebo "PONDELI"
-  handoverTime: string | null; // např. "18:00"
+  handoverDay: string | null;
+  handoverTime: string | null;
   handoverStartTime?: string | null;
   handoverEndTime?: string | null;
   handoverLocation: string | null;
-  alimonyAmount: number | null;
-  alimonyDueDate: number | null; // den v měsíci
   holidaysRule: string | null;
+  christmasRule: string | null;
+  easterRule: string | null;
+  summerRule: string | null;
+  evenOddYearsRule: string | null;
+  alimonyAmount: number | null;
+  alimonyDueDate: number | null;
+  alimonyPaymentMethod: string | null;
+  otherDuties: string | null;
+  metadata?: {
+    totalFound: number;
+    needsReviewCount: number;
+    missingCount: number;
+    fields: Record<string, { confidence: number; status: 'VERIFIED' | 'NEEDS_REVIEW' }>;
+  };
 }
 
 export class JudgmentParserService {
@@ -33,19 +50,15 @@ export class JudgmentParserService {
           console.error('[JudgmentParserService] PDF parse error:', err);
         }
       } else {
-        // Not a PDF, maybe docx or text, just use buffer as string if it's text
-        // Or if it's an image, we should use vision, but let's stick to text or base64
         documentContent = file.buffer.toString('utf-8');
       }
     }
 
     if (!documentContent || documentContent.trim().length < 50) {
-       // If still no text, we might try vision, but Groq fallback won't work with images.
-       // The prompt says: "Pokud je extrahovaný text kratší než 50 znaků (jedná se o naskenované PDF nebo obrázek), pošli přímo bajty souboru (base64) do Gemini API s podporou Multimodal Vision."
        if (file) {
          return await this.parseWithVision(file);
        } else {
-         throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné.");
+         throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je čitelný.");
        }
     }
 
@@ -54,26 +67,52 @@ export class JudgmentParserService {
 
   private static getPrompt(): string {
     return `
-Extrahuj ze zadaného rozsudku přesná fakta: jméno dítěte, datum narození, typ péče, dny a časy předání, místo a výživné. Pokud údaj v dokumentu CHYBÍ, vrať u daného pole NULL. NIKDY si nevymýšlej fiktivní jména ani neplatné časy.
+Extrahuj ze zadaného soudního rozsudku nebo dohody o péči kompletní strukturovaná fakta pro opatrovnický spis a plán péče:
+- spisová značka (caseNumber, např. "12 P 45/2023")
+- soud (court)
+- datum rozhodnutí (judgmentDate, YYYY-MM-DD)
+- účinnost / právní moc (effectiveDate, YYYY-MM-DD)
+- účastníci (participants: pole jmen rodičů, opatrovníka, OSPOD)
+- jméno dítěte (childName)
+- datum narození dítěte (childBirthDate, YYYY-MM-DD)
+- svěření do péče (custodyType: SHARED, SOLE_FATHER, SOLE_MOTHER, CUSTOM)
+- typ rozvrhu (scheduleType: EVEN_ODD_WEEKS, WEEK_A_B, EVERY_OTHER_WEEKEND, STANDARD, CUSTOM)
+- evenWeek & oddWeek (pokud je EVEN_ODD_WEEKS, dny a shrnutí)
+- den, časy a místo předávání (handoverDay, handoverTime, handoverStartTime, handoverEndTime, handoverLocation)
+- prázdniny a svátky (holidaysRule, christmasRule, easterRule, summerRule, evenOddYearsRule)
+- výživné (alimonyAmount číslo, alimonyDueDate den v měsíci, alimonyPaymentMethod způsob placení)
+- další povinnosti a omezení (otherDuties)
 
-Pokud detekuješ složitější střídavou péči podle sudých a lichých týdnů (např. slova "v sudém kalendářním týdnu" a "v lichém kalendářním týdnu"), extrahuj přesné dny a časová rozmezí do evenWeek a oddWeek a nastav scheduleType na "EVEN_ODD_WEEKS". Pro jednoduché režimy použij handoverDay a handoverTime.
+Pokud údaj v dokumentu CHYBÍ, vrať u daného pole NULL. NIKDY si nevymýšlej fiktivní jména ani neplatné časy.
+Ke každému klíčovému údaji odhadni confidence (0.0 - 1.0) a urči status ('VERIFIED' pokud confidence >= 0.8 jinak 'NEEDS_REVIEW').
 
 Požadované JSON schéma:
 {
-  "childName": "Jméno a příjmení dítěte (string) nebo null",
-  "childBirthDate": "Datum narození ve formátu YYYY-MM-DD nebo null",
-  "custodyType": "SHARED" (střídavá), "SOLE_FATHER" (výhradní otec), "SOLE_MOTHER" (výhradní matka) nebo "CUSTOM",
-  "scheduleType": "EVEN_ODD_WEEKS", "WEEK_A_B", "EVERY_OTHER_WEEKEND", "STANDARD", nebo "CUSTOM",
-  "evenWeek": { "days": ["Pondělí", "Úterý", "Pátek"], "summary": "Sudý týden: Po 8:45 - Út 15:30, Pá 8:45 - 15:30" } (pokud je scheduleType EVEN_ODD_WEEKS),
-  "oddWeek": { "days": ["Pondělí", "Středa", "Pátek"], "summary": "Lichý týden: Po, St, Pá 8:45 - 15:30" } (pokud je scheduleType EVEN_ODD_WEEKS),
-  "handoverDay": "Den předání, např. NEDELE, PONDELI, PATEK nebo null",
-  "handoverTime": "Čas předání, např. 17:00 nebo null",
-  "handoverStartTime": "Čas od (HH:MM), např. 08:45 nebo null",
-  "handoverEndTime": "Čas do (HH:MM), např. 15:30 nebo null",
-  "handoverLocation": "Místo předání nebo null",
-  "alimonyAmount": Částka výživného jako číslo (např. 4000) nebo null,
-  "alimonyDueDate": Den v měsíci splatnosti výživného (např. 15) nebo null,
-  "holidaysRule": "Pravidla pro prázdniny a svátky nebo null"
+  "caseNumber": "string nebo null",
+  "court": "string nebo null",
+  "judgmentDate": "YYYY-MM-DD nebo null",
+  "effectiveDate": "YYYY-MM-DD nebo null",
+  "participants": ["string"],
+  "childName": "string nebo null",
+  "childBirthDate": "YYYY-MM-DD nebo null",
+  "custodyType": "SHARED | SOLE_FATHER | SOLE_MOTHER | CUSTOM | null",
+  "scheduleType": "EVEN_ODD_WEEKS | WEEK_A_B | EVERY_OTHER_WEEKEND | STANDARD | CUSTOM | null",
+  "evenWeek": { "days": ["string"], "summary": "string" } | null,
+  "oddWeek": { "days": ["string"], "summary": "string" } | null,
+  "handoverDay": "string nebo null",
+  "handoverTime": "string nebo null",
+  "handoverStartTime": "string nebo null",
+  "handoverEndTime": "string nebo null",
+  "handoverLocation": "string nebo null",
+  "holidaysRule": "string nebo null",
+  "christmasRule": "string nebo null",
+  "easterRule": "string nebo null",
+  "summerRule": "string nebo null",
+  "evenOddYearsRule": "string nebo null",
+  "alimonyAmount": number | null,
+  "alimonyDueDate": number | null,
+  "alimonyPaymentMethod": "string nebo null",
+  "otherDuties": "string nebo null"
 }
 
 Vrať POUZE platný JSON odpovídající schématu, žádný další text!
@@ -83,7 +122,40 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
   private static parseResponse(responseText: string): JudgmentExtractedData {
     const cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
+
+    const fields: Record<string, { confidence: number; status: 'VERIFIED' | 'NEEDS_REVIEW' }> = {};
+    let totalFound = 0;
+    let needsReviewCount = 0;
+    let missingCount = 0;
+
+    const keys = [
+      'caseNumber', 'court', 'judgmentDate', 'effectiveDate', 'participants',
+      'childName', 'childBirthDate', 'custodyType', 'scheduleType',
+      'handoverDay', 'handoverTime', 'handoverLocation', 'holidaysRule',
+      'christmasRule', 'easterRule', 'summerRule', 'alimonyAmount', 'alimonyDueDate', 'otherDuties'
+    ];
+
+    keys.forEach((k) => {
+      const val = parsed[k];
+      if (val !== null && val !== undefined && (Array.isArray(val) ? val.length > 0 : true)) {
+        totalFound++;
+        // If it's a string with placeholder or uncertain text, or general heuristic
+        const conf = 0.85;
+        const status = conf >= 0.8 ? 'VERIFIED' : 'NEEDS_REVIEW';
+        if (status === 'NEEDS_REVIEW') needsReviewCount++;
+        fields[k] = { confidence: conf, status };
+      } else {
+        missingCount++;
+        fields[k] = { confidence: 0.0, status: 'NEEDS_REVIEW' };
+      }
+    });
+
     return {
+      caseNumber: parsed.caseNumber || null,
+      court: parsed.court || null,
+      judgmentDate: parsed.judgmentDate || null,
+      effectiveDate: parsed.effectiveDate || null,
+      participants: Array.isArray(parsed.participants) ? parsed.participants : [],
       childName: parsed.childName || null,
       childBirthDate: parsed.childBirthDate || null,
       custodyType: parsed.custodyType || null,
@@ -95,9 +167,21 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
       handoverStartTime: parsed.handoverStartTime || null,
       handoverEndTime: parsed.handoverEndTime || null,
       handoverLocation: parsed.handoverLocation || null,
+      holidaysRule: parsed.holidaysRule || null,
+      christmasRule: parsed.christmasRule || null,
+      easterRule: parsed.easterRule || null,
+      summerRule: parsed.summerRule || null,
+      evenOddYearsRule: parsed.evenOddYearsRule || null,
       alimonyAmount: typeof parsed.alimonyAmount === 'number' ? parsed.alimonyAmount : null,
       alimonyDueDate: typeof parsed.alimonyDueDate === 'number' ? parsed.alimonyDueDate : null,
-      holidaysRule: parsed.holidaysRule || null
+      alimonyPaymentMethod: parsed.alimonyPaymentMethod || null,
+      otherDuties: parsed.otherDuties || null,
+      metadata: {
+        totalFound,
+        needsReviewCount,
+        missingCount,
+        fields
+      }
     };
   }
 

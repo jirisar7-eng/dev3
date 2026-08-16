@@ -185,8 +185,15 @@ export async function runAICouncilConsensusTests() {
   const confirmedEvidence: EvidenceBundle = {
     findingId: 'f-101',
     findingMessage: 'SQL Injection in User search API',
+    findingCategory: 'SECURITY',
     severity: 'P0',
+    qaRunId: 'run-fail-002',
+    commitSha: 'commit-fail-456',
+    gitCommitSha: 'commit-fail-456',
     validationStatus: {
+      exists: true,
+      isFresh: true,
+      relatesToCommit: true,
       evidenceScore: 90,
       hasSufficientEvidence: true,
       wasPreviouslyVerified: false,
@@ -250,8 +257,15 @@ export async function runAICouncilConsensusTests() {
   const weakEvidence: EvidenceBundle = {
     findingId: 'f-101',
     findingMessage: 'SQL Injection in User search API',
+    findingCategory: 'SECURITY',
     severity: 'P0',
+    qaRunId: 'run-fail-002',
+    commitSha: 'commit-fail-456',
+    gitCommitSha: 'commit-fail-456',
     validationStatus: {
+      exists: true,
+      isFresh: true,
+      relatesToCommit: true,
       evidenceScore: 20,
       hasSufficientEvidence: false,
       wasPreviouslyVerified: false,
@@ -275,8 +289,15 @@ export async function runAICouncilConsensusTests() {
   const resolvedEvidence: EvidenceBundle = {
     findingId: 'f-101',
     findingMessage: 'SQL Injection in User search API',
+    findingCategory: 'SECURITY',
     severity: 'P0',
+    qaRunId: 'run-fail-002',
+    commitSha: 'commit-fail-456',
+    gitCommitSha: 'commit-fail-456',
     validationStatus: {
+      exists: true,
+      isFresh: true,
+      relatesToCommit: true,
       evidenceScore: 100,
       hasSufficientEvidence: true,
       wasPreviouslyVerified: true,
@@ -300,8 +321,15 @@ export async function runAICouncilConsensusTests() {
   const likelyEvidence: EvidenceBundle = {
     findingId: 'f-202',
     findingMessage: 'Potential race condition in payment endpoint',
+    findingCategory: 'PERSISTENCE',
     severity: 'P1',
+    qaRunId: 'run-pass-001',
+    commitSha: 'commit-pass-123',
+    gitCommitSha: 'commit-pass-123',
     validationStatus: {
+      exists: true,
+      isFresh: true,
+      relatesToCommit: true,
       evidenceScore: 80,
       hasSufficientEvidence: true,
       wasPreviouslyVerified: false,

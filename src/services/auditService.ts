@@ -55,6 +55,10 @@ export class AuditService {
           },
         });
 
+        if (!created || !created.createdAt) {
+          throw new Error('Database returned empty or invalid created log.');
+        }
+
         return {
           id: created.id,
           userId: created.userId || undefined,
@@ -63,7 +67,7 @@ export class AuditService {
           module: created.module,
           details: created.details,
           ipAddress: created.ipAddress || '127.0.0.1',
-          createdAt: created.createdAt.toISOString(),
+          createdAt: typeof created.createdAt === 'string' ? new Date(created.createdAt).toISOString() : created.createdAt.toISOString(),
         };
       } catch (err) {
         console.info('[Fallback] recordLog error, using dbStore:', err);
