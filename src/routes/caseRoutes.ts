@@ -695,11 +695,11 @@ router.post('/:caseId/apply-judgment', async (req: AuthenticatedRequest, res) =>
   try {
     const { caseId } = req.params;
     await ClientCaseService.authorizeCaseAccess(caseId, req.user!);
-    const { extractedData } = req.body;
+    const { extractedData, forceApply } = req.body;
     if (!extractedData) {
       return res.status(400).json({ error: 'Chybí extractedData.' });
     }
-    const result = await ClientCaseService.applyJudgmentToCase(caseId, req.user!, extractedData);
+    const result = await ClientCaseService.applyJudgmentToCase(caseId, req.user!, extractedData, forceApply);
     res.json({ success: true, ...result });
   } catch (err: any) {
     handleCareError(res, err);

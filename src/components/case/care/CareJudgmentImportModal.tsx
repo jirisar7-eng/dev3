@@ -35,6 +35,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [activeSourceSnippet, setActiveSourceSnippet] = useState<{ fieldName: string; sourceText: string; confidence: number } | null>(null);
+  const [conflictData, setConflictData] = useState<any>(null);
 
   if (!isOpen) return null;
 
@@ -47,6 +48,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
 
     setIsParsing(true);
     setError(null);
+    setConflictData(null);
 
     try {
       const formData = new FormData();
@@ -75,7 +77,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
     }
   };
 
-  const handleConfirmImport = async () => {
+  const handleConfirmImport = async (force = false) => {
     if (!extractedData) return;
     setIsSubmitting(true);
     setError(null);
@@ -87,18 +89,23 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
           'Content-Type': 'application/json',
           'Authorization': `Bearer jwt_token_user_${Date.now()}`
         },
-        body: JSON.stringify({ extractedData })
+        body: JSON.stringify({ extractedData, forceApply: force })
       });
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Chyba při ukládání údajů do spisu.');
 
-      alert('Rozsudek byl úspěšně zpracován a data byla uložena do spisu!');
+      if (result.conflictDetected) {
+        setConflictData(result);
+        setIsSubmitting(false);
+        return;
+      }
+
+      alert('Rozsudek byl úspěšně zpracován, uložen do spisu, vytvořen plán péče a synchronizován kalendář!');
       onClose();
       window.location.reload();
     } catch (err: any) {
       setError(`Chyba ukládání: ${err.message}`);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -370,6 +377,46 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
               />
             </div>
 
+            {/* Conflict resolution warning box */}
+            {conflictData && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs space-y-2">
+                <div className="flex items-center gap-2 text-amber-900 font-bold">
+                  <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span>Detekován konflikt se stávajícími údaji ve spisu</span>
+                </div>
+                <p className="text-amber-800">{conflictData.message}</p>
+                <div className="grid grid-cols-2 gap-2 pt-1 text-2xs">
+                  <div className="bg-white p-2 rounded border border-amber-100">
+                    <span className="font-bold text-slate-500 block">Původní ve spisu:</span>
+                    <span>Spisová značka: <strong>{conflictData.existing?.caseNumber || 'Neuvedeno'}</strong></span>
+                    <span className="block">Aktivní plány: <strong>{conflictData.existing?.activeCarePlansCount || 0}</strong></span>
+                  </div>
+                  <div className="bg-white p-2 rounded border border-amber-100">
+                    <span className="font-bold text-slate-500 block">Nová z rozsudku:</span>
+                    <span>Spisová značka: <strong className="text-emerald-700">{conflictData.incoming?.caseNumber || 'Neuvedeno'}</strong></span>
+                    <span className="block">Režim péče: <strong className="text-emerald-700">{conflictData.incoming?.custodyType || 'N/A'}</strong></span>
+                  </div>
+                </div>
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConflictData(null)}
+                    className="px-3 py-1.5 rounded-lg border border-amber-300 text-slate-700 font-bold hover:bg-white cursor-pointer"
+                  >
+                    Zrušit
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleConfirmImport(true)}
+                    className="px-4 py-1.5 rounded-lg bg-amber-700 text-white font-bold hover:bg-amber-800 cursor-pointer shadow-xs"
+                  >
+                    {isSubmitting ? 'Přepisuji...' : 'Přepsat a vynutit import (Force Apply)'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Traceability snippet modal / popup box */}
             {activeSourceSnippet && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-xs space-y-1">
@@ -399,7 +446,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={handleConfirmImport}
+                onClick={() => handleConfirmImport()}
                 className="px-5 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <CheckCircle2 className="w-4 h-4" />

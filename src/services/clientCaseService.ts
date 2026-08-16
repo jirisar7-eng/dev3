@@ -1105,83 +1105,148 @@ export class ClientCaseService {
   }
 
   // ----------------------------------------------------
-  // JUDGMENT IMPORT & CASE SYNC
+  // JUDGMENT IMPORT & CASE SYNC (PHASE 2)
   // ----------------------------------------------------
-  public static async applyJudgmentToCase(caseId: string, requestingUser: User, data: any) {
+  public static async applyJudgmentToCase(caseId: string, requestingUser: User, extractedData: any, forceApply = false) {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error("Databáze není dostupná.");
 
-    // 1. Update Case
-    await prisma.case.update({
+    // 1. Authorize case access
+    await this.authorizeCaseAccess(caseId, requestingUser);
+
+    if (!extractedData) {
+      throw new Error("Chybí extractedData.");
+    }
+
+    // Check existing case & active care plans for conflict detection
+    const existingCase = await prisma.case.findUnique({
       where: { id: caseId },
-      data: {
-        caseNumber: data.caseNumber || undefined,
-        court: data.court || undefined,
-        currentCareType: data.custodyType || undefined,
-        description: data.otherDuties ? `Další povinnosti: ${data.otherDuties}` : undefined,
-        updatedAt: new Date()
-      }
+      include: { children: true, carePlans: { where: { status: 'ACTIVE' } } }
     });
 
-    // 2. Create or update child
-    let child;
-    if (data.childName) {
-      const parts = data.childName.trim().split(' ');
-      const firstName = parts[0] || 'Dítě';
-      const lastName = parts.slice(1).join(' ') || '';
-
-      const existingChildren = await prisma.child.findMany({ where: { caseId } });
-      if (existingChildren.length > 0) {
-        child = await prisma.child.update({
-          where: { id: existingChildren[0].id },
-          data: {
-            firstName,
-            lastName: lastName || existingChildren[0].lastName,
-            birthDate: data.childBirthDate ? new Date(data.childBirthDate) : undefined,
-            notes: `Režim: ${data.custodyType}, Rozvrh: ${data.scheduleType}`
-          }
-        });
-      } else {
-        child = await prisma.child.create({
-          data: {
-            caseId,
-            firstName,
-            lastName: lastName || 'Nováková',
-            birthDate: data.childBirthDate ? new Date(data.childBirthDate) : null,
-            notes: `Režim: ${data.custodyType}, Rozvrh: ${data.scheduleType}`
-          }
-        });
-      }
+    if (!existingCase) {
+      throw new Error("Případ nebyl nalezen.");
     }
 
-    // 3. Create CarePlan using CarePlanService
-    let carePlan;
+    const hasConflict = !forceApply && (
+      (existingCase.caseNumber && existingCase.caseNumber !== extractedData.caseNumber && extractedData.caseNumber) ||
+      (existingCase.carePlans && existingCase.carePlans.length > 0)
+    );
+
+    if (hasConflict) {
+      return {
+        conflictDetected: true,
+        message: "Spis již obsahuje existující spisovou značku nebo aktivní plán péče. Zkontrolujte rozdíly a potvrďte přepsání.",
+        existing: {
+          caseNumber: existingCase.caseNumber,
+          court: existingCase.court,
+          activeCarePlansCount: existingCase.carePlans.length,
+          childrenCount: existingCase.children.length
+        },
+        incoming: {
+          caseNumber: extractedData.caseNumber,
+          court: extractedData.court,
+          custodyType: extractedData.custodyType,
+          scheduleType: extractedData.scheduleType
+        }
+      };
+    }
+
+    // 2. Execute case and child update in a single atomic PostgreSQL transaction with automatic rollback
+    const txResult = await prisma.$transaction(async (tx) => {
+      // Update Case
+      const updatedCase = await tx.case.update({
+        where: { id: caseId },
+        data: {
+          caseNumber: extractedData.caseNumber || undefined,
+          court: extractedData.court || undefined,
+          currentCareType: extractedData.custodyType || undefined,
+          description: extractedData.otherDuties ? `Další povinnosti (Zdroj: JUDGMENT): ${extractedData.otherDuties}` : undefined,
+          updatedAt: new Date()
+        }
+      });
+
+      // Create or update Child (strictly isolated to caseId)
+      let child = null;
+      if (extractedData.childName) {
+        const rawChildName = typeof extractedData.childName === 'string' ? extractedData.childName : extractedData.childName.value || 'Dítě';
+        const parts = rawChildName.trim().split(' ');
+        const firstName = parts[0] || 'Dítě';
+        const lastName = parts.slice(1).join(' ') || '';
+
+        const existingChildren = await tx.child.findMany({ where: { caseId } });
+        if (existingChildren.length > 0) {
+          child = await tx.child.update({
+            where: { id: existingChildren[0].id },
+            data: {
+              firstName,
+              lastName: lastName || existingChildren[0].lastName,
+              birthDate: extractedData.childBirthDate ? new Date(extractedData.childBirthDate) : undefined,
+              notes: `Zdroj: JUDGMENT. Režim: ${extractedData.custodyType || 'N/A'}, Rozvrh: ${extractedData.scheduleType || 'N/A'}`
+            }
+          });
+        } else {
+          child = await tx.child.create({
+            data: {
+              caseId,
+              firstName,
+              lastName: lastName || 'Nováková',
+              birthDate: extractedData.childBirthDate ? new Date(extractedData.childBirthDate) : null,
+              notes: `Zdroj: JUDGMENT. Režim: ${extractedData.custodyType || 'N/A'}, Rozvrh: ${extractedData.scheduleType || 'N/A'}`
+            }
+          });
+        }
+      }
+
+      return { updatedCase, child };
+    });
+
+    // 3. Create CarePlan using CarePlanService and synchronize calendar
+    let carePlan = null;
+    let syncResult = null;
     try {
       const childrenList = await prisma.child.findMany({ where: { caseId } });
+      const holidayRulesList = [];
+      if (extractedData.holidaysRule) {
+        holidayRulesList.push({
+          name: 'Pravidla pro prázdniny a svátky (Rozsudek)',
+          holidayType: 'SUMMER' as any,
+          evenYearParent: 'PARENT_A' as any,
+          oddYearParent: 'PARENT_B' as any,
+          notes: String(extractedData.holidaysRule)
+        });
+      }
+
       carePlan = await CarePlanService.createPlan(caseId, {
-        title: `Soudní rozsudek / Dohoda (${data.scheduleType || 'Standard'})`,
-        type: data.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
-        rotationPattern: data.scheduleType || '7/7',
+        title: `Soudní rozsudek / Dohoda (${extractedData.scheduleType || '7/7'})`,
+        type: extractedData.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+        rotationPattern: extractedData.scheduleType || '7/7',
         startDate: new Date().toISOString().split('T')[0],
         rotationIntervalDays: 28,
-        defaultHandoverTime: data.handoverTime || '16:00',
+        defaultHandoverTime: extractedData.handoverTime || '16:00',
         status: 'ACTIVE',
         children: childrenList.map(c => ({ childId: c.id })),
-        holidayRules: data.holidaysRule ? [{ name: 'Pravidla pro prázdniny a svátky', holidayType: 'SUMMER', evenYearParent: 'FATHER', oddYearParent: 'MOTHER', notes: data.holidaysRule }] : undefined
+        holidayRules: holidayRulesList.length > 0 ? holidayRulesList : undefined
       }, requestingUser);
-    } catch (cpErr) {
-      console.warn('[applyJudgmentToCase] CarePlan creation warning:', cpErr);
+
+      // 4. Synchronize Care Plan to Case Calendar (CaseEvent) with sourceType = 'CARE_PLAN'
+      if (carePlan && carePlan.id) {
+        syncResult = await CarePlanService.syncPlanToCaseCalendar(carePlan.id, caseId, requestingUser);
+      }
+    } catch (cpErr: any) {
+      console.error('[applyJudgmentToCase] CarePlan/Calendar sync error:', cpErr);
+      throw new Error(`Chyba při vytváření plánu péče nebo synchronizaci kalendáře: ${cpErr.message}`);
     }
 
-    // 4. Audit Log
+    // 5. Audit Log
     await AuditService.recordLog(
       'JUDGMENT_APPLIED',
       'ClientCase',
-      `Aplikován rozsudek pro spis ${data.caseNumber || caseId} (Dítě: ${data.childName || 'Neuvedeno'})`,
+      `Aplikován rozsudek pro spis ${extractedData.caseNumber || caseId}. Vytvořen plán péče a synchronizován kalendář.`,
       requestingUser
     );
 
-    return { success: true, caseId, child, carePlan };
+    return { success: true, caseId, child: txResult.child, carePlan, syncResult };
   }
 
   // ----------------------------------------------------
