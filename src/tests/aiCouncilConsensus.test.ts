@@ -8,8 +8,10 @@ import {
   AIAnalysisContext,
   AICouncilAnalystResult,
   AIProvider,
-  AIProviderResponse
+  AIProviderResponse,
+  EvidenceBundle
 } from '../services/qa/ai/types.js';
+import { EvidenceValidator } from '../services/qa/ai/evidenceValidator.js';
 
 class MockCouncilProvider implements AIProvider {
   public name: string;
@@ -175,6 +177,177 @@ export async function runAICouncilConsensusTests() {
   assert.ok(firstFinding?.recommendation, 'Recommendation must exist');
   assert.ok(Array.isArray(firstFinding?.suggestedTests), 'SuggestedTests must be an array');
   console.log('✅ Test 5 Passed\n');
+
+  // Test 6: Evidence Validation & Consensus States (CONFIRMED, LIKELY, INSUFFICIENT_EVIDENCE, RESOLVED, DISAGREEMENT)
+  console.log('Test 6: Evidence Validation States & Score Assessments...');
+  
+  // 6A. CONFIRMED Case: Both fail, deterministic fails, sufficient evidence
+  const confirmedEvidence: EvidenceBundle = {
+    findingId: 'f-101',
+    findingMessage: 'SQL Injection in User search API',
+    severity: 'P0',
+    validationStatus: {
+      evidenceScore: 90,
+      hasSufficientEvidence: true,
+      wasPreviouslyVerified: false,
+      hasChangedSinceVerification: true
+    }
+  };
+
+  const contextWithEvidence: AIAnalysisContext = {
+    ...baseFailContext,
+    evidenceBundles: [confirmedEvidence]
+  };
+
+  const geminiFindingAnalyst: AICouncilAnalystResult = {
+    providerName: 'gemini',
+    modelName: 'gemini-2.5-flash',
+    timestamp: new Date().toISOString(),
+    confidence: 0.95,
+    summary: 'Gemini found SQL injection.',
+    verdict: 'FAIL',
+    findings: [{
+      finding: 'SQL Injection in User search API',
+      severity: 'P0',
+      rootCause: 'Improper query sanitization',
+      confidence: 0.95,
+      evidence: 'Raw query constructed with string concat',
+      recommendation: 'Use parameterized queries',
+      suggestedTests: []
+    }]
+  };
+
+  const grokFindingAnalyst: AICouncilAnalystResult = {
+    providerName: 'grok',
+    modelName: 'grok-2-latest',
+    timestamp: new Date().toISOString(),
+    confidence: 0.90,
+    summary: 'Grok confirms SQL injection.',
+    verdict: 'FAIL',
+    findings: [{
+      finding: 'SQL Injection in User search API',
+      severity: 'P0',
+      rootCause: 'Concatenated values',
+      confidence: 0.90,
+      evidence: 'Found concat in src/api/users.ts',
+      recommendation: 'Use parameters',
+      suggestedTests: []
+    }]
+  };
+
+  const confirmedConsensus = ConsensusEngine.evaluateConsensus(contextWithEvidence, {
+    gemini: geminiFindingAnalyst,
+    grok: grokFindingAnalyst
+  });
+
+  assert.strictEqual(confirmedConsensus.agreedFindings.length, 1);
+  const matchedConfirmed = confirmedConsensus.agreedFindings[0];
+  assert.strictEqual(matchedConfirmed.consensusState, 'CONFIRMED', 'Should match CONFIRMED status');
+  assert.strictEqual(matchedConfirmed.evidenceScore, 90);
+  assert.ok(matchedConfirmed.evidenceBundle, 'Evidence bundle should be attached');
+
+  // 6B. INSUFFICIENT_EVIDENCE Case: Score < 40 or hasSufficientEvidence = false
+  const weakEvidence: EvidenceBundle = {
+    findingId: 'f-101',
+    findingMessage: 'SQL Injection in User search API',
+    severity: 'P0',
+    validationStatus: {
+      evidenceScore: 20,
+      hasSufficientEvidence: false,
+      wasPreviouslyVerified: false,
+      hasChangedSinceVerification: true
+    }
+  };
+
+  const contextWithWeakEvidence: AIAnalysisContext = {
+    ...baseFailContext,
+    evidenceBundles: [weakEvidence]
+  };
+
+  const weakConsensus = ConsensusEngine.evaluateConsensus(contextWithWeakEvidence, {
+    gemini: geminiFindingAnalyst,
+    grok: grokFindingAnalyst
+  });
+
+  assert.strictEqual(weakConsensus.agreedFindings[0].consensusState, 'INSUFFICIENT_EVIDENCE', 'Should be INSUFFICIENT_EVIDENCE when validation lacks data');
+
+  // 6C. RESOLVED Case: Previously verified & unchanged
+  const resolvedEvidence: EvidenceBundle = {
+    findingId: 'f-101',
+    findingMessage: 'SQL Injection in User search API',
+    severity: 'P0',
+    validationStatus: {
+      evidenceScore: 100,
+      hasSufficientEvidence: true,
+      wasPreviouslyVerified: true,
+      hasChangedSinceVerification: false
+    }
+  };
+
+  const contextWithResolvedEvidence: AIAnalysisContext = {
+    ...baseFailContext,
+    evidenceBundles: [resolvedEvidence]
+  };
+
+  const resolvedConsensus = ConsensusEngine.evaluateConsensus(contextWithResolvedEvidence, {
+    gemini: geminiFindingAnalyst,
+    grok: grokFindingAnalyst
+  });
+
+  assert.strictEqual(resolvedConsensus.agreedFindings[0].consensusState, 'RESOLVED', 'Should be RESOLVED since file has been previously verified without changes');
+
+  // 6D. LIKELY Case: both fail but no deterministic finding (simulating a clean pass but AI found potential bug)
+  const likelyEvidence: EvidenceBundle = {
+    findingId: 'f-202',
+    findingMessage: 'Potential race condition in payment endpoint',
+    severity: 'P1',
+    validationStatus: {
+      evidenceScore: 80,
+      hasSufficientEvidence: true,
+      wasPreviouslyVerified: false,
+      hasChangedSinceVerification: true
+    }
+  };
+
+  const contextWithLikelyEvidence: AIAnalysisContext = {
+    ...basePassContext,
+    evidenceBundles: [likelyEvidence]
+  };
+
+  const geminiLikelyAnalyst: AICouncilAnalystResult = {
+    ...geminiFindingAnalyst,
+    findings: [{
+      finding: 'Potential race condition in payment endpoint',
+      severity: 'P1',
+      rootCause: 'No lock on wallet table',
+      confidence: 0.95,
+      evidence: 'Missing lock',
+      recommendation: 'Add transactions',
+      suggestedTests: []
+    }]
+  };
+
+  const grokLikelyAnalyst: AICouncilAnalystResult = {
+    ...grokFindingAnalyst,
+    findings: [{
+      finding: 'Potential race condition in payment endpoint',
+      severity: 'P1',
+      rootCause: 'Race condition',
+      confidence: 0.90,
+      evidence: 'Race condition',
+      recommendation: 'Add locking',
+      suggestedTests: []
+    }]
+  };
+
+  const likelyConsensus = ConsensusEngine.evaluateConsensus(contextWithLikelyEvidence, {
+    gemini: geminiLikelyAnalyst,
+    grok: grokLikelyAnalyst
+  });
+
+  assert.strictEqual(likelyConsensus.agreedFindings[0].consensusState, 'LIKELY', 'Should be LIKELY when both agree but deterministic finding is absent');
+
+  console.log('✅ Test 6 Passed\n');
 
   console.log('🎉 ALL AI COUNCIL & CONSENSUS ENGINE TESTS PASSED SUCCESSFULLY!');
 }

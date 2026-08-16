@@ -66,6 +66,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [expandedFindings, setExpandedFindings] = useState<Record<string, boolean>>({});
 
   // Git Delta & AI Telemetry State
   const [gitInfo, setGitInfo] = useState<{ currentCommitSha: string; previousCommitSha: string; changedFiles: string[] }>({
@@ -164,6 +165,10 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
     fetchRegistry();
     fetchAiStats();
   }, []);
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath(currentPath));
+  }, [currentPath]);
 
   const handleRunAIAnalysis = async () => {
     setRunningAI(true);
@@ -1266,25 +1271,161 @@ PRODUCTION READINESS GATE EXPLANATION:
                 Žádné nálezy neodpovídají zadaným filtrům.
               </p>
             ) : (
-              <div className="space-y-2">
-                {filteredFindings.map((finding: any, idx: number) => (
-                  <div key={finding.id || idx} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-100/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="shrink-0 mt-0.5">
-                        {getSeverityBadge(finding.severity)}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">{finding.message}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          Kategorie: <strong className="text-slate-700 uppercase">{finding.category || 'FUNCTIONAL'}</strong> {finding.endpointId ? `| Endpoint: ${finding.endpointId}` : ''}
+              <div className="space-y-3">
+                {filteredFindings.map((finding: any, idx: number) => {
+                  const matched = latestRun?.aiReport?.aiCouncil?.agreedFindings?.find((af: any) =>
+                    finding.message.toLowerCase().includes(af.finding.toLowerCase()) ||
+                    af.finding.toLowerCase().includes(finding.message.toLowerCase())
+                  );
+                  const fId = finding.id || `f-${idx}`;
+                  const isExpanded = !!expandedFindings[fId];
+                  const toggleExpanded = () => {
+                    setExpandedFindings(prev => ({ ...prev, [fId]: !prev[fId] }));
+                  };
+
+                  const score = matched?.evidenceScore ?? 0;
+                  const getScoreBadgeColor = (s: number) => {
+                    if (s >= 80) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                    if (s >= 40) return 'text-amber-700 bg-amber-50 border-amber-200';
+                    return 'text-rose-700 bg-rose-50 border-rose-200';
+                  };
+
+                  return (
+                    <div key={fId} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors space-y-3">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 mt-0.5">
+                            {getSeverityBadge(finding.severity)}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-900 leading-snug">{finding.message}</div>
+                            <div className="text-[10px] text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span>Kategorie: <strong className="text-slate-700 uppercase">{finding.category || 'FUNCTIONAL'}</strong></span>
+                              {finding.endpointId && <span className="text-slate-300">|</span>}
+                              {finding.endpointId && <span>Endpoint: <strong className="text-slate-700">{finding.endpointId}</strong></span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                          {matched ? (
+                            <>
+                              <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black border ${getScoreBadgeColor(score)}`}>
+                                Evidence: {score}/100
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                matched.consensusState === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                matched.consensusState === 'LIKELY' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                matched.consensusState === 'INSUFFICIENT_EVIDENCE' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                                matched.consensusState === 'DISAGREEMENT' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                'bg-slate-100 text-slate-800 border border-slate-200'
+                              }`}>
+                                {matched.consensusState ?? 'UNKNOWN'}
+                              </span>
+                              <button
+                                onClick={toggleExpanded}
+                                className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                {isExpanded ? 'Skrýt důkazy' : 'Zobrazit důkazy'}
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              Deterministický QA nález
+                            </span>
+                          )}
                         </div>
                       </div>
+
+                      {/* Expandable Evidence Details Panel */}
+                      {matched && isExpanded && (
+                        <div className="mt-3 p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-4 text-xs">
+                          {/* Top row showing validation status overview */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-[11px] leading-tight">
+                            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                              <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Verdikt Gemini</span>
+                              <div className="text-slate-900 mt-1 font-mono font-bold">
+                                {matched.geminiVerdict ?? 'N/A'} ({(matched.geminiConfidence ?? 0 * 100).toFixed(0)}%)
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                              <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Verdikt Grok</span>
+                              <div className="text-slate-900 mt-1 font-mono font-bold">
+                                {matched.grokVerdict ?? 'N/A'} ({(matched.grokConfidence ?? 0 * 100).toFixed(0)}%)
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                              <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Konsenzus rady</span>
+                              <div className="text-indigo-600 mt-1 font-mono font-bold">
+                                {matched.consensusState ?? 'N/A'}
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                              <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Deterministický QA</span>
+                              <div className="text-slate-900 mt-1 font-mono font-bold">
+                                {matched.deterministicVerdict ?? 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Used Evidence Section */}
+                          <div className="space-y-2">
+                            <span className="text-slate-900 font-black text-xs block">Použité důkazy (Evidence Bundle):</span>
+                            
+                            {/* Source Files list */}
+                            {matched.evidenceBundle?.sourceFiles && matched.evidenceBundle.sourceFiles.length > 0 && (
+                              <div className="space-y-2.5">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Relevantní zdrojové soubory</span>
+                                {matched.evidenceBundle.sourceFiles.map((sf: any, sfIdx: number) => (
+                                  <div key={sfIdx} className="border border-slate-150 rounded-xl overflow-hidden bg-slate-50">
+                                    <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-150 flex items-center justify-between font-mono text-[10px] text-slate-700">
+                                      <span className="truncate">{sf.filePath}</span>
+                                      <span className="shrink-0 text-slate-400">hash: {sf.hash?.slice(0, 8)}</span>
+                                    </div>
+                                    <pre className="p-3 text-[10px] font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap max-h-48 scrollbar-thin">
+                                      {sf.content}
+                                    </pre>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Stack Trace */}
+                            {matched.evidenceBundle?.stackTrace && (
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Stack Trace / Chybový výstup</span>
+                                <pre className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-[10px] font-mono text-rose-800 overflow-x-auto">
+                                  {matched.evidenceBundle.stackTrace}
+                                </pre>
+                              </div>
+                            )}
+
+                            {/* API Request/Response */}
+                            {matched.evidenceBundle?.apiRequestResponse && (
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">API Request / Response payload</span>
+                                <pre className="p-3 bg-slate-900 rounded-xl text-[10px] font-mono text-slate-200 overflow-x-auto">
+                                  {matched.evidenceBundle.apiRequestResponse}
+                                </pre>
+                              </div>
+                            )}
+
+                            {/* Verification Cache Status */}
+                            {matched.evidenceBundle?.validationStatus && (
+                              <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-4 text-[10px] text-slate-500 font-medium">
+                                <div>Dostatek důkazů: <strong className="text-slate-800">{matched.evidenceBundle.validationStatus.hasSufficientEvidence ? 'ANO' : 'NE'}</strong></div>
+                                <div>Dříve ověřeno: <strong className="text-slate-800">{matched.evidenceBundle.validationStatus.wasPreviouslyVerified ? 'ANO' : 'NE'}</strong></div>
+                                {matched.evidenceBundle.validationStatus.wasPreviouslyVerified && (
+                                  <div>Změněno od ověření: <strong className="text-slate-800">{matched.evidenceBundle.validationStatus.hasChangedSinceVerification ? 'ANO' : 'NE'}</strong></div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono shrink-0">
-                      Zaznamenáno v auditu
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1373,6 +1514,123 @@ PRODUCTION READINESS GATE EXPLANATION:
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Evidence Validation Section */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Evidence Validation (Doložení důkazů AI Rady)</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Podrobný přehled deterministických podkladů, které AI Rada (Gemini & Grok) nezávisle analyzovala.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {latestRun?.aiReport?.aiCouncil?.agreedFindings && latestRun.aiReport.aiCouncil.agreedFindings.length > 0 ? (
+                latestRun.aiReport.aiCouncil.agreedFindings.map((finding: any, idx: number) => {
+                  const score = finding.evidenceScore ?? 0;
+                  const getScoreColor = (s: number) => {
+                    if (s >= 80) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                    if (s >= 40) return 'text-amber-700 bg-amber-50 border-amber-200';
+                    return 'text-rose-700 bg-rose-50 border-rose-200';
+                  };
+                  return (
+                    <div key={idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black border ${getScoreColor(score)}`}>
+                            Evidence: {score}/100
+                          </span>
+                          <span className="text-xs font-bold text-slate-900">{finding.finding}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                          finding.consensusState === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800' :
+                          finding.consensusState === 'LIKELY' ? 'bg-blue-100 text-blue-800' :
+                          finding.consensusState === 'INSUFFICIENT_EVIDENCE' ? 'bg-rose-100 text-rose-800' :
+                          finding.consensusState === 'DISAGREEMENT' ? 'bg-amber-100 text-amber-800' :
+                          'bg-slate-100 text-slate-800'
+                        }`}>
+                          {finding.consensusState ?? 'UNKNOWN'}
+                        </span>
+                      </div>
+
+                      {/* Evidence Summary Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 text-[11px]">
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                          <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Použité důkazy</span>
+                          <span className="text-slate-800 mt-1 font-mono block truncate" title={finding.evidenceBundle?.findingMessage || finding.evidence}>
+                            {finding.evidenceBundle?.sourceFiles?.length ? `${finding.evidenceBundle.sourceFiles.length} soub.` : '0 soub.'}
+                            {finding.evidenceBundle?.stackTrace ? ' + Stack' : ''}
+                          </span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                          <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Gemini Verdikt</span>
+                          <span className="text-slate-800 mt-1 font-mono block">
+                            {finding.geminiVerdict ?? 'N/A'} ({(finding.geminiConfidence ?? 0 * 100).toFixed(0)}%)
+                          </span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                          <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Grok Verdikt</span>
+                          <span className="text-slate-800 mt-1 font-mono block">
+                            {finding.grokVerdict ?? 'N/A'} ({(finding.grokConfidence ?? 0 * 100).toFixed(0)}%)
+                          </span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-100 col-span-2 sm:col-span-1">
+                          <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider block">Ověřený QA stav</span>
+                          <span className="text-slate-800 mt-1 font-mono block truncate">
+                            {finding.evidenceBundle?.validationStatus?.wasPreviouslyVerified ? 'Dříve VERIFIED' : 'Nové zjištění'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Evidence Details Collapsible Block (Default Expanded for complete overview) */}
+                      {finding.evidenceBundle && (
+                        <div className="p-3.5 bg-slate-900 text-slate-300 rounded-xl font-mono text-[10px] space-y-3 overflow-auto max-h-64 scrollbar-thin">
+                          <div className="text-slate-400 border-b border-slate-800 pb-1 font-bold flex justify-between items-center">
+                            <span>SPOUSTĚCÍ KONTEXT & DETERMINISTICKÁ DATA:</span>
+                            <span className="text-slate-500">score: {finding.evidenceBundle.validationStatus?.evidenceScore}/100</span>
+                          </div>
+                          
+                          {finding.evidenceBundle.stackTrace && (
+                            <div>
+                              <span className="text-rose-400 font-bold block mb-1">DETEKOVANÁ CHYBA (STACK TRACE):</span>
+                              <pre className="p-2 bg-slate-950 rounded text-rose-300 overflow-x-auto whitespace-pre">
+                                {finding.evidenceBundle.stackTrace}
+                              </pre>
+                            </div>
+                          )}
+
+                          {finding.evidenceBundle.apiRequestResponse && (
+                            <div>
+                              <span className="text-indigo-400 font-bold block mb-1">API REQUEST & RESPONSE CONTRACT:</span>
+                              <pre className="p-2 bg-slate-950 rounded text-indigo-300 overflow-x-auto whitespace-pre">
+                                {finding.evidenceBundle.apiRequestResponse}
+                              </pre>
+                            </div>
+                          )}
+
+                          {finding.evidenceBundle.sourceFiles?.map((sf: any, sfIdx: number) => (
+                            <div key={sfIdx} className="space-y-1">
+                              <span className="text-emerald-400 font-bold block">SOUBOR: {sf.filePath}</span>
+                              <pre className="p-2 bg-slate-950 rounded text-slate-300 overflow-x-auto max-h-32 scrollbar-thin">
+                                {sf.content}
+                              </pre>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center p-6 bg-slate-50 border border-slate-150 rounded-2xl">
+                  <p className="text-xs text-slate-500 italic">Žádné doložené nálezy v posledním běhu auditu.</p>
+                </div>
+              )}
             </div>
           </div>
 

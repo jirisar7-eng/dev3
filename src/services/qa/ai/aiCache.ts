@@ -11,6 +11,7 @@ export interface CacheKeyParams {
 
 class AICache {
   private cache = new Map<string, AIAnalystReport>();
+  private bundleCache = new Map<string, any>();
 
   public computeKey(params: CacheKeyParams): string {
     const rawString = `${params.commitSha}:${params.sourceHash}:${params.context}:${params.provider}:${params.model}`;
@@ -31,16 +32,25 @@ class AICache {
     this.cache.set(key, report);
   }
 
+  public getBundleResult(key: string): any | null {
+    return this.bundleCache.get(key) || null;
+  }
+
+  public setBundleResult(key: string, result: any): void {
+    this.bundleCache.set(key, result);
+  }
+
   public has(key: string): boolean {
     return this.cache.has(key);
   }
 
   public clear(): void {
     this.cache.clear();
+    this.bundleCache.clear();
   }
 
   public size(): number {
-    return this.cache.size;
+    return this.cache.size + this.bundleCache.size;
   }
 }
 

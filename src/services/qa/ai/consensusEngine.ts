@@ -99,11 +99,57 @@ export class ConsensusEngine {
     const agreedFindings: AICouncilFinding[] = [];
     const disputedFindings: AICouncilFinding[] = [];
 
+    const bundles = context.evidenceBundles || [];
+
     for (const entry of allFindingsMap.values()) {
-      if (entry.occurrences >= Math.ceil(totalAnalysts / 2)) {
-        agreedFindings.push(entry.finding);
+      const f = entry.finding;
+      
+      // Find matching bundle
+      const matchedBundle = bundles.find(b => 
+        b.findingMessage.toLowerCase().includes(f.finding.toLowerCase()) ||
+        f.finding.toLowerCase().includes(b.findingMessage.toLowerCase())
+      );
+      
+      f.evidenceBundle = matchedBundle;
+      f.evidenceScore = matchedBundle ? matchedBundle.validationStatus.evidenceScore : 0;
+      
+      // Determine individual provider verdicts and confidence
+      const geminiResult = analysts['gemini'];
+      const grokResult = analysts['grok'];
+      
+      const geminiFinding = geminiResult?.findings.find(g => g.finding.toLowerCase().includes(f.finding.toLowerCase()) || f.finding.toLowerCase().includes(g.finding.toLowerCase()));
+      const grokFinding = grokResult?.findings.find(g => g.finding.toLowerCase().includes(f.finding.toLowerCase()) || f.finding.toLowerCase().includes(g.finding.toLowerCase()));
+      
+      f.geminiVerdict = geminiFinding ? 'FAIL' : (geminiResult ? 'PASS' : 'NEEDS_REVIEW');
+      f.geminiConfidence = geminiFinding ? geminiFinding.confidence : 0.9;
+      
+      f.grokVerdict = grokFinding ? 'FAIL' : (grokResult ? 'PASS' : 'NEEDS_REVIEW');
+      f.grokConfidence = grokFinding ? grokFinding.confidence : 0.9;
+      
+      const isDetFail = context.testResults.findings?.some(df => df.message.toLowerCase().includes(f.finding.toLowerCase()) || f.finding.toLowerCase().includes(df.message.toLowerCase())) || false;
+      f.deterministicVerdict = isDetFail ? 'FAIL' : 'PASS';
+      
+      // Determine consensus state
+      if (matchedBundle && matchedBundle.validationStatus.wasPreviouslyVerified && !matchedBundle.validationStatus.hasChangedSinceVerification) {
+        f.consensusState = 'RESOLVED';
+      } else if (matchedBundle && !matchedBundle.validationStatus.hasSufficientEvidence) {
+        f.consensusState = 'INSUFFICIENT_EVIDENCE';
+      } else if (f.geminiVerdict === 'FAIL' && f.grokVerdict === 'FAIL' && f.deterministicVerdict === 'FAIL') {
+        f.consensusState = 'CONFIRMED';
+      } else if (f.geminiVerdict === 'FAIL' && f.grokVerdict === 'FAIL' && f.deterministicVerdict === 'PASS') {
+        f.consensusState = 'LIKELY';
+      } else if ((f.geminiVerdict === 'FAIL' && f.geminiConfidence > 0.8) && (f.grokVerdict === 'PASS' || f.grokVerdict === 'NEEDS_REVIEW')) {
+        f.consensusState = 'LIKELY';
+      } else if (f.geminiVerdict !== f.grokVerdict) {
+        f.consensusState = 'DISAGREEMENT';
       } else {
-        disputedFindings.push(entry.finding);
+        f.consensusState = 'CONFIRMED';
+      }
+
+      if (entry.occurrences >= Math.ceil(totalAnalysts / 2)) {
+        agreedFindings.push(f);
+      } else {
+        disputedFindings.push(f);
       }
     }
 

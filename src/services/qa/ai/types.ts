@@ -7,6 +7,60 @@ export interface AICouncilFinding {
   recommendation: string;
   suggestedTests: string[];
   qaFindingId?: string;
+  evidenceBundle?: EvidenceBundle;
+  evidenceScore?: number;
+  consensusState?: 'CONFIRMED' | 'LIKELY' | 'INSUFFICIENT_EVIDENCE' | 'DISAGREEMENT' | 'RESOLVED';
+  geminiVerdict?: 'PASS' | 'FAIL' | 'NEEDS_REVIEW' | string;
+  geminiConfidence?: number;
+  grokVerdict?: 'PASS' | 'FAIL' | 'NEEDS_REVIEW' | string;
+  grokConfidence?: number;
+  deterministicVerdict?: string;
+}
+
+export interface EvidenceBundle {
+  findingId: string;
+  findingMessage: string;
+  findingCategory: string;
+  severity: 'P0' | 'P1' | 'P2' | 'P3' | string;
+  qaRunId: string;
+  commitSha: string;
+  qaTestResult?: {
+    passed: boolean;
+    message?: string;
+    details?: string;
+  };
+  apiRequestResponse?: {
+    endpoint: string;
+    method: string;
+    sampleRequest?: string;
+    sampleResponse?: string;
+  };
+  stackTrace?: string;
+  sourceFiles?: Array<{
+    filePath: string;
+    content: string;
+    hash: string;
+  }>;
+  gitCommitSha: string;
+  gitDiff?: string;
+  dependencyContext?: string[];
+  dbState?: string;
+  previousVerifiedResult?: {
+    verifiedAt: string;
+    verdict: string;
+    commitSha: string;
+    hash: string;
+  };
+  validationStatus: {
+    exists: boolean;
+    isFresh: boolean;
+    relatesToCommit: boolean;
+    hasSufficientEvidence: boolean;
+    wasPreviouslyVerified: boolean;
+    hasChangedSinceVerification: boolean;
+    evidenceScore: number;
+    insufficientEvidenceReason?: string;
+  };
 }
 
 export interface AICouncilAnalystResult {
@@ -144,6 +198,7 @@ export interface AIAnalysisContext {
     scope?: string;
     history?: Array<{ role: string; content: string }>;
   };
+  evidenceBundles?: EvidenceBundle[];
 }
 
 export interface AIProviderResponse {

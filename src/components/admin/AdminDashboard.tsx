@@ -395,12 +395,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           <button
             onClick={() => setActiveTab('qa')}
             className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'qa' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+              activeTab === 'qa' && !currentPath?.includes('/qa/copilot') ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
             }`}
           >
             <Activity className="w-4 h-4 text-purple-400" />
             <span>QA & Audit Syntéza</span>
           </button>
+
+          {hasRole('ADMIN') && (
+            <button
+              onClick={() => {
+                setActiveTab('qa');
+                const targetUrl = '/administrace/qa/copilot';
+                if (onNavigate) onNavigate(targetUrl);
+                else {
+                  window.history.pushState({}, '', targetUrl);
+                  window.dispatchEvent(new Event('popstate'));
+                }
+              }}
+              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+                currentPath?.includes('/qa/copilot') ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span>Synthesis Admin Copilot</span>
+              </span>
+              <span className="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">
+                AI Agent
+              </span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('settings')}
@@ -526,8 +551,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
                 </div>
               </div>
 
-              {/* Test Runner Card in Overview */}
-              <TestRunnerCard />
+              {/* Admin Modules Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 🤖 Synthesis Admin Copilot */}
+                {hasRole('ADMIN') && (
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-purple-300 transition-all group">
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center border border-purple-100 group-hover:scale-105 transition-transform duration-200 shadow-xs">
+                          <Activity className="w-6 h-6 text-purple-600 animate-pulse" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                            🤖 Synthesis Admin Copilot
+                          </h3>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold uppercase tracking-wider">
+                            Multi-AI Agent
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                        AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        const targetUrl = '/administrace/qa/copilot';
+                        if (onNavigate) onNavigate(targetUrl);
+                        else {
+                          window.history.pushState({}, '', targetUrl);
+                          window.dispatchEvent(new Event('popstate'));
+                        }
+                      }}
+                      className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group-hover:shadow-lg"
+                    >
+                      <Sparkles className="w-4 h-4 text-purple-300" />
+                      Spustit Admin Copilot
+                    </button>
+                  </div>
+                )}
+
+                {/* Test Runner Card */}
+                <TestRunnerCard />
+              </div>
 
               {/* System Info Banner */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3 text-xs text-slate-700">

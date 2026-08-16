@@ -194,6 +194,98 @@ export async function seedDatabaseIfEmpty() {
 
     if (userCount > 1 && navCount > 0 && pageCount > 0 && catCount > 0 && faqCount > 0) {
       console.log('[Prisma Seed] Databáze již obsahuje uživatele i kompletní CMS data. Kontroluji stránky modulů...');
+      
+      const modulesToUpsert = [
+        {
+          key: 'system-test-module',
+          name: 'System Test Module (Technický Test)',
+          version: '1.0.0',
+          enabled: true,
+          public: false,
+          config: JSON.stringify({ maxRequestsPerMin: 100, debugMode: true, apiEndpointUrl: 'https://test.api' }),
+          description: 'Demonstrační technický modul pro verifikaci funkčnosti Module Engine, RBAC a konfigurací.',
+          icon: 'TestTube',
+        },
+        {
+          key: 'child_support_calc',
+          name: 'Kalkulačka výživného',
+          version: '1.0.0',
+          enabled: true,
+          public: true,
+          config: JSON.stringify({ minSalary: 20000, maxChildren: 5, useDoporučenéTabulkyMSP: true }),
+          description: 'Orientační výpočet výživného dle doporučujících tabulek Ministerstva spravedlnosti ČR.',
+          icon: 'Calculator',
+        },
+        {
+          key: 'handover_simulator',
+          name: 'Simulátor předávání dítěte',
+          version: '1.0.0',
+          enabled: true,
+          public: true,
+          config: JSON.stringify({ enableProtocolGenerator: true, requireGPSVerification: false }),
+          description: 'Nástroj pro evidenci a bezpečné předávání dítěte včetně předávacích protokolů.',
+          icon: 'RefreshCw',
+        },
+        {
+          key: 'care_calendar',
+          name: 'Kalendář péče',
+          version: '1.0.0',
+          enabled: true,
+          public: true,
+          config: JSON.stringify({ defaultRotationWeeks: 2, syncWithGoogleCalendar: true }),
+          description: 'Plánovač střídavé péče, prázdnin a svátků pro bezkonfliktní organizaci času.',
+          icon: 'Calendar',
+        },
+        {
+          key: 'document_templates',
+          name: 'Právní dokumenty a vzory',
+          version: '1.0.0',
+          enabled: true,
+          public: true,
+          config: JSON.stringify({ allowPDFDownload: true, enableCustomFields: true }),
+          description: 'Generátor návrhů na úpravu poměrů k nezletilému dítěti, dohod a odvolání.',
+          icon: 'FileText',
+        },
+        {
+          key: 'volunteering',
+          name: 'Dobrovolnictví a mentoring',
+          version: '1.0.0',
+          enabled: true,
+          public: true,
+          config: JSON.stringify({ requireApproval: true, allowPeerChat: true }),
+          description: 'Spojení zkušených otců (mentorů) s táty v krizových opatrovnických situacích.',
+          icon: 'Users',
+        },
+        {
+          key: 'ai_assistant',
+          name: 'AI Právní & Psychologický Asistent',
+          version: '0.9.0',
+          enabled: false,
+          public: false,
+          config: JSON.stringify({ model: 'gemini-2.5-flash', disclaimerNoticeRequired: true }),
+          description: 'Inteligentní asistent navržený pro rychlou analýzu podání a přípravu na jednání OSPOD.',
+          icon: 'Bot',
+        },
+        {
+          key: 'admin_copilot',
+          name: '🤖 Synthesis Admin Copilot',
+          version: '1.0.0',
+          enabled: true,
+          public: false,
+          config: JSON.stringify({ aiModel: 'gemini-2.5-flash', safetyCheck: true }),
+          description: 'AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.',
+          icon: 'Bot',
+        }
+      ];
+
+      for (const mod of modulesToUpsert) {
+        await prisma.module.upsert({
+          where: { key: mod.key },
+          update: {},
+          create: mod,
+        }).catch((e) => console.error(`[Prisma Seed] Error seeding module ${mod.key}:`, e));
+      }
+
       await ensureAllModulePagesExist();
       return;
     }
@@ -422,6 +514,16 @@ export async function seedDatabaseIfEmpty() {
         public: false,
         config: JSON.stringify({ model: 'gemini-2.5-flash', disclaimerNoticeRequired: true }),
         description: 'Inteligentní asistent navržený pro rychlou analýzu podání a přípravu na jednání OSPOD.',
+        icon: 'Bot',
+      },
+      {
+        key: 'admin_copilot',
+        name: '🤖 Synthesis Admin Copilot',
+        version: '1.0.0',
+        enabled: true,
+        public: false,
+        config: JSON.stringify({ aiModel: 'gemini-2.5-flash', safetyCheck: true }),
+        description: 'AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.',
         icon: 'Bot',
       },
     ];

@@ -349,6 +349,18 @@ const defaultModules: Module[] = [
     icon: 'Bot',
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: 'mod-7',
+    key: 'admin_copilot',
+    name: '🤖 Synthesis Admin Copilot',
+    version: '1.0.0',
+    enabled: true,
+    public: false,
+    config: JSON.stringify({ aiModel: 'gemini-2.5-flash', safetyCheck: true }),
+    description: 'AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.',
+    icon: 'Bot',
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 const defaultUsers: User[] = [

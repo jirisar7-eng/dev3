@@ -23,6 +23,8 @@ export const getModuleUrl = (key: string): string => {
       return '/dokumenty';
     case 'volunteering':
       return '/dobrovolnici';
+    case 'admin_copilot':
+      return '/administrace/qa/copilot';
     default:
       return `/${key}`;
   }

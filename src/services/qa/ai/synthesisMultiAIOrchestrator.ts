@@ -8,7 +8,8 @@ import {
   SynthesisAIResult,
   SynthesisOptions,
   AICouncilAnalystResult,
-  AICouncilFinding
+  AICouncilFinding,
+  EvidenceBundle
 } from './types';
 import { sanitizeInputData } from './sanitizer';
 import { aiCache } from './aiCache';
@@ -18,6 +19,7 @@ import { ConsensusEngine } from './consensusEngine';
 import { GeminiProvider } from './providers/geminiProvider';
 import { GrokProvider } from './providers/grokProvider';
 import { GroqProvider } from './providers/groqProvider';
+import { EvidenceValidator } from './evidenceValidator';
 
 interface ProviderState {
   provider: AIProvider;
@@ -215,6 +217,23 @@ export class SynthesisMultiAIOrchestrator {
       ? `\nSPECIFICKÝ DOTAZ ADMIN COPILOTA:\n${context.adminCopilotContext.prompt}\n`
       : '';
 
+    const evidenceBundlesBlock = context.evidenceBundles && context.evidenceBundles.length > 0
+      ? `\nDETEKOVANÉ DETERMINISTICKÉ DŮKAZY (EVIDENCE BUNDLES):
+Pro každý nález byly deterministicky shromážděny následující podklady a stavy validace:
+${JSON.stringify(context.evidenceBundles.map(b => ({
+          findingId: b.findingId,
+          findingMessage: b.findingMessage,
+          severity: b.severity,
+          validationStatus: b.validationStatus,
+          stackTrace: b.stackTrace,
+          apiRequestResponse: b.apiRequestResponse,
+          previousVerifiedResult: b.previousVerifiedResult,
+          gitDiff: b.gitDiff,
+          sourceFiles: b.sourceFiles?.map(s => ({ filePath: s.filePath, hash: s.hash, contentSnippet: s.content.slice(0, 1500) }))
+        })), null, 2)}
+`
+      : '';
+
     return `
 Jsi nezávislý AI Audit Analytik v AI Radě (AI Council) projektu "Táta má právo".
 Tvá úloha je provést objektovní, evidencemi doloženou bezpečnostní a funkční analýzu dodaného QA kontextu.
@@ -223,6 +242,8 @@ BEZPEČNOSTNÍ A DETERMINISTICKÉ ZÁSADY:
 1. Nesmíš měnit výsledky deterministických testů ani skóre.
 2. Nesmíš provádět žádné zápisy do databáze ani měnit oprávnění (RBAC).
 3. Pokud existují selhání, P0/P1 nálezy nebo neotestované prvky, hodnocení musí být "FAIL".
+4. Každý tvůj závěr musí být podložen konkrétním deterministickým důkazem (viz EVIDENCE BUNDLES). Pokud chybí zdrojový kód nebo relevantní stack trace pro FAIL/PARTIAL nález, nebo je hasSufficientEvidence = false, nesmíš jej potvrdit jako FAIL. V takovém případě musíš vrátit "NEEDS_REVIEW" s odůvodněním "INSUFFICIENT_EVIDENCE".
+5. Již ověřený prvek (wasPreviouslyVerified = true a hasChangedSinceVerification = false) neanalyzuj znovu jako chybu. Označ jej jako vyřešený ("RESOLVED" nebo "PASS").
 
 DODANÝ RELEVANTNÍ KONTEXT AUDITU:
 - Commit SHA: ${context.commitSha} (${context.branch})
@@ -232,6 +253,8 @@ DODANÝ RELEVANTNÍ KONTEXT AUDITU:
 - Kontext závislostí: ${context.dependencyContext ? JSON.stringify(context.dependencyContext) : 'N/A'}
 - Předchozí QA výsledky: ${context.previousQAResults ? JSON.stringify(context.previousQAResults) : 'N/A'}
 ${copilotPrompt}
+${evidenceBundlesBlock}
+
 VÝSLEDKY DETERMINISTICKÝCH TESTŮ:
 - Metriky: Pages=${testResults.metrics.pages}, API=${testResults.metrics.apiEndpoints}, DB=${testResults.metrics.prismaModels}, E2E=${testResults.metrics.e2eTests}
 - Skóre: Functional=${testResults.scores.functional}%, Security=${testResults.scores.security}%, Overall=${testResults.scores.overall}%
@@ -304,12 +327,51 @@ Odpověz VÝHRADNĚ jako platný JSON objekt s následující přesnou strukturo
       }
     }
 
+    // Generate Evidence Bundles for all findings
+    const findingsList = sanitizedContext.testResults.findings || [];
+    const evidenceBundles: EvidenceBundle[] = [];
+    for (const finding of findingsList) {
+      const bundle = await EvidenceValidator.createBundle(finding, {
+        id: sanitizedContext.qaRunId || 'temp-run-id',
+        commitSha: sanitizedContext.commitSha,
+        branch: sanitizedContext.branch,
+        environment: sanitizedContext.environment,
+        findings: sanitizedContext.testResults.findings
+      });
+      evidenceBundles.push(bundle);
+    }
+    sanitizedContext.evidenceBundles = evidenceBundles;
+
     const councilPrompt = this.buildCouncilPrompt(sanitizedContext);
     console.log(`[Synthesis Multi-AI Orchestrator] Executing AI Council across ${targetStates.length} providers: ${targetStates.map(s => s.provider.name).join(', ')}`);
 
+    const bundlesHash = crypto.createHash('sha256')
+      .update(JSON.stringify(evidenceBundles.map(b => ({
+        findingId: b.findingId,
+        findingMessage: b.findingMessage,
+        severity: b.severity,
+        validationStatus: b.validationStatus,
+        sourceFilesHash: b.sourceFiles?.map(s => s.hash)
+      }))))
+      .digest('hex');
+
     const executionPromises = targetStates.map(async state => {
+      const bundleModelCacheKey = `bundle-cache:${sanitizedContext.commitSha}:${bundlesHash}:${state.provider.name}:${state.provider.modelName}`;
+      
+      let res: AIProviderResponse;
+      const cachedResponse = aiCache.getBundleResult(bundleModelCacheKey);
+      
+      if (cachedResponse) {
+        console.log(`[Synthesis Multi-AI Orchestrator] Cache hit for provider ${state.provider.name} and model ${state.provider.modelName}`);
+        res = cachedResponse;
+      } else {
+        const promptStart = Date.now();
+        res = await this.executeWithRetry(state, councilPrompt, timeoutMs, maxRetries);
+        res.latencyMs = res.latencyMs || (Date.now() - promptStart);
+        aiCache.setBundleResult(bundleModelCacheKey, res);
+      }
+
       const start = Date.now();
-      const res = await this.executeWithRetry(state, councilPrompt, timeoutMs, maxRetries);
       const latencyMs = res.latencyMs || (Date.now() - start);
 
       let parsed: any = {};
