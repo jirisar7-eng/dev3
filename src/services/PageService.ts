@@ -1,0 +1,333 @@
+import { getPrismaClient, isPrismaAvailable } from '../db/prisma';
+import { dbStore } from './dbStore';
+
+export interface ModulePageDef {
+  slug: string;
+  title: string;
+  description: string;
+  category?: string;
+}
+
+export const MENU_MODULE_PAGES: ModulePageDef[] = [
+  // 1. 🚨 Krizová pomoc & Komunita
+  { slug: 'krizova-pomoc', title: 'Krizová pomoc & Komunita', description: 'Okamžitá krizová opora, praktické postupy, komunitní sdílení a právní jistota pro otce.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'sos-plan', title: 'SOS Plán prvních 72 hodin', description: '4-kroký krizový algoritmus prvních 72 hodin opatrovnického konfliktu.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'crisis', title: 'SOS Krizový plán a linky', description: 'Okamžitá krizová intervence, kontakty na linky pomoci a kroky při krizových situacích.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'forum', title: 'Komunitní fórum a diskuse', description: 'Diskuzní prostor pro sdílení zkušeností otců v opatrovnických řízeních.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'pribehy', title: 'Příběhy z opatrovnické praxe', description: 'Reálné příběhy a zkušenosti otců při boji o péči a kontakt s dětmi.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'stories', title: 'Příběhy z opatrovnické praxe (EN)', description: 'Reálné příběhy a zkušenosti otců při boji o péči a kontakt s dětmi.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'memento', title: 'Memento a zkušenosti otců', description: 'Svědectví, poučení a prevence systémového odcizení rodiče.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'pravni-poradna', title: 'Právní poradna pro otce', description: 'Odborná právní poradna a odpovědi na specifické opatrovnické otázky.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'advice', title: 'Právní poradna pro otce (EN)', description: 'Odborná právní poradna a odpovědi na specifické opatrovnické otázky.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'podpora', title: 'Podpora a mentorská síť', description: 'Síť dobrovolníků, mentorů a vrstevnické podpory pro otce.', category: 'Krizová pomoc & Komunita' },
+  { slug: 'support', title: 'Podpora a mentorská síť (EN)', description: 'Síť dobrovolníků, mentorů a vrstevnické podpory pro otce.', category: 'Krizová pomoc & Komunita' },
+
+  // 2. ⚖️ Opatrovnictví & Právo
+  { slug: 'opatrovnicka-agenda', title: 'Opatrovnická agenda a kroky', description: 'Kompletní průvodce opatrovnickou agendou od podání návrhu po rozsudek.', category: 'Opatrovnictví & Právo' },
+  { slug: 'rights', title: 'Práva rodičů a dětí', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'judikatura', title: 'Přehled judikatury a judikátů', description: 'Klíčové nálezy Ústavního soudu a judikáty k opatrovnické péči a výživnému.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ke-stazeni', title: 'Vzory podání a dokumenty ke stažení', description: 'Praktické vzory žádostí, návrhů, odvolání a dokumentů pro opatrovnické soudy.', category: 'Opatrovnictví & Právo' },
+
+  // 3. 🏛️ Státní data
+  { slug: 'state-laws', title: 'e-Sbírka • Opatrovnická e-Legislativa', description: 'Interaktivní paragrafové znění OZ, ZSPOD a o.s.ř. s citacemi pro soudní podání.', category: 'Státní data' },
+  { slug: 'state-statistics', title: 'Statistiky opatrovnické praxe', description: 'Analýza dat Ministerstva spravedlnosti o délkách řízení a typech péče v ČR.', category: 'Státní data' },
+  { slug: 'pripadova-databaze', title: 'Případová databáze rozsudků', description: 'Rejstřík rozsudků a judikátů s vyhledáváním a právními větami.', category: 'Státní data' },
+
+  // 4. 🎓 Akademie
+  { slug: 'knihovna-studii', title: 'Knihovna vědeckých studií', description: 'Vědecké studie a recenzované výzkumy o střídavé péči a vývoji dětí.', category: 'Akademie' },
+  { slug: 'videoteka', title: 'Videotéka a rozhovory', description: 'Odborná videa, přednášky a rozhovory s psychology a právníky.', category: 'Akademie' },
+  { slug: 'vzdelavani', title: 'Edukativní kvízy a testy', description: 'Interaktivní testy právního vědomí a opatrovnické metodiky.', category: 'Akademie' },
+  { slug: 'legal-wiki', title: 'Právní Wiki a pojmovník', description: 'Slovník pojmů z opatrovnického práva, OSPODu a soudního řízení.', category: 'Akademie' },
+  { slug: 'cesta-zakladatele', title: 'Cesta zakladatele projektu', description: 'Příběh a motivace stojící za vznikem platformy Táta má právo.', category: 'Akademie' },
+
+  // 5. 📂 Pracovna
+  { slug: 'user-portal', title: 'Osobní klientská složka otce', description: 'Správa osobního spisu, termínů a důkazů pro opatrovnické řízení.', category: 'Pracovna' },
+  { slug: 'profile', title: 'Uživatelský profil', description: 'Nastavení klientského účtu, rolí a kontaktních údajů.', category: 'Pracovna' },
+  { slug: 'coparent-hub', title: 'Co-Parenting centrum & sdílený kalendář', description: 'Plánování péče, sdílený kalendář a evidence výloh mezi rodiči.', category: 'Pracovna' },
+
+  // 6. 🤖 AI nástroje
+  { slug: 'ai-assistant', title: 'AI Opatrovnický asistent', description: 'Inteligentní asistent pro rozbor soudních dokumentů a přípravu podání.', category: 'AI nástroje' },
+  { slug: 'ai-guide', title: 'AI Průvodce opatrovnickým řízením', description: 'Krok za krokem průvodce strategií v soudním řízení a při komunikaci s OSPOD.', category: 'AI nástroje' },
+  { slug: 'ai-case-manager', title: 'AI Case Manager spisu', description: 'Organizátor spisu, chronologie událostí a důkazních materiálů.', category: 'AI nástroje' },
+  { slug: 'plan-pece', title: 'Simulátor a kalkulačka péče', description: 'Kalkulačka výživného a rozvržení střídavé péče.', category: 'AI nástroje' },
+  { slug: 'centrum-formularu', title: 'Generátor právních formulářů', description: 'Automatické generování návrhů na předběžná opatření a střídavou péči.', category: 'AI nástroje' },
+
+  // 7. 🛠️ Systém
+  { slug: 'news', title: 'Novinky a aktualizace', description: 'Aktuální zprávy o změnách v legislativě a provozu portálu.', category: 'Systém' },
+  { slug: 'synthesis-hub', title: 'Systémový Synthesis Hub', description: 'Centrální přehled systémového stavu a analytických modulů.', category: 'Systém' },
+  { slug: 'ai-admin', title: 'AI Administrace a modely', description: 'Správa AI modelů, promptů a systémového nastavení asistenta.', category: 'Systém' },
+  { slug: 'admin', title: 'Správa systému a administrace', description: 'Administrační rozhraní pro správu uživatelů, obsahu a nastavení.', category: 'Systém' },
+  { slug: 'ai-context', title: 'AI Context & Prompt Manager', description: 'Konfigurace kontextu a znalostní báze pro AI asistenty.', category: 'Systém' },
+  { slug: 'user-manual', title: 'Uživatelská příručka a nápověda', description: 'Návod k použití portálu a jeho pokročilých funkcí.', category: 'Systém' },
+  { slug: 'sitemap', title: 'Mapa stránek a architektura', description: 'Přehledná struktura všech sekcí a modulů portálu Táta má právo.', category: 'Systém' },
+];
+
+export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {
+  let createdCount = 0;
+    const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
+
+  for (const mod of MENU_MODULE_PAGES) {
+    const defaultPuckData = {
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: `hero-${mod.slug}`,
+            title: mod.title,
+            description: mod.description,
+            buttonText: 'Otevřít modul',
+            buttonUrl: `/${mod.slug}`,
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: `text-${mod.slug}`,
+            text: `Vítejte v modulu **${mod.title}** platformy Táta má právo.\n\n${mod.description}\n\nTuto stránku můžete plně upravovat a vizuálně přizpůsobit pomocí editoru Puck Builder.`,
+            align: 'left',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: `cta-${mod.slug}`,
+            title: `Potřebujete poradit v sekci ${mod.title}?`,
+            description: 'Využijte naši právní poradnu nebo AI Opatrovnického asistenta.',
+            buttonText: 'Přejít do poradny',
+            buttonUrl: '/advice',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: mod.title,
+        },
+      },
+    };
+
+    if (prismaClient) {
+      try {
+        const existingBefore = await prismaClient.page.findUnique({
+          where: { slug: mod.slug },
+        });
+
+        if (!existingBefore) {
+          await prismaClient.page.create({
+            data: {
+              title: mod.title,
+              slug: mod.slug,
+              content: defaultPuckData,
+              sections: {
+                create: [
+                  {
+                    sectionKey: 'hero',
+                    title: mod.title,
+                    content: mod.description,
+                    order: 1,
+                    config: JSON.stringify({ buttonText: 'Otevřít', buttonUrl: `/${mod.slug}` }),
+                  },
+                  {
+                    sectionKey: 'text',
+                    title: 'Popis modulu',
+                    content: mod.description,
+                    order: 2,
+                    config: JSON.stringify({ align: 'left' }),
+                  },
+                ],
+              },
+            },
+          });
+          createdCount++;
+        } else {
+          await prismaClient.page.update({
+            where: { slug: mod.slug },
+            data: {
+              title: mod.title,
+            },
+          });
+        }
+      } catch (err) {
+        console.warn(`[Ensure Module Pages] Prisma sync error pro ${mod.slug}:`, err);
+      }
+    }
+
+    // Always maintain dbStore in sync as fallback
+    const existingInStore = dbStore.pages.find((p) => p.slug === mod.slug);
+    if (!existingInStore) {
+      dbStore.pages.push({
+        id: `pg-mod-${mod.slug}`,
+        slug: mod.slug,
+        title: mod.title,
+        content: defaultPuckData as any,
+        published: true,
+        updatedAt: new Date().toISOString(),
+      });
+      if (!prismaClient) {
+        createdCount++;
+      }
+    }
+  }
+
+  const message = `Synchronizace dokončena. Všech ${MENU_MODULE_PAGES.length} modulů z hlavního menu je v databázi. Vytvořeno ${createdCount} nových stránek v Puck Builderu.`;
+  console.log(`[Ensure Module Pages] ${message}`);
+  return {
+    success: true,
+    createdCount,
+    totalModules: MENU_MODULE_PAGES.length,
+    message,
+  };
+}
+
+export async function convertAllPagesToPuck(): Promise<{ success: boolean; convertedCount: number; totalPages: number; message: string }> {
+  // First ensure all module pages exist
+  await ensureAllModulePagesExist();
+
+  let convertedCount = 0;
+  const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
+
+  // Helper to convert plain string/HTML/legacy content into Puck Data
+  const convertToPuckFormat = (title: string, slug: string, rawContent: any) => {
+    let text = typeof rawContent === 'string' ? rawContent : '';
+    if (typeof rawContent === 'object' && rawContent !== null) {
+      if (Array.isArray(rawContent.content)) {
+        return rawContent;
+      }
+      text = JSON.stringify(rawContent);
+    }
+
+    const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || `Obsah stránky ${title}. Tuto stránku můžete upravit v Puck editoru.`;
+
+    const blocks: any[] = [
+      {
+        type: 'HeroBlock',
+        props: {
+          id: `hero-${slug}`,
+          title: title || 'Název stránky',
+          description: cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText,
+          buttonText: 'Zobrazit více',
+          buttonUrl: `#${slug}`,
+        },
+      },
+      {
+        type: 'TextBlock',
+        props: {
+          id: `text-${slug}`,
+          text: cleanText,
+          align: 'left',
+        },
+      },
+    ];
+
+    if (slug === 'kontakt' || slug === 'advice' || slug === 'poradna') {
+      blocks.push({
+        type: 'FormBlock',
+        props: {
+          id: `form-${slug}`,
+          formId: `contact-form-${slug}`,
+          formName: `Formulář na stránce ${title}`,
+          title: 'Kontaktní formulář',
+          description: 'Vyplňte váš dotaz a náš tým se vám ozve zpět.',
+          fieldsText: 'Jméno a příjmení | text | true\nE-mailová adresa | email | true\nTelefonní číslo | tel | false\nZpráva | textarea | true',
+          submitButtonText: 'Odeslat dotaz',
+          successMessage: 'Děkujeme za odeslání. Ozveme se vám zpět.',
+        },
+      });
+    } else {
+      blocks.push({
+        type: 'CallToAction',
+        props: {
+          id: `cta-${slug}`,
+          title: `Potřebujete poradit v oblasti ${title}?`,
+          description: 'Navštivte naši bezplatnou poradnu nebo využijte AI Opatrovnického asistenta.',
+          buttonText: 'Přejít do poradny',
+          buttonUrl: '/advice',
+          variant: 'primary',
+        },
+      });
+    }
+
+    return {
+      content: blocks,
+      root: { props: { title: title || 'Stránka' } },
+    };
+  };
+
+  // 1. Process Prisma pages
+  if (prismaClient) {
+    try {
+      const dbPages = await prismaClient.page.findMany();
+      for (const page of dbPages) {
+        let isPuck = false;
+        if (page.content && typeof page.content === 'object') {
+          const obj = page.content as any;
+          if (Array.isArray(obj.content)) {
+            isPuck = true;
+          }
+        } else if (typeof page.content === 'string') {
+          try {
+            const parsed = JSON.parse(page.content);
+            if (parsed && Array.isArray(parsed.content)) {
+              isPuck = true;
+            }
+          } catch (e) {
+            isPuck = false;
+          }
+        }
+
+        if (!isPuck) {
+          const puckData = convertToPuckFormat(page.title, page.slug, page.content);
+          await prismaClient.page.update({
+            where: { id: page.id },
+            data: { content: puckData },
+          });
+          convertedCount++;
+        }
+      }
+    } catch (err) {
+      console.warn('[convertAllPagesToPuck] Prisma error:', err);
+    }
+  }
+
+  // 2. Process dbStore pages
+  for (let i = 0; i < dbStore.pages.length; i++) {
+    const page = dbStore.pages[i];
+    let isPuck = false;
+    if (page.content && typeof page.content === 'object' && Array.isArray((page.content as any).content)) {
+      isPuck = true;
+    } else if (typeof page.content === 'string') {
+      try {
+        const parsed = JSON.parse(page.content);
+        if (parsed && Array.isArray(parsed.content)) {
+          isPuck = true;
+        }
+      } catch (e) {
+        isPuck = false;
+      }
+    }
+
+    if (!isPuck) {
+      const puckData = convertToPuckFormat(page.title, page.slug, page.content);
+      dbStore.pages[i] = {
+        ...page,
+        content: puckData as any,
+        updatedAt: new Date().toISOString(),
+      };
+      if (!prismaClient) {
+        convertedCount++;
+      }
+    }
+  }
+
+  const totalPages = dbStore.pages.length;
+  const message = `Převod stránek dokončen. Celkem ${totalPages} stránek v Puck editoru (převedeno ${convertedCount} nových).`;
+  console.log(`[convertAllPagesToPuck] ${message}`);
+
+  return {
+    success: true,
+    convertedCount,
+    totalPages,
+    message,
+  };
+}
+
