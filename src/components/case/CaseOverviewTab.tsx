@@ -35,6 +35,7 @@ interface CaseOverviewTabProps {
   onOpenNewTask: () => void;
   onOpenNewDoc: () => void;
   onOpenNewDeadline: () => void;
+  onOpenJudgmentImport: () => void;
 }
 
 export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
@@ -44,6 +45,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   onOpenNewTask,
   onOpenNewDoc,
   onOpenNewDeadline,
+  onOpenJudgmentImport,
 }) => {
   const children = activeCase.children || [];
   const deadlines = (activeCase.deadlines || []).filter((d) => !d.isCompleted);
@@ -129,6 +131,13 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
 
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap sm:flex-nowrap lg:flex-col gap-2.5 shrink-0">
+            <button
+              onClick={onOpenJudgmentImport}
+              className="px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border border-emerald-600/50"
+            >
+              <FileText className="w-4 h-4 text-white" />
+              📄 NAHRÁT ROZSUDek A AUTOMATICKY VYPLNIT
+            </button>
             <button
               onClick={onOpenNewEvent}
               className="px-4 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-2 cursor-pointer"

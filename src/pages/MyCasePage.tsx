@@ -31,6 +31,7 @@ import { CaseEvidenceTab } from '../components/case/CaseEvidenceTab';
 import { CaseTimelineTab } from '../components/case/CaseTimelineTab';
 import { CaseSecurityTab } from '../components/case/CaseSecurityTab';
 import { CareHubTab } from '../components/case/care/CareHubTab';
+import { CareJudgmentImportModal } from '../components/case/care/CareJudgmentImportModal';
 
 export type CaseTabKey =
   | 'overview'
@@ -58,6 +59,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingCase, setIsCreatingCase] = useState<boolean>(false);
+  const [isJudgmentImportOpen, setIsJudgmentImportOpen] = useState<boolean>(false);
   const [newCaseTitle, setNewCaseTitle] = useState<string>('');
   const [newCaseNumber, setNewCaseNumber] = useState<string>('');
   const [newCourt, setNewCourt] = useState<string>('');
@@ -732,6 +734,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
               onOpenNewTask={() => setActiveTab('tasks')}
               onOpenNewDoc={() => setActiveTab('documents')}
               onOpenNewDeadline={() => setActiveTab('tasks')}
+              onOpenJudgmentImport={() => setIsJudgmentImportOpen(true)}
             />
           )}
 
@@ -833,6 +836,16 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
             Založit první spis
           </button>
         </div>
+      )}
+
+      {activeCase && (
+        <CareJudgmentImportModal
+          isOpen={isJudgmentImportOpen}
+          onClose={() => setIsJudgmentImportOpen(false)}
+          caseId={activeCase.id}
+          childrenList={activeCase.children || []}
+          onImportPlan={loadCases}
+        />
       )}
     </div>
   );

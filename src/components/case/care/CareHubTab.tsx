@@ -283,10 +283,10 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border border-emerald-600/50"
           >
-            <FileText className="w-4 h-4 text-slate-600" />
-            Import rozsudku
+            <FileText className="w-4 h-4 text-white" />
+            📄 NAHRÁT ROZSUDek A AUTOMATICKY VYPLNIT
           </button>
 
           <button
