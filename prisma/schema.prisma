@@ -1568,6 +1568,8 @@ model QARun {
   commitSha        String?     @default("main-HEAD")
   branch           String?     @default("main")
   environment      String?     @default("development")
+  isIncremental    Boolean?    @default(false)
+  auditType        String?     @default("FULL") // "FULL" or "INCREMENTAL"
   
   // Quality Scores (0 - 100)
   functionalScore  Float       @default(100.0)
@@ -1597,3 +1599,65 @@ model QAFinding {
   endpointId String?
   createdAt  DateTime @default(now())
 }
+
+model QARegistryItem {
+  id             String         @id @default(uuid())
+  key            String         @unique // e.g. "PAGE:CareHubPage", "ENDPOINT:GET:/api/health", "COMPONENT:ArticleCard"
+  name           String
+  type           String         // "SERVICE", "ENDPOINT", "COMPONENT", "PAGE", "TEST"
+  filePath       String?
+  contentHash    String?
+  lastCommitSha  String?
+  status         String         @default("DISCOVERED") // VERIFIED, CHANGED, INVALIDATED, FAILED, SKIPPED, DISCOVERED
+  lastVerifiedAt DateTime?
+  lastResultJson String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  dependencies   QADependency[] @relation("ItemDependencies")
+  dependents     QADependency[] @relation("ItemDependents")
+
+  @@index([type])
+  @@index([status])
+}
+
+model QADependency {
+  id        String         @id @default(uuid())
+  sourceId  String
+  source    QARegistryItem @relation("ItemDependencies", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId  String
+  target    QARegistryItem @relation("ItemDependents", fields: [targetId], references: [id], onDelete: Cascade)
+  type      String         @default("IMPORTS") // IMPORTS, CALLS, USES, TESTS
+  createdAt DateTime       @default(now())
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@index([targetId])
+}
+
+model QAAICache {
+  id         String   @id @default(uuid())
+  cacheKey   String   @unique
+  provider   String   @default("grok")
+  model      String   @default("grok-2-latest")
+  reportJson String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([cacheKey])
+}
+
+model QAAIStats {
+  id               String   @id @default(uuid())
+  totalCalls       Int      @default(0)
+  cacheHits        Int      @default(0)
+  skipped          Int      @default(0)
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  estimatedCostUsd Float    @default(0.0)
+  lastCallAt       DateTime?
+  skippedReasons   String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+

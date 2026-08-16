@@ -5,7 +5,30 @@ import { SystemTestModuleAdmin } from './modules/SystemTestModuleAdmin';
 import { CustomModuleManager } from './CustomModuleManager';
 import { Sliders, CheckCircle2, XCircle, Code, Save, RefreshCw, TestTube, Layers, Lock, Globe, Sparkles } from 'lucide-react';
 
-export const ModuleManager: React.FC = () => {
+interface ModuleManagerProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const getModuleUrl = (key: string): string => {
+  switch (key) {
+    case 'child_support_calc':
+      return '/kalkulacka-vyzivneho';
+    case 'handover_simulator':
+      return '/simulator-predavani';
+    case 'ai_assistant':
+      return '/ai-asistent';
+    case 'care_calendar':
+      return '/coparent-hub';
+    case 'document_templates':
+      return '/dokumenty';
+    case 'volunteering':
+      return '/dobrovolnici';
+    default:
+      return `/${key}`;
+  }
+};
+
+export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
   const { modules, toggleModule, updateModuleConfig, reloadModules } = useModules();
   const [managerMode, setManagerMode] = useState<'system' | 'custom'>('system');
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'inactive'>('all');
@@ -223,13 +246,31 @@ export const ModuleManager: React.FC = () => {
                 </span>
               )}
 
-              <button
-                onClick={() => handleOpenConfig(mod)}
-                className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
-              >
-                <Code className="w-3.5 h-3.5" />
-                Konfigurace
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const targetUrl = getModuleUrl(mod.key);
+                    if (onNavigate) {
+                      onNavigate(targetUrl);
+                    } else {
+                      window.history.pushState({}, '', targetUrl);
+                      window.dispatchEvent(new Event('popstate'));
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  Otevřít modul
+                </button>
+
+                <button
+                  onClick={() => handleOpenConfig(mod)}
+                  className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                >
+                  <Code className="w-3.5 h-3.5" />
+                  Konfigurace
+                </button>
+              </div>
             </div>
           </div>
         ))}

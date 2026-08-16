@@ -553,7 +553,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'page-builder' && <AdminPageBuilder onNavigate={onNavigate} />}
           {activeTab === 'texts' && <TextManager />}
           {activeTab === 'theme' && <ThemeManager />}
-          {activeTab === 'modules' && <ModuleManager />}
+          {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
           {activeTab === 'subjekty' && <SubjektManager />}
           {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}

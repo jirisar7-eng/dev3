@@ -18,6 +18,25 @@ interface ModulesSectionProps {
   onNavigate?: (path: string) => void;
 }
 
+const getModuleUrl = (key: string): string => {
+  switch (key) {
+    case 'child_support_calc':
+      return '/kalkulacka-vyzivneho';
+    case 'handover_simulator':
+      return '/simulator-predavani';
+    case 'ai_assistant':
+      return '/ai-asistent';
+    case 'care_calendar':
+      return '/coparent-hub';
+    case 'document_templates':
+      return '/dokumenty';
+    case 'volunteering':
+      return '/dobrovolnici';
+    default:
+      return `/${key}`;
+  }
+};
+
 export const ModulesSection: React.FC<ModulesSectionProps> = ({ onNavigate }) => {
   const { modules } = useModules();
 
@@ -105,7 +124,7 @@ export const ModulesSection: React.FC<ModulesSectionProps> = ({ onNavigate }) =>
                 <div>
                   <button
                     onClick={() => {
-                      const targetUrl = (mod.key === 'coparent' || mod.key === 'CoParent') ? '/coparent-hub' : `/${mod.key}`;
+                      const targetUrl = getModuleUrl(mod.key);
                       if (onNavigate) onNavigate(targetUrl);
                       else {
                         window.history.pushState({}, '', targetUrl);

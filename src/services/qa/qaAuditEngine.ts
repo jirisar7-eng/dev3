@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import { prisma } from '../../db/prisma';
 import { qaDiscoveryService } from '../qaDiscoveryService';
 import { aiAnalystService, AIAnalystReport } from './aiAnalystService';
+import { qaRegistryService, IncrementalAuditPlan } from './qaRegistryService';
 
 const API_URL = 'http://127.0.0.1:3000/api';
 
@@ -15,6 +16,14 @@ export interface AuditRunResult {
   commitSha: string;
   branch: string;
   environment: string;
+  isIncremental?: boolean;
+  auditType?: 'FULL' | 'INCREMENTAL';
+  incrementalPlan?: {
+    totalItems: number;
+    skippedCount: number;
+    auditedCount: number;
+    dependencyEdgesCount: number;
+  };
   metrics: {
     pages: number;
     buttons: number;
@@ -55,11 +64,113 @@ export interface AuditRunResult {
   rawReportText: string;
 }
 
+export function calculateQAScoresAndMetrics(params: {
+  passCount: number;
+  failCount: number;
+  partialCount: number;
+  notTestedCount: number;
+  verifiedSkippedCount: number;
+  p0Count: number;
+  p1Count: number;
+  p2Count: number;
+  p3Count: number;
+  totalDiscovered: number;
+  findingsList: Array<{ severity: string; category: string; message: string }>;
+}) {
+  const {
+    passCount,
+    failCount,
+    partialCount,
+    notTestedCount,
+    verifiedSkippedCount,
+    p0Count,
+    p1Count,
+    totalDiscovered,
+    findingsList
+  } = params;
+
+  const discoveredCount = Math.max(1, totalDiscovered);
+  const verifiedCount = passCount + verifiedSkippedCount;
+  const testedCount = passCount + failCount + partialCount;
+
+  // Coverage percentages
+  const coveragePercent = Math.round((verifiedCount / discoveredCount) * 100);
+  const testedCoveragePercent = Math.round((testedCount / discoveredCount) * 100);
+  const verifiedCoveragePercent = Math.round((verifiedCount / discoveredCount) * 100);
+
+  // Quality ratio (NOT TESTED = 0, PARTIAL = 0.5, PASS/VERIFIED = 1.0)
+  const totalQualityPoints = passCount + verifiedSkippedCount + (0.5 * partialCount);
+  const baseQualityRatio = totalQualityPoints / discoveredCount;
+
+  // Functional Score
+  let functionalScore = Math.round(baseQualityRatio * 100);
+  if (p0Count > 0) functionalScore = Math.min(40, functionalScore);
+  else if (p1Count > 0) functionalScore = Math.min(70, functionalScore);
+
+  // Category Scores
+  const calcCatScore = (cat: string) => {
+    const catFindings = findingsList.filter(f => f.category === cat);
+    const catFails = catFindings.filter(f => f.severity === 'P0' || f.severity === 'P1').length;
+    if (catFindings.length === 0) return Math.round(baseQualityRatio * 100);
+    const catPassRatio = (catFindings.length - catFails) / catFindings.length;
+    return Math.round(catPassRatio * baseQualityRatio * 100);
+  };
+
+  const securityScore = calcCatScore('SECURITY');
+  const apiScore = calcCatScore('API');
+  const persistenceScore = calcCatScore('PERSISTENCE');
+  const e2eScore = calcCatScore('E2E');
+
+  // Overall Score
+  let overallScore = Math.round(
+    functionalScore * 0.35 +
+    securityScore * 0.25 +
+    apiScore * 0.15 +
+    persistenceScore * 0.125 +
+    e2eScore * 0.125
+  );
+
+  // Rules 4 & 5: If NOT TESTED > 0 or PARTIAL > 0 or FAIL > 0 or P0/P1 > 0, Overall QA Score MUST NOT be 100%
+  if (notTestedCount > 0 || partialCount > 0 || failCount > 0 || p0Count > 0 || p1Count > 0) {
+    overallScore = Math.min(99, overallScore);
+    functionalScore = Math.min(99, functionalScore);
+  }
+
+  // Cap overallScore to verifiedCoveragePercent if coverage is incomplete
+  if (verifiedCoveragePercent < 100) {
+    overallScore = Math.min(overallScore, Math.max(verifiedCoveragePercent, Math.round(baseQualityRatio * 100)));
+  }
+
+  return {
+    scores: {
+      functional: Math.max(0, Math.min(100, functionalScore)),
+      security: Math.max(0, Math.min(100, securityScore)),
+      api: Math.max(0, Math.min(100, apiScore)),
+      persistence: Math.max(0, Math.min(100, persistenceScore)),
+      e2e: Math.max(0, Math.min(100, e2eScore)),
+      overall: Math.max(0, Math.min(100, overallScore))
+    },
+    metrics: {
+      discoveredCount,
+      testedCount,
+      verifiedCount,
+      coveragePercent,
+      testedCoveragePercent,
+      verifiedCoveragePercent
+    }
+  };
+}
+
 export const qaAuditEngine = {
-  async runAudit(adminToken?: string): Promise<AuditRunResult> {
-    // Step 1: DISCOVERY
+  async runAudit(adminToken?: string, options: { isIncremental?: boolean } = {}): Promise<AuditRunResult> {
+    const isIncremental = !!options.isIncremental;
+    const auditType = isIncremental ? 'INCREMENTAL' : 'FULL';
+
+    // Step 1: DISCOVERY & INCREMENTAL PLAN
     const discoveryData = await qaDiscoveryService.discover();
     const metrics = discoveryData.metrics;
+
+    const incrementalPlan = await qaRegistryService.syncAndBuildGraph(!isIncremental);
 
     let commitSha = 'main-HEAD';
     try {
@@ -84,7 +195,9 @@ export const qaAuditEngine = {
         status: 'RUNNING',
         commitSha,
         branch,
-        environment
+        environment,
+        isIncremental,
+        auditType
       }
     });
 
@@ -106,6 +219,19 @@ export const qaAuditEngine = {
         passCount++;
       }
     };
+
+    // Log Incremental Plan details
+    if (isIncremental) {
+      logFinding('P3', 'INCREMENTAL', `Incremental QA Plan: ${incrementalPlan.itemsToSkip.length} items SKIPPED (unchanged), ${incrementalPlan.itemsToRun.length} items AUDITED.`);
+      for (const skipped of incrementalPlan.itemsToSkip) {
+        logFinding('P3', 'INCREMENTAL', `[SKIP] Unchanged item '${skipped.key}' (${skipped.type}) - preserved VERIFIED state.`);
+      }
+      for (const itemToRun of incrementalPlan.itemsToRun) {
+        logFinding('P3', 'INCREMENTAL', `[RUN] Auditing '${itemToRun.key}' (${itemToRun.type}) - Reason: ${itemToRun.reason}`);
+      }
+    } else {
+      logFinding('P3', 'INCREMENTAL', `Full QA Plan: Auditing all ${incrementalPlan.totalItems} discovered items and building dependency graph.`);
+    }
 
     // Step 2: STATIC AUDIT
     try {
@@ -270,51 +396,28 @@ export const qaAuditEngine = {
     const p2Count = findingsList.filter(f => f.severity === 'P2').length;
     const p3Count = findingsList.filter(f => f.severity === 'P3').length;
 
-    const totalTestsExecuted = findingsList.length;
-    notTestedCount = Math.max(0, metrics.apiEndpoints - totalTestsExecuted);
+    const totalDiscovered = incrementalPlan.totalItems;
+    const verifiedSkippedCount = incrementalPlan.itemsToSkip.filter(i => i.status === 'VERIFIED').length;
+    const testedCount = passCount + failCount + partialCount;
+    notTestedCount = Math.max(0, totalDiscovered - testedCount - verifiedSkippedCount);
 
-    // Calculate Scores (0 - 100)
-    const securityFindings = findingsList.filter(f => f.category === 'SECURITY');
-    const securityFails = securityFindings.filter(f => f.severity === 'P0' || f.severity === 'P1').length;
-    const securityScore = securityFindings.length > 0
-      ? Math.max(0, Math.round(((securityFindings.length - securityFails) / securityFindings.length) * 100))
-      : 100;
+    // Calculate Scores & Metrics strictly
+    const scoreAndMetricResult = calculateQAScoresAndMetrics({
+      passCount,
+      failCount,
+      partialCount,
+      notTestedCount,
+      verifiedSkippedCount,
+      p0Count,
+      p1Count,
+      p2Count,
+      p3Count,
+      totalDiscovered,
+      findingsList
+    });
 
-    const apiFindings = findingsList.filter(f => f.category === 'API');
-    const apiFails = apiFindings.filter(f => f.severity === 'P0' || f.severity === 'P1').length;
-    const apiScore = apiFindings.length > 0
-      ? Math.max(0, Math.round(((apiFindings.length - apiFails) / apiFindings.length) * 100))
-      : 100;
-
-    const persistenceFindings = findingsList.filter(f => f.category === 'PERSISTENCE');
-    const persistenceFails = persistenceFindings.filter(f => f.severity === 'P0' || f.severity === 'P1').length;
-    const persistenceScore = persistenceFindings.length > 0
-      ? Math.max(0, Math.round(((persistenceFindings.length - persistenceFails) / persistenceFindings.length) * 100))
-      : 100;
-
-    const e2eFindings = findingsList.filter(f => f.category === 'E2E');
-    const e2eFails = e2eFindings.filter(f => f.severity === 'P0' || f.severity === 'P1').length;
-    const e2eScore = e2eFindings.length > 0
-      ? Math.max(0, Math.round(((e2eFindings.length - e2eFails) / e2eFindings.length) * 100))
-      : 100;
-
-    const functionalScore = p0Count > 0 ? 50 : p1Count > 0 ? 80 : 100;
-    const overallScore = Math.round(
-      functionalScore * 0.25 +
-      securityScore * 0.25 +
-      apiScore * 0.20 +
-      persistenceScore * 0.15 +
-      e2eScore * 0.15
-    );
-
-    const scores = {
-      functional: functionalScore,
-      security: securityScore,
-      api: apiScore,
-      persistence: persistenceScore,
-      e2e: e2eScore,
-      overall: overallScore
-    };
+    const scores = scoreAndMetricResult.scores;
+    const { discoveredCount, coveragePercent, testedCoveragePercent, verifiedCoveragePercent } = scoreAndMetricResult.metrics;
 
     const counts = {
       pass: passCount,
@@ -324,7 +427,10 @@ export const qaAuditEngine = {
       p0: p0Count,
       p1: p1Count,
       p2: p2Count,
-      p3: p3Count
+      p3: p3Count,
+      discovered: discoveredCount,
+      tested: testedCount,
+      verifiedSkipped: verifiedSkippedCount
     };
 
     // Step 9: AI ANALYSIS
@@ -341,7 +447,10 @@ export const qaAuditEngine = {
         forms: metrics.forms,
         apiEndpoints: metrics.apiEndpoints,
         prismaModels: metrics.prismaModels,
-        e2eTests: metrics.e2eTests || 1
+        e2eTests: metrics.e2eTests || 1,
+        coveragePercent,
+        testedCoveragePercent,
+        verifiedCoveragePercent
       },
       scores,
       counts,
@@ -354,24 +463,22 @@ export const qaAuditEngine = {
     // Step 10: FINAL REPORT GENERATION
     const rawReportText = `SYNTHESIS QA FINAL REPORT
 
-Pages: ${metrics.pages}
-Buttons: ${metrics.buttons}
-Forms: ${metrics.forms}
-Links: ${metrics.links}
-API: ${metrics.apiEndpoints}
-Database: ${metrics.prismaModels}
-E2E: ${metrics.e2eTests || 1}
-Security: ${securityFindings.length}
-
+DISCOVERED: ${discoveredCount}
+TESTED: ${testedCount}
 PASS: ${passCount}
 FAIL: ${failCount}
 PARTIAL: ${partialCount}
 NOT TESTED: ${notTestedCount}
+VERIFIED/SKIPPED: ${verifiedSkippedCount}
 
 P0: ${p0Count}
 P1: ${p1Count}
 P2: ${p2Count}
 P3: ${p3Count}
+
+Coverage: ${coveragePercent}%
+Tested Coverage: ${testedCoveragePercent}%
+Verified Coverage: ${verifiedCoveragePercent}%
 
 Functional: ${scores.functional}%
 Security: ${scores.security}%
@@ -380,7 +487,10 @@ E2E: ${scores.e2e}%
 Overall: ${scores.overall}%
 
 AI VERDICT:
-${verdict}`;
+${verdict}
+
+PRODUCTION READINESS GATE EXPLANATION:
+"PRODUCTION READY" smí vzniknout pouze tehdy, pokud všechny povinné QA prvky mají aktuální VERIFIED/PASS stav.`;
 
     // Store findings in database
     for (const f of findingsList) {
@@ -395,6 +505,15 @@ ${verdict}`;
       });
     }
 
+    // Mark audited items in registry as VERIFIED if no critical failures occurred
+    for (const itemToRun of incrementalPlan.itemsToRun) {
+      if (failCount === 0) {
+        await qaRegistryService.markItemVerified(itemToRun.key, { verdict, scores });
+      } else {
+        await qaRegistryService.markItemFailed(itemToRun.key, { verdict, failCount });
+      }
+    }
+
     // Update QARun with metrics, scores, AI report
     await prisma.qARun.update({
       where: { id: run.id },
@@ -406,7 +525,7 @@ ${verdict}`;
         persistenceScore: scores.persistence,
         e2eScore: scores.e2e,
         overallScore: scores.overall,
-        statsJson: JSON.stringify({ metrics, counts, rawReportText }),
+        statsJson: JSON.stringify({ metrics, counts, rawReportText, incrementalPlan }),
         aiReportJson: JSON.stringify(aiReport),
         verdict
       }
@@ -419,6 +538,14 @@ ${verdict}`;
       commitSha,
       branch,
       environment,
+      isIncremental,
+      auditType,
+      incrementalPlan: {
+        totalItems: incrementalPlan.totalItems,
+        skippedCount: incrementalPlan.itemsToSkip.length,
+        auditedCount: incrementalPlan.itemsToRun.length,
+        dependencyEdgesCount: incrementalPlan.dependencyEdges.length
+      },
       metrics: {
         pages: metrics.pages,
         buttons: metrics.buttons,
@@ -427,7 +554,7 @@ ${verdict}`;
         apiEndpoints: metrics.apiEndpoints,
         prismaModels: metrics.prismaModels,
         e2eTests: metrics.e2eTests || 1,
-        securityChecks: securityFindings.length
+        securityChecks: findingsList.filter(f => f.category === 'SECURITY').length
       },
       counts,
       scores,

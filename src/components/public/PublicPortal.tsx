@@ -204,7 +204,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'ai-case-manager' || slug === 'case-manager' || slug === 'rozbor-spisu') {
     return <AiCaseManagerView onNavigate={onNavigate} />;
   }
-  if (slug === 'ai-simulator' || slug === 'simulator' || slug === 'plan-pece') {
+  if (slug === 'ai-simulator' || slug === 'simulator' || slug === 'plan-pece' || slug === 'kalkulacka-vyzivneho' || slug === 'simulator-predavani') {
     return <AiSimulatorView onNavigate={onNavigate} />;
   }
   if (slug === 'ai-formulare' || slug === 'centrum-formularu' || slug === 'formulare') {

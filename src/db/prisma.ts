@@ -1,9 +1,18 @@
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
 import type { PrismaClient as PrismaClientType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import net from 'net';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+let PrismaClientClass: any = null;
+try {
+  const pkg = require('@prisma/client');
+  PrismaClientClass = pkg.PrismaClient;
+} catch (err: any) {
+  console.warn('[Database] Initial load of @prisma/client failed or client not generated yet:', err?.message || err);
+}
 
 process.on('unhandledRejection', (reason: any) => {
   if (reason?.code === 'P1001' || reason?.message?.includes("Can't reach database server")) {
@@ -125,6 +134,15 @@ export function getPrismaClient(): PrismaClientType | null {
 
   if (!clientInstance) {
     try {
+      if (!PrismaClientClass) {
+        try {
+          const pkg = require('@prisma/client');
+          PrismaClientClass = pkg.PrismaClient;
+        } catch (loadErr) {
+          markPrismaUnavailable(loadErr);
+          return null;
+        }
+      }
       const pool = new pg.Pool({ 
         connectionString: dbUrl, 
         connectionTimeoutMillis: 5000,
@@ -132,7 +150,7 @@ export function getPrismaClient(): PrismaClientType | null {
         max: 20
       });
       const adapter = new PrismaPg(pool);
-      clientInstance = new PrismaClient({ adapter });
+      clientInstance = new PrismaClientClass({ adapter });
     } catch (error) {
       markPrismaUnavailable(error);
       return null;
