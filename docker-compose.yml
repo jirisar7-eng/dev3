@@ -11,6 +11,8 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev3@postgres_dev3:5432/tatovacesta_dev3?schema=public}
       - JWT_SECRET=${JWT_SECRET}
+      - CLAMAV_HOST=${CLAMAV_HOST:-clamav_scanner}
+      - CLAMAV_PORT=${CLAMAV_PORT:-3310}
       - MAILCOW_PUBLIC_URL=${MAILCOW_PUBLIC_URL:-https://mail.tatovacesta.cz}
       - MAILCOW_URL=${MAILCOW_URL:-https://mail.tatovacesta.cz}
       - MAILCOW_INTERNAL_URL=${MAILCOW_INTERNAL_URL:-https://172.22.1.14}
@@ -25,6 +27,7 @@ services:
       - mailcow_network
     depends_on:
       - postgres
+      - clamav
 
   postgres:
     image: postgres:16-alpine
@@ -40,8 +43,20 @@ services:
     networks:
       - default
 
+  clamav:
+    image: clamav/clamav:latest
+    container_name: clamav_scanner
+    restart: always
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_data_dev3:/var/lib/clamav
+    networks:
+      - default
+
 volumes:
   postgres_data_dev3:
+  clamav_data_dev3:
 
 networks:
   caddy_net:

@@ -7,7 +7,7 @@ export interface ScanResult {
 
 export class ClamAvService {
   private static getHost(): string {
-    return process.env.CLAMAV_HOST || process.env.CLAM_HOST || '127.0.0.1';
+    return process.env.CLAMAV_HOST || process.env.CLAM_HOST || 'clamav_scanner';
   }
 
   private static getPort(): number {
@@ -59,7 +59,7 @@ export class ClamAvService {
         if (trimmed.includes('OK')) {
           resolve({ status: 'CLEAN', details: trimmed });
         } else if (trimmed.includes('FOUND')) {
-          reject(new Error(`[ClamAV Scan INFECTED] V souboru byl detekován virus/škodlivý kód: ${trimmed}`));
+          reject(new Error(`[ClamAV Infected] V souboru byl detekován virus/škodlivý kód: ${trimmed}`));
         } else {
           reject(new Error(`[ClamAV Scan Error] Neplatná odpověď z antivirové kontroly: ${trimmed || 'Prázdná odpověď'}`));
         }
@@ -67,12 +67,12 @@ export class ClamAvService {
 
       socket.on('timeout', () => {
         socket.destroy();
-        reject(new Error('[ClamAV Scan Timeout] Vypršel časový limit připojení k antivirovému serveru ClamAV.'));
+        reject(new Error(`[ClamAV Unavailable] Vypršel časový limit připojení k antivirovému serveru ClamAV (${host}:${port}). Skenování selhalo (Fail-Closed).`));
       });
 
       socket.on('error', (err) => {
         socket.destroy();
-        reject(new Error(`[ClamAV Scan Connection Failed] Připojení k antivirové službě ClamAV (${host}:${port}) selhalo: ${err.message}`));
+        reject(new Error(`[ClamAV Unavailable] Připojení k antivirové službě ClamAV (${host}:${port}) selhalo: ${err.message}. Skenování selhalo (Fail-Closed).`));
       });
     });
   }
