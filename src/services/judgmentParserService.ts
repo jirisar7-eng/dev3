@@ -1,9 +1,20 @@
 import { AiService } from './AiService';
+import { ClamAvService } from './clamAvService';
+import mammoth from 'mammoth';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
+export interface FieldMeta {
+  value: any;
+  confidence: number;
+  status: 'VERIFIED' | 'NEEDS_REVIEW' | 'NOT_FOUND';
+  sourceText?: string;
+}
+
 export interface JudgmentExtractedData {
+  sourceDocumentId: string;
+  extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE';
   caseNumber: string | null;
   court: string | null;
   judgmentDate: string | null;
@@ -32,172 +43,214 @@ export interface JudgmentExtractedData {
   metadata?: {
     totalFound: number;
     needsReviewCount: number;
-    missingCount: number;
-    fields: Record<string, { confidence: number; status: 'VERIFIED' | 'NEEDS_REVIEW' }>;
+    notFoundCount: number;
+    fields: Record<string, FieldMeta>;
   };
 }
 
 export class JudgmentParserService {
   public static async parseJudgmentFile(file?: Express.Multer.File, text?: string): Promise<JudgmentExtractedData> {
     let documentContent = text || '';
+    let extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE' = 'AI_TEXT';
+    const sourceDocumentId = file ? `${file.originalname}_${Date.now()}` : `text_input_${Date.now()}`;
 
     if (file) {
-      if (file.mimetype === 'application/pdf') {
+      // 1. Upload Security Checks: Size limit (25MB), MIME type check, ClamAV scan
+      if (file.buffer.length > 25 * 1024 * 1024) {
+        throw new Error('Soubor přesahuje maximální povolenou velikost 25 MB.');
+      }
+
+      const allowedMimes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'text/plain',
+        'image/png',
+        'image/jpeg'
+      ];
+
+      if (file.mimetype && !allowedMimes.includes(file.mimetype)) {
+        throw new Error(`Nepodporovaný formát souboru: ${file.mimetype}. Použijte PDF, DOCX, TXT nebo obrázek.`);
+      }
+
+      // ClamAV security scan
+      try {
+        await ClamAvService.scanBuffer(file.buffer);
+      } catch (scanErr: any) {
+        throw new Error(`Antivirová kontrola (ClamAV) zamítla soubor: ${scanErr.message}`);
+      }
+
+      // 2. Format specific parsing
+      if (file.mimetype === 'application/pdf' || file.originalname.endsWith('.pdf')) {
         try {
           const pdfData = await pdfParse(file.buffer);
           documentContent = pdfData.text;
+          extractionMethod = 'PDF_PARSE';
         } catch (err) {
-          console.error('[JudgmentParserService] PDF parse error:', err);
+          console.warn('[JudgmentParserService] PDF parse text failed, falling back to Vision:', err);
         }
+      } else if (
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.originalname.endsWith('.docx')
+      ) {
+        try {
+          const result = await mammoth.extractRawText({ buffer: file.buffer });
+          documentContent = result.value;
+          extractionMethod = 'MAMMOTH_DOCX';
+        } catch (err) {
+          console.error('[JudgmentParserService] DOCX parse error:', err);
+          throw new Error('Nepodařilo se přečíst obsah dokumentu Word (DOCX).');
+        }
+      } else if (file.mimetype.startsWith('image/') || file.originalname.match(/\.(png|jpg|jpeg)$/i)) {
+        // Image / Scanned file -> Vision API
+        return await this.parseWithVision(file, sourceDocumentId);
       } else {
         documentContent = file.buffer.toString('utf-8');
+        extractionMethod = 'AI_TEXT';
       }
     }
 
-    if (!documentContent || documentContent.trim().length < 50) {
+    if (!documentContent || documentContent.trim().length < 30) {
        if (file) {
-         return await this.parseWithVision(file);
+         return await this.parseWithVision(file, sourceDocumentId);
        } else {
          throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je čitelný.");
        }
     }
 
-    return await this.parseWithText(documentContent);
+    return await this.parseWithText(documentContent, sourceDocumentId, extractionMethod);
   }
 
   private static getPrompt(): string {
     return `
-Extrahuj ze zadaného soudního rozsudku nebo dohody o péči kompletní strukturovaná fakta pro opatrovnický spis a plán péče:
-- spisová značka (caseNumber, např. "12 P 45/2023")
-- soud (court)
-- datum rozhodnutí (judgmentDate, YYYY-MM-DD)
-- účinnost / právní moc (effectiveDate, YYYY-MM-DD)
-- účastníci (participants: pole jmen rodičů, opatrovníka, OSPOD)
-- jméno dítěte (childName)
-- datum narození dítěte (childBirthDate, YYYY-MM-DD)
-- svěření do péče (custodyType: SHARED, SOLE_FATHER, SOLE_MOTHER, CUSTOM)
-- typ rozvrhu (scheduleType: EVEN_ODD_WEEKS, WEEK_A_B, EVERY_OTHER_WEEKEND, STANDARD, CUSTOM)
-- evenWeek & oddWeek (pokud je EVEN_ODD_WEEKS, dny a shrnutí)
-- den, časy a místo předávání (handoverDay, handoverTime, handoverStartTime, handoverEndTime, handoverLocation)
-- prázdniny a svátky (holidaysRule, christmasRule, easterRule, summerRule, evenOddYearsRule)
-- výživné (alimonyAmount číslo, alimonyDueDate den v měsíci, alimonyPaymentMethod způsob placení)
-- další povinnosti a omezení (otherDuties)
+Extrahuj ze zadaného soudního rozsudku nebo dohody o péči kompletní strukturovaná fakta pro opatrovnický spis a plán péče. 
+DŮLEŽITÉ: Nikdy si nevymýšlej chybějící údaje! Pokud údaj v textu prokazatelně není, vrať u něj value: null, confidence: 0.0, status: "NOT_FOUND".
+Pro každý extrahovaný údaj uveď:
+- value: zjištěná hodnota (nebo null)
+- confidence: číslo od 0.0 do 1.0 vyjadřující skutečnou jistotu extrakce
+- status: "VERIFIED" (pokud confidence >= 0.8), "NEEDS_REVIEW" (pokud 0 < confidence < 0.8), nebo "NOT_FOUND" (pokud hodnota chybí)
+- sourceText: přesný výňatek (citace) z textu dokumentu, ze kterého byl údaj odvozen
 
-Pokud údaj v dokumentu CHYBÍ, vrať u daného pole NULL. NIKDY si nevymýšlej fiktivní jména ani neplatné časy.
-Ke každému klíčovému údaji odhadni confidence (0.0 - 1.0) a urči status ('VERIFIED' pokud confidence >= 0.8 jinak 'NEEDS_REVIEW').
-
-Požadované JSON schéma:
+Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text):
 {
-  "caseNumber": "string nebo null",
-  "court": "string nebo null",
-  "judgmentDate": "YYYY-MM-DD nebo null",
-  "effectiveDate": "YYYY-MM-DD nebo null",
-  "participants": ["string"],
-  "childName": "string nebo null",
-  "childBirthDate": "YYYY-MM-DD nebo null",
-  "custodyType": "SHARED | SOLE_FATHER | SOLE_MOTHER | CUSTOM | null",
-  "scheduleType": "EVEN_ODD_WEEKS | WEEK_A_B | EVERY_OTHER_WEEKEND | STANDARD | CUSTOM | null",
-  "evenWeek": { "days": ["string"], "summary": "string" } | null,
-  "oddWeek": { "days": ["string"], "summary": "string" } | null,
-  "handoverDay": "string nebo null",
-  "handoverTime": "string nebo null",
-  "handoverStartTime": "string nebo null",
-  "handoverEndTime": "string nebo null",
-  "handoverLocation": "string nebo null",
-  "holidaysRule": "string nebo null",
-  "christmasRule": "string nebo null",
-  "easterRule": "string nebo null",
-  "summerRule": "string nebo null",
-  "evenOddYearsRule": "string nebo null",
-  "alimonyAmount": number | null,
-  "alimonyDueDate": number | null,
-  "alimonyPaymentMethod": "string nebo null",
-  "otherDuties": "string nebo null"
+  "caseNumber": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "court": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "judgmentDate": { "value": "YYYY-MM-DD | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "effectiveDate": { "value": "YYYY-MM-DD | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "participants": { "value": ["string"], "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "childName": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "childBirthDate": { "value": "YYYY-MM-DD | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "custodyType": { "value": "SHARED | SOLE_FATHER | SOLE_MOTHER | CUSTOM | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "scheduleType": { "value": "EVEN_ODD_WEEKS | WEEK_A_B | EVERY_OTHER_WEEKEND | STANDARD | CUSTOM | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "evenWeek": { "value": { "days": ["string"], "summary": "string" } | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "oddWeek": { "value": { "days": ["string"], "summary": "string" } | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "handoverDay": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "handoverTime": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "handoverLocation": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "holidaysRule": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "christmasRule": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "easterRule": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "summerRule": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyAmount": { "value": number | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyDueDate": { "value": number | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyPaymentMethod": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "otherDuties": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" }
 }
-
-Vrať POUZE platný JSON odpovídající schématu, žádný další text!
 `;
   }
 
-  private static parseResponse(responseText: string): JudgmentExtractedData {
+  private static parseResponse(responseText: string, sourceDocumentId: string, extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE'): JudgmentExtractedData {
     const cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
-    const fields: Record<string, { confidence: number; status: 'VERIFIED' | 'NEEDS_REVIEW' }> = {};
+    const fields: Record<string, FieldMeta> = {};
     let totalFound = 0;
     let needsReviewCount = 0;
-    let missingCount = 0;
+    let notFoundCount = 0;
 
     const keys = [
       'caseNumber', 'court', 'judgmentDate', 'effectiveDate', 'participants',
       'childName', 'childBirthDate', 'custodyType', 'scheduleType',
-      'handoverDay', 'handoverTime', 'handoverLocation', 'holidaysRule',
-      'christmasRule', 'easterRule', 'summerRule', 'alimonyAmount', 'alimonyDueDate', 'otherDuties'
+      'evenWeek', 'oddWeek', 'handoverDay', 'handoverTime', 'handoverLocation',
+      'holidaysRule', 'christmasRule', 'easterRule', 'summerRule',
+      'alimonyAmount', 'alimonyDueDate', 'alimonyPaymentMethod', 'otherDuties'
     ];
 
     keys.forEach((k) => {
-      const val = parsed[k];
-      if (val !== null && val !== undefined && (Array.isArray(val) ? val.length > 0 : true)) {
+      const item = parsed[k] || { value: null, confidence: 0.0, status: 'NOT_FOUND', sourceText: null };
+      const val = item.value;
+      const confidence = typeof item.confidence === 'number' ? item.confidence : 0.0;
+      let status: 'VERIFIED' | 'NEEDS_REVIEW' | 'NOT_FOUND' = item.status || 'NOT_FOUND';
+
+      const hasValue = val !== null && val !== undefined && (Array.isArray(val) ? val.length > 0 : true);
+
+      if (!hasValue) {
+        status = 'NOT_FOUND';
+        notFoundCount++;
+      } else if (confidence >= 0.8) {
+        status = 'VERIFIED';
         totalFound++;
-        // If it's a string with placeholder or uncertain text, or general heuristic
-        const conf = 0.85;
-        const status = conf >= 0.8 ? 'VERIFIED' : 'NEEDS_REVIEW';
-        if (status === 'NEEDS_REVIEW') needsReviewCount++;
-        fields[k] = { confidence: conf, status };
       } else {
-        missingCount++;
-        fields[k] = { confidence: 0.0, status: 'NEEDS_REVIEW' };
+        status = 'NEEDS_REVIEW';
+        needsReviewCount++;
+        totalFound++;
       }
+
+      fields[k] = {
+        value: val,
+        confidence,
+        status,
+        sourceText: item.sourceText || null
+      };
     });
 
     return {
-      caseNumber: parsed.caseNumber || null,
-      court: parsed.court || null,
-      judgmentDate: parsed.judgmentDate || null,
-      effectiveDate: parsed.effectiveDate || null,
-      participants: Array.isArray(parsed.participants) ? parsed.participants : [],
-      childName: parsed.childName || null,
-      childBirthDate: parsed.childBirthDate || null,
-      custodyType: parsed.custodyType || null,
-      scheduleType: parsed.scheduleType || null,
-      evenWeek: parsed.evenWeek || null,
-      oddWeek: parsed.oddWeek || null,
-      handoverDay: parsed.handoverDay || null,
-      handoverTime: parsed.handoverTime || null,
-      handoverStartTime: parsed.handoverStartTime || null,
-      handoverEndTime: parsed.handoverEndTime || null,
-      handoverLocation: parsed.handoverLocation || null,
-      holidaysRule: parsed.holidaysRule || null,
-      christmasRule: parsed.christmasRule || null,
-      easterRule: parsed.easterRule || null,
-      summerRule: parsed.summerRule || null,
-      evenOddYearsRule: parsed.evenOddYearsRule || null,
-      alimonyAmount: typeof parsed.alimonyAmount === 'number' ? parsed.alimonyAmount : null,
-      alimonyDueDate: typeof parsed.alimonyDueDate === 'number' ? parsed.alimonyDueDate : null,
-      alimonyPaymentMethod: parsed.alimonyPaymentMethod || null,
-      otherDuties: parsed.otherDuties || null,
+      sourceDocumentId,
+      extractionMethod,
+      caseNumber: fields.caseNumber.value,
+      court: fields.court.value,
+      judgmentDate: fields.judgmentDate.value,
+      effectiveDate: fields.effectiveDate.value,
+      participants: Array.isArray(fields.participants.value) ? fields.participants.value : [],
+      childName: fields.childName.value,
+      childBirthDate: fields.childBirthDate.value,
+      custodyType: fields.custodyType.value,
+      scheduleType: fields.scheduleType.value,
+      evenWeek: fields.evenWeek.value,
+      oddWeek: fields.oddWeek.value,
+      handoverDay: fields.handoverDay.value,
+      handoverTime: fields.handoverTime.value,
+      handoverLocation: fields.handoverLocation.value,
+      holidaysRule: fields.holidaysRule.value,
+      christmasRule: fields.christmasRule.value,
+      easterRule: fields.easterRule.value,
+      summerRule: fields.summerRule.value,
+      evenOddYearsRule: null,
+      alimonyAmount: fields.alimonyAmount.value,
+      alimonyDueDate: fields.alimonyDueDate.value,
+      alimonyPaymentMethod: fields.alimonyPaymentMethod.value,
+      otherDuties: fields.otherDuties.value,
       metadata: {
         totalFound,
         needsReviewCount,
-        missingCount,
+        notFoundCount,
         fields
       }
     };
   }
 
-  private static async parseWithText(documentContent: string): Promise<JudgmentExtractedData> {
+  private static async parseWithText(documentContent: string, sourceDocumentId: string, extractionMethod: 'AI_TEXT' | 'MAMMOTH_DOCX' | 'PDF_PARSE'): Promise<JudgmentExtractedData> {
     const prompt = this.getPrompt() + "\n\nZde je text dokumentu k analýze:\n" + documentContent;
     try {
       const responseText = await AiService.generateContent(prompt);
-      return this.parseResponse(responseText);
+      return this.parseResponse(responseText, sourceDocumentId, extractionMethod);
     } catch (err: any) {
       console.error('[JudgmentParserService] Text parse failed:', err?.message);
       throw new Error("Z dokumentu nelze přečíst text nebo AI selhala.");
     }
   }
 
-  private static async parseWithVision(file: Express.Multer.File): Promise<JudgmentExtractedData> {
-    // Import inside so we don't break if not needed
+  private static async parseWithVision(file: Express.Multer.File, sourceDocumentId: string): Promise<JudgmentExtractedData> {
     const { GoogleGenAI } = await import('@google/genai');
     const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2;
     if (!apiKey) {
@@ -209,7 +262,7 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           prompt,
           {
@@ -224,10 +277,11 @@ Vrať POUZE platný JSON odpovídající schématu, žádný další text!
       if (!response.text) {
         throw new Error("Empty response from Vision AI.");
       }
-      return this.parseResponse(response.text);
+      return this.parseResponse(response.text, sourceDocumentId, 'AI_VISION');
     } catch (err: any) {
       console.error('[JudgmentParserService] Vision parse failed:', err?.message);
-      throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné.");
+      throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je dokument čitelný.");
     }
   }
 }
+
