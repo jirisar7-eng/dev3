@@ -26,6 +26,7 @@ import { EsbirkaApiError } from './errors';
  */
 export class EsbirkaApiClient {
   private readonly baseUrl: string;
+  private readonly apiContextPath: string;
   private readonly apiKey: string;
   private readonly timeoutMs: number;
   private readonly maxResponseSizeBytes: number;
@@ -50,6 +51,25 @@ export class EsbirkaApiClient {
     // 2. Validate and resolve HTTPS Base URL
     const rawBaseUrl = config?.baseUrl || process.env.ESBIRKA_BASE_URL || 'https://api.e-sbirka.gov.cz';
     this.baseUrl = EsbirkaApiClient.validateAndNormalizeUrl(rawBaseUrl);
+
+    // 2b. Resolve API Context Path (e.g., /esel-esbir-daver)
+    let contextPath = config?.apiContextPath !== undefined 
+      ? config.apiContextPath 
+      : (process.env.ESBIRKA_API_CONTEXT_PATH !== undefined ? process.env.ESBIRKA_API_CONTEXT_PATH : '/esel-esbir-daver');
+
+    if (contextPath && !contextPath.startsWith('/')) {
+      contextPath = `/${contextPath}`;
+    }
+    if (contextPath.endsWith('/')) {
+      contextPath = contextPath.slice(0, -1);
+    }
+    
+    // Prevent duplication: if baseUrl already ends with the context path, strip the context path
+    // OR if we just want to ensure we don't duplicate, we can trim it from baseUrl
+    if (contextPath && this.baseUrl.endsWith(contextPath)) {
+      this.baseUrl = this.baseUrl.slice(0, -contextPath.length);
+    }
+    this.apiContextPath = contextPath;
 
     // 3. Resolve API Key (fail closed if missing)
     const resolvedApiKey = config?.apiKey !== undefined ? config.apiKey : (process.env.ESBIRKA_API_KEY || '');
@@ -192,7 +212,8 @@ export class EsbirkaApiClient {
     }
     EsbirkaApiClient.lastRequestTimestamp = Date.now();
 
-    const targetUrl = `${this.baseUrl}${endpoint}`;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const targetUrl = `${this.baseUrl}${this.apiContextPath}${cleanEndpoint}`;
     const timeout = options.timeoutMs ?? this.timeoutMs;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);

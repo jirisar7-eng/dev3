@@ -37,6 +37,12 @@ export interface EsbirkaClientConfig {
   baseUrl?: string;
 
   /**
+   * The API context path prefix.
+   * Defaults to process.env.ESBIRKA_API_CONTEXT_PATH or '/esel-esbir-daver'.
+   */
+  apiContextPath?: string;
+
+  /**
    * The authorization API key.
    * Defaults to process.env.ESBIRKA_API_KEY.
    */

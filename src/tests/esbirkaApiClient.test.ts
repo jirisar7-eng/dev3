@@ -333,6 +333,72 @@ export async function runEsbirkaApiClientTests() {
     'TEST 11: Error messages automatically sanitize and redact secret tokens'
   );
 
+  // --------------------------------------------------------------------------
+  // TEST 12: Context Path Routing & Duplication Prevention
+  // --------------------------------------------------------------------------
+  let resolvedUrl1 = '';
+  const clientUrl1 = new EsbirkaApiClient({
+    baseUrl: 'https://api.e-sbirka.gov.cz',
+    apiContextPath: '/esel-esbir-daver',
+    apiKey: 'test-key',
+    minIntervalMs: 0,
+    customFetch: async (url: string) => {
+      resolvedUrl1 = url;
+      return {
+        status: 200,
+        headers: new Map([['content-type', 'application/json']]),
+        text: async () => JSON.stringify({ ok: true }),
+      };
+    },
+  });
+  await clientUrl1.getAct(89, 2012);
+  assert(
+    resolvedUrl1 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/predpisy/2012/89',
+    `TEST 12: Base URL and context path assembled correctly without duplication: ${resolvedUrl1}`
+  );
+
+  let resolvedUrl2 = '';
+  const clientUrl2 = new EsbirkaApiClient({
+    baseUrl: 'https://api.e-sbirka.gov.cz/esel-esbir-daver', // Trailing duplicated context path
+    apiContextPath: '/esel-esbir-daver',
+    apiKey: 'test-key',
+    minIntervalMs: 0,
+    customFetch: async (url: string) => {
+      resolvedUrl2 = url;
+      return {
+        status: 200,
+        headers: new Map([['content-type', 'application/json']]),
+        text: async () => JSON.stringify({ ok: true }),
+      };
+    },
+  });
+  await clientUrl2.getAct(89, 2012);
+  assert(
+    resolvedUrl2 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/predpisy/2012/89',
+    `TEST 12: Prevents duplicate context path when base URL includes it: ${resolvedUrl2}`
+  );
+
+  let resolvedUrl3 = '';
+  const clientUrl3 = new EsbirkaApiClient({
+    baseUrl: 'https://api.e-sbirka.gov.cz',
+    apiContextPath: '', // Explicit empty context path
+    apiKey: 'test-key',
+    minIntervalMs: 0,
+    customFetch: async (url: string) => {
+      resolvedUrl3 = url;
+      return {
+        status: 200,
+        headers: new Map([['content-type', 'application/json']]),
+        text: async () => JSON.stringify({ ok: true }),
+      };
+    },
+  });
+  await clientUrl3.getAct(89, 2012);
+  assert(
+    resolvedUrl3 === 'https://api.e-sbirka.gov.cz/predpisy/2012/89',
+    `TEST 12: Handles empty context path correctly: ${resolvedUrl3}`
+  );
+
   console.log('\n=== ÚKOL 4/10 TEST RESULTS ===');
   console.log(`Passed: ${passed}`);
   console.log(`Failed: ${failed}`);
