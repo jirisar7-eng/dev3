@@ -318,14 +318,14 @@ export class CoParentController {
       const file = req.file;
 
       if (!text && !file) {
-        return res.status(400).json({ success: false, message: "Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné." });
+        return res.status(400).json({ success: false, message: "Musíte nahrát soubor rozsudku nebo vložit text." });
       }
 
       const extracted = await JudgmentParserService.parseJudgmentFile(file, text);
       res.json({ success: true, ...extracted });
     } catch (err: any) {
-      console.error('[CoParentController.parseJudgment error]:', err);
-      res.status(400).json({ success: false, message: err.message || "Z dokumentu nelze přečíst text. Zkontrolujte, zda je PDF čitelné." });
+      console.error('[CoParentController.parseJudgment error]:', err?.message || err);
+      res.status(400).json({ success: false, message: err?.message || "Chyba při zpracování rozsudku." });
     }
   }
 

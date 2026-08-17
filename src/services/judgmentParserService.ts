@@ -1,9 +1,6 @@
 import { AiService } from './AiService';
 import { ClamAvService } from './clamAvService';
 import mammoth from 'mammoth';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 
 export interface FieldMeta {
   value: any;
@@ -49,73 +46,156 @@ export interface JudgmentExtractedData {
 }
 
 export class JudgmentParserService {
+  /**
+   * Multi-strategy PDF text extractor:
+   * 1. Uses PDFParse class from pdf-parse v2
+   * 2. Falls back to pdfjs-dist legacy engine if PDFParse yields empty text or fails
+   */
+  private static async extractTextFromPdf(buffer: Buffer): Promise<{ text: string; pageCount: number; method: 'PDF_PARSE' | 'PDFJS_DIST' | 'NONE' }> {
+    // Strategy A: pdf-parse v2 (PDFParse class)
+    try {
+      const { PDFParse } = await import('pdf-parse');
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      const text = (result?.text || '').trim();
+      const pageCount = result?.total || 1;
+      await parser.destroy().catch(() => {});
+
+      if (text.length >= 30) {
+        return { text, pageCount, method: 'PDF_PARSE' };
+      }
+    } catch (err: any) {
+      console.warn('[JudgmentParserService] Primary PDFParse extractor failed or empty, trying fallback:', err?.message || err);
+    }
+
+    // Strategy B: pdfjs-dist engine fallback
+    try {
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const uint8 = new Uint8Array(buffer);
+      const loadingTask = pdfjs.getDocument({ data: uint8, disableFontFace: true });
+      const doc = await loadingTask.promise;
+      const pageCount = doc.numPages || 1;
+      let combinedText = '';
+
+      for (let i = 1; i <= pageCount; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+          .map((item: any) => ('str' in item ? item.str : ''))
+          .join(' ');
+        combinedText += pageText + '\n';
+      }
+
+      if (typeof (doc as any).cleanup === 'function') {
+        await (doc as any).cleanup().catch(() => {});
+      }
+      if (typeof (doc as any).destroy === 'function') {
+        await (doc as any).destroy().catch(() => {});
+      }
+      const trimmed = combinedText.trim();
+      if (trimmed.length >= 30) {
+        return { text: trimmed, pageCount, method: 'PDFJS_DIST' };
+      }
+    } catch (err: any) {
+      console.warn('[JudgmentParserService] Secondary pdfjs-dist extractor failed:', err?.message || err);
+    }
+
+    return { text: '', pageCount: 0, method: 'NONE' };
+  }
+
   public static async parseJudgmentFile(file?: Express.Multer.File, text?: string): Promise<JudgmentExtractedData> {
     let documentContent = text || '';
     let extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE' = 'AI_TEXT';
     const sourceDocumentId = file ? `${file.originalname}_${Date.now()}` : `text_input_${Date.now()}`;
 
     if (file) {
-      // 1. Upload Security Checks: Size limit (25MB), MIME type check, ClamAV scan
-      if (file.buffer.length > 25 * 1024 * 1024) {
+      const fileSize = file.buffer?.length || 0;
+      const ext = file.originalname?.split('.').pop()?.toLowerCase() || '';
+
+      console.log(`[JudgmentParserService] Received file upload: ${file.originalname} (${fileSize} bytes, MIME: ${file.mimetype || 'unknown'}, ext: .${ext})`);
+
+      if (fileSize === 0) {
+        throw new Error('Nahraný soubor je prázdný (0 B).');
+      }
+
+      // 1. Upload Security Checks: Size limit (25MB), MIME & format validation
+      if (fileSize > 25 * 1024 * 1024) {
         throw new Error('Soubor přesahuje maximální povolenou velikost 25 MB.');
       }
 
       const allowedMimes = [
         'application/pdf',
+        'application/x-pdf',
+        'application/octet-stream',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/msword',
         'text/plain',
         'image/png',
-        'image/jpeg'
+        'image/jpeg',
+        'image/jpg',
+        'image/webp'
       ];
 
-      if (file.mimetype && !allowedMimes.includes(file.mimetype)) {
+      const isMagicPdf = fileSize >= 4 && file.buffer.toString('utf-8', 0, 4) === '%PDF';
+      const isPdf = file.mimetype === 'application/pdf' || file.mimetype === 'application/x-pdf' || ext === 'pdf' || isMagicPdf;
+      const isDocx = file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || ext === 'docx' || ext === 'doc';
+      const isImage = file.mimetype?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+      const isTxt = file.mimetype === 'text/plain' || ext === 'txt';
+
+      if (file.mimetype && !allowedMimes.includes(file.mimetype) && !isPdf && !isDocx && !isImage && !isTxt) {
         throw new Error(`Nepodporovaný formát souboru: ${file.mimetype}. Použijte PDF, DOCX, TXT nebo obrázek.`);
       }
 
-      // ClamAV security scan
+      // ClamAV security scan (mandatory antivirus gatekeeper)
       try {
-        await ClamAvService.scanBuffer(file.buffer);
+        console.log(`[JudgmentParserService] Running ClamAV scan on ${fileSize} bytes buffer...`);
+        const scanResult = await ClamAvService.scanBuffer(file.buffer);
+        console.log(`[JudgmentParserService] ClamAV scan passed successfully (Status: ${scanResult.status}).`);
       } catch (scanErr: any) {
+        console.error('[JudgmentParserService] ClamAV scan rejected file:', scanErr.message);
         throw new Error(`Antivirová kontrola (ClamAV) zamítla soubor: ${scanErr.message}`);
       }
 
-      // 2. Format specific parsing
-      if (file.mimetype === 'application/pdf' || file.originalname.endsWith('.pdf')) {
-        try {
-          const pdfData = await pdfParse(file.buffer);
-          documentContent = pdfData.text;
+      // 2. Format specific text extraction
+      if (isPdf) {
+        console.log(`[JudgmentParserService] Extracting text from PDF (${fileSize} bytes)...`);
+        const { text: pdfText, pageCount, method } = await this.extractTextFromPdf(file.buffer);
+
+        if (pdfText && pdfText.length >= 30) {
+          console.log(`[JudgmentParserService] PDF text extracted successfully via ${method}: ${pdfText.length} chars across ${pageCount} pages.`);
+          documentContent = pdfText;
           extractionMethod = 'PDF_PARSE';
-        } catch (err) {
-          console.warn('[JudgmentParserService] PDF parse text failed, falling back to Vision:', err);
+        } else {
+          console.log(`[JudgmentParserService] PDF contains no selectable text layer (${pdfText.length} chars). Delegating to OCR Vision analysis.`);
         }
-      } else if (
-        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.originalname.endsWith('.docx')
-      ) {
+      } else if (isDocx) {
         try {
           const result = await mammoth.extractRawText({ buffer: file.buffer });
-          documentContent = result.value;
+          documentContent = result.value || '';
           extractionMethod = 'MAMMOTH_DOCX';
-        } catch (err) {
-          console.error('[JudgmentParserService] DOCX parse error:', err);
-          throw new Error('Nepodařilo se přečíst obsah dokumentu Word (DOCX).');
+          console.log(`[JudgmentParserService] DOCX text extracted successfully: ${documentContent.length} chars.`);
+        } catch (err: any) {
+          console.error('[JudgmentParserService] DOCX parse error:', err?.message);
+          throw new Error(`Nepodařilo se přečíst obsah dokumentu Word (DOCX): ${err?.message || 'Chyba formátu'}`);
         }
-      } else if (file.mimetype.startsWith('image/') || file.originalname.match(/\.(png|jpg|jpeg)$/i)) {
-        // Image / Scanned file -> Vision API
+      } else if (isImage) {
+        console.log(`[JudgmentParserService] Image file detected (.${ext}). Delegating to Vision AI parser.`);
         return await this.parseWithVision(file, sourceDocumentId);
-      } else {
+      } else if (isTxt) {
         documentContent = file.buffer.toString('utf-8');
         extractionMethod = 'AI_TEXT';
+        console.log(`[JudgmentParserService] TXT file loaded: ${documentContent.length} chars.`);
       }
     }
 
+    // Fallback: If no text was extracted from file, attempt OCR Vision (e.g. for scanned PDFs)
     if (!documentContent || documentContent.trim().length < 30) {
-       if (file) {
-         return await this.parseWithVision(file, sourceDocumentId);
-       } else {
-         throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je čitelný.");
-       }
+      if (file) {
+        console.log(`[JudgmentParserService] Text layer insufficient (${documentContent.trim().length} chars). Invoking OCR Vision analysis for scanned document.`);
+        return await this.parseWithVision(file, sourceDocumentId);
+      } else {
+        throw new Error("Vložený text rozsudku je příliš krátký (méně než 30 znaků). Zadejte prosím celý výrok rozsudku nebo nahrajte čitelný soubor.");
+      }
     }
 
     return await this.parseWithText(documentContent, sourceDocumentId, extractionMethod);
@@ -160,8 +240,20 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text):
   }
 
   private static parseResponse(responseText: string, sourceDocumentId: string, extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE'): JudgmentExtractedData {
-    const cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    let cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr: any) {
+      console.error('[JudgmentParserService] JSON parse error on AI response:', parseErr.message);
+      throw new Error(`AI model nevrátil platný JSON formát: ${parseErr.message}`);
+    }
 
     const fields: Record<string, FieldMeta> = {};
     let totalFound = 0;
@@ -242,46 +334,96 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text):
   private static async parseWithText(documentContent: string, sourceDocumentId: string, extractionMethod: 'AI_TEXT' | 'MAMMOTH_DOCX' | 'PDF_PARSE'): Promise<JudgmentExtractedData> {
     const prompt = this.getPrompt() + "\n\nZde je text dokumentu k analýze:\n" + documentContent;
     try {
+      console.log(`[JudgmentParserService] Generating AI facts analysis from ${documentContent.length} chars text...`);
       const responseText = await AiService.generateContent(prompt);
       return this.parseResponse(responseText, sourceDocumentId, extractionMethod);
     } catch (err: any) {
-      console.error('[JudgmentParserService] Text parse failed:', err?.message);
-      throw new Error("Z dokumentu nelze přečíst text nebo AI selhala.");
+      console.error('[JudgmentParserService] Text AI analysis failed:', err?.message);
+      throw new Error(`AI analýza textu rozsudku selhala: ${err?.message || 'Služba AI není dostupná'}`);
     }
   }
 
   private static async parseWithVision(file: Express.Multer.File, sourceDocumentId: string): Promise<JudgmentExtractedData> {
     const { GoogleGenAI } = await import('@google/genai');
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is required for image/PDF vision processing.");
+
+    const primaryKey = process.env.GEMINI_API_KEY;
+    const secondaryKey = process.env.GEMINI_API_KEY_2;
+
+    if (!primaryKey && !secondaryKey) {
+      throw new Error("Pro analýzu naskenovaných dokumentů a obrázků (OCR) je vyžadován platný GEMINI_API_KEY. Pokud máte textové PDF, zkontrolujte, zda obsahuje vrstvu s textem, nebo vložte text ručně.");
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    // Determine normalized MIME type
+    let mimeType = file.mimetype;
+    const ext = file.originalname?.split('.').pop()?.toLowerCase() || '';
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      if (ext === 'pdf') mimeType = 'application/pdf';
+      else if (ext === 'png') mimeType = 'image/png';
+      else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+      else if (ext === 'webp') mimeType = 'image/webp';
+      else mimeType = 'application/pdf';
+    }
+
     const prompt = this.getPrompt();
+    const base64Data = file.buffer.toString('base64');
 
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          prompt,
-          {
-            inlineData: {
-              data: file.buffer.toString('base64'),
-              mimeType: file.mimetype
+    // 1. Try Primary Gemini Key
+    if (primaryKey) {
+      try {
+        console.log('[JudgmentParserService] Invoking Vision OCR with Primary GEMINI_API_KEY...');
+        const ai = new GoogleGenAI({ apiKey: primaryKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType
+              }
             }
-          }
-        ]
-      });
+          ]
+        });
 
-      if (!response.text) {
-        throw new Error("Empty response from Vision AI.");
+        if (response.text) {
+          console.log('[JudgmentParserService] Vision OCR succeeded with Primary GEMINI_API_KEY.');
+          return this.parseResponse(response.text, sourceDocumentId, 'AI_VISION');
+        }
+      } catch (primaryErr: any) {
+        console.warn('[JudgmentParserService] Primary GEMINI_API_KEY vision OCR failed:', primaryErr?.message);
       }
-      return this.parseResponse(response.text, sourceDocumentId, 'AI_VISION');
-    } catch (err: any) {
-      console.error('[JudgmentParserService] Vision parse failed:', err?.message);
-      throw new Error("Z dokumentu nelze přečíst text. Zkontrolujte, zda je dokument čitelný.");
     }
+
+    // 2. Try Secondary Gemini Key if available
+    if (secondaryKey) {
+      try {
+        console.log('[JudgmentParserService] Invoking Vision OCR with Secondary GEMINI_API_KEY_2...');
+        const ai2 = new GoogleGenAI({ apiKey: secondaryKey });
+        const response2 = await ai2.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType
+              }
+            }
+          ]
+        });
+
+        if (response2.text) {
+          console.log('[JudgmentParserService] Vision OCR succeeded with Secondary GEMINI_API_KEY_2.');
+          return this.parseResponse(response2.text, sourceDocumentId, 'AI_VISION');
+        }
+      } catch (secErr: any) {
+        console.warn('[JudgmentParserService] Secondary GEMINI_API_KEY_2 vision OCR failed:', secErr?.message);
+      }
+    }
+
+    console.error('[JudgmentParserService] All Vision AI OCR attempts failed.');
+    throw new Error("OCR analýza naskenovaného dokumentu selhala. Zkontrolujte, zda je dokument čitelný, nebo vložte text výrokové části ručně.");
   }
 }
+
 

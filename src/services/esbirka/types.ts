@@ -15,7 +15,16 @@ export type EsbirkaErrorCode =
   | 'INVALID_JSON'
   | 'INVALID_RESPONSE'
   | 'RESPONSE_TOO_LARGE'
-  | 'UNKNOWN_ERROR';
+  | 'UNKNOWN_ERROR'
+  | 'QUOTA_EXCEEDED'
+  | 'SYNC_ALREADY_RUNNING'
+  | 'VALIDATION_FAILED'
+  | 'NORMALIZATION_FAILED'
+  | 'PERSISTENCE_FAILED'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'SERVER_ERROR'
+  | 'REMOTE_SERVER_ERROR';
 
 /**
  * Configuration options for initializing the EsbirkaApiClient.

@@ -11,14 +11,16 @@ export class EsbirkaApiError extends Error {
   public readonly httpStatus?: number;
   public readonly timestamp: string;
   public readonly responseSize?: number;
+  public readonly safeDetails?: any;
 
   constructor(params: {
     message: string;
     code: EsbirkaErrorCode;
-    requestId: string;
-    endpoint: string;
+    requestId?: string;
+    endpoint?: string;
     httpStatus?: number;
     responseSize?: number;
+    safeDetails?: any;
     cause?: Error | unknown;
   }) {
     // Sanitize message to strip any inadvertent secrets
@@ -27,10 +29,11 @@ export class EsbirkaApiError extends Error {
 
     this.name = 'EsbirkaApiError';
     this.code = params.code;
-    this.requestId = params.requestId;
-    this.endpoint = params.endpoint;
+    this.requestId = params.requestId || `req_${Date.now().toString(36)}`;
+    this.endpoint = params.endpoint || 'unknown';
     this.httpStatus = params.httpStatus;
     this.responseSize = params.responseSize;
+    this.safeDetails = params.safeDetails;
     this.timestamp = new Date().toISOString();
 
     if (params.cause && params.cause instanceof Error) {
@@ -73,6 +76,11 @@ export class EsbirkaApiError extends Error {
       httpStatus: this.httpStatus,
       timestamp: this.timestamp,
       responseSize: this.responseSize,
+      safeDetails: this.safeDetails,
     };
   }
+}
+
+export function isEsbirkaApiError(error: unknown): error is EsbirkaApiError {
+  return error instanceof EsbirkaApiError;
 }

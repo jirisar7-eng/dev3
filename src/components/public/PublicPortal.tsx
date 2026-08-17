@@ -24,6 +24,7 @@ import { LegalDocsPage } from '../../pages/LegalDocsPage';
 import { MyCasePage } from '../../pages/MyCasePage';
 import { CoParentHubPage } from '../../pages/CoParentHubPage';
 import SupportUsPage from "../../pages/SupportUsPage";
+import { AiContextView } from './AiContextView';
 import {
   CrisisCommunityPortal,
   SosPlanView,
@@ -114,6 +115,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <MyCasePage onNavigate={onNavigate} />
       </div>
     );
+  }
+
+  // 0.3 AI Context & Machine Index (/ai-context)
+  if (slug === 'ai-context') {
+    return <AiContextView onNavigate={onNavigate} />;
   }
 
   // 0.2 CoParent Hub (/coparent-hub, /coparent)

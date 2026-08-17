@@ -386,39 +386,48 @@ app.get('/api/admin/esbirka/laws/:code', requireAuth, requireRole('ADMIN'), asyn
   }
 });
 
-// KLIENTSKÉ ENDPOINTY (GET /api/state/laws/*) - ČTOU VÝHRADNĚ Z LOKÁLNÍ DATABÁZE
+// KLIENTSKÉ ENDPOINTY (GET /api/state/laws/*) - ČTOU VÝHRADNĚ Z LOKÁLNÍ DATABÁZE V POSTGRESQL
 app.get('/api/state/laws', async (req: express.Request, res: express.Response) => {
+  if (!isPrismaAvailable()) {
+    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
+  }
   try {
-    const laws = await EsbirkaService.getLawsFromDb();
+    const laws = await EsbirkaLegalRepository.getAllActs();
     res.json({ success: true, laws });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Chyba při načítání předpisů z databáze.' });
+    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
   }
 });
 
 app.get('/api/state/laws/:rok/:cislo', async (req: express.Request, res: express.Response) => {
+  if (!isPrismaAvailable()) {
+    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
+  }
   try {
     const { rok, cislo } = req.params;
-    const law = await EsbirkaService.getLawByCodeFromDb(`${cislo}/${rok}`);
+    const law = await EsbirkaLegalRepository.getActDetailsByCode(`${cislo}/${rok}`);
     if (!law) {
       return res.status(404).json({ error: 'Předpis nebyl nalezen v lokální databázi.' });
     }
     res.json({ success: true, law });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Chyba při načítání předpisu z databáze.' });
+    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
   }
 });
 
 app.get('/api/state/laws/:code', async (req: express.Request, res: express.Response) => {
+  if (!isPrismaAvailable()) {
+    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
+  }
   try {
     const { code } = req.params;
-    const law = await EsbirkaService.getLawByCodeFromDb(code);
+    const law = await EsbirkaLegalRepository.getActDetailsByCode(code);
     if (!law) {
       return res.status(404).json({ error: 'Předpis nebyl nalezen v lokální databázi.' });
     }
     res.json({ success: true, law });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Chyba při načítání předpisu z databáze.' });
+    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
   }
 });
 
