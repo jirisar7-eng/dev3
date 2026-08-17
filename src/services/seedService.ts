@@ -1353,15 +1353,23 @@ export async function seedDatabaseIfEmpty() {
     }
 
     // 11. Audit Log Initial Entry
-    await prisma.auditLog.create({
-      data: {
-        userId: 'usr-superadmin',
-        userEmail: 'superadmin@tatovacesta.cz',
-        action: 'SYSTEM_INIT',
-        module: 'CORE',
-        details: 'PostgreSQL + Prisma architektura úspěšně inicializována.',
-      },
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: 'SUPER_ADMIN' },
     });
+
+    if (existingAdmin) {
+      await prisma.auditLog.create({
+        data: {
+          userId: existingAdmin.id,
+          userEmail: existingAdmin.email,
+          action: 'SYSTEM_INIT',
+          module: 'CORE',
+          details: 'PostgreSQL + Prisma architektura úspěšně inicializována.',
+        },
+      });
+    } else {
+      console.log('[Prisma Seed] SUPER_ADMIN neexistuje, přeskočení vytvoření inicializačního AuditLogu.');
+    }
 
     console.log('[Prisma Seed] Seeding dokončen úspěšně!');
   } catch (error) {
