@@ -34,6 +34,8 @@ import { seedSystemTemplates } from './src/services/templateService';
 import { UserDataService } from './src/services/userDataService.ts';
 import { GithubPublisherService } from './src/services/githubPublisherService.ts';
 import { EsbirkaService } from './src/services/EsbirkaService.ts';
+import { EsbirkaScheduler } from './src/services/esbirka/EsbirkaScheduler.ts';
+import { EsbirkaLegalRepository } from './src/services/esbirka/EsbirkaLegalRepository.ts';
 import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
 import { OAuthService } from './src/services/oauthService.ts';
@@ -54,6 +56,7 @@ import coparentRoutes from './src/routes/coparentRoutes';
 import adminVpsRoutes from './src/routes/adminVpsRoutes';
 import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
+import aiContextRoutes from './src/routes/aiContextRoutes';
 
 dotenv.config();
 
@@ -187,6 +190,7 @@ app.use('/api/coparent', coparentRoutes);
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);
+app.use(aiContextRoutes);
 
 // Pracovnici community proposal & moderation endpoints
 app.get('/api/pracovnici/pending', async (_req, res) => {
@@ -303,17 +307,82 @@ app.get('/api/esbirka/verify', async (req: express.Request, res: express.Respons
   });
 });
 
-// Admin sync endpoint (subject to rate limiting & 5 req/24h quota)
-app.post('/api/esbirka/sync', async (req: express.Request, res: express.Response) => {
+// Admin sync endpoint (PROTECTED: Requires ADMIN or LEGAL_EDITOR role, strictly enforced quota & lock)
+app.post('/api/esbirka/sync', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
   try {
-    const { cislo, rok } = req.body;
-    if (!cislo || !rok) {
-      return res.status(400).json({ error: 'Číslo a rok předpisu jsou povinné.' });
+    const { cislo, rok, actCode } = req.body;
+    const userId = req.user?.id || 'admin';
+    const userRole = req.user?.role || 'ADMIN';
+
+    const result = await EsbirkaScheduler.triggerManualSync({
+      actCode,
+      actNumber: cislo ? Number(cislo) : undefined,
+      actYear: rok ? Number(rok) : undefined,
+      userId,
+      userRole,
+    });
+
+    if (result.status === 'FAILED') {
+      return res.status(500).json({
+        success: false,
+        error: result.error?.message || 'Chyba při synchronizaci předpisu.',
+        result,
+      });
     }
-    const law = await EsbirkaService.syncLaw(Number(cislo), Number(rok));
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    const status = err?.httpStatus || 500;
+    res.status(status).json({
+      success: false,
+      error: err.message || 'Chyba při synchronizaci e-Sbírky.',
+      code: err.code || 'SYNC_ERROR',
+    });
+  }
+});
+
+// Admin Scheduler Status endpoint
+app.get('/api/admin/esbirka/scheduler/status', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const status = await EsbirkaScheduler.getStatus();
+    res.json({ success: true, status });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při čtení stavu plánovače.' });
+  }
+});
+
+// Admin Sync Audits endpoint
+app.get('/api/admin/esbirka/audits', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const audits = await EsbirkaLegalRepository.getAllAudits(limit);
+    res.json({ success: true, audits });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při čtení auditů synchronizace.' });
+  }
+});
+
+// Admin Laws endpoint
+app.get('/api/admin/esbirka/laws', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const laws = await EsbirkaLegalRepository.getAllActs();
+    res.json({ success: true, laws });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při čtení seznamu zákonů z repozitáře.' });
+  }
+});
+
+// Admin Law Details endpoint (with full versions and sections)
+app.get('/api/admin/esbirka/laws/:code', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const code = req.params.code;
+    const law = await EsbirkaLegalRepository.getActDetailsByCode(code);
+    if (!law) {
+      return res.status(404).json({ error: 'Zákon nebyl v repozitáři nalezen.' });
+    }
     res.json({ success: true, law });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Chyba při synchronizaci e-Sbírky.' });
+    res.status(500).json({ error: err.message || 'Chyba při čtení detailu zákona.' });
   }
 });
 

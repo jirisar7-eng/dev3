@@ -45,7 +45,9 @@ import { ContactModerationManager } from './ContactModerationManager';
 import { VpsManagement } from './VpsManagement';
 import { TestRunnerCard } from './TestRunnerCard';
 import { QADashboard } from './qa/QADashboard';
-import { Code, Building2, Terminal, FlaskConical } from 'lucide-react';
+import { AiContextManager } from './AiContextManager';
+import { Code, Building2, Terminal, FlaskConical, Cpu, Scale } from 'lucide-react';
+import { EsbirkaAdminPanel } from './EsbirkaAdminPanel';
 
 type AdminTab =
   | 'overview'
@@ -56,6 +58,7 @@ type AdminTab =
   | 'theme'
   | 'modules'
   | 'custom-modules'
+  | 'esbirka'
   | 'subjekty'
   | 'schvalovani-kontaktu'
   | 'cms'
@@ -64,6 +67,7 @@ type AdminTab =
   | 'compliance'
   | 'audit'
   | 'qa'
+  | 'ai-context'
   | 'settings'
   | 'sponsors'
   | 'dns'
@@ -303,6 +307,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           </button>
 
           <button
+            onClick={() => setActiveTab('esbirka')}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'esbirka' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Scale className="w-4 h-4 text-emerald-500" />
+              <span>Administrace e-Sbírka</span>
+            </span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              MV ČR
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('subjekty')}
             className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
               activeTab === 'subjekty' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
@@ -426,6 +445,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
               </span>
             </button>
           )}
+
+          <button
+            onClick={() => setActiveTab('ai-context')}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'ai-context' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Cpu className="w-4 h-4 text-blue-400" />
+              <span>AI Context & Index</span>
+            </span>
+            <span className="text-[9px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              LLMS
+            </span>
+          </button>
 
           <button
             onClick={() => setActiveTab('settings')}
@@ -622,6 +656,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'theme' && <ThemeManager />}
           {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
+          {activeTab === 'esbirka' && <EsbirkaAdminPanel />}
           {activeTab === 'subjekty' && <SubjektManager />}
           {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
           {activeTab === 'cms' && <CmsManager />}
@@ -637,6 +672,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'compliance' && <ComplianceManager />}
           {activeTab === 'audit' && <AuditLogViewer />}
           {activeTab === 'qa' && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
+          {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'settings' && <SettingsManager />}
           {activeTab === 'dns' && <DnsManagementPage />}
           {activeTab === 'sponsors' && <PartnerManager />}
