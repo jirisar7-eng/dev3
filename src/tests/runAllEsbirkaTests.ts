@@ -2,11 +2,15 @@ import { runValidationNormalizationTests } from './esbirkaValidationNormalizatio
 import { runSyncEngineTests } from './esbirkaSyncEngine.test';
 import { runSchedulerTests } from './esbirkaScheduler.test';
 import { runPublicPortalTests } from './esbirkaPublicPortal.test';
+import { runRealApiIntegrationTest } from './esbirkaRealApiIntegration.test';
 
 async function runAll() {
   console.log('\n=============================================================');
   console.log('--- COMPREHENSIVE e-SBÍRKA / e-LEGISLATIVA TEST SUITE ---');
   console.log('=============================================================\n');
+
+  console.log('>>> RUNNING REAL e-SBÍRKA REST API INTEGRATION TEST...');
+  await runRealApiIntegrationTest();
 
   console.log('>>> RUNNING VALIDATOR & NORMALIZER TESTS (ÚKOL 5/10)...');
   await runValidationNormalizationTests();

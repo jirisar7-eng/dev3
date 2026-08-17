@@ -204,7 +204,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'Unauthorized access to e-Sbírka API',
       code: 'UNAUTHORIZED',
       httpStatus: 401,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res7 = await EsbirkaSyncEngine.syncAct({
@@ -222,7 +222,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'Forbidden: IP not allowlisted',
       code: 'FORBIDDEN',
       httpStatus: 403,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res8 = await EsbirkaSyncEngine.syncAct({
@@ -239,7 +239,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'Upstream rate limit exceeded (429)',
       code: 'RATE_LIMITED',
       httpStatus: 429,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res9 = await EsbirkaSyncEngine.syncAct({
@@ -256,7 +256,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'e-Sbírka Internal Server Error (500)',
       code: 'SERVER_ERROR',
       httpStatus: 500,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res10 = await EsbirkaSyncEngine.syncAct({
@@ -273,7 +273,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'Connection timeout after 10000ms',
       code: 'TIMEOUT',
       httpStatus: 504,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res11 = await EsbirkaSyncEngine.syncAct({
@@ -290,7 +290,7 @@ export async function runSyncEngineTests(): Promise<{ passed: number; failed: nu
       message: 'ECONNREFUSED: e-sbirka.cz is unreachable',
       code: 'NETWORK_ERROR',
       httpStatus: 503,
-      endpoint: '/predpisy/2012/89',
+      endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     });
   });
   const res12 = await EsbirkaSyncEngine.syncAct({

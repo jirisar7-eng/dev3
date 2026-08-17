@@ -34,7 +34,7 @@ export async function runEsbirkaApiClientTests() {
       },
     });
 
-    await client.get({ endpoint: '/predpisy/2012/89' });
+    await client.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 1: Missing API key should throw error');
   } catch (err: any) {
     assert(
@@ -105,7 +105,7 @@ export async function runEsbirkaApiClientTests() {
     },
   });
 
-  const resSuccess = await clientSuccess.get({ endpoint: '/predpisy/2012/89' });
+  const resSuccess = await clientSuccess.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
   assert(resSuccess.status === 200, 'TEST 3: Returns HTTP 200');
   assert(resSuccess.data.predpis.cislo === 89, 'TEST 3: Successfully parsed data payload');
   assert(resSuccess.etag === 'W/"etag-hash-89-2012"', 'TEST 3: Extracts ETag correctly');
@@ -128,7 +128,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await client500.get({ endpoint: '/predpisy/2012/89' });
+    await client500.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 4: HTTP 500 should throw error');
   } catch (err: any) {
     assert(
@@ -153,7 +153,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await clientHtml.get({ endpoint: '/predpisy/2012/89' });
+    await clientHtml.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 5: HTML response should throw error');
   } catch (err: any) {
     assert(
@@ -178,7 +178,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await clientBadJson.get({ endpoint: '/predpisy/2012/89' });
+    await clientBadJson.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 6: Broken JSON should throw error');
   } catch (err: any) {
     assert(
@@ -204,7 +204,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await clientHuge.get({ endpoint: '/predpisy/2012/89' });
+    await clientHuge.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 7: Payload exceeding limit should throw error');
   } catch (err: any) {
     assert(
@@ -243,7 +243,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await clientTimeout.get({ endpoint: '/predpisy/2012/89' });
+    await clientTimeout.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 8: Request exceeding timeout should throw error');
   } catch (err: any) {
     assert(
@@ -268,7 +268,7 @@ export async function runEsbirkaApiClientTests() {
   });
 
   try {
-    await client429.get({ endpoint: '/predpisy/2012/89' });
+    await client429.get({ endpoint: '/dokumenty-sbirky/%2Fsb%2F2012%2F89' });
     assert(false, 'TEST 9: HTTP 429 should throw error');
   } catch (err: any) {
     assert(
@@ -323,7 +323,7 @@ export async function runEsbirkaApiClientTests() {
     message: 'Failed with Bearer secret-token-abc and apiKey: 12345',
     code: 'HTTP_ERROR',
     requestId: 'req-123',
-    endpoint: '/predpisy/89/2012',
+    endpoint: '/dokumenty-sbirky/%2Fsb%2F89%2F2012',
   });
 
   assert(
@@ -353,7 +353,7 @@ export async function runEsbirkaApiClientTests() {
   });
   await clientUrl1.getAct(89, 2012);
   assert(
-    resolvedUrl1 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/predpisy/2012/89',
+    resolvedUrl1 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     `TEST 12: Base URL and context path assembled correctly without duplication: ${resolvedUrl1}`
   );
 
@@ -374,7 +374,7 @@ export async function runEsbirkaApiClientTests() {
   });
   await clientUrl2.getAct(89, 2012);
   assert(
-    resolvedUrl2 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/predpisy/2012/89',
+    resolvedUrl2 === 'https://api.e-sbirka.gov.cz/esel-esbir-daver/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     `TEST 12: Prevents duplicate context path when base URL includes it: ${resolvedUrl2}`
   );
 
@@ -395,7 +395,7 @@ export async function runEsbirkaApiClientTests() {
   });
   await clientUrl3.getAct(89, 2012);
   assert(
-    resolvedUrl3 === 'https://api.e-sbirka.gov.cz/predpisy/2012/89',
+    resolvedUrl3 === 'https://api.e-sbirka.gov.cz/dokumenty-sbirky/%2Fsb%2F2012%2F89',
     `TEST 12: Handles empty context path correctly: ${resolvedUrl3}`
   );
 

@@ -96,7 +96,7 @@ export class EsbirkaSyncEngine {
 
     let lockAcquired = false;
     let quotaSlot: QuotaSlotReservation | null = null;
-    const endpoint = `/predpisy/${actYear}/${actNumber}`;
+    const endpoint = `/dokumenty-sbirky/%2Fsb%2F${actYear}%2F${actNumber}`;
 
     try {
       // 2. CONCURRENCY GUARD: Acquire distributed lock

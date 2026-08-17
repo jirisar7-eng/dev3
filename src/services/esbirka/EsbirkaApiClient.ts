@@ -460,7 +460,7 @@ export class EsbirkaApiClient {
    * Convenience method to fetch a legal act by year and act number.
    */
   public async getAct(actNumber: number, actYear: number, options?: Partial<EsbirkaRequestOptions>): Promise<EsbirkaApiResponse<any>> {
-    return this.get<any>({ endpoint: `/predpisy/${actYear}/${actNumber}`, ...options });
+    return this.get<any>({ endpoint: `/dokumenty-sbirky/%2Fsb%2F${actYear}%2F${actNumber}`, ...options });
   }
 
   /**

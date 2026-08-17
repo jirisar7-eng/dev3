@@ -52,7 +52,7 @@ export class EsbirkaQuotaGuard {
    * Atomically checks quota and reserves an API call slot before executing an HTTP request.
    * Fails closed if daily limit is reached (QUOTA_EXCEEDED) or rate limit is violated (RATE_LIMITED).
    * 
-   * @param endpoint Target API path (e.g. "/predpisy/2012/89")
+   * @param endpoint Target API path (e.g. "/dokumenty-sbirky/%2Fsb%2F2012%2F89")
    * @param actCode Optional act code (e.g. "89/2012")
    * @param syncAuditId Optional correlation ID with LegalSyncAudit
    * @param requestType Operation type (e.g. "GET_ACT", "CHECK_METADATA")

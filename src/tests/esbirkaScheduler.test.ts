@@ -167,7 +167,7 @@ export async function runSchedulerTests(): Promise<{ passed: number; failed: num
 
   // Simulate quota reservations up to target limit (3)
   for (let i = 0; i < 3; i++) {
-    await EsbirkaQuotaGuard.reserveSlot(`/predpisy/test/${i}`, `test-${i}`, null, 'GET_ACT');
+    await EsbirkaQuotaGuard.reserveSlot(`/dokumenty-sbirky/test/${i}`, `test-${i}`, null, 'GET_ACT');
     await new Promise((r) => setTimeout(r, 1050));
   }
 
@@ -179,9 +179,9 @@ export async function runSchedulerTests(): Promise<{ passed: number; failed: num
   assert(skippedTickResult === null, '8. Scheduled tick gracefully skipped when daily target quota (3) is reached');
 
   // Test 9: Manual sync rejects when hard limit (5) is reached
-  await EsbirkaQuotaGuard.reserveSlot(`/predpisy/test/3`, `test-3`, null, 'GET_ACT');
+  await EsbirkaQuotaGuard.reserveSlot(`/dokumenty-sbirky/test/3`, `test-3`, null, 'GET_ACT');
   await new Promise((r) => setTimeout(r, 1050));
-  await EsbirkaQuotaGuard.reserveSlot(`/predpisy/test/4`, `test-4`, null, 'GET_ACT');
+  await EsbirkaQuotaGuard.reserveSlot(`/dokumenty-sbirky/test/4`, `test-4`, null, 'GET_ACT');
 
   const quotaHardLimit = await EsbirkaQuotaGuard.getQuotaStatus();
   assert(quotaHardLimit.usedToday === 5 && quotaHardLimit.isExceeded === true, '9. Daily hard quota limit (5/5) reached', quotaHardLimit);
@@ -218,7 +218,7 @@ export async function runSchedulerTests(): Promise<{ passed: number; failed: num
   // Immediate second call without waiting 1,000 ms
   let rateLimitCaught = false;
   try {
-    await EsbirkaQuotaGuard.reserveSlot('/predpisy/2012/89', '89/2012', null, 'GET_ACT');
+    await EsbirkaQuotaGuard.reserveSlot('/dokumenty-sbirky/%2Fsb%2F2012%2F89', '89/2012', null, 'GET_ACT');
   } catch (err: any) {
     if (err.code === 'RATE_LIMITED' || err.message.includes('Rate limit violation')) {
       rateLimitCaught = true;

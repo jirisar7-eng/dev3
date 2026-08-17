@@ -74,7 +74,7 @@ export interface EsbirkaClientConfig {
  */
 export interface EsbirkaRequestOptions {
   /**
-   * Relative endpoint path (e.g. '/predpisy/2012/89').
+   * Relative endpoint path (e.g. '/dokumenty-sbirky/%2Fsb%2F2012%2F89').
    */
   endpoint: string;
 
