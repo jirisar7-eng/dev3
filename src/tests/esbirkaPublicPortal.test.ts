@@ -41,7 +41,7 @@ export async function runPublicPortalTests() {
     category: 'FAMILY_LAW',
     status: 'ACTIVE',
     source: 'E_SBIRKA',
-    sourceUri: 'https://www.esbirka.cz/predpis/89/2012',
+    sourceUri: 'https://e-sbirka.gov.cz/predpis/89/2012',
     passedDate: new Date('2012-02-03'),
     promulgationDate: new Date('2012-03-22'),
     effectiveFrom: new Date('2014-01-01'),

@@ -48,7 +48,7 @@ export class EsbirkaApiClient {
     }
 
     // 2. Validate and resolve HTTPS Base URL
-    const rawBaseUrl = config?.baseUrl || process.env.ESBIRKA_BASE_URL || 'https://www.esbirka.cz/api/v1';
+    const rawBaseUrl = config?.baseUrl || process.env.ESBIRKA_BASE_URL || 'https://api.e-sbirka.gov.cz';
     this.baseUrl = EsbirkaApiClient.validateAndNormalizeUrl(rawBaseUrl);
 
     // 3. Resolve API Key (fail closed if missing)
@@ -198,8 +198,7 @@ export class EsbirkaApiClient {
     const timer = setTimeout(() => controller.abort(), timeout);
 
     const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.apiKey}`,
-      'X-API-KEY': this.apiKey,
+      'esel-api-access-key': this.apiKey,
       'Accept': 'application/json, application/problem+json',
       'User-Agent': 'TataMaPravo-LegislativeSync/1.0 (dev3.tatovacesta.cz)',
       ...(options.headers || {}),

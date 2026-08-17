@@ -27,7 +27,7 @@ export async function runEsbirkaApiClientTests() {
   // --------------------------------------------------------------------------
   try {
     const client = new EsbirkaApiClient({
-      baseUrl: 'https://www.esbirka.cz/api/v1',
+      baseUrl: 'https://api.e-sbirka.gov.cz',
       apiKey: '', // Empty key
       customFetch: async () => {
         throw new Error('Should never reach network');
@@ -47,11 +47,11 @@ export async function runEsbirkaApiClientTests() {
   // TEST 2: URL Validation & SSRF Protection
   // --------------------------------------------------------------------------
   const invalidUrls = [
-    { url: 'http://www.esbirka.cz/api', reason: 'Non-HTTPS protocol' },
+    { url: 'http://api.e-sbirka.gov.cz/api', reason: 'Non-HTTPS protocol' },
     { url: 'http://localhost:3000', reason: 'Localhost rejection' },
     { url: 'https://127.0.0.1/api', reason: 'Loopback IPv4 rejection' },
     { url: 'https://0.0.0.0/api', reason: 'Wildcard address rejection' },
-    { url: 'ftp://www.esbirka.cz/api', reason: 'FTP protocol rejection' },
+    { url: 'ftp://api.e-sbirka.gov.cz/api', reason: 'FTP protocol rejection' },
     { url: 'javascript:alert(1)', reason: 'Javascript pseudo-protocol rejection' },
     { url: 'https://192.168.1.1/api', reason: 'Private network CIDR rejection' },
   ];
@@ -69,8 +69,8 @@ export async function runEsbirkaApiClientTests() {
   }
 
   // Valid HTTPS URL validation
-  const validUrl = EsbirkaApiClient.validateAndNormalizeUrl('https://www.esbirka.cz/api/v1/');
-  assert(validUrl === 'https://www.esbirka.cz/api/v1', 'TEST 2: Valid HTTPS URL correctly normalized');
+  const validUrl = EsbirkaApiClient.validateAndNormalizeUrl('https://api.e-sbirka.gov.cz/');
+  assert(validUrl === 'https://api.e-sbirka.gov.cz', 'TEST 2: Valid HTTPS URL correctly normalized');
 
   // --------------------------------------------------------------------------
   // TEST 3: HTTP 200 Success with Valid JSON Payload
@@ -88,7 +88,7 @@ export async function runEsbirkaApiClientTests() {
   };
 
   const clientSuccess = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-secure-api-key-12345',
     minIntervalMs: 0,
     customFetch: async (url: string, init: any) => {
@@ -110,14 +110,13 @@ export async function runEsbirkaApiClientTests() {
   assert(resSuccess.data.predpis.cislo === 89, 'TEST 3: Successfully parsed data payload');
   assert(resSuccess.etag === 'W/"etag-hash-89-2012"', 'TEST 3: Extracts ETag correctly');
   assert(resSuccess.rawBodyHash.length === 64, 'TEST 3: Generates valid SHA-256 payload hash');
-  assert(interceptedHeaders['Authorization'] === 'Bearer test-secure-api-key-12345', 'TEST 3: Bearer token sent to upstream');
-  assert(interceptedHeaders['X-API-KEY'] === 'test-secure-api-key-12345', 'TEST 3: X-API-KEY header sent to upstream');
+  assert(interceptedHeaders['esel-api-access-key'] === 'test-secure-api-key-12345', 'TEST 3: esel-api-access-key header sent to upstream');
 
   // --------------------------------------------------------------------------
   // TEST 4: HTTP 500 Server Error -> Fail Closed
   // --------------------------------------------------------------------------
   const client500 = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 0,
     customFetch: async () => ({
@@ -142,7 +141,7 @@ export async function runEsbirkaApiClientTests() {
   // TEST 5: HTML Error Page (502 / 503 Bad Gateway) -> Reject non-JSON
   // --------------------------------------------------------------------------
   const clientHtml = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 0,
     customFetch: async () => ({
@@ -167,7 +166,7 @@ export async function runEsbirkaApiClientTests() {
   // TEST 6: Invalid / Malformed JSON Body
   // --------------------------------------------------------------------------
   const clientBadJson = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 0,
     customFetch: async () => ({
@@ -192,7 +191,7 @@ export async function runEsbirkaApiClientTests() {
   // TEST 7: Response Size Limit Exceeded (> 10MB)
   // --------------------------------------------------------------------------
   const clientHuge = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 0,
     maxResponseSizeBytes: 100, // Small limit for testing
@@ -218,7 +217,7 @@ export async function runEsbirkaApiClientTests() {
   // TEST 8: Timeout Handling
   // --------------------------------------------------------------------------
   const clientTimeout = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     timeoutMs: 50, // 50ms
     minIntervalMs: 0,
@@ -257,7 +256,7 @@ export async function runEsbirkaApiClientTests() {
   // TEST 9: HTTP 429 Rate Limited from Upstream
   // --------------------------------------------------------------------------
   const client429 = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 0,
     customFetch: async () => ({
@@ -285,7 +284,7 @@ export async function runEsbirkaApiClientTests() {
   let maxConcurrentObserved = 0;
 
   const clientConcurrent = new EsbirkaApiClient({
-    baseUrl: 'https://www.esbirka.cz/api/v1',
+    baseUrl: 'https://api.e-sbirka.gov.cz',
     apiKey: 'test-key',
     minIntervalMs: 10,
     customFetch: async () => {

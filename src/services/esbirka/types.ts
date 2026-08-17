@@ -32,7 +32,7 @@ export type EsbirkaErrorCode =
 export interface EsbirkaClientConfig {
   /**
    * The HTTPS base URL for e-Sbírka / e-Legislativa REST API.
-   * Defaults to process.env.ESBIRKA_BASE_URL or 'https://www.esbirka.cz/api/v1'.
+   * Defaults to process.env.ESBIRKA_BASE_URL or 'https://api.e-sbirka.gov.cz'.
    */
   baseUrl?: string;
 
