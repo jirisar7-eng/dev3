@@ -635,6 +635,167 @@ model Law {
   @@index([code])
 }
 
+enum LegalActStatus {
+  ACTIVE
+  AMENDED
+  REPEALED
+}
+
+enum SyncAuditStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  UNCHANGED
+  FAILED
+  SKIPPED
+  RATE_LIMITED
+  QUOTA_EXCEEDED
+}
+
+model LegalAct {
+  id               String            @id @default(uuid())
+  actCode          String            @unique // Např. "89/2012", "359/1999"
+  actNumber        Int               // 89
+  actYear          Int               // 2012
+  collection       String            @default("Sb.") // "Sb.", "Sb.m.s."
+  title            String            // "Zákon č. 89/2012 Sb., občanský zákoník"
+  shortTitle       String?           // "Občanský zákoník" / "OZ"
+  actType          String            @default("ZAKON") // "ZAKON", "USTAVNI_ZAKON", "VYHLASKA", "NARIZENI_VLADY"
+  category         String            @default("FAMILY_LAW") // "FAMILY_LAW", "CHILD_PROTECTION", "CIVIL_PROCEDURE", "EXECUTION", "CONSTITUTIONAL"
+  status           LegalActStatus    @default(ACTIVE) // ACTIVE, AMENDED, REPEALED
+  source           String            @default("ESBIRKA") // "ESBIRKA", "E_LEGISLATIVA"
+  sourceUri        String?           // URI v e-Sbírce / e-Legislativě
+  
+  // Časová razítka a účinnost
+  passedDate       DateTime?         // Datum přijetí
+  promulgationDate DateTime?         // Datum vyhlášení ve Sbírce
+  effectiveFrom    DateTime?         // Datum nabytí účinnosti aktuálního znění
+  effectiveTo      DateTime?         // Datum konce účinnosti (pokud známo)
+  lastAmendedDate  DateTime?         // Datum poslední novely
+  
+  // Synchronizační a ověřovací metadata
+  lastSyncedAt     DateTime?         // Datum a čas posledního kontaktu s e-Sbírka API
+  lastVerifiedAt   DateTime?         // Datum a čas, kdy byl obsah ověřen jako platný
+  contentHash      String            // SHA-256 hash konsolidovaného normativního textu
+  etag             String?           // ETag hlavička z HTTP odezvy pro If-None-Match
+  syncPriority     Int               @default(10) // 1 = nejvyšší (P0), 10 = standard
+  rawMetadata      Json?             // Původní metadata z e-Sbírky
+  
+  // Vazby
+  sections         LegalActSection[]
+  versions         LegalActVersion[]
+  syncAudits       LegalSyncAudit[]
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([actCode])
+  @@index([category])
+  @@index([status])
+  @@index([effectiveFrom])
+  @@index([lastSyncedAt])
+  @@index([syncPriority])
+}
+
+model LegalActSection {
+  id               String       @id @default(uuid())
+  legalActId       String
+  legalAct         LegalAct     @relation(fields: [legalActId], references: [id], onDelete: Cascade)
+  
+  sectionNumber    String       // "858", "888", "888a", "19", "452"
+  sectionOrder     Int          @default(0) // Pořadí pro řazení (např. 88800)
+  title            String?      // Např. "Rodičovská odpovědnost a styk s dítětem"
+  content          String       @db.Text // Úplné znění paragrafu včetně odstavců
+  
+  // Opatrovnická metadata
+  isKeySection     Boolean      @default(false) // Označení klíčových paragrafů pro otce
+  practicalNote    String?      @db.Text // Praktický výklad a metodický komentář
+  courtRelevance   String?      @db.Text // Jak argumentovat u soudu / na OSPOD
+  
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([legalActId, sectionNumber])
+  @@index([legalActId])
+  @@index([sectionNumber])
+  @@index([isKeySection])
+}
+
+model LegalActVersion {
+  id               String       @id @default(uuid())
+  legalActId       String
+  legalAct         LegalAct     @relation(fields: [legalActId], references: [id], onDelete: Cascade)
+  
+  versionNumber    String       // Identifikátor novely (např. "novela-450/2025" nebo "v1.0")
+  effectiveFrom    DateTime     // Účinnost této verze od
+  effectiveTo      DateTime?    // Účinnost této verze do (null = aktuální znění)
+  promulgationDate DateTime?    // Datum vyhlášení novely
+  contentSnapshot  Json?        // Úplný JSON snapshot znění k danému období
+  contentHash      String       // SHA-256 hash dané verze
+  changeSummary    String?      @db.Text // Přehled změn přinesených novelou
+  sourceNote       String?      // Poznámka ke zdroji / číslu novely
+  
+  createdAt        DateTime     @default(now())
+
+  @@index([legalActId])
+  @@index([effectiveFrom])
+  @@index([contentHash])
+}
+
+model LegalSyncAudit {
+  id               String          @id @default(uuid())
+  legalActId       String?
+  legalAct         LegalAct?       @relation(fields: [legalActId], references: [id], onDelete: SetNull)
+  
+  actCode          String          // "89/2012", "ALL"
+  syncType         String          @default("AUTOMATIC_CRON") // "AUTOMATIC_CRON", "ADMIN_MANUAL", "SYSTEM_BOOTSTRAP"
+  startedAt        DateTime        @default(now())
+  finishedAt       DateTime?
+  durationMs       Int?
+  
+  status           SyncAuditStatus // PENDING, RUNNING, SUCCESS, UNCHANGED, FAILED, SKIPPED, RATE_LIMITED, QUOTA_EXCEEDED
+  httpStatus       Int?            // 200, 304, 429, 500, 502, 503
+  apiCallsCount    Int             @default(1)
+  
+  // Datová statistika
+  recordsReceived  Int             @default(0)
+  recordsNew       Int             @default(0)
+  recordsChanged   Int             @default(0)
+  recordsUnchanged Int             @default(0)
+  errorsCount      Int             @default(0)
+  
+  responseHash     String?         // SHA-256 příchozího payloadu
+  errorMessage     String?         @db.Text
+  initiatedBy      String          @default("SYSTEM") // "CRON", "ADMIN:userId", "BOOTSTRAP"
+  quotaUsageIn24h  Int             @default(1) // Kolikáté volání v klouzavém okně to bylo (1..5)
+  
+  createdAt        DateTime        @default(now())
+
+  @@index([actCode])
+  @@index([status])
+  @@index([startedAt])
+  @@index([syncType])
+}
+
+model EsbirkaQuotaAudit {
+  id               String       @id @default(uuid())
+  calledAt         DateTime     @default(now()) // Čas odeslání HTTP požadavku na e-Sbírku
+  requestType      String       @default("GET_ACT") // "GET_ACT", "CHECK_METADATA", "GET_SECTIONS"
+  endpoint         String       // "/predpisy/2012/89"
+  actCode          String?      // "89/2012"
+  httpStatus       Int?         // 200, 304, 429, 500, etc.
+  result           String       @default("SUCCESS") // "SUCCESS", "NOT_MODIFIED", "ERROR", "TIMEOUT"
+  syncAuditId      String?      // Vazba na LegalSyncAudit.id
+  responseHash     String?
+  durationMs       Int?
+  
+  createdAt        DateTime     @default(now())
+
+  @@index([calledAt])
+  @@index([actCode])
+  @@index([requestType])
+}
+
 model StateStatistic {
   id          String   @id @default(uuid())
   category    String   // "Péče o děti", "Délka řízení", "Výživné"
