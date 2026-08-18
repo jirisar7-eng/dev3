@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { PageRender } from '../builder/PageRender';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 
 interface PageRendererProps {
   slug: string;
@@ -46,9 +47,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ slug, onNavigate }) 
         setLoading(false);
       });
 
-    fetch('/api/cms/faqs')
-      .then((res) => res.json())
-      .then((data) => setFaqs(data))
+    fetchCmsPublic('/api/cms/faqs')
+      .then((data) => { if (Array.isArray(data)) setFaqs(data); })
       .catch(() => {});
   }, [slug]);
 

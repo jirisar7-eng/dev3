@@ -5,6 +5,7 @@ import { useText } from '../../context/TextContext';
 import { SeoHead } from './SeoHead';
 import { PageRender } from '../builder/PageRender';
 import { SchemaDrivenRenderer } from '../common/SchemaDrivenRenderer';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 import {
   FileText,
   ArrowRight,
@@ -65,9 +66,8 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
         setLoading(false);
       });
 
-    fetch('/api/cms/faqs')
-      .then((res) => res.json())
-      .then((data) => setFaqs(data))
+    fetchCmsPublic('/api/cms/faqs')
+      .then((data) => { if (Array.isArray(data)) setFaqs(data); })
       .catch(() => {});
   }, [slug]);
 

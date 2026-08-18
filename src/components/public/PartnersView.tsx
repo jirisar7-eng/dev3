@@ -3,13 +3,13 @@ import { SeoHead } from './SeoHead';
 import { Handshake, Building2, Globe, ArrowUpRight } from 'lucide-react';
 import { Article } from '../../types';
 import { stripMarkdown } from '../../utils/textUtils';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 
 export const PartnersView: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    fetch('/api/cms/articles')
-      .then((res) => res.json())
+    fetchCmsPublic('/api/cms/articles')
       .then((data: Article[]) => {
         // Filter out the sponsor articles
         const sponsors = data.filter(a => a.category === 'Partneři a Sponzoři' || a.category === 'Partneři a sponzoři');

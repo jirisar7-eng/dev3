@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Faq } from '../../types';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 
 export const FaqSection: React.FC = () => {
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/cms/faqs')
-      .then((res) => res.json())
-      .then((data) => setFaqs(data))
+    fetchCmsPublic('/api/cms/faqs')
+      .then((data) => { if (Array.isArray(data)) setFaqs(data); })
       .catch((err) => console.error('Error fetching FAQs:', err));
   }, []);
 

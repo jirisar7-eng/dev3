@@ -274,6 +274,10 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 3f. About Project Routes (/o-nas, /kontakt, /sponzori, /partneri)
   if (slug === 'o-nas' || slug === 'o-projektu') {
+    const isPuckEnabled = typeof window !== 'undefined' && localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true';
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="o-projektu" onNavigate={onNavigate} />;
+    }
     return <AboutView onNavigate={onNavigate} />;
   }
   if (slug === 'kontakt') {
