@@ -286,6 +286,13 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') { return <SupportUsPage />; }
 
   if (slug === 'partneri' || slug === 'partners') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_PARTNERI_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="partneri" onNavigate={onNavigate} fallbackComponent={<PartnersView />} />;
+    }
     return <PartnersView />;
   }
 

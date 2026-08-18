@@ -632,6 +632,59 @@ const defaultPages: Page[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    id: 'pg-partneri',
+    slug: 'partneri',
+    title: 'Partneři a sponzoři',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-partneri',
+            badgeText: 'Naši partneři a sponzoři',
+            title: 'Podporují nás',
+            description: 'Zajištění dostupnosti poradenských materiálů, článků a vzorů právních podání 24 hodin denně, 7 dní v týdnu je pro otce v krizových situacích klíčové. Děkujeme těmto technologickým partnerům za jejich podporu, bez kterých by tento portál nemohl existovat.',
+            ctaText: 'Stát se partnerem',
+            ctaUrl: '/kontakt',
+            secondaryCtaText: 'Podpořit spolek',
+            secondaryCtaUrl: '/podporte-nas',
+          },
+        },
+        {
+          type: 'ArticlesFeedBlock',
+          props: {
+            id: 'feed-partneri',
+            title: 'Technologičtí a odborní partneři',
+            subtitle: 'Děkujeme za podporu infrastruktury a provozu portálu.',
+            categoryFilter: 'Partneři a sponzoři',
+            limit: 6,
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-partneri',
+            title: 'Chcete se stát partnerem projektu Táta má právo?',
+            description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje pro rodiny v opatrovnických řízeních.',
+            buttonText: 'Kontaktovat koordinátora',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Partneři a sponzoři',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Partneři a sponzoři • Táta má právo',
+    seoDescription: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 'pg-33-1',
     slug: 'crisis',
     title: 'Krizový Akční Plán SOS',

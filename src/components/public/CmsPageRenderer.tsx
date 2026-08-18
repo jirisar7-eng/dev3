@@ -22,9 +22,10 @@ import {
 interface CmsPageRendererProps {
   slug: string;
   onNavigate?: (path: string) => void;
+  fallbackComponent?: React.ReactNode;
 }
 
-export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNavigate }) => {
+export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNavigate, fallbackComponent }) => {
   const [page, setPage] = useState<Page | null>(null);
   const [customModule, setCustomModule] = useState<CustomModule | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -99,6 +100,9 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   }
 
   if (error || !page) {
+    if (fallbackComponent) {
+      return <>{fallbackComponent}</>;
+    }
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
         <SeoHead title="Stránka nenalezena" canonicalPath={`/${slug}`} />
@@ -131,6 +135,7 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   } catch (e) {}
 
   if (puckData) {
+    const hasHeroBlock = Array.isArray(puckData.content) && puckData.content.some((b: any) => b?.type === 'HeroBlock');
     return (
       <div className="min-h-screen bg-slate-50/50 pb-20">
         <SeoHead
@@ -138,16 +143,22 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
           description={page.seoDescription || page.title}
           canonicalPath={`/${page.slug}`}
         />
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl font-black text-white">{page.title}</h1>
+        {!hasHeroBlock && (
+          <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+            <div className="max-w-5xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl font-black text-white">{page.title}</h1>
+            </div>
           </div>
-        </div>
-        <div className="max-w-5xl mx-auto px-4 py-8">
+        )}
+        <div className={hasHeroBlock ? 'w-full' : 'max-w-5xl mx-auto px-4 py-8'}>
           <PageRender data={puckData} />
         </div>
       </div>
     );
+  }
+
+  if (fallbackComponent && (!page.sections || page.sections.length === 0) && !page.content) {
+    return <>{fallbackComponent}</>;
   }
 
   return (
