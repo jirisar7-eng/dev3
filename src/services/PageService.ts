@@ -61,6 +61,7 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'user-manual', title: 'Uživatelská příručka a nápověda', description: 'Návod k použití portálu a jeho pokročilých funkcí.', category: 'Systém' },
   { slug: 'sitemap', title: 'Mapa stránek a architektura', description: 'Přehledná struktura všech sekcí a modulů portálu Táta má právo.', category: 'Systém' },
   { slug: 'partneri', title: 'Partneři a sponzoři', description: 'Technologičtí a odborní partneři, kteří podporují infrastrukturu a provoz portálu Táta má právo.', category: 'Systém' },
+  { slug: 'sponzori', title: 'Partneři a sponzoři', description: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.', category: 'Systém' },
 ];
 
 export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {
@@ -68,12 +69,12 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
     const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
-    const defaultPuckData = mod.slug === 'partneri' ? {
+    const defaultPuckData = (mod.slug === 'partneri' || mod.slug === 'sponzori') ? {
       content: [
         {
           type: 'HeroBlock',
           props: {
-            id: 'hero-partneri',
+            id: `hero-${mod.slug}`,
             badgeText: 'Naši partneři a sponzoři',
             title: 'Podporují nás',
             description: 'Zajištění dostupnosti poradenských materiálů, článků a vzorů právních podání 24 hodin denně, 7 dní v týdnu je pro otce v krizových situacích klíčové. Děkujeme těmto technologickým partnerům za jejich podporu, bez kterých by tento portál nemohl existovat.',
@@ -86,7 +87,7 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
         {
           type: 'ArticlesFeedBlock',
           props: {
-            id: 'feed-partneri',
+            id: `feed-${mod.slug}`,
             title: 'Technologičtí a odborní partneři',
             subtitle: 'Děkujeme za podporu infrastruktury a provozu portálu.',
             categoryFilter: 'Partneři a sponzoři',
@@ -96,7 +97,7 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
         {
           type: 'CallToAction',
           props: {
-            id: 'cta-partneri',
+            id: `cta-${mod.slug}`,
             title: 'Chcete se stát partnerem projektu Táta má právo?',
             description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje pro rodiny v opatrovnických řízeních.',
             buttonText: 'Kontaktovat koordinátora',

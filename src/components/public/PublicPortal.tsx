@@ -296,6 +296,17 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <PartnersView />;
   }
 
+  if (slug === 'sponzori' || slug === 'sponsors') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_SPONZORI_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="sponzori" onNavigate={onNavigate} fallbackComponent={<PartnersView />} />;
+    }
+    return <PartnersView />;
+  }
+
   // 3c. Volunteer Agreement Route (/dohoda-o-spolupraci, /e-dohoda, /volunteer-agreement, /e-dohoda-dobrovolnika)
   if (
     slug === 'dohoda-o-spolupraci' ||
