@@ -331,8 +331,15 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <VolunteerCodexPage onNavigate={onNavigate} />;
   }
 
-  // 3e. GDPR Compliance Center Route (/gdpr, /gdpr-center, /zasady-ochrany-osobnich-udaju)
-  if (slug === 'gdpr' || slug === 'gdpr-center' || slug === 'zasady-ochrany-osobnich-udaju' || slug === 'privacy-policy') {
+  // 3e. GDPR Compliance Center & Privacy Policy Route (/zasady-ochrany-osobnich-udaju, /privacy-policy, /gdpr, /gdpr-center)
+  if (slug === 'zasady-ochrany-osobnich-udaju' || slug === 'privacy-policy' || slug === 'gdpr' || slug === 'gdpr-center') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_PRIVACY_POLICY_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="zasady-ochrany-osobnich-udaju" onNavigate={onNavigate} fallbackComponent={<GdprComplianceCenterPage onNavigate={onNavigate} />} />;
+    }
     return <GdprComplianceCenterPage onNavigate={onNavigate} />;
   }
 

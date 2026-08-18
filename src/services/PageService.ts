@@ -63,6 +63,7 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'partneri', title: 'Partneři a sponzoři', description: 'Technologičtí a odborní partneři, kteří podporují infrastrukturu a provoz portálu Táta má právo.', category: 'Systém' },
   { slug: 'sponzori', title: 'Partneři a sponzoři', description: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.', category: 'Systém' },
   { slug: 'kodex-dobrovolnika', title: 'Dobrovolnický kodex', description: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS.', category: 'Systém' },
+  { slug: 'zasady-ochrany-osobnich-udaju', title: 'Zásady ochrany osobních údajů (GDPR)', description: 'Zásady zpracování a ochrany osobních údajů, správa souhlasů a práva subjektů údajů podle Nařízení (EU) 2016/679.', category: 'Systém' },
 ];
 
 export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {
@@ -70,7 +71,72 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
     const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
-    const defaultPuckData = mod.slug === 'kodex-dobrovolnika' ? {
+    const defaultPuckData = mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-privacy-policy',
+            badgeText: 'Synthesis OS • Security & Privacy Compliance',
+            title: 'Zásady ochrany osobních údajů (GDPR)',
+            description: 'Transparentní zpracování a ochrana osobních údajů podle Nařízení Evropského parlamentu a Rady (EU) 2016/679 (GDPR). Release 0.5.1 • Účinnost od 12. 8. 2026.',
+            ctaText: 'Zpět na hlavní portál',
+            ctaUrl: '/',
+            secondaryCtaText: 'Kontaktní formulář',
+            secondaryCtaUrl: '/kontakt',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-privacy-controller',
+            text: '### 1. Identifikace správce\nSprávcem osobních údajů podle Nařízení Evropského parlamentu a Rady (EU) 2016/679 (GDPR) je:\n- **Jméno a příjmení:** Jiří Šár (fyzická osoba nepodnikající)\n- **Role:** Zakladatel a provozovatel projektu *Táta má právo / Synthesis OS*\n- **Webový portál:** www.tatovacesta.cz\n- **Kontaktní e-mail:** info@tatovacesta.cz | **Pověřený GDPR e-mail:** gdpr@tatamapravo.cz\n\n### 2. Kategorie a soubory zpracovávaných údajů\nZpracováváme osobní údaje nezbytné pro provoz portálu, komunitních funkcí a AI nástrojů:\n- **Identifikační a kontaktní údaje:** E-mailová adresa, uživatelské jméno, unikátní ID účtu.\n- **Technické údaje:** IP adresa, soubory cookies, logy přihlášení, typ prohlížeče.\n- **Autentizační údaje (Passkeys):** Systém **neukládá biometrické údaje**. Biometrická autentizace probíhá výhradně na zařízení uživatele (FIDO2/WebAuthn). Na server se přenáší pouze kryptografický veřejný klíč.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-privacy-sensitive',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: '2.4 Citlivé osobní údaje (Čl. 9)',
+            col1Text: 'Při vkládání podkladů do poradny systém zpracovává informace z rodinných vztahů a soudních spisů. Tyto údaje nejsou vyžadovány pro běžné použití a doporučuje se jejich důsledná anonymizace.',
+            col2Title: '3. Zpracování pomocí AI',
+            col2Text: 'AI nástroje uplatňují princip minimalizace dat. Výstupy slouží jako orientační podklad a nepředstavují automatizované rozhodování podle Čl. 22 GDPR.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-privacy-rights',
+            text: '### 5. Ochrana osobních údajů nezletilých dětí\nPortál **není určen k veřejnému zveřejňování identifikačních údajů o dětech**. V komunitních sekcích je zakázáno uvádět celá jména dětí, fotografie, rodná čísla nebo adresy škol a bydliště. Veškeré příběhy musí být důsledně anonymizovány.\n\n### 6. Uchování dat a zálohování\nOsobní údaje aktivních účtů uchováváme po dobu trvání registrace. Po žádosti o zrušení účtu dojde k výmazu údajů z aktivních systémů do 30 dnů. Technické zálohy jsou přemazávány v automatických cyklech (max. 90 dnů).\n\n### 7. Práva uživatelů podle GDPR\nMáte právo na přístup (Čl. 15), opravu (Čl. 16), výmaz / právo být zapomenut (Čl. 17), omezení zpracování (Čl. 18), přenositelnost údajů (Čl. 20) a vznesení námitky (Čl. 21). Svá práva můžete uplatnit na e-mailu gdpr@tatamapravo.cz.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-privacy-contact',
+            title: 'Máte dotaz k ochraně osobních údajů nebo chcete uplatnit svá práva?',
+            description: 'Náš pověřený tým pro ochranu osobních údajů vám rád odpoví a pomůže s uplatněním práv subjektu údajů podle GDPR.',
+            buttonText: 'Kontaktovat GDPR podporu',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Zásady ochrany osobních údajů (GDPR)',
+        },
+      },
+    } : mod.slug === 'kodex-dobrovolnika' ? {
       content: [
         {
           type: 'HeroBlock',
