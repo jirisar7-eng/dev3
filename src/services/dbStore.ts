@@ -738,6 +738,82 @@ const defaultPages: Page[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    id: 'pg-kodex-dobrovolnika',
+    slug: 'kodex-dobrovolnika',
+    title: 'Dobrovolnický kodex',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-kodex-dobrovolnika',
+            badgeText: 'Synthesis OS • Samostatný modul compliance',
+            title: 'DOBROVOLNICKÝ KODEX',
+            description: 'Táta má právo / Synthesis OS • Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků. Verze dokumentu: 1.0 • ID: SYNTH-CODEX-VOL-2026-V1 • Účinnost od: 12. 8. 2026',
+            ctaText: 'Zpět na hlavní portál',
+            ctaUrl: '/',
+            secondaryCtaText: 'Podpořit projekt',
+            secondaryCtaUrl: '/podporte-nas',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-kodex-purpose',
+            text: '### I. ÚČEL KODEXU\n1. Tento kodex stanovuje základní pravidla chování všech dobrovolníků, spolupracovníků a osob s přístupem k projektu **Táta má právo / Synthesis OS**.\n2. Účelem kodexu je zajistit, aby projekt zůstal bezpečným, důvěryhodným a respektujícím prostředím pro rodiče, děti i všechny členy komunity.\n3. Dobrovolník přijímá skutečnost, že práce v projektu může mít přímý dopad na životní situace lidí, kteří se nacházejí v náročných rodinných, právních nebo psychických okolnostech.\n\n### II. POSLÁNÍ PROJEKTU\nDobrovolník při své činnosti podporuje zejména nejlepší zájem dítěte, zdravý vztah dítěte k oběma rodičům, respekt mezi rodiči, odpovědné rodičovství, dostupnost ověřených informací a lidský přístup k lidem v obtížné situaci.\n\n*Projekt není založen na boji proti jednotlivým osobám, ale na podpoře řešení, informovanosti a odpovědnosti.*',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-kodex-values',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: 'III. ZÁKLADNÍ HODNOTY',
+            col1Text: '1. Respekt ke každému člověku bez ohledu na pohlaví, věk či situaci.\n2. Ochrana dítěte – dítě není nástroj konfliktu.\n3. Pravdivost a odpovědnost – ověřování informací a uvádění zdrojů.',
+            col2Title: 'IV. KOMUNIKACE A PRAVIDLA',
+            col2Text: 'Slušná, klidná a věcná komunikace bez odsuzování, urážení či vyvolávání konfliktů. Zásada neútočení na druhého rodiče a důsledná ochrana soukromí.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-kodex-standards',
+            text: '### VII. OCHRANA SOUKROMÍ A ODBORNOST\nDobrovolník chrání identitu uživatelů, nesdílí screenshoty komunikace ani detaily případů. Nepředstírá kvalifikaci, kterou nemá, a jasně rozlišuje osobní názor od stanoviska projektu.\n\n### X. TECHNOLOGICKÁ ETIKA A AI\nBezpečnost systému znamená ochranu lidí. Při využití AI dobrovolník kontroluje výstupy a nevkládá citlivé osobní údaje do externích služeb.\n\n### XIV. SLIB DOBROVOLNÍKA\n> *„Přijímám odpovědnost za své jednání v projektu Táta má právo. Budu chránit soukromí lidí, respektovat důstojnost rodičů i dětí a využívat své schopnosti k pomoci, nikoliv k prohlubování konfliktů.“*',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-kodex-volunteer',
+            title: 'Chcete se zapojit do dobrovolnického týmu?',
+            description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje a komunitní podporu pro rodiny v opatrovnických řízeních.',
+            buttonText: 'Kontaktovat koordinátora',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Dobrovolnický kodex',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Dobrovolnický kodex • Táta má právo / Synthesis OS',
+    seoDescription: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 'pg-33-1',
     slug: 'crisis',
     title: 'Krizový Akční Plán SOS',

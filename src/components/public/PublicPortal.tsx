@@ -319,8 +319,15 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <VolunteerAgreementPage onNavigate={onNavigate} />;
   }
 
-  // 3d. Volunteer Codex Route (/kodex-dobrovolnika)
+  // 3d. Volunteer Codex Route (/kodex-dobrovolnika, /volunteer-code)
   if (slug === 'kodex-dobrovolnika' || slug === 'volunteer-code') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_KODEX_DOBROVOLNIKA_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="kodex-dobrovolnika" onNavigate={onNavigate} fallbackComponent={<VolunteerCodexPage onNavigate={onNavigate} />} />;
+    }
     return <VolunteerCodexPage onNavigate={onNavigate} />;
   }
 
