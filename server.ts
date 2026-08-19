@@ -38,6 +38,7 @@ import { EsbirkaScheduler } from './src/services/esbirka/EsbirkaScheduler.ts';
 import { EsbirkaLegalRepository } from './src/services/esbirka/EsbirkaLegalRepository.ts';
 import { subjektService } from './src/services/subjektService.ts';
 import { dbStore } from './src/services/dbStore.ts';
+import { StateAdminHubService } from './src/services/stateAdmin/StateAdminHubService.ts';
 import { OAuthService } from './src/services/oauthService.ts';
 import { PasskeyService } from './src/services/passkeyService.ts';
 import { TotpService } from './src/services/totpService.ts';
@@ -662,6 +663,99 @@ app.get('/api/state/court-cases', async (req: express.Request, res: express.Resp
     res.json({ success: true, cases: dbStore.courtCases, courtCases: dbStore.courtCases, data: dbStore.courtCases });
   } catch (err: any) {
     res.json({ success: true, cases: dbStore.courtCases, courtCases: dbStore.courtCases, data: dbStore.courtCases });
+  }
+});
+
+// ------------------------------------------------------
+// STATE ADMINISTRATION API HUB (PHASE 5)
+// ------------------------------------------------------
+app.get('/api/state-admin/health', async (req: express.Request, res: express.Response) => {
+  try {
+    const health = await StateAdminHubService.getHealthStatus();
+    res.json({ success: true, ...health });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error checking State Admin Hub health' });
+  }
+});
+
+app.get('/api/state-admin/justice/statistics', async (req: express.Request, res: express.Response) => {
+  try {
+    const agenda = (req.query.agenda as string) || 'P';
+    const result = await StateAdminHubService.getJudicialStatistics(agenda);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching MSp judicial statistics' });
+  }
+});
+
+app.get('/api/state-admin/justice/cases', async (req: express.Request, res: express.Response) => {
+  try {
+    const court = (req.query.court as string) || 'Ústavní soud';
+    const result = await StateAdminHubService.getJudicialCases(court);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching MSp judicial cases' });
+  }
+});
+
+app.get('/api/state-admin/csu/demographics', async (req: express.Request, res: express.Response) => {
+  try {
+    const result = await StateAdminHubService.getDemographicStatistics();
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching ČSÚ demographics' });
+  }
+});
+
+app.get('/api/state-admin/csu/nkod', async (req: express.Request, res: express.Response) => {
+  try {
+    const keyword = (req.query.keyword as string) || 'rodina';
+    const result = await StateAdminHubService.searchNkodDatasets(keyword);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error searching NKOD datasets' });
+  }
+});
+
+app.get('/api/state-admin/registries/ovm', async (req: express.Request, res: express.Response) => {
+  try {
+    const type = (req.query.type as 'SOUD' | 'OSPOD') || 'SOUD';
+    const result = await StateAdminHubService.getOvmEntities(type);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching OVM entities' });
+  }
+});
+
+app.get('/api/state-admin/registries/verify-professional', async (req: express.Request, res: express.Response) => {
+  try {
+    const ico = (req.query.ico as string) || '';
+    if (!ico) {
+      return res.status(400).json({ success: false, error: 'Chybí kód IČO.', code: 'INVALID_ICO' });
+    }
+    const result = await StateAdminHubService.verifyLegalProfessional(ico);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error verifying professional in ARES' });
+  }
+});
+
+app.get('/api/state-admin/e-legislativa/bills', async (req: express.Request, res: express.Response) => {
+  try {
+    const actCode = (req.query.actCode as string) || '89/2012';
+    const result = await StateAdminHubService.getLegislativeBills(actCode);
+    res.status(result.httpStatus || 200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching e-Legislativa bills' });
+  }
+});
+
+app.get('/api/state-admin/audits', async (req: express.Request, res: express.Response) => {
+  try {
+    const audits = StateAdminHubService.getAuditLogs();
+    res.json({ success: true, count: audits.length, audits });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching State Admin Hub audit logs' });
   }
 });
 
