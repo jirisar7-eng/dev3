@@ -29,6 +29,63 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'rights', title: 'Práva rodičů a dětí (EN)', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
   { slug: 'judikatura', title: 'Přehled judikatury a judikátů', description: 'Klíčové nálezy Ústavního soudu a judikáty k opatrovnické péči a výživnému.', category: 'Opatrovnictví & Právo' },
   { slug: 'ke-stazeni', title: 'Vzory podání a dokumenty ke stažení', description: 'Praktické vzory žádostí, návrhů, odvolání a dokumentů pro opatrovnické soudy.', category: 'Opatrovnictví & Právo' },
+  { slug: 'rozchod-a-dite', title: 'Průvodce životní cestou otce', description: 'Kompletní životní cesta: Rozchod, Dítě, OSPOD, Soud, Rozhodnutí a stabilní péče.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z', title: 'Ucelený průvodce OSPOD od A do Z', description: 'Kompletní praktická příručka pro jednání s orgánem sociálně-právní ochrany dětí.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy', title: 'Metodika dokumentace a důkazů', description: 'Praktický návod na bezpečné a legální shromažďování důkazních materiálů.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice', title: 'Reakční matice na nepravdivá tvrzení', description: 'Jak věcně, deeskalačně a s důkazy reagovat na nepravdivá tvrzení u soudu a OSPOD.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu', title: 'Dítě uprostřed konfliktu', description: 'Psychologická a procesní doporučení pro ochranu dítěte před partnerským konfliktem.', category: 'Opatrovnictví & Právo' },
+
+  // 2.1 🚨 Co dělat / Co nedělat
+  { slug: 'co-nedelat', title: 'Co (ne)dělat v řízení', description: 'Praktický průvodce krizovým chováním otce v opatrovnickém konfliktu.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/komunikace', title: 'Jak (ne)komunikovat', description: 'Metodika bezpečné a věcné komunikace s bývalou partnerkou.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/predavani', title: 'Jak (ne)předávat dítě', description: 'Bezpečné a klidné předávání dítěte bez partnerských střetů.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/dite', title: 'Jak (ne)jednat před dítětem', description: 'Ochrana dětského bezpečí a psychiky před partnerským sporem.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/osp', title: 'Jak (ne)jednat s OSPOD', description: 'Jak se chovat na úřadě a prokázat svou rodičovskou kapacitu.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/soud', title: 'Jak se (ne)chovat u soudu', description: 'Procesní taktika, sebekontrola a věcné vystupování v soudní síni.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/socialni-site', title: 'Co (ne)dávat na internet', description: 'Právní rizika a dopady veřejného komentování sporu.', category: 'Opatrovnictví & Právo' },
+  { slug: 'co-nedelat/ai', title: 'Jak (ne)využívat AI', description: 'Zásady odpovědné a bezpečné práce s AI asistenty bez chyb.', category: 'Opatrovnictví & Právo' },
+
+  // 2.2 👶 Dítě v konfliktu sub-pages
+  { slug: 'dite-v-konfliktu/konflikt-loajality', title: 'Konflikt loajality dětí', description: 'Jak chránit dítě před pocitem viny a zrady jednoho z rodičů.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu/predavani', title: 'Tranzitní stres dětí', description: 'Jak zvládat pláč a nervozitu dítěte při přechodu mezi rodiči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu/dite-odmita-jit', title: 'Když dítě odmítá jít k otci', description: 'Krizová doporučení a deeskalační postup při odporu dítěte.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu/skola', title: 'Komunikace se školou', description: 'Jak uplatnit svá rodičovská práva na informace ve škole.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu/psycholog', title: 'Zapojení psychologa', description: 'Kdy vyhledat odbornou psychologickou pomoc a jak s ní pracovat.', category: 'Opatrovnictví & Právo' },
+
+  // 2.3 ⚖️ Reakční matice (Tvrzení druhého rodiče)
+  { slug: 'tvrzeni-druheho-rodice/dite-nechce-k-otci', title: 'Tvrzení: „Dítě k otci nechce“', description: 'Jak reagovat na argumenty, že dítě odmítá styk z vlastní vůle.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-se-nestara', title: 'Tvrzení: „Otec se dříve nestaral“', description: 'Jak doložit kontinuitu své péče a rodičovskou způsobilost.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-nema-cas', title: 'Tvrzení: „Otec nemá čas“', description: 'Jak obhájit pracovní flexibilitu a časovou kapacitu pro péči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-nema-bydleni', title: 'Tvrzení: „Otec nemá bydlení“', description: 'Jak doložit materiální zázemí a připravit se na šetření.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/stridava-pece-skodi', title: 'Tvrzení: „Střídavka dítěti škodí“', description: 'Jak argumentovat vědeckými studiemi ve prospěch střídavé péče.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/dite-je-prilis-male', title: 'Tvrzení: „Dítě je příliš malé“', description: 'Jak obhájit nocování u nejmenších dětí podle studií.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/rodice-se-nedomluvi', title: 'Tvrzení: „Rodiče se nedomluví“', description: 'Jak ukázat snahu o dohodu a deeskalovat mezirodičovský konflikt.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-je-agresor', title: 'Tvrzení: „Otec je agresor“', description: 'Jak reagovat na nepravdivá obvinění z verbálního násilí.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-neplati-alimenty', title: 'Tvrzení: „Otec neplatí výživné“', description: 'Jak doložit úhrady nákladů a plnění vyživovací povinnosti.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/dite-ma-krouzky', title: 'Tvrzení: „Péče brání kroužkům“', description: 'Jak zajistit zájmy dítěte bez ohledu na střídání domovů.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-chce-stridavku-pro-penize', title: 'Tvrzení: „Chce střídavku pro peníze“', description: 'Jak vyvrátit finanční spekulace o motivaci k péči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/dite-je-nemocne', title: 'Tvrzení: „Dítě je příliš nemocné“', description: 'Jak zajistit plnění léčebného režimu v obou domácnostech.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/otec-nema-zkusenosti', title: 'Tvrzení: „Otec nemá zkušenosti“', description: 'Jak doložit péči o kojence a batolata bez předsudků.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice/soudni-znalec-nedoporucil', title: 'Tvrzení: „Soudní znalec nedoporučil“', description: 'Jak reagovat na nepříznivý znalecký posudek věcně a odborně.', category: 'Opatrovnictví & Právo' },
+
+  // 2.4 🏛️ OSPOD od A do Z sub-pages
+  { slug: 'ospod-a-z/prvni-jednani', title: 'První jednání na OSPOD', description: 'Jak se chovat na úvodní schůzce a vytvořit dobrý dojem.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/co-si-pripravit', title: 'Co si připravit na OSPOD', description: 'Kompletní checklist dokumentů a podkladů na schůzku.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/domaci-setreni', title: 'Domácí šetření OSPOD', description: 'Jak připravit domácnost na návštěvu sociální pracovnice.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/zapis-a-protokol', title: 'Zápis a protokol na OSPOD', description: 'Jak pracovat s protokolem, kontrolovat text a uplatňovat výhrady.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/co-aktivne-rikat', title: 'Co aktivně říkat na OSPOD', description: 'Vhodné věcné formulace zaměřené na zájem nezletilého dítěte.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/co-nerikat', title: 'Co nikdy neříkat na OSPOD', description: 'Komunikační tabu, která spolehlivě poškodí vaši pozici.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/jak-reagovat', title: 'Jak reagovat na podjatost OSPOD', description: 'Jak čelit případné neobjektivitě a postupovat v mezích zákona.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/kolizni-opatrovnik', title: 'Kolizní opatrovník u soudu', description: 'Pochopte procesní úlohu a vliv OSPODu na soudní rozhodnutí.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z/stiznost-175', title: 'Stížnost na postup OSPOD', description: 'Metodika podání věcné stížnosti podle správního řádu.', category: 'Opatrovnictví & Právo' },
+
+  // 2.5 📂 Metodika dokumentace sub-pages
+  { slug: 'dokumentace-a-dokazy/jak-dokumentovat', title: 'Jak správně dokumentovat', description: 'Jak vést deník péče, evidovat předávání, školu a lékaře.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy/nahravky', title: 'Právní limity nahrávání hovorů', description: 'Kdy a jak lze legálně použít tajné nahrávky u soudu.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy/komunikace', title: 'Dokumentace zpráv a chatu', description: 'Jak strukturovat a předkládat písemnou komunikaci jako důkaz.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy/svedci', title: 'Svědectví třetích osob', description: 'Jak zapojit svědky, učitele, lékaře a sousedy do dokazování.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy/chronologie', title: 'Vytvoření chronologie případu', description: 'Návod na sestavení přehledné časové osy událostí pro soud.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy/co-nedelat', title: 'Čeho se vyvarovat u důkazů', description: 'Zákonné hranice dokazování – ochrana před trestním stíháním.', category: 'Opatrovnictví & Právo' },
 
   // 3. 🏛️ Státní data
   { slug: 'state-laws', title: 'e-Sbírka • Opatrovnická e-Legislativa', description: 'Interaktivní paragrafové znění OZ, ZSPOD a o.s.ř. s citacemi pro soudní podání.', category: 'Státní data' },
@@ -74,7 +131,7 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
     const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
-    const defaultPuckData = mod.slug === 'domu' || mod.slug === 'home' ? DEFAULT_HOMEPAGE_PUCK_DATA : mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
+    const defaultPuckData = (mod.slug === 'domu' || mod.slug === 'home') ? DEFAULT_HOMEPAGE_PUCK_DATA : LEGAL_PAGES_PUCK_DATA[mod.slug] ? LEGAL_PAGES_PUCK_DATA[mod.slug] : CRISIS_COMMUNITY_PAGES_PUCK_DATA[mod.slug] ? CRISIS_COMMUNITY_PAGES_PUCK_DATA[mod.slug] : mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
       content: [
         {
           type: 'HeroBlock',

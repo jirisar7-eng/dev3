@@ -2,6 +2,15 @@
  * Výchozí Puck JSON struktury pro všechny veřejné stránky a moduly Krizové pomoci.
  */
 
+import {
+  DEFAULT_CO_NEDELAT_HUB_PUCK_DATA,
+  PRACTICAL_CO_NEDELAT_PAGES,
+  PRACTICAL_DITE_V_KONFLIKTU_PAGES,
+  PRACTICAL_TVRZENI_PAGES,
+  PRACTICAL_OSPOD_PAGES,
+  PRACTICAL_DOKUMENTACE_PAGES
+} from './practicalExpansionData';
+
 export const DEFAULT_HOMEPAGE_PUCK_DATA = {
   content: [
     {
@@ -495,6 +504,271 @@ export const DEFAULT_DOCUMENTS_PUCK_DATA = {
   root: { props: { title: 'Knihovna právních vzorů' } },
 };
 
+export const DEFAULT_ROZCHOD_A_DITE_PUCK_DATA = {
+  content: [
+    {
+      type: 'HeroBlock',
+      props: {
+        id: 'hero-rozchod-a-dite',
+        title: 'Průvodce životní cestou otce: Od rozchodu ke stabilní péči',
+        description: 'Kompletní životní cesta: Rozchod, Dítě, OSPOD, Soud, Rozhodnutí a stabilní péče. Vše, co potřebujete vědět a udělat v každé fázi opatrovnického procesu.',
+        badgeText: 'Životní cesta otce • Průvodce',
+        ctaText: 'Spustit SOS Plán',
+        ctaUrl: '/sos-plan',
+        secondaryCtaText: 'Znalostní báze',
+        secondaryCtaUrl: '/legal-wiki',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-rozchod-phase-1',
+        text: '### 1. Rozchod a stabilizace vztahu s dětmi\n\nRozpad partnerského vztahu je emočně nesmírně náročný, avšak pro zájmy dítěte je nezbytné tyto emoce oddělit od rodičovské role. Dětští psychologové se shodují, že největší zátěží pro dítě není samotný rozchod rodičů, ale dlouhotrvající meziričovský konflikt, ve kterém je dítě zataženo do sporů dospělých.\n\n**Co má otec udělat ihned po rozchodu:**\n- **Aplikovat krizový SOS Plán:** Zachovat klid a jednat s rozmyslem. Na dehonestující nebo agresivní zprávy neodpovídat v afektu (metoda 24 hodin na odpověď).\n- **Navrhnout provizorní písemnou dohodu:** Předložit druhému rodiči písemný návrh na dočasnou péči o dítě tak, aby byl zachován pravidelný kontakt s oběma rodiči.\n- **Zůstat aktivní v každodenním životě dítěte:** Vodit dítě do školky/školy, navštěvovat lékaře, zajišťovat kroužky.\n\n**Čemu se striktně vyhnout:**\n- **Zbrklému odchodu ze společného bydliště:** Pokud odejdete z bytu bez písemné dohody, jak bude probíhat péče o dítě, může být toto chování u soudu dezinterpretováno jako „opuštění rodiny“ nebo ztráta zájmu o každodenní péči.\n- **Konfrontacím před dítětem:** Dítě nikdy nesmí být svědkem hádek, výčitek nebo fyzického napětí.\n- **Zatahování dítěte do sporů:** Nepoužívejte dítě jako poslíčka zpráv ani se ho neptejte na detaily ze soukromí druhého rodiče.\n\n**Doporučené moduly:**\n- **[SOS Plán prvních 72 hodin](/sos-plan)**\n- **[Simulátor a kalkulačka péče](/plan-pece)**',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-rozchod-phases',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: 'Fáze 2: OSPOD a kolizní opatrovník',
+        col1Text: 'Jakmile soud zahájí řízení, jmenuje dítěti kolizního opatrovníka - OSPOD. Ten zkoumá poměry v rodině, mluví s rodiči i dětmi a podává soudu doporučení.\n\n**Co dělat:** Připravit se na jednání klidně, mluvit výhradně o zájmu dítěte a své rodičovské kapacitě, nikoliv o chybách matky.\n\n[Přejít na průvodce OSPOD](/ospod-a-z)',
+        col2Title: 'Fáze 3: Soudní řízení a rozsudek',
+        col2Text: 'Opatrovnický soud rozhoduje o péči, výživném a styku. Klíčem k úspěchu je věcná argumentace postavená na důkazech o kontinuitě péče a zájmu dítěte.\n\n**Co dělat:** Vést si pečlivou kroniku událostí, shromažďovat věcné důkazy a doložit stabilní zázemí.\n\n[Zobrazit vzory podání](/ke-stazeni)',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-rozchod-phase-4',
+        text: '### 4. Stabilní péče a dlouhodobý Co-Parenting\n\nVydáním soudního rozhodnutí proces nekončí, ale začíná nová etapa. Dlouhodobě udržitelná péče vyžaduje strukturu, předvídatelnost a deeskalaci komunikace mezi rodiči.\n\n**Zlatá pravidla stabilní péče:**\n- **Sdílený kalendář:** Plánujte prázdniny, svátky, školní akce a lékaře s dostatečným předstihem na jednom sdíleném místě.\n- **Jasná evidence nákladů:** Veškeré mimořádné výdaje (škola, kroužky, tábory) dokumentujte a sdílejte transparentně, aby se předešlo sporům o finance.\n- **Zákonná práva:** Trvejte na svém právu na informace o zdraví a vzdělání dítěte od škol a lékařů.\n\n**Doporučené moduly:**\n- **[Co-Parenting centrum & sdílený kalendář](/coparent-hub)**\n- **[Práva rodičů a dětí](/prava)**',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+  ],
+  root: { props: { title: 'Průvodce životní cestou otce' } },
+};
+
+export const DEFAULT_OSPOD_A_Z_PUCK_DATA = {
+  content: [
+    {
+      type: 'HeroBlock',
+      props: {
+        id: 'hero-ospod-a-z',
+        title: 'Ucelený průvodce OSPOD od A do Z',
+        description: 'Praktická příručka pro jednání s Orgánem sociálně-právní ochrany dětí. Zjistěte, jak se připravit na první schůzku, jak probíhá domácí šetření a jak čelit případné neobjektivitě.',
+        badgeText: 'OSPOD • Průvodce pro otce',
+        ctaText: 'Spustit AI Průvodce',
+        ctaUrl: '/ai-guide',
+        secondaryCtaText: 'Vzory stížností',
+        secondaryCtaUrl: '/ke-stazeni',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-ospod-roles',
+        text: '### 1. Kdo je OSPOD a jaká je jeho role?\n\nOrgán sociálně-právní ochrany dětí (OSPOD) je úřad, který v opatrovnickém řízení vystupuje jako **kolizní opatrovník nezletilého dítěte**. Jmenuje ho soud v situaci, kdy hrozí střet zájmů mezi rodiči a dítětem (což je u rozchodu standardní stav). OSPOD nemá rozhodovací pravomoc – nerozhoduje o výživném ani o střídavé péči. Jeho úkolem je nestranně hájit zájmy dítěte, provádět šetření v rodině a podávat soudu doporučení, kterým se soud v drtivé většině případů řídí.\n\n**Zásadní pravidlo:** OSPOD není nepřítel, kterého musíte porazit, ani spojenec, kterého si můžete koupit stížnostmi na druhou stranu. Vaším cílem při komunikaci s OSPOD je prokázat, že jste **stabilní, milující a spolupracující rodič**, který respektuje roli matky a klade zájmy dítěte na první místo.\n\n### 2. Příprava na první jednání a schůzku\n\nPrvní osobní schůzka s opatrovnickou pracovnicí na úřadě určuje tón celého budoucího vztahu. Schůzku doprovází nervozita, proto je nezbytná důsledná věcná příprava.\n\n**Klíčové zásady pro první schůzku:**\n- **Mluvte o dítěti, ne o matce:** Místo stížností typu „matka je psychopatka a brání mi v kontaktu“ formulujte situaci věcně: „Mám s dětmi velmi silný vztah a mým hlavním cílem je zajistit jim kontinuitu otcovské péče, kterou jsem realizoval po celou dobu trvání našeho soužití. Mám k tomu připravené stabilní zázemí a časový rozvrh.“\n- **Připravte si konkrétní režim péče:** Přineste s sebou rozpis péče (např. v režimu střídavé péče), ukažte, jak budete řešit logistiku (vyzvedávání, škola, kroužky).\n- **Doložte rodičovskou kapacitu:** Předložte potvrzení od zaměstnavatele o flexibilní pracovní době nebo možnosti home office a ukažte, že se aktivně zajímáte o potřeby dítěte.',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-ospod-steps',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: '3. Domácí šetření u otce',
+        col1Text: 'Pracovnice OSPOD navštíví vaše bydliště, aby ověřila vhodnost prostředí pro pobyt dítěte.\n\n**Co se hodnotí:**\n- Zda má dítě odpovídající prostor na spaní a učení (dětský koutek, postýlka, stůl podle věku).\n- Přítomnost základních potřeb (hygiena, bezpečí, hračky, věkově odpovídající knížky).\n- Všeobecná čistota a zázemí rodiny.\n\n**Doporučení:** Buďte věcní a klidní. Domácí šetření není domovní prohlídka, ale ověření, že vaše zázemí odpovídá vývojovým potřebám dítěte.',
+        col2Title: '4. Práce s protokoly a zápisy',
+        col2Text: 'Po každém jednání se sepisuje protokol. Vše, co řeknete, může být zaznamenáno a použito u soudu.\n\n**Co dělat:**\n- Protokol si před podpisem velmi důkladně přečtěte.\n- Pokud zápis překrucuje vaše slova nebo vynechává klíčová fakta, trvejte na okamžité úpravě.\n- Pokud pracovnice odmítne změnu provést, podepište zápis s vlastnoručním dopsáním věcné výhrady (např. „Podepisuji s výhradou k odstavci 3...“).',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-ospod-unfairness',
+        text: '### 5. Jak čelit neobjektivitě a podjatosti\n\nV praxi se otcové někdy setkávají s předsudky nebo neprofesionálním chováním. Pokud máte důvodné podezření na podjatost nebo závažné pochybení opatrovnické pracovnice, postupujte striktně v právních mezích:\n- **Nezvyšujte hlas a nevyhrožujte:** Jakýkoliv verbální útok či agresivita bude okamžitě zaznamenána v protokolu a použita proti vám u soudu.\n- **Komunikujte výhradně písemně:** Pokud vám pracovnice odmítá vyhovět ústně, veškeré žádosti, podněty a návrhy podávejte písemně (ideálně datovou schránkou) s jasným požadavkem na písemné vyjádření OSPOD.\n- **Podejte stížnost na postup úřadu:** Podle § 175 správního řádu můžete podat věcnou stížnost vedoucímu odboru sociálních věcí příslušného městského úřadu. Stížnost musí být absolutně zbavena emocí a musí poukazovat na konkrétní porušení povinností sociálního pracovníka (např. odmítnutí zapsat vyjádření otce, ignorování důkazů, neuskutečnění domácího šetření u matky při podezření na zanedbání péče).\n- **Požádejte o delegování případu:** V krajních případech lze požádat o delegování případu jinému pracovníkovi z důvodu závažných pochybností o nestrannosti.\n\n**Doporučené moduly:**\n- **[Právní Wiki a pojmovník](/legal-wiki)**\n- **[AI Opatrovnický průvodce](/ai-guide)**',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+  ],
+  root: { props: { title: 'OSPOD od A do Z' } },
+};
+
+export const DEFAULT_DOKUMENTACE_A_DOKAZY_PUCK_DATA = {
+  content: [
+    {
+      type: 'HeroBlock',
+      props: {
+        id: 'hero-dokumentace',
+        title: 'Metodika dokumentace a důkazů v opatrovnickém řízení',
+        description: 'Praktický návod, jak bezpečně, legálně a účinně shromažďovat, strukturovat a předkládat důkazní materiály u soudu a OSPOD v zájmu obhájení otcovské péče.',
+        badgeText: 'Metodika • Důkazní břemeno',
+        ctaText: 'Spustit Case Manager',
+        ctaUrl: '/ai-case-manager',
+        secondaryCtaText: 'Šablony podání',
+        secondaryCtaUrl: '/ke-stazeni',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-docs-philosophy',
+        text: '### 1. Zásadní princip: Důkaz slouží k ochraně dítěte, ne k pomstě\n\nJednou z nejčastějších chyb otců v opatrovnickém konfliktu je shromažďování enormního množství irelevantních, emočně zabarvených nahrávek, SMS zpráv a screenshotů s cílem „zničit“ druhého rodiče a dokázat jeho domnělou neschopnost. Tento postup se téměř vždy obrací proti otci – soudy i OSPOD takové jednání vnímají jako projev vysoké míry konfliktnosti a neschopnosti se s druhým rodičem konstruktivně dohodnout.\n\n**Správná filozofie dokazování:**\n- **Dokazujte svou rodičovskou kapacitu:** Důkazy mají prokazovat vaše stabilní zázemí, kontinuitu vaší péče, váš aktivní zájem o školní prospěch, zdraví a volný čas dítěte.\n- **Dokazujte ochotu ke spolupráci:** Prezentujte důkazy o tom, že se aktivně snažíte o dohodu, komunikujete klidně, deeskalujete konflikty a respektujete roli matky v životě dítěte.\n- **Dokazujte systémové překážky v péči:** Pokud dochází k maření styku nebo poškozování zájmů dítěte, dokumentujte tyto události věcně, systematicky a bez osobních urážek.\n\n### 2. Co přesně v opatrovnickém řízení dokumentovat?\n- **Deník péče a předávání:** Zaznamenávejte datum, přesný čas, místo a průběh každého předání dítěte. Pokud předání neproběhlo, uveďte důvod sdělený druhým rodičem (nemoc, odmítnutí) a přiložte související SMS/e-mail.\n- **Zdravotní péče:** Evidujte návštěvy u pediatrů a specialistů (kdo tam s dítětem byl, jaké byly závěry), nákupy léků, zdravotních pomůcek a plnění léčebných režimů.\n- **Vzdělávání a volný čas:** Dokumentujte komunikaci se školou/školkou (třídní schůzky, nahlížení do žákovské knížky, omlouvání absencí), úhrady kroužků, táborů a školních výletů.\n- **Písemná komunikace:** Uchovávejte e-maily a SMS zprávy. Nikdy nemažte historii zpráv. Komunikujte striktně podle BIFF metody (Brief, Informative, Friendly, Firm).',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-docs-rules',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: '3. Právní limity nahrávání hovorů',
+        col1Text: 'Záznamy rozhovorů (audio/video) jsou citlivým tématem.\n\n**Zákonný rámec:**\n- Podle občanského zákoníku je pořizování nahrávek bez vědomí osoby obecně zakázáno.\n- **Výjimka pro opatrovnické soudy:** Judikatura Nejvyššího i Ústavního soudu připouští tajné nahrávky jako důkaz u soudu, pokud jimi nelze chránit slabší stranu (dítě) jiným způsobem (např. při verbální agresi matky před dítětem, přiznání k maření styku).\n- **Varování:** Nahrávky nesmí být nikdy zveřejněny na sociálních sítích, jinak hrozí žaloba na ochranu osobnosti.',
+        col2Title: '4. Jak strukturovat záznam události',
+        col2Text: 'Pro záznam do vašeho spisu v modulu Můj případ uplatňujte tuto metodiku:\n\n- **Fakticita:** Uvádějte pouze holá fakta (kdo, co, kdy, kde).\n- **Absence emocí:** Vyhněte se adjektivům hodnotícím charakter druhého rodiče (např. místo „matka hystericky řvala“ napište „matka zvýšeným hlasem uvedla, že dítě nepředá“).\n- **Provázanost na důkazy:** Každý záznam doplňte o odkaz na SMS, e-mail, předávací protokol nebo svědecké vyjádření.',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-docs-step-by-step',
+        text: '### 5. Jak předložit důkazy soudu\n\nPři sepisování soudních vyjádření nebo návrhů dbejte na přehlednost:\n- **Chronologický přehled:** Pokud prokazujete opakované maření styku, vytvořte pro soud přehlednou tabulku s daty maření, odkazem na příslušnou SMS omluvu/neomluvu a dopadem na dítě.\n- **Číslování příloh:** Každý důkaz označte jako přílohu (např. *Příloha č. 1: E-mailová komunikace ze dne 12. 8. 2026*).\n- **Stručnost a čitelnost:** Soudce nemá čas číst stovky stran nesourodých chatů. Vyberte pouze ty nejzásadnější zprávy, které jednoznačně prokazují vaše tvrzení, a klíčové pasáže zvýrazněte.\n\n**Doporučené moduly:**\n- **[Osobní klientská složka otce](/user-portal)**\n- **[AI Case Manager spisu](/ai-case-manager)**',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+  ],
+  root: { props: { title: 'Metodika dokumentace a důkazů' } },
+};
+
+export const DEFAULT_TVRZENI_DRUHEHO_RODICE_PUCK_DATA = {
+  content: [
+    {
+      type: 'HeroBlock',
+      props: {
+        id: 'hero-tvrzeni',
+        title: 'Reakční matice na nepravdivá tvrzení druhého rodiče',
+        description: 'Jak věcně, deeskalačně, bez hněvu a s neprůstřelnými důkazy reagovat u soudu a OSPOD na typické argumenty namířené proti otcovské péči.',
+        badgeText: 'Reakční matice • Deeskalace',
+        ctaText: 'Rozbor vyjádření',
+        ctaUrl: '/ai-case-manager',
+        secondaryCtaText: 'Právní poradna',
+        secondaryCtaUrl: '/pravni-poradna',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-tvrzeni-strategy',
+        text: '### 1. Jak pracovat s tvrzeními v opatrovnickém sporu?\n\nVypjatá opatrovnická řízení často přinášejí tvrzení, která mohou otce zaskočit, zranit nebo vyprovokovat k hněvu. Reakce v afektu (křik u soudu, útočné SMS zprávy) však druhé straně slouží jako potvrzení pravdivosti jejich slov o vaší konfliktní povaze.\n\n**Zlatá pravidla deeskalační reakce:**\n- **Princip ledového klidu:** Na každé nepravdivé tvrzení reagujte věcně, stručně a výhradně pomocí faktů a listinných důkazů.\n- **Neútočte na charakter:** Místo obviňování „matka lže, protože mě chce zničit“ zvolte procesní formulaci: „Tvrzení matky neodpovídá skutečnosti, což dokládám níže uvedenými věcnými důkazy.“\n- **Zájem dítěte:** Každou reakci propojte s potřebami vašeho syna či dcery. Ukazujte, že vám jde o stabilní vývoj dítěte, nikoliv o osobní spor s bývalou partnerkou.',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-tvrzeni-matrix-1',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: 'Tvrzení A: Otec nemá čas na péči kvůli zaměstnání',
+        col1Text: '### Častý argument matky:\n„Otec pracuje dlouho do večera, často cestuje, péči by stejně musel delegovat na babičky nebo chůvy, proto střídavá péče není možná.“\n\n### Správná deeskalační reakce:\n„Mám plnou rodičovskou kapacitu i vůli o dítě pečovat. Své pracovní povinnosti jsem plně přizpůsobil potřebám dětí. Způsob zajištění péče dokládám potvrzením od zaměstnavatele o flexibilní pracovní době a možnosti práce z domova (home office) v týdnech, kdy mám děti v péči.“\n\n### Věcné důkazy:\n- Potvrzení zaměstnavatele o úpravě pracovní doby.\n- Detailní časový rozvrh dne (vyzvedávání ze školy, kroužky, příprava do školy).',
+        col2Title: 'Tvrzení B: Dítě je po návratu od otce neklidné, plačtivé a pomožuje se',
+        col2Text: '### Častý argument matky:\n„Dítě pobyt u otce psychicky nezvládá. Po návratu pláče, je agresivní nebo se pomočuje, což dokazuje, že u něj trpí.“\n\n### Správná deeskalační reakce:\n„Dítě miluje oba rodiče. Mírný neklid či pláč při předávání nebo bezprostředně po něm je podle dětské psychologie přirozeným projevem tzv. tranzitního stresu – tedy reakce na přechod mezi dvěma odlišnými rodinnými prostředími, nikoliv důsledkem špatné péče na mé straně. U mě doma se dítě chová klidně, má nastavený pravidelný režim a spánek, což doložím deníkem adaptace.“\n\n### Věcné důkazy:\n- Deník adaptace s fotografiemi dítěte v klidném stavu.\n- Odkaz na psychologické studie o tranzitním stresu v naší knihovně.\n- Návrh na deeskalaci předávání (např. předávání přímo přes školu/školku bez přímého střetu rodičů).',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-tvrzeni-matrix-2',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: 'Tvrzení C: Dítě je příliš malé (kojenec/batole) na střídání',
+        col1Text: '### Častý argument matky:\n„U takto malého dítěte je střídavá péče vyloučena, dítě je fixováno výhradně na matku a nocování u otce by narušilo jeho zdravý vývoj.“\n\n### Správná deeskalační reakce:\n„Podle moderních výzkumů dětské psychologie (např. konsenzuální studie prof. Warshaka podepsaná 110 mezinárodními odborníky) je pro zdravý vývoj dítěte klíčové budování bezpečné citové vazby (attachmentu) k oběma rodičům od útlého věku. To vyžaduje pravidelný, častý kontakt včetně přenocování, aby otec nebyl vnímán jen jako víkendový návštěvník. Navrhuji asymetrický model péče s postupným rozšiřováním styku podle věku dítěte.“\n\n### Věcné důkazy:\n- Odkaz na odborné studie o péči o nejmenší děti.\n- Návrh schématu postupného rozšiřování péče (např. 2-2-3 dny, postupné navyšování nocí).',
+        col2Title: 'Tvrzení D: Otec se o dítě dříve nestaral, dělala vše matka',
+        col2Text: '### Častý argument matky:\n„Celou dobu se o dítě starala výhradně matka, otec se věnoval kariéře a s dítětem neumí zacházet, neumí uvařit, nezná jeho režim.“\n\n### Správná deeskalační reakce:\n„Během společného soužití jsme měli s partnerkou rozdělené role pro ekonomické zajištění rodiny, což bylo naším společným rozhodnutím. To však nijak nesnižuje mou rodičovskou způsobilost. S potřebami, stravováním i denním režimem dítěte jsem plně obeznámen. Od rozchodu o dítě samostatně a řádně pečuji, což dokládají zprávy z pediatrie a školy.“\n\n### Věcné důkazy:\n- Doklad o návštěvě lékaře s dítětem v mé péči.\n- Potvrzení o zaplacení obědů, kroužků či nákupu školních potřeb.\n- Svědectví učitelů, kroužkových vedoucích o komunikaci s otcem.',
+      },
+    },
+    {
+      type: 'CallToAction',
+      props: {
+        id: 'cta-tvrzeni-ai',
+        title: 'Máte před sebou vyjádření plné nepravdivých tvrzení?',
+        description: 'Vložte text vyjádření do AI Case Managera. Systém zanalyzuje jednotlivá tvrzení a připraví vám věcnou, strukturovanou a deeskalující reakční osnovu podloženou judikaturou a psychologickými argumenty.',
+        buttonText: 'Spustit analýzu vyjádření',
+        buttonUrl: '/ai-case-manager',
+        variant: 'primary',
+      },
+    },
+  ],
+  root: { props: { title: 'Reakční matice na tvrzení' } },
+};
+
+export const DEFAULT_DITE_V_KONFLIKTU_PUCK_DATA = {
+  content: [
+    {
+      type: 'HeroBlock',
+      props: {
+        id: 'hero-dite-v-konfliktu',
+        title: 'Dítě uprostřed rodičovského konfliktu',
+        description: 'Psychologická doporučení a procesní postupy pro ochranu vašeho dítěte před syndromem zavrženého rodiče, konfliktem loajality a dopady rozchodu na jeho psychiku.',
+        badgeText: 'Psychologie dítěte • Zájem nezletilého',
+        ctaText: 'Studie o střídavé péči',
+        ctaUrl: '/knihovna-studii',
+        secondaryCtaText: 'Komunitní podpora',
+        secondaryCtaUrl: '/podpora',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-dite-conflict-types',
+        text: '### 1. Konflikt loajality — největší tichá hrozba\n\nKonflikt loajality je psychologický stav, do kterého je dítě uvrženo, když má pocit, že projev lásky, náklonnosti nebo radosti s jedním rodičem znamená zradu druhého rodiče. Tento stav je pro dětskou psychiku extrémně zatěžující a je hlavním zdrojem psychosomatických potíží dětí po rozchodu (bolesti hlavy, bříška, noční pomočování, zhoršení školního prospěchu, sociální úzkosti).\n\n**Jak chránit dítě před konfliktem loajality:**\n- **Aktivně dítěti dovolte mít rádo druhého rodiče:** Říkejte mu věty jako: „Jsem moc rád, že ses měl u maminky hezky. Maminka tě má moc ráda a já jsem rád, když jste spolu šťastní.“ Dítě potřebuje slyšet, že jeho láska k matce vás nezraní.\n- **Nikdy nekritizujte matku před dítětem:** Vyhněte se jakýmkoliv negativním komentářům, povzdechům nebo ironickým narážkám na adresu druhého rodiče. Dítě vnímá kritiku matky jako kritiku poloviny své vlastní identity, což vede k hlubokému narušení sebeúcty.\n- **Nepoužívejte dítě jako komunikační kanál:** Nedomlouvejte předávání, platby ani soudní záležitosti skrze dítě (např. „řekni mámě, že...“). Komunikujte výhradně přímo s matkou.\n\n### 2. Jak s dětmi bezpečně mluvit o rozchodu a soudu?\n- **Odpovídejte pravdivě, ale přiměřeně věku:** Děti nepotřebují a nesmí znát detaily o nevěře, financích, rozdělení majetku nebo o tom, kdo podal jakou žalobu. Stačí ubezpečení: „My dospělí už spolu nebudeme bydlet, protože se naše životní cesty rozešly, ale oba tě máme nejvíc na světě rádi a na tom se nikdy nic nezmění.“\n- **Netlačte na informace:** Po návratu dítěte od druhého rodiče se vyhněte výslechům typu „Co jste dělali? S kým tam máma byla? Kdo u vás spal?“. Nechte dítě vyprávět samovolně. Pokud vyprávět nechce, respektujte to. Dítě se nesmí cítit jako vyzvědač.\n- **Ujistěte dítě o jeho nevinně:** Děti mají často sklon dávat rozpad rodiny za vinu sobě (např. „kdybych nezlobil, táta by neodešel“). Opakovaně jim zdůrazňujte, že rozchod je záležitost dospělých a ony za nic nemohou.',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+    {
+      type: 'ColumnsBlock',
+      props: {
+        id: 'cols-dite-alienation',
+        columnsCount: '2',
+        ratio: 'equal',
+        gap: 'lg',
+        col1Title: '3. Syndrom odcizení rodiče (PAS)',
+        col1Text: 'Syndrom odcizení rodiče (Parental Alienation Syndrome) nastává při systematickém programování dítěte jedním rodičem proti druhému.\n\n**Varovné signály:**\n- Dítě používá nepřirozený, dospělý jazyk k popisu chyb otce.\n- Bezprecedentní, skoková změna chování z láskyplného vztahu na absolutní odmítání.\n- Dítě vykazuje tzv. „fenomén nezávislého myslitele“ (tvrdí, že otce nechce vidět ze své vlastní vůle, ale nedokáže uvést žádný konkrétní důvod).\n\n**Jak reagovat:** Vyhledejte okamžitě pomoc dětského psychologa se specializací na opatrovnické spory a informujte písemně OSPOD.',
+        col2Title: '4. Komunikace se školou a lékaři',
+        col2Text: 'Nezapomínejte, že jako rodič máte plná rodičovská práva (pokud nebyla soudem omezena, což je extrémně vzácné).\n\n**Co uplatnit v praxi:**\n- **Škola:** Písemně požádejte vedení školy o zřízení vlastního přístupu do elektronického systému (Bakaláři apod.) a o zasílání informací o prospěchu a chování.\n- **Pediatr:** Zašlete dětskému lékaři dopis s informací, že požadujete být informován o všech zdravotních prohlídkách, očkováních a plánovaných zákrocích vašeho dítěte.\n- **Účast:** Choďte na třídní schůzky a doprovázejte dítě k lékaři osobně.',
+      },
+    },
+    {
+      type: 'TextBlock',
+      props: {
+        id: 'text-dite-scientific-basis',
+        text: '### 5. Vědecky podložená fakta o střídavé péči\n\nDesítky let výzkumů v oblasti vývojové psychologie potvrzují, že střídavá péče (pokud jsou oba rodiče způsobilí a bydliště nejsou extrémně vzdálená) přináší dětem nejlepší dlouhodobé výsledky. Děti ve střídavé péči vykazují srovnatelnou úroveň psychosociálního zdraví, sebevědomí a školních výsledků jako děti z úplných rodin, a výrazně lepší než děti ve výhradní péči jednoho rodiče.\n\n**Klíčové studie k prostudování:**\n- **Warshak (2014) - Nocování nejmenších dětí:** Analýza potvrzující, že nocování u otce je bezpečné a prospěšné i pro kojence a batolata, neboť posiluje citovou vazbu k obou rodičům.\n- **Nielsen (2018) - Analýza 60 studií:** Komplexní přehled dokládající, že děti ve společné péči mají lepší vztahy s oběma rodiči a méně psychických potíží bez ohledu na úroveň meziričovského konfliktu.\n\n**Doporučené moduly:**\n- **[Knihovna vědeckých studií](/knihovna-studii)**\n- **[Vzdelavací sekce a kvízy](/vzdelavani)**',
+        align: 'left',
+        maxWidth: 'xl',
+      },
+    },
+  ],
+  root: { props: { title: 'Dítě uprostřed konfliktu' } },
+};
+
 export const LEGAL_PAGES_PUCK_DATA: Record<string, any> = {
   'home': DEFAULT_HOMEPAGE_PUCK_DATA,
   'agenda': DEFAULT_AGENDA_PUCK_DATA,
@@ -505,5 +779,18 @@ export const LEGAL_PAGES_PUCK_DATA: Record<string, any> = {
   'pripadova-databaze': DEFAULT_CASE_LAW_PUCK_DATA,
   'dokumenty': DEFAULT_DOCUMENTS_PUCK_DATA,
   'ke-stazeni': DEFAULT_DOCUMENTS_PUCK_DATA,
+  'rozchod-a-dite': DEFAULT_ROZCHOD_A_DITE_PUCK_DATA,
+  'ospod-a-z': DEFAULT_OSPOD_A_Z_PUCK_DATA,
+  'dokumentace-a-dokazy': DEFAULT_DOKUMENTACE_A_DOKAZY_PUCK_DATA,
+  'tvrzeni-druheho-rodice': DEFAULT_TVRZENI_DRUHEHO_RODICE_PUCK_DATA,
+  'dite-v-konfliktu': DEFAULT_DITE_V_KONFLIKTU_PUCK_DATA,
+  
+  // Phase 7.2 Practical Content Expansion Pages
+  'co-nedelat': DEFAULT_CO_NEDELAT_HUB_PUCK_DATA,
+  ...PRACTICAL_CO_NEDELAT_PAGES,
+  ...PRACTICAL_DITE_V_KONFLIKTU_PAGES,
+  ...PRACTICAL_TVRZENI_PAGES,
+  ...PRACTICAL_OSPOD_PAGES,
+  ...PRACTICAL_DOKUMENTACE_PAGES,
 };
 
