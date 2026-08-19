@@ -6,6 +6,8 @@ import { SeoHead } from './SeoHead';
 import { PageRender } from '../builder/PageRender';
 import { SchemaDrivenRenderer } from '../common/SchemaDrivenRenderer';
 import { fetchCmsPublic } from '../../lib/cmsCache';
+import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../../puck/defaultPageData';
+import { normalizePuckData } from '../../puck/config';
 import {
   FileText,
   ArrowRight,
@@ -125,17 +127,62 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
     );
   }
 
+  // Helper to convert plain string/markdown into safe Puck structure
+  const convertTextToPuckData = (title: string, pageSlug: string, rawText: string) => {
+    const cleanText = rawText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || `Obsah stránky ${title}.`;
+    return normalizePuckData({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: `hero-${pageSlug}`,
+            title: title || 'Název stránky',
+            description: cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText,
+            buttonText: 'Zobrazit více',
+            buttonUrl: `#${pageSlug}`,
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: `text-${pageSlug}`,
+            text: rawText,
+            align: 'left',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: `cta-${pageSlug}`,
+            title: `Potřebujete poradit v oblasti ${title}?`,
+            description: 'Navštivte naši bezplatnou poradnu nebo využijte AI Opatrovnického asistenta.',
+            buttonText: 'Přejít do poradny',
+            buttonUrl: '/advice',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: { props: { title: title || 'Stránka' } },
+    });
+  };
+
   // Parse Puck content if available
-  let puckData = null;
+  let puckData: any = null;
   try {
     const raw = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
-    if (raw && typeof raw === 'object' && Array.isArray(raw.content) && raw.root && typeof raw.root.props === 'object') {
-      puckData = raw;
-    } else {
-      console.warn('Puck data exists but has invalid structure for page:', slug);
+    if (raw && typeof raw === 'object' && Array.isArray(raw.content)) {
+      puckData = normalizePuckData(raw);
+    } else if (slug === 'home' || slug === 'domu') {
+      puckData = normalizePuckData(DEFAULT_HOMEPAGE_PUCK_DATA);
+    } else if (typeof page.content === 'string' && page.content.trim()) {
+      puckData = convertTextToPuckData(page.title, slug, page.content);
     }
   } catch (e) {
-    console.warn('Failed to parse Puck data for page:', slug, e);
+    if (slug === 'home' || slug === 'domu') {
+      puckData = normalizePuckData(DEFAULT_HOMEPAGE_PUCK_DATA);
+    } else if (page?.content && typeof page.content === 'string' && page.content.trim()) {
+      puckData = convertTextToPuckData(page.title, slug, page.content);
+    }
   }
 
   // HARDENED FALLBACK LOGIC:

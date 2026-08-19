@@ -16,6 +16,30 @@ import { ImageAdapter, ImageAdapterProps } from './adapters/ImageAdapter';
 import { ColumnsAdapter, ColumnsAdapterProps } from './adapters/ColumnsAdapter';
 import { FaqFeedAdapter, FaqFeedAdapterProps } from './adapters/FaqFeedAdapter';
 import { ArticlesFeedAdapter, ArticlesFeedAdapterProps } from './adapters/ArticlesFeedAdapter';
+import {
+  SituationSelectorAdapter,
+  SituationSelectorProps,
+  ProcessTimelineAdapter,
+  ProcessTimelineProps,
+  FeatureGridAdapter,
+  FeatureGridProps,
+  LifeSituationsGridAdapter,
+  LifeSituationsGridProps,
+  GuideSectionAdapter,
+  GuideSectionProps,
+  WorkspaceSectionAdapter,
+  WorkspaceSectionProps,
+  AiSectionAdapter,
+  AiSectionProps,
+  KnowledgeCenterAdapter,
+  KnowledgeCenterProps,
+  PrincipleSectionAdapter,
+  PrincipleSectionProps,
+  CtaGridAdapter,
+  CtaGridProps,
+  FooterCtaAdapter,
+  FooterCtaProps,
+} from './adapters/HomepageAdapters';
 
 export function normalizePuckData(data: any): Data {
   if (!data || typeof data !== 'object') {
@@ -50,6 +74,17 @@ export function normalizePuckData(data: any): Data {
 
 export type Props = {
   HeroBlock: HeroAdapterProps;
+  SituationSelectorBlock: SituationSelectorProps;
+  ProcessTimelineBlock: ProcessTimelineProps;
+  FeatureGridBlock: FeatureGridProps;
+  LifeSituationsGridBlock: LifeSituationsGridProps;
+  GuideSectionBlock: GuideSectionProps;
+  WorkspaceSectionBlock: WorkspaceSectionProps;
+  AiSectionBlock: AiSectionProps;
+  KnowledgeCenterBlock: KnowledgeCenterProps;
+  PrincipleSectionBlock: PrincipleSectionProps;
+  CtaGridBlock: CtaGridProps;
+  FooterCtaBlock: FooterCtaProps;
   TextBlock: TextAdapterProps;
   CallToAction: CtaAdapterProps;
   ColumnsBlock: ColumnsAdapterProps;
@@ -65,23 +100,269 @@ export const puckConfig: Config<Props> = {
     HeroBlock: {
       fields: {
         title: { type: 'text' },
+        subtitle: { type: 'text' },
         description: { type: 'textarea' },
         badgeText: { type: 'text' },
+        highlightBadge: { type: 'text' },
         ctaText: { type: 'text' },
         ctaUrl: { type: 'text' },
         secondaryCtaText: { type: 'text' },
         secondaryCtaUrl: { type: 'text' },
       },
       defaultProps: {
-        title: 'Táta má právo. Dítě má právo na oba rodiče.',
-        description: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče.',
+        title: 'Táta má právo',
+        subtitle: 'Pomoc, když se rozpadá rodina. Podpora, když nechcete přijít o své dítě.',
+        description: 'Rozchod rodičů nemusí znamenat konec vztahu otce s dítětem.\n\nNa jednom místě získáte přehled, co můžete udělat, jaká máte práva, jak postupovat vůči soudu a OSPOD, jak si připravit podklady a jak si dlouhodobě udržet přehled o péči o své dítě.',
         badgeText: 'Portál pro právní a psychologickou oporu otců v ČR',
-        ctaText: 'Prozkoumat poradnu',
-        ctaUrl: '#poradna',
-        secondaryCtaText: 'Přehled modulů',
-        secondaryCtaUrl: '#moduly',
+        highlightBadge: 'Nejsme proti matkám. Jsme pro dítě a jeho právo mít oba rodiče.',
+        ctaText: 'Začít podle mé situace',
+        ctaUrl: '#situace',
+        secondaryCtaText: 'Prozkoumat portál',
+        secondaryCtaUrl: '#sekce',
       },
       render: (props) => <HeroAdapter {...props} />,
+    },
+
+    SituationSelectorBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        cards: {
+          type: 'array',
+          getItemSummary: (item) => item.title || 'Karta',
+          arrayFields: {
+            title: { type: 'text' },
+            description: { type: 'textarea' },
+            ctaText: { type: 'text' },
+            ctaUrl: { type: 'text' },
+            icon: { type: 'text' },
+            active: {
+              type: 'select',
+              options: [
+                { label: 'Aktivní', value: 'true' },
+                { label: 'Skrytá', value: 'false' },
+              ],
+            },
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Nevíte, kde začít?',
+        subtitle: 'Vyberte, co právě řešíte.',
+        cards: [],
+      },
+      render: (props) => <SituationSelectorAdapter {...props} />,
+    },
+
+    ProcessTimelineBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        description: { type: 'textarea' },
+        steps: {
+          type: 'array',
+          getItemSummary: (item, idx) => item.title || `Krok ${(idx ?? 0) + 1}`,
+          arrayFields: {
+            stepNumber: { type: 'text' },
+            title: { type: 'text' },
+            description: { type: 'textarea' },
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Vaše dítě. Vaše péče. Vaše práva.',
+        subtitle: 'Portál, který spojuje informace, dokumenty a praktickou pomoc.',
+        description: 'Táta má právo není jen databáze článků. Je to nástroj, který má otci pomoci projít celou cestou:',
+        steps: [],
+      },
+      render: (props) => <ProcessTimelineAdapter {...props} />,
+    },
+
+    FeatureGridBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        features: {
+          type: 'array',
+          getItemSummary: (item) => item.title || 'Funkce',
+          arrayFields: {
+            title: { type: 'text' },
+            description: { type: 'textarea' },
+            ctaText: { type: 'text' },
+            ctaUrl: { type: 'text' },
+            icon: { type: 'text' },
+            active: {
+              type: 'select',
+              options: [
+                { label: 'Aktivní', value: 'true' },
+                { label: 'Skrytá', value: 'false' },
+              ],
+            },
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Co můžete na portálu dělat?',
+        subtitle: 'Komplexní ekosystém nástrojů pro otce',
+        features: [],
+      },
+      render: (props) => <FeatureGridAdapter {...props} />,
+    },
+
+    LifeSituationsGridBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        situations: {
+          type: 'array',
+          getItemSummary: (item) => item.title || 'Situace',
+          arrayFields: {
+            title: { type: 'text' },
+            description: { type: 'textarea' },
+            ctaText: { type: 'text' },
+            ctaUrl: { type: 'text' },
+            icon: { type: 'text' },
+            active: {
+              type: 'select',
+              options: [
+                { label: 'Aktivní', value: 'true' },
+                { label: 'Skrytá', value: 'false' },
+              ],
+            },
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Řešte svou situaci podle toho, co právě prožíváte',
+        subtitle: 'Přímé vstupy do tematických modulů',
+        situations: [],
+      },
+      render: (props) => <LifeSituationsGridAdapter {...props} />,
+    },
+
+    GuideSectionBlock: {
+      fields: {
+        title: { type: 'text' },
+        text: { type: 'textarea' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Nevíte, co řešit jako první?',
+        text: 'Použijte našeho průvodce. Odpovězte na několik jednoduchých otázek a portál vám sestaví orientační seznam oblastí, které mohou být pro vaši situaci důležité.',
+        ctaText: 'Spustit průvodce',
+        ctaUrl: '/ai-guide',
+      },
+      render: (props) => <GuideSectionAdapter {...props} />,
+    },
+
+    WorkspaceSectionBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        itemsText: { type: 'textarea' },
+        note: { type: 'text' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Vaše dokumenty nemusí být rozházené',
+        subtitle: 'Vytvořte si vlastní opatrovnickou složku',
+        itemsText: 'Rozhodnutí soudu\nNávrhy a vyjádření\nKomunikace rodičů\nDůležité události\nDůkazní materiály\nTermíny jednání\nÚdaje o dítěti\nPlán péče\nDůležitá judikatura\nVlastní poznámky',
+        note: 'Jednou zadané údaje nemusíte zbytečně přepisovat do dalších částí portálu.',
+        ctaText: 'Otevřít Moji pracovnu',
+        ctaUrl: '/user-portal',
+      },
+      render: (props) => <WorkspaceSectionAdapter {...props} />,
+    },
+
+    AiSectionBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        capabilitiesText: { type: 'textarea' },
+        disclaimer: { type: 'textarea' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Nechte si pomoci s orientací',
+        subtitle: 'AI průvodce',
+        capabilitiesText: 'vytvořit stručné shrnutí rozsudku či podání\nvytáhnout důležité údaje a lhůty\nvytvořit seznam otázek na jednání OSPOD / soudu\nnajít související právní témata\npřipravit věcné podklady pro advokáta\nporovnat informace v různých dokumentech\nvysvětlit složitý právní text srozumitelněji',
+        disclaimer: 'AI nenahrazuje advokáta ani soud. Je to nástroj pro orientaci, organizaci informací a přípravu.',
+        ctaText: 'Vyzkoušet AI průvodce',
+        ctaUrl: '/ai-guide',
+      },
+      render: (props) => <AiSectionAdapter {...props} />,
+    },
+
+    KnowledgeCenterBlock: {
+      fields: {
+        title: { type: 'text' },
+        text: { type: 'textarea' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Ověřené informace místo chaosu',
+        text: 'Cílem je, aby otec nemusel hledat odpověď na deseti různých místech.',
+        ctaText: 'Prozkoumat znalostní centrum',
+        ctaUrl: '/legal-wiki',
+      },
+      render: (props) => <KnowledgeCenterAdapter {...props} />,
+    },
+
+    PrincipleSectionBlock: {
+      fields: {
+        title: { type: 'text' },
+        highlightTitle: { type: 'text' },
+        body: { type: 'textarea' },
+      },
+      defaultProps: {
+        title: 'Co je důležité?',
+        highlightTitle: 'Dítě není předmět sporu.',
+        body: 'Rozchod rodičů je situace dospělých.\n\nPro dítě je ale zásadní, aby mělo bezpečný vztah k oběma rodičům, pokud jsou oba rodiče schopni o něj řádně pečovat.\n\nProto nechceme stavět portál na boji: otec proti matce, ale na principu: dítě + oba rodiče + odpovědná péče.',
+      },
+      render: (props) => <PrincipleSectionAdapter {...props} />,
+    },
+
+    CtaGridBlock: {
+      fields: {
+        title: { type: 'text' },
+        buttons: {
+          type: 'array',
+          getItemSummary: (item) => item.text || 'Tlačítko',
+          arrayFields: {
+            text: { type: 'text' },
+            url: { type: 'text' },
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Začněte tam, kde právě jste',
+        buttons: [],
+      },
+      render: (props) => <CtaGridAdapter {...props} />,
+    },
+
+    FooterCtaBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'text' },
+        text: { type: 'textarea' },
+        legalDisclaimer: { type: 'textarea' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Táta má právo',
+        subtitle: 'Informace. Nástroje. Orientace. Podpora.',
+        text: 'Projekt vzniká s cílem pomáhat rodičům lépe se orientovat v situacích spojených s rozchodem, péčí o dítě a opatrovnickým řízením.',
+        legalDisclaimer: 'Informace na portálu mají informační charakter a nenahrazují individuální právní služby.',
+        ctaText: 'Začít',
+        ctaUrl: '/sos-plan',
+      },
+      render: (props) => <FooterCtaAdapter {...props} />,
     },
 
     TextBlock: {

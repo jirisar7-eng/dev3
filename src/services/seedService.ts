@@ -1,6 +1,7 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
 import { NAVIGATION_ITEMS } from '../config/navigation';
 import { prisma, isPrismaAvailable } from '../db/prisma.ts';
+import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { hash as argonHash } from '@node-rs/argon2';
@@ -564,9 +565,9 @@ export async function seedDatabaseIfEmpty() {
     // Pages
     const pagesToSeed = [
       {
-        slug: 'domu',
+        slug: 'home',
         title: 'Táta má právo • Hlavní strana',
-        content: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.',
+        content: JSON.stringify(DEFAULT_HOMEPAGE_PUCK_DATA),
         published: true,
         seoTitle: 'Táta má právo | Opatrovnictví & Dítě v rozvodu',
         seoDescription: 'Komplexní podpora otců v opatrovnickém řízení se zaměřením na nejlepší zájem dítěte.',
@@ -910,11 +911,19 @@ export async function seedDatabaseIfEmpty() {
     ];
 
     for (const p of pagesToSeed) {
-      await prisma.page.upsert({
-        where: { slug: p.slug },
-        update: {},
-        create: p,
-      });
+      if (p.slug === 'home' || p.slug === 'domu') {
+        await prisma.page.upsert({
+          where: { slug: p.slug },
+          update: { content: p.content, title: p.title },
+          create: p,
+        });
+      } else {
+        await prisma.page.upsert({
+          where: { slug: p.slug },
+          update: {},
+          create: p,
+        });
+      }
     }
 
     // Articles

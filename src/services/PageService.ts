@@ -1,5 +1,6 @@
 import { getPrismaClient, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
+import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 
 export interface ModulePageDef {
   slug: string;
@@ -64,6 +65,7 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'sponzori', title: 'Partneři a sponzoři', description: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.', category: 'Systém' },
   { slug: 'kodex-dobrovolnika', title: 'Dobrovolnický kodex', description: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS.', category: 'Systém' },
   { slug: 'zasady-ochrany-osobnich-udaju', title: 'Zásady ochrany osobních údajů (GDPR)', description: 'Zásady zpracování a ochrany osobních údajů, správa souhlasů a práva subjektů údajů podle Nařízení (EU) 2016/679.', category: 'Systém' },
+  { slug: 'home', title: 'Táta má právo • Hlavní strana', description: 'Hlavní veřejná stránka portálu Táta má právo.', category: 'Systém' },
 ];
 
 export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {
@@ -71,7 +73,7 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
     const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
-    const defaultPuckData = mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
+    const defaultPuckData = mod.slug === 'domu' || mod.slug === 'home' ? DEFAULT_HOMEPAGE_PUCK_DATA : mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
       content: [
         {
           type: 'HeroBlock',
@@ -439,12 +441,22 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
           });
           createdCount++;
         } else {
-          await prismaClient.page.update({
-            where: { slug: mod.slug },
-            data: {
-              title: mod.title,
-            },
-          });
+          if (mod.slug === 'home' || mod.slug === 'domu') {
+            await prismaClient.page.update({
+              where: { slug: mod.slug },
+              data: {
+                title: mod.title,
+                content: DEFAULT_HOMEPAGE_PUCK_DATA,
+              },
+            });
+          } else {
+            await prismaClient.page.update({
+              where: { slug: mod.slug },
+              data: {
+                title: mod.title,
+              },
+            });
+          }
         }
       } catch (err) {
         console.warn(`[Ensure Module Pages] Prisma sync error pro ${mod.slug}:`, err);
@@ -465,6 +477,8 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
       if (!prismaClient) {
         createdCount++;
       }
+    } else if (mod.slug === 'home' || mod.slug === 'domu') {
+      existingInStore.content = DEFAULT_HOMEPAGE_PUCK_DATA as any;
     }
   }
 
@@ -487,6 +501,10 @@ export async function convertAllPagesToPuck(): Promise<{ success: boolean; conve
 
   // Helper to convert plain string/HTML/legacy content into Puck Data
   const convertToPuckFormat = (title: string, slug: string, rawContent: any) => {
+    if (slug === 'home' || slug === 'domu') {
+      return DEFAULT_HOMEPAGE_PUCK_DATA;
+    }
+
     let text = typeof rawContent === 'string' ? rawContent : '';
     if (typeof rawContent === 'object' && rawContent !== null) {
       if (Array.isArray(rawContent.content)) {

@@ -180,6 +180,117 @@ export class StateAdminApiClient {
   }
 
   /**
+   * Execute secure server-side SPARQL query against NKOD (https://data.gov.cz/sparql)
+   */
+  public static async executeSparqlQuery(
+    source: StateAdminSourceCategory,
+    sparqlQuery: string,
+    timeoutMs: number = 10000
+  ): Promise<{ status: number; data: any; durationMs: number; error?: string }> {
+    const sparqlEndpoint = 'https://data.gov.cz/sparql';
+    const startTime = Date.now();
+
+    // 1. Browser Defense
+    if (typeof window !== 'undefined') {
+      const durationMs = Date.now() - startTime;
+      this.recordAudit(source, sparqlEndpoint, 403, durationMs, false, 0, 'Browser execution forbidden (SSRF defense)');
+      return {
+        status: 403,
+        data: null,
+        durationMs,
+        error: 'CLIENT_EXECUTION_FORBIDDEN: SPARQL queries must be executed exclusively server-side.',
+      };
+    }
+
+    // 2. SSRF Protection
+    if (!this.isUrlSsrfSafe(sparqlEndpoint)) {
+      const durationMs = Date.now() - startTime;
+      this.recordAudit(source, sparqlEndpoint, 400, durationMs, false, 0, 'SSRF validation failed for SPARQL endpoint');
+      return {
+        status: 400,
+        data: null,
+        durationMs,
+        error: 'INVALID_URL_SSRF_BLOCKED: SPARQL endpoint failed security validation.',
+      };
+    }
+
+    // 3. Rate Limit Check
+    if (!this.checkRateLimit(source)) {
+      const durationMs = Date.now() - startTime;
+      this.recordAudit(source, sparqlEndpoint, 429, durationMs, false, 0, 'Rate limit exceeded');
+      return {
+        status: 429,
+        data: null,
+        durationMs,
+        error: 'RATE_LIMIT_EXCEEDED: Maximum requests per minute exceeded for connector.',
+      };
+    }
+
+    // 4. Execute HTTP POST to SPARQL endpoint
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(sparqlEndpoint, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
+          Accept: 'application/sparql-results+json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `query=${encodeURIComponent(sparqlQuery)}`,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+      const durationMs = Date.now() - startTime;
+
+      if (!response.ok) {
+        this.recordAudit(source, sparqlEndpoint, response.status, durationMs, false, 0, `SPARQL HTTP ${response.status}`);
+        return {
+          status: response.status,
+          data: null,
+          durationMs,
+          error: `UPSTREAM_HTTP_ERROR_${response.status}`,
+        };
+      }
+
+      const json = await response.json().catch(() => null);
+      if (!json || !json.results || !Array.isArray(json.results.bindings)) {
+        this.recordAudit(source, sparqlEndpoint, 200, durationMs, false, 0, 'Invalid SPARQL JSON bindings response');
+        return {
+          status: 422,
+          data: null,
+          durationMs,
+          error: 'INVALID_SPARQL_RESPONSE: Response does not contain valid SPARQL result bindings.',
+        };
+      }
+
+      const bindings = json.results.bindings;
+      this.recordAudit(source, sparqlEndpoint, 200, durationMs, true, bindings.length);
+      return {
+        status: 200,
+        data: bindings,
+        durationMs,
+      };
+    } catch (err: any) {
+      clearTimeout(timer);
+      const durationMs = Date.now() - startTime;
+      const isTimeout = err.name === 'AbortError';
+      const status = isTimeout ? 504 : 500;
+      const errorMsg = isTimeout ? 'TIMEOUT: SPARQL endpoint failed to respond within limit.' : err.message || 'Fetch failed';
+
+      this.recordAudit(source, sparqlEndpoint, status, durationMs, false, 0, errorMsg);
+      return {
+        status,
+        data: null,
+        durationMs,
+        error: isTimeout ? 'UPSTREAM_TIMEOUT' : `SPARQL_FETCH_ERROR: ${errorMsg}`,
+      };
+    }
+  }
+
+  /**
    * Audit Logger
    */
   private static recordAudit(

@@ -1,5 +1,6 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
 import { NAVIGATION_ITEMS } from '../config/navigation';
+import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 import {
   User,
   TextItem,
@@ -521,6 +522,17 @@ const defaultPageSections: PageSection[] = [
 ];
 
 const defaultPages: Page[] = [
+  {
+    id: 'pg-home',
+    slug: 'home',
+    title: 'Táta má právo • Hlavní strana',
+    content: DEFAULT_HOMEPAGE_PUCK_DATA as any,
+    published: true,
+    seoTitle: 'Táta má právo | Opatrovnictví & Dítě v rozvodu',
+    seoDescription: 'Komplexní podpora otců v opatrovnickém řízení se zaměřením na nejlepší zájem dítěte.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
 
   {
     id: 'pg-batch3-krizova-pomoc',
@@ -657,9 +669,9 @@ const defaultPages: Page[] = [
 
   {
     id: 'pg-1',
-    slug: 'domu',
+    slug: 'home',
     title: 'Táta má právo • Hlavní strana',
-    content: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.',
+    content: JSON.stringify(DEFAULT_HOMEPAGE_PUCK_DATA),
     published: true,
     seoTitle: 'Táta má právo | Opatrovnictví & Dítě v rozvodu',
     seoDescription: 'Komplexní podpora otců v opatrovnickém řízení se zaměřením na nejlepší zájem dítěte.',
@@ -2171,6 +2183,67 @@ class MemoryStore {
   categories: Category[] = [...defaultCategories];
   pageSections: PageSection[] = [...defaultPageSections];
   pages: Page[] = [...defaultPages];
+
+  constructor() {
+    this.pages = this.pages.map((p) => {
+      if (p.slug === 'home' || p.slug === 'domu') {
+        return {
+          ...p,
+          content: DEFAULT_HOMEPAGE_PUCK_DATA as any,
+        };
+      }
+
+      let isPuck = false;
+      let rawObj: any = p.content;
+      if (typeof p.content === 'string') {
+        try {
+          rawObj = JSON.parse(p.content);
+          if (rawObj && typeof rawObj === 'object' && Array.isArray(rawObj.content)) {
+            isPuck = true;
+          }
+        } catch (e) {
+          isPuck = false;
+        }
+      } else if (p.content && typeof p.content === 'object' && Array.isArray((p.content as any).content)) {
+        isPuck = true;
+      }
+
+      if (isPuck) {
+        return p;
+      }
+
+      const text = typeof p.content === 'string' ? p.content : JSON.stringify(p.content);
+      const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || `Obsah stránky ${p.title}.`;
+      const puckData = {
+        content: [
+          {
+            type: 'HeroBlock',
+            props: {
+              id: `hero-${p.slug}`,
+              title: p.title || 'Název stránky',
+              description: cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText,
+              buttonText: 'Zobrazit více',
+              buttonUrl: `#${p.slug}`,
+            },
+          },
+          {
+            type: 'TextBlock',
+            props: {
+              id: `text-${p.slug}`,
+              text: text,
+              align: 'left',
+            },
+          },
+        ],
+        root: { props: { title: p.title || 'Stránka' } },
+      };
+
+      return {
+        ...p,
+        content: puckData as any,
+      };
+    });
+  }
   articles: Article[] = [...defaultArticles];
   faqs: Faq[] = [...defaultFaqs];
   navItems: NavItem[] = [...defaultNavItems];
