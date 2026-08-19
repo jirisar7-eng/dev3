@@ -2,6 +2,7 @@ import { EntityType } from '@prisma/client';
 import { dbStore } from './dbStore';
 import { Subjekt, Review } from '../types';
 import { prisma } from '../db/prisma';
+import { AresApiClient, AresVerifyResult } from './ares';
 
 export class SubjektService {
   /**
@@ -457,6 +458,15 @@ export class SubjektService {
 
       return newReview;
     }
+  }
+
+  /**
+   * Verifies an economic entity by IČO using official server-side ARES REST API v3.
+   * Pure read-only verification: does not modify or create unapproved database records.
+   */
+  async verifyIcoWithAres(ico: string | number): Promise<AresVerifyResult> {
+    const aresClient = new AresApiClient();
+    return await aresClient.fetchSubjectByIco(ico);
   }
 
   /**
