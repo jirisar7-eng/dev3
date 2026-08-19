@@ -564,7 +564,7 @@ export async function seedDatabaseIfEmpty() {
     // Pages
     const pagesToSeed = [
       {
-        slug: 'domu',
+        slug: 'home',
         title: 'Táta má právo • Hlavní strana',
         content: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.',
         published: true,

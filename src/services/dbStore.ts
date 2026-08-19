@@ -658,7 +658,7 @@ const defaultPages: Page[] = [
 
   {
     id: 'pg-1',
-    slug: 'domu',
+    slug: 'home',
     title: 'Táta má právo • Hlavní strana',
     content: JSON.stringify(DEFAULT_HOMEPAGE_PUCK_DATA),
     published: true,

@@ -65,7 +65,7 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'sponzori', title: 'Partneři a sponzoři', description: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.', category: 'Systém' },
   { slug: 'kodex-dobrovolnika', title: 'Dobrovolnický kodex', description: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS.', category: 'Systém' },
   { slug: 'zasady-ochrany-osobnich-udaju', title: 'Zásady ochrany osobních údajů (GDPR)', description: 'Zásady zpracování a ochrany osobních údajů, správa souhlasů a práva subjektů údajů podle Nařízení (EU) 2016/679.', category: 'Systém' },
-  { slug: 'domu', title: 'Táta má právo • Hlavní strana', description: 'Hlavní veřejná stránka portálu Táta má právo.', category: 'Systém' },
+  { slug: 'home', title: 'Táta má právo • Hlavní strana', description: 'Hlavní veřejná stránka portálu Táta má právo.', category: 'Systém' },
 ];
 
 export async function ensureAllModulePagesExist(): Promise<{ success: boolean; createdCount: number; totalModules: number; message: string }> {

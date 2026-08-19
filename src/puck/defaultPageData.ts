@@ -14,9 +14,9 @@ export const DEFAULT_HOMEPAGE_PUCK_DATA = {
         badgeText: 'Portál pro právní a psychologickou oporu otců v ČR',
         highlightBadge: 'Nejsme proti matkám. Jsme pro dítě a jeho právo mít oba rodiče.',
         ctaText: 'Začít podle mé situace',
-        ctaUrl: '#situace',
+        ctaUrl: '/opatrovnicka-agenda',
         secondaryCtaText: 'Prozkoumat portál',
-        secondaryCtaUrl: '#sekce',
+        secondaryCtaUrl: '/sitemap',
       },
     },
     {
@@ -496,7 +496,6 @@ export const DEFAULT_DOCUMENTS_PUCK_DATA = {
 };
 
 export const LEGAL_PAGES_PUCK_DATA: Record<string, any> = {
-  'domu': DEFAULT_HOMEPAGE_PUCK_DATA,
   'home': DEFAULT_HOMEPAGE_PUCK_DATA,
   'agenda': DEFAULT_AGENDA_PUCK_DATA,
   'opatrovnicka-agenda': DEFAULT_AGENDA_PUCK_DATA,

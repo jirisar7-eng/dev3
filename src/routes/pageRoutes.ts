@@ -76,7 +76,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
     const decodedSlug = decodeURIComponent(slug);
     const lookupSlugs = [decodedSlug];
     if (decodedSlug === '/' || decodedSlug === 'index' || decodedSlug === 'root') {
-      lookupSlugs.push('domu', 'home');
+      lookupSlugs.push('home', 'domu');
     }
 
     let page = null;

@@ -144,7 +144,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
 
   // 1. Homepage Route
-  if (cleanPath === '/' || slug === 'domu') {
+  if (cleanPath === '/' || slug === 'home' || slug === 'domu') {
     const fallbackComponent = (
       <div className="space-y-4">
         <SeoHead
@@ -160,7 +160,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       </div>
     );
 
-    return <CmsPageRenderer slug="domu" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
+    return <CmsPageRenderer slug="home" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
   }
 
   // 2. Articles Route (/clanky, /clanky/:slug, /metodika, /metodika/:slug)
