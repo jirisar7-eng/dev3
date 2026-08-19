@@ -91,11 +91,37 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
 
+  // P3 ARES Verification state
+  const [aresIco, setAresIco] = useState('');
+  const [aresResult, setAresResult] = useState<any | null>(null);
+  const [aresLoading, setAresLoading] = useState(false);
+
   // Modals state
   const [selectedSubjekt, setSelectedSubjekt] = useState<Subjekt | null>(null);
   const [showAddSubjektModal, setShowAddSubjektModal] = useState<boolean>(false);
   const [showReviewModal, setShowReviewModal] = useState<Subjekt | null>(null);
   const [showAddPracovnikModal, setShowAddPracovnikModal] = useState<boolean>(false);
+
+  const handleVerifyAres = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aresIco.trim()) return;
+    setAresLoading(true);
+    try {
+      const res = await fetch(`/api/state-admin/registries/verify-professional?ico=${encodeURIComponent(aresIco.trim())}`);
+      const data = await res.json();
+      setAresResult(data);
+    } catch (err) {
+      setAresResult({
+        success: false,
+        source: 'P3_PUBLIC_REGISTRIES_ARES',
+        fetchedAt: new Date().toISOString(),
+        data: null,
+        error: 'Chyba při komunikaci s ARES v3 API.',
+      });
+    } finally {
+      setAresLoading(false);
+    }
+  };
 
   // New Subjekt Form
   const [newSubjektForm, setNewSubjektForm] = useState({
@@ -441,6 +467,71 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
             <option value={4.5}>4.5+ hvězdiček ★</option>
           </select>
         </div>
+      </div>
+
+      {/* P3 ARES PROFESSIONAL VERIFICATION CARD */}
+      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900">
+              P3 – Ověření subjektu v ARES v3 (IČO advokáta, znalce, poradenství)
+            </h2>
+          </div>
+          <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+            Zdroj: ARES v3 (MFCR / ARES API v3)
+          </span>
+        </div>
+
+        <form onSubmit={handleVerifyAres} className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={aresIco}
+            onChange={(e) => setAresIco(e.target.value)}
+            placeholder="Zadejte IČO subjektu (např. 70890692, 00231339)..."
+            className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
+          />
+          <button
+            type="submit"
+            disabled={aresLoading || !aresIco.trim()}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-xs"
+          >
+            {aresLoading ? 'Ověřuji v ARES...' : 'Ověřit v ARES v3'}
+          </button>
+        </form>
+
+        {aresResult && (
+          <div className="pt-2">
+            {aresResult.success && aresResult.data ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-xs text-emerald-950 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5 text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Subjekt ověřen v ARES v3 (Aktivní)</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Aktualizováno: {new Date(aresResult.fetchedAt).toLocaleString('cs-CZ')}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                  <div><strong className="text-slate-600 font-sans block text-[10px]">Název:</strong> {aresResult.data.name}</div>
+                  <div><strong className="text-slate-600 font-sans block text-[10px]">IČO:</strong> {aresResult.data.ico}</div>
+                  <div><strong className="text-slate-600 font-sans block text-[10px]">Sídlo:</strong> {aresResult.data.address}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-xs text-rose-950 space-y-1">
+                <div className="flex items-center gap-2 font-bold text-rose-800">
+                  <AlertCircle className="w-4 h-4 text-rose-600" />
+                  <span>Subjekt nebylo možné ověřit v ARES v3</span>
+                </div>
+                <p className="text-[11px] text-rose-800">
+                  {aresResult.error || 'Zadané IČO nebylo nalezeno nebo je ARES v3 API dočasně nedostupné.'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Subjekty List */}

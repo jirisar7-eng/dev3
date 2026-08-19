@@ -38,29 +38,29 @@ export class StateAdminHubService {
     const p3Audit = getConnectorLastAudit('P3_PUBLIC_REGISTRY');
     const p4Audit = getConnectorLastAudit('P4_E_LEGISLATIVA');
 
-    const connectors = {
+    const connectors: Record<string, { name: string; priority: string; status: 'OK' | 'ERROR' | 'UNCHECKED'; lastHttpStatus?: number }> = {
       P1_JUSTICE: {
         name: 'Ministerstvo spravedlnosti / OpenData (P1)',
         priority: 'P1',
-        status: p1Audit ? (p1Audit.success ? 'OK' : 'ERROR') : 'OK',
+        status: (p1Audit ? (p1Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
         lastHttpStatus: p1Audit?.httpStatus,
       },
       P2_CSU_NKOD: {
         name: 'ČSÚ / Národní katalog otevřených dat (P2)',
         priority: 'P2',
-        status: p2Audit ? (p2Audit.success ? 'OK' : 'ERROR') : 'OK',
+        status: (p2Audit ? (p2Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
         lastHttpStatus: p2Audit?.httpStatus,
       },
       P3_PUBLIC_REGISTRY: {
         name: 'Veřejné registry / OVM Soudy & OSPOD (P3)',
         priority: 'P3',
-        status: p3Audit ? (p3Audit.success ? 'OK' : 'ERROR') : 'OK',
+        status: (p3Audit ? (p3Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
         lastHttpStatus: p3Audit?.httpStatus,
       },
       P4_E_LEGISLATIVA: {
         name: 'e-Legislativa / Sněmovní tisky (P4)',
         priority: 'P4',
-        status: p4Audit ? (p4Audit.success ? 'OK' : 'ERROR') : 'OK',
+        status: (p4Audit ? (p4Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
         lastHttpStatus: p4Audit?.httpStatus,
       },
     };
