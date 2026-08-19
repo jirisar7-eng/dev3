@@ -63,9 +63,9 @@ export class EsbirkaScheduler {
     const schedule = customSchedule || process.env.ESBIRKA_CRON_SCHEDULE || this.DEFAULT_CRON_EXPRESSION;
     this.activeCronExpression = schedule;
 
-    // Check if scheduler is explicitly disabled via env
-    if (process.env.ESBIRKA_SCHEDULER_ENABLED === 'false') {
-      console.log('[EsbirkaScheduler] Scheduler disabled via ESBIRKA_SCHEDULER_ENABLED=false configuration.');
+    // Check if scheduler is explicitly disabled via env OR in development when ESBIRKA_API_KEY is missing
+    if (process.env.ESBIRKA_SCHEDULER_ENABLED === 'false' || (!process.env.ESBIRKA_API_KEY && process.env.NODE_ENV !== 'production')) {
+      console.log('[EsbirkaScheduler] Scheduler disabled via configuration (ESBIRKA_SCHEDULER_ENABLED=false or missing ESBIRKA_API_KEY in dev).');
       this.isInitialized = true;
       this.isRunning = false;
       return;
@@ -120,6 +120,24 @@ export class EsbirkaScheduler {
    */
   public static async executeScheduledTick(apiClientOverride?: any): Promise<SyncResult | null> {
     const startedAt = new Date();
+
+    // 0. Environment check: Skip if API key is not configured and no mock client override is provided
+    const hasApiKey = Boolean(process.env.ESBIRKA_API_KEY && process.env.ESBIRKA_API_KEY.trim().length > 0);
+    if (!hasApiKey && !apiClientOverride) {
+      console.log('[EsbirkaScheduler] Scheduled tick skipped: ESBIRKA_API_KEY is not configured in environment.');
+      await EsbirkaLegalRepository.recordSyncAudit({
+        syncId: `cron-skip-nokey-${Date.now()}`,
+        actCode: 'NONE',
+        syncType: 'AUTOMATIC_CRON',
+        status: 'SKIPPED',
+        startedAt,
+        finishedAt: new Date(),
+        durationMs: 0,
+        errorMessage: 'Scheduled run skipped: ESBIRKA_API_KEY is not configured.',
+        initiatedBy: 'SYSTEM_CRON_SCHEDULER',
+      });
+      return null;
+    }
 
     // 1. Quota Pre-check (Conservative Target: 3 calls/day)
     const quotaStatus = await EsbirkaQuotaGuard.getQuotaStatus();

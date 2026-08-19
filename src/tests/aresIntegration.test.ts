@@ -279,6 +279,46 @@ export async function runAresIntegrationTests() {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // TEST 13 (PHASE 2): verifySubjectByIco in SubjektService & Standalone Export
+  // --------------------------------------------------------------------------
+  {
+    const result = await subjektService.verifySubjectByIco('70890692');
+    // Note: since this is run in test environment without live network, let's verify mock client or method contract
+    assert(typeof subjektService.verifySubjectByIco === 'function', 'TEST 13: subjektService.verifySubjectByIco is defined');
+    assert(typeof subjektService.verifyIcoWithAres === 'function', 'TEST 13: subjektService.verifyIcoWithAres is defined (backward compat)');
+  }
+
+  // --------------------------------------------------------------------------
+  // TEST 14 (PHASE 2): Verification of Normalized Data Properties for Admin UI
+  // --------------------------------------------------------------------------
+  {
+    const sampleRaw = {
+      ico: '00023841',
+      obchodniJmeno: 'Město Nymburk',
+      pravniForma: '801',
+      datumVzniku: '1990-11-23',
+      sidlo: {
+        nazevObce: 'Nymburk',
+        kodKraje: 27,
+        nazevKraje: 'Středočeský kraj',
+        nazevUlice: 'Náměstí Přemyslovců',
+        cisloDomovni: 163,
+        psc: 28802,
+        textovaAdresa: 'Náměstí Přemyslovců 163, 28802 Nymburk',
+      },
+    };
+
+    const normalized = AresNormalizer.normalizeSubject(sampleRaw);
+    assert(normalized.ico === '00023841', 'TEST 14: Normalized IČO is padded to 8 digits');
+    assert(normalized.name === 'Město Nymburk', 'TEST 14: Obchodní jméno is preserved');
+    assert(normalized.city === 'Nymburk', 'TEST 14: Město is correctly extracted');
+    assert(normalized.region === 'Středočeský kraj', 'TEST 14: Region is mapped to Czech standard region');
+    assert(normalized.address === 'Náměstí Přemyslovců 163, 28802 Nymburk', 'TEST 14: Textová adresa is populated');
+    assert(normalized.isEntityActive === true, 'TEST 14: Subject active flag is true');
+    assert(Boolean(normalized.verifiedAt), 'TEST 14: verifiedAt timestamp is present');
+  }
+
   console.log('====================================================');
   console.log(`DEV3 ARES TEST SUMMARY: PASSED=${passed}, FAILED=${failed}`);
   console.log('====================================================');

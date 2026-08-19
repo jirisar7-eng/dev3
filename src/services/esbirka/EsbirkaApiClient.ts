@@ -336,6 +336,9 @@ export class EsbirkaApiClient {
     if (status === 403) {
       throw this.createAndLogHttpError('AUTHORIZATION_ERROR', `Access forbidden (HTTP 403) for endpoint ${endpoint}.`, requestId, endpoint, status, durationMs);
     }
+    if (status === 404) {
+      throw this.createAndLogHttpError('NOT_FOUND', `Dokument nebo předpis nebyl v e-Sbírce nalezen (HTTP 404) pro endpoint ${endpoint}.`, requestId, endpoint, status, durationMs);
+    }
     if (status === 429) {
       throw this.createAndLogHttpError('RATE_LIMITED', `Rate limit exceeded on e-Sbírka server (HTTP 429).`, requestId, endpoint, status, durationMs);
     }

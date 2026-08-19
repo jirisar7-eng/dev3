@@ -7,6 +7,7 @@ export type EsbirkaErrorCode =
   | 'CONFIGURATION_ERROR'
   | 'AUTHENTICATION_ERROR'
   | 'AUTHORIZATION_ERROR'
+  | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'TIMEOUT'
   | 'NETWORK_ERROR'

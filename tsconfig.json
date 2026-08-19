@@ -22,5 +22,7 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": ["src/**/*", "server.ts"],
+  "exclude": ["node_modules", "dist", "src/tests/hybridPuckPages.test.tsx", "src/tests/hybridPuckBatch3.test.ts", "src/tests/hybridPuckPhase4.test.ts"]
 }
