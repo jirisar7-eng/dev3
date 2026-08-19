@@ -26,7 +26,8 @@ services:
     extra_hosts:
       - "mail.tatovacesta.cz:${MAILCOW_INTERNAL_IP:-172.22.1.14}"
     networks:
-      - app_network
+      - default
+      - caddy_net
       - mailcow_network
     depends_on:
       - postgres
@@ -45,7 +46,7 @@ services:
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:
-      - app_network
+      - default
 
   clamav:
     image: clamav/clamav:latest
@@ -56,11 +57,12 @@ services:
     volumes:
       - clamav_data_dev:/var/lib/clamav
     networks:
-      - app_network
+      - default
 
 networks:
-  app_network:
+  caddy_net:
     external: true
+    name: ${APP_NETWORK_NAME:-tatovacesta_app_network}
   mailcow_network:
     external: true
     name: mailcow-dockerized_mailcow-network

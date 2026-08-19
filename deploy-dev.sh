@@ -17,9 +17,10 @@ if git rev-parse --verify origin/main >/dev/null 2>&1; then
   git reset --hard origin/main
 fi
 
-# 2. Ensure Docker network app_network exists
-echo "[2/6] Verifying Docker app_network..."
-docker network create app_network 2>/dev/null || true
+# 2. Ensure Docker network exists
+echo "[2/6] Verifying Docker network..."
+export APP_NETWORK_NAME=${APP_NETWORK_NAME:-app_network}
+docker network create "$APP_NETWORK_NAME" 2>/dev/null || true
 
 # 3. Build and start containers with docker compose
 echo "[3/6] Building and starting Docker containers..."
