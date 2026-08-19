@@ -11,6 +11,7 @@ import { VolunteerAgreementPage } from './VolunteerAgreementPage';
 import { VolunteerCodexPage } from './VolunteerCodexPage';
 import { GdprComplianceCenterPage } from './GdprComplianceCenterPage';
 import { FounderStoryPage } from './FounderStoryPage';
+import { UserManualPage } from './UserManualPage';
 import { StudyLibraryPage } from './StudyLibraryPage';
 import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
@@ -512,6 +513,19 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'pravni-dokumenty' || slug === 'smlouva-dobrovolnik' || COMPLIANCE_SLUGS.includes(slug)) {
     const initialKey = slug === 'smlouva-dobrovolnik' ? 'dohoda-o-spolupraci' : (slug === 'pravni-dokumenty' ? undefined : slug);
     return <LegalDocsPage onNavigate={onNavigate} initialDocKey={initialKey} />;
+  }
+
+  // 5. User Manual Route (/user-manual)
+  if (slug === 'user-manual') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_USER_MANUAL_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="user-manual" onNavigate={onNavigate} fallbackComponent={<UserManualPage onNavigate={onNavigate} />} />;
+    }
+    return <UserManualPage onNavigate={onNavigate} />;
   }
 
   // 6. Default CMS Page Router for all other slugs (/o-projektu, /zivotni-situace, /dobrovolnictvi, etc.)

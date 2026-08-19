@@ -1299,7 +1299,36 @@ const defaultPages: Page[] = [
     id: 'pg-33-32',
     slug: 'user-manual',
     title: 'Nápověda & Uživatelský manuál',
-    content: '# Nápověda & Uživatelský manuál\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-user-manual',
+            badgeText: 'Nápověda k platformě',
+            title: 'Uživatelský manuál & Nápověda',
+            description: 'Kompletní průvodce platformou Táta má právo a systémem Synthesis OS. Od prvního přihlášení až po pokročilou správu opatrovnického spisu.',
+            ctaText: 'Začít s průvodcem',
+            ctaUrl: '/o-projektu',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-user-manual-1',
+            text: '### 📥 Sekce se aktuálně připravuje\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu. Brzy zde najdete detailní návody na použití AI asistentů, správu případů a práci se zabezpečeným úložištěm.',
+            align: 'center',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        }
+      ],
+      root: {
+        props: {
+          title: 'Uživatelská příručka a nápověda',
+        },
+      },
+    }),
     published: true,
     seoTitle: 'Nápověda & Uživatelský manuál | Táta má právo',
     seoDescription: 'Stránka je připravena pro budoucí obsah.',
