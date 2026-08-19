@@ -386,50 +386,233 @@ app.get('/api/admin/esbirka/laws/:code', requireAuth, requireRole('ADMIN'), asyn
   }
 });
 
-// KLIENTSKÉ ENDPOINTY (GET /api/state/laws/*) - ČTOU VÝHRADNĚ Z LOKÁLNÍ DATABÁZE V POSTGRESQL
-app.get('/api/state/laws', async (req: express.Request, res: express.Response) => {
-  if (!isPrismaAvailable()) {
-    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
-  }
-  try {
-    const laws = await EsbirkaLegalRepository.getAllActs();
-    res.json({ success: true, laws });
-  } catch (err: any) {
-    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
-  }
-});
+// KLIENTSKÉ ENDPOINTY (GET /api/esbirka/acts/* & GET /api/state/laws/*) - ČTOU VÝHRADNĚ Z LOKÁLNÍ DATABÁZE
+// Fail-closed princip: Žádné přímé volání externího API e-Sbírky ze strany klienta, žádná náhradní/mock data při chybě.
 
-app.get('/api/state/laws/:rok/:cislo', async (req: express.Request, res: express.Response) => {
-  if (!isPrismaAvailable()) {
-    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
-  }
+// 1. Seznam podporovaných předpisů
+const handleGetSupportedActs = async (req: express.Request, res: express.Response) => {
   try {
-    const { rok, cislo } = req.params;
-    const law = await EsbirkaLegalRepository.getActDetailsByCode(`${cislo}/${rok}`);
-    if (!law) {
-      return res.status(404).json({ error: 'Předpis nebyl nalezen v lokální databázi.' });
+    const refDateParam = req.query.date as string;
+    const refDate = refDateParam ? new Date(refDateParam) : new Date();
+    if (refDateParam && isNaN(refDate.getTime())) {
+      return res.status(400).json({ success: false, error: 'Neplatný formát data v parametru date.', code: 'INVALID_DATE_FORMAT' });
     }
-    res.json({ success: true, law });
-  } catch (err: any) {
-    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
-  }
-});
 
-app.get('/api/state/laws/:code', async (req: express.Request, res: express.Response) => {
-  if (!isPrismaAvailable()) {
-    return res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
+    const acts = await EsbirkaService.getSupportedActs(refDate);
+    res.json({
+      success: true,
+      referenceDate: refDate.toISOString(),
+      count: acts.length,
+      acts,
+      laws: acts, // Alias pro zpětnou kompatibilitu
+    });
+  } catch (err: any) {
+    console.error('Error fetching supported acts:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
   }
+};
+
+app.get('/api/esbirka/acts', handleGetSupportedActs);
+app.get('/api/state/laws', handleGetSupportedActs);
+
+// 2. Aktuální znění předpisu (k dnešnímu dni)
+const handleGetCurrentActWording = async (req: express.Request, res: express.Response) => {
   try {
     const { code } = req.params;
-    const law = await EsbirkaLegalRepository.getActDetailsByCode(code);
-    if (!law) {
-      return res.status(404).json({ error: 'Předpis nebyl nalezen v lokální databázi.' });
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Chybí kód předpisu.', code: 'INVALID_ACT_CODE' });
     }
-    res.json({ success: true, law });
+
+    const wording = await EsbirkaService.getCurrentActWording(code);
+    if (!wording) {
+      return res.status(404).json({ success: false, error: `Předpis '${code}' nebyl nalezen v lokální databázi.`, code: 'ACT_NOT_FOUND' });
+    }
+
+    res.json({
+      success: true,
+      actCode: wording.act.actCode,
+      validity: wording.validity,
+      referenceDate: wording.referenceDate.toISOString(),
+      act: wording.act,
+      version: wording.version,
+      sections: wording.sections,
+    });
   } catch (err: any) {
-    res.status(503).json({ error: 'Služba je dočasně nedostupná (databáze PostgreSQL není dostupná).' });
+    console.error('Error fetching current act wording:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
+  }
+};
+
+app.get('/api/esbirka/acts/:code/current', handleGetCurrentActWording);
+app.get('/api/state/laws/:code/current', handleGetCurrentActWording);
+
+// 3. Seznam časových znění (verzí) předpisu
+const handleGetActVersions = async (req: express.Request, res: express.Response) => {
+  try {
+    const { code } = req.params;
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Chybí kód předpisu.', code: 'INVALID_ACT_CODE' });
+    }
+
+    const refDateParam = req.query.date as string;
+    const refDate = refDateParam ? new Date(refDateParam) : new Date();
+    if (refDateParam && isNaN(refDate.getTime())) {
+      return res.status(400).json({ success: false, error: 'Neplatný formát data v parametru date.', code: 'INVALID_DATE_FORMAT' });
+    }
+
+    const formattedCode = code.replace('-', '/');
+    const act = await EsbirkaLegalRepository.getActDetailsByCode(formattedCode);
+    if (!act) {
+      return res.status(404).json({ success: false, error: `Předpis '${code}' nebyl nalezen v lokální databázi.`, code: 'ACT_NOT_FOUND' });
+    }
+
+    const versions = await EsbirkaService.getActVersions(code, refDate);
+    res.json({
+      success: true,
+      actCode: act.actCode,
+      actTitle: act.title,
+      referenceDate: refDate.toISOString(),
+      count: versions.length,
+      versions,
+    });
+  } catch (err: any) {
+    console.error('Error fetching act versions:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
+  }
+};
+
+app.get('/api/esbirka/acts/:code/versions', handleGetActVersions);
+app.get('/api/state/laws/:code/versions', handleGetActVersions);
+
+// 4. Znění předpisu k referenčnímu datu (?date=YYYY-MM-DD)
+const handleGetActWordingAtDate = async (req: express.Request, res: express.Response) => {
+  try {
+    const { code } = req.params;
+    const dateParam = (req.query.date as string) || (req.query.at as string);
+
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Chybí kód předpisu.', code: 'INVALID_ACT_CODE' });
+    }
+
+    if (!dateParam) {
+      return res.status(400).json({
+        success: false,
+        error: 'Chybí povinný parametr dotazu "date" (např. ?date=2024-01-01).',
+        code: 'MISSING_DATE_PARAM',
+      });
+    }
+
+    const parsedDate = new Date(dateParam);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Neplatný formát data. Použijte standardní formát ISO (YYYY-MM-DD).',
+        code: 'INVALID_DATE_FORMAT',
+      });
+    }
+
+    const wording = await EsbirkaService.getActWordingAtDate(code, parsedDate);
+    if (!wording) {
+      return res.status(404).json({
+        success: false,
+        error: `K zadanému datu (${dateParam}) nebylo v lokální databázi nalezeno žádné platné znění předpisu '${code}'.`,
+        code: 'VERSION_NOT_FOUND_FOR_DATE',
+      });
+    }
+
+    res.json({
+      success: true,
+      actCode: wording.act.actCode,
+      requestedDate: parsedDate.toISOString(),
+      validity: wording.validity,
+      act: wording.act,
+      version: wording.version,
+      sections: wording.sections,
+    });
+  } catch (err: any) {
+    console.error('Error fetching act wording at date:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
+  }
+};
+
+app.get('/api/esbirka/acts/:code/at-date', handleGetActWordingAtDate);
+app.get('/api/state/laws/:code/at-date', handleGetActWordingAtDate);
+
+// 5. Konkrétní časové znění podle ID verze nebo čísla verze
+const handleGetActVersionDetails = async (req: express.Request, res: express.Response) => {
+  try {
+    const { code, versionId } = req.params;
+    if (!code || !versionId) {
+      return res.status(400).json({ success: false, error: 'Chybí kód předpisu nebo identifikátor verze.', code: 'INVALID_PARAMETERS' });
+    }
+
+    const version = await EsbirkaService.getActVersionDetails(code, versionId);
+    if (!version) {
+      return res.status(404).json({
+        success: false,
+        error: `Časové znění '${versionId}' pro předpis '${code}' nebylo nalezeno v lokální databázi.`,
+        code: 'VERSION_NOT_FOUND',
+      });
+    }
+
+    const sections = EsbirkaLegalRepository.extractSectionsFromSnapshot(version.contentSnapshot);
+
+    res.json({
+      success: true,
+      actCode: code.replace('-', '/'),
+      version,
+      sections,
+    });
+  } catch (err: any) {
+    console.error('Error fetching act version detail:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
+  }
+};
+
+app.get('/api/esbirka/acts/:code/version/:versionId', handleGetActVersionDetails);
+app.get('/api/state/laws/:code/version/:versionId', handleGetActVersionDetails);
+
+// 6. Detail předpisu podle roku a čísla (/api/state/laws/:rok/:cislo)
+app.get('/api/state/laws/:rok/:cislo', async (req: express.Request, res: express.Response) => {
+  try {
+    const { rok, cislo } = req.params;
+    const code = `${cislo}/${rok}`;
+    const act = await EsbirkaService.getActDetails(code);
+    if (!act) {
+      return res.status(404).json({ success: false, error: `Předpis '${code}' nebyl nalezen v lokální databázi.`, code: 'ACT_NOT_FOUND' });
+    }
+    res.json({ success: true, act, law: act });
+  } catch (err: any) {
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
   }
 });
+
+// 7. Detail předpisu podle kódu (/api/esbirka/acts/:code & /api/state/laws/:code)
+const handleGetActDetail = async (req: express.Request, res: express.Response) => {
+  try {
+    const { code } = req.params;
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Chybí kód předpisu.', code: 'INVALID_ACT_CODE' });
+    }
+
+    const refDateParam = req.query.date as string;
+    const refDate = refDateParam ? new Date(refDateParam) : new Date();
+
+    const act = await EsbirkaService.getActDetails(code, refDate);
+    if (!act) {
+      return res.status(404).json({ success: false, error: `Předpis '${code}' nebyl nalezen v lokální databázi.`, code: 'ACT_NOT_FOUND' });
+    }
+
+    res.json({ success: true, act, law: act });
+  } catch (err: any) {
+    console.error('Error fetching act detail:', err);
+    res.status(503).json({ success: false, error: 'Služba je dočasně nedostupná (chyba při čtení z databáze).', code: 'DB_READ_ERROR' });
+  }
+};
+
+app.get('/api/esbirka/acts/:code', handleGetActDetail);
+app.get('/api/state/laws/:code', handleGetActDetail);
+
 
 app.get('/api/state/statistics', async (req: express.Request, res: express.Response) => {
   try {
