@@ -102,3 +102,60 @@ Při testování v reálném čase se objevila chyba překročení maximální h
 1. Zabalili jsme výpočet `allowedNavItems` do **`useMemo`** s přesnými závislostmi `[effectiveNavItems, isAuthorizedAdmin, isSuperAdmin]`.
 2. Reference pole je nyní plně stabilní a mění se pouze při skutečné změně zdrojových dat nebo uživatelské role.
 3. Nekonečný cyklus byl kompletně eliminován, hlavička renderuje naprosto čistě, bezchybně a optimálně.
+
+---
+
+## 9. COMPACT MOBILE ICON NAVIGATION
+Abychom vyhověli potřebám uživatelů na úzkých mobilních portrétních viewportech (320px až 430px), kde se textová tlačítka (MENU, Veřejnost, Můj účet, Přihlášit, Registrace) fyzicky nevejdou vedle sebe, rozšířili jsme Adaptive Navigation Engine o **kompaktní ikonovou navigaci**.
+
+### A. Důvod změny
+Při šířce viewportu pod 640px (mobilní zařízení) hrozilo při nahromadění textových popisků zalomení hlavičky do dvou řádků, horizontální přetečení nebo oříznutí loga. Nový ikonový panel tento problém kompletně řeší a přináší moderní, intuitivní a čisté mobilní rozhraní.
+
+### B. Rozhodovací logika a prioritizace
+Změna je plně adaptivní a nezavádí žádné statické CSS breakpointy. Vychází přímo z naměřených rozměrů hlavičky (`dimensions.containerWidth`):
+* Celý mobilní kompaktní režim se aktivuje, pokud je vnitřní šířka hlavičky `< 640px` (tj. `isMobileCompact`).
+* Jednotlivá ikonová tlačítka se v něm zobrazují dynamicky podle dostupné šířky, aby **nikdy** nevzniklo přetečení:
+  1. **MENU (☰) (Priorita 1):** Zobrazuje se vždy.
+  2. **Můj účet (👤 / Avatar) (Priorita 2):** Zobrazuje se pro šířky `>= 280px`. Pokud je uživatel přihlášen, zobrazuje se jeho reálný avatar a kliknutím se otevře bezpečné uživatelské dropdown menu. Pokud přihlášen není, zobrazuje se standardní ikona uživatele, která odkazuje na klientský portál.
+  3. **Přihlásit (🔑) (Priorita 3):** Zobrazuje se pro nepřihlášené uživatele při šířkách `>= 340px`.
+  4. **Registrace (📝) (Priorita 3b):** Zobrazuje se pro nepřihlášené uživatele při šířkách `>= 420px`.
+  5. **Veřejnost (🌐) (Priorita 4):** Zobrazuje se při šířkách `>= 380px` (přepíná zobrazení do veřejného režimu).
+
+Pokud je viewport extrémně úzký (např. 320px), zobrazí se pouze nejvyšší priority (**Logo + MENU + Můj účet**). Ostatní položky se skryjí z lišty a jsou plně dostupné uvnitř otevřeného hlavního **MegaMenu**, což je optimální UX vzor.
+
+### C. Použité ikony a styling
+Všechny ikony jsou importovány ze stávající knihovny `lucide-react` používané v projektu:
+* **MENU:** `Menu` / `X` (přepíná stav MegaMenu)
+* **MŮJ ÚČET / AVATAR:** Reálný avatar uživatele, nebo ikona `User`
+* **PŘIHLÁSIT:** Ikona `LogIn`
+* **REGISTRACE:** Ikona `UserPlus`
+* **VEŘEJNOST:** Ikona `Globe`
+
+Tlačítka mají jednotný styling:
+* Rozměr **44x44 px** (`w-11 h-11`), což přesně odpovídá mezinárodním standardům pro spolehlivé dotykové ovládání (touch target).
+* Konzistentní zakulacení (`rounded-xl`), ohraničení, hover/active stavy a animace.
+* Jasné barevné rozlišení (např. modrý tón pro přihlášení, červený pro zavření menu).
+
+### D. Accessibility (Přístupnost)
+* Každé ikonové tlačítko obsahuje jednoznačný a čitelný **`aria-label`** a atribut **`title`** (např. `aria-label="Přihlásit"`, `aria-label="Registrace"`).
+* Klávesový focus funguje naprosto bezchybně pomocí standardního tabulátoru s výrazným modrým focus ringem (`focus:outline-none focus:ring-2 focus:ring-blue-500`).
+* Tlačítko `MENU` a avatar správně spravují atribut **`aria-expanded`** podle stavu otevření podnabídky.
+
+### E. Testované viewporty a výsledky (QA)
+
+| Viewport | Typ testovaného zařízení | Vykreslené ikony v hlavičce | Přetečení | Stav |
+| :--- | :--- | :--- | :---: | :---: |
+| **320x568** | iPhone SE (Portrait) | Logo \| MENU \| Můj účet | Ne (0px scroll) | **PASS** |
+| **360x800** | Galaxy S20 (Portrait) | Logo \| MENU \| Můj účet \| Přihlásit | Ne (0px scroll) | **PASS** |
+| **375x812** | iPhone 13 (Portrait) | Logo \| MENU \| Můj účet \| Přihlásit | Ne (0px scroll) | **PASS** |
+| **390x844** | iPhone 14 (Portrait) | Logo \| MENU \| Můj účet \| Přihlásit \| Veřejnost | Ne (0px scroll) | **PASS** |
+| **414x896** | iPhone XR (Portrait) | Logo \| MENU \| Můj účet \| Přihlásit \| Veřejnost | Ne (0px scroll) | **PASS** |
+| **430x932** | iPhone 14 Pro Max (Portrait) | Logo \| MENU \| Můj účet \| Přihlásit \| Registrace \| Veřejnost | Ne (0px scroll) | **PASS** |
+| **všechny landscape** | Mobily v landscape režimu | Adaptivní dle dostupné šířky (MENU + standardní controls) | Ne (0px scroll) | **PASS** |
+| **768x1024** | iPad (Portrait) | Standardní rozložení (LOGO \| MENU + texty) | Ne (0px scroll) | **PASS** |
+
+### F. Regresní kontrola
+* **Bezpečnost:** Všechna autentizační tlačítka přímo sdílejí původní stav (`currentUser`, `logout()`, `onNavigate` a router dispatching). Nedochází k žádné duplikaci business logiky ani rout.
+* **MegaMenu:** Kliknutím na kompaktní `MENU` se bezchybně otevírá původní mobilní overlay `MegaMenu`, zachovává se close-on-outside-click, zavírání přes klávesu `ESC` a kompletní SPA navigace.
+* **Puck & DB:** Bez zásahu do CMS vrstvy, databáze či oprávnění (RBAC). 
+
