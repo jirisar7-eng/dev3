@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
@@ -141,104 +141,219 @@ export const Header: React.FC<HeaderProps> = ({
     return t(key, defaultMap[key] || key);
   };
 
+  // 1. Media query capability listeners
+  const getMediaCapabilities = () => {
+    if (typeof window === 'undefined') return { hasHover: true, isPointerFine: true };
+    const hasHover = window.matchMedia('(hover: hover)').matches;
+    const isPointerFine = window.matchMedia('(pointer: fine)').matches;
+    return { hasHover, isPointerFine };
+  };
+
+  const [capabilities, setCapabilities] = useState(() => getMediaCapabilities());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hoverQuery = window.matchMedia('(hover: hover)');
+    const pointerQuery = window.matchMedia('(pointer: fine)');
+
+    const onChange = () => {
+      setCapabilities({
+        hasHover: hoverQuery.matches,
+        isPointerFine: pointerQuery.matches,
+      });
+    };
+
+    if (hoverQuery.addEventListener) {
+      hoverQuery.addEventListener('change', onChange);
+      pointerQuery.addEventListener('change', onChange);
+    } else {
+      hoverQuery.addListener(onChange);
+      pointerQuery.addListener(onChange);
+    }
+
+    return () => {
+      if (hoverQuery.removeEventListener) {
+        hoverQuery.removeEventListener('change', onChange);
+        pointerQuery.removeEventListener('change', onChange);
+      } else {
+        hoverQuery.removeListener(onChange);
+        pointerQuery.removeListener(onChange);
+      }
+    };
+  }, []);
+
+  // 2. Refs for layout elements
+  const containerRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+  const navMeasureRef = useRef<HTMLElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  // 3. Dimensions tracking state
+  const [dimensions, setDimensions] = useState({
+    containerWidth: 0,
+    logoWidth: 0,
+    navWidth: 0,
+    rightWidth: 0,
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateDimensions = () => {
+      setDimensions({
+        containerWidth: containerRef.current?.getBoundingClientRect().width || 0,
+        logoWidth: logoRef.current?.getBoundingClientRect().width || 0,
+        navWidth: navMeasureRef.current?.getBoundingClientRect().width || 0,
+        rightWidth: rightRef.current?.getBoundingClientRect().width || 0,
+      });
+    };
+
+    // Initial measurement
+    updateDimensions();
+
+    // ResizeObserver to detect change in container size
+    const observer = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    // Additional event listeners
+    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('orientationchange', updateDimensions);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('orientationchange', updateDimensions);
+    };
+  }, [allowedNavItems]); // update whenever allowedNavItems changes
+
+  // 4. Decision logic
+  const isSpaceSufficient =
+    dimensions.containerWidth > 0 &&
+    dimensions.containerWidth >= dimensions.logoWidth + dimensions.navWidth + dimensions.rightWidth + 48; // 48px safety gap margin
+
+  const showDesktopNav =
+    capabilities.hasHover &&
+    capabilities.isPointerFine &&
+    isSpaceSufficient;
+
+  // 5. Render helper for navigation items to avoid duplication
+  const renderNavigation = (isMeasuring = false) => {
+    const parentItems = allowedNavItems.filter((item) => !item.parentId);
+    const childItemsMap = allowedNavItems.reduce((acc, item) => {
+      if (item.parentId) {
+        if (!acc[item.parentId]) acc[item.parentId] = [];
+        acc[item.parentId].push(item);
+      }
+      return acc;
+    }, {} as Record<string, NavItem[]>);
+
+    return parentItems.map((item, idx) => {
+      const children = childItemsMap[item.id] || [];
+      const isActive =
+        currentView === 'public' &&
+        (currentPath === item.url || (item.url !== '/' && currentPath.startsWith(item.url)));
+
+      const isRightAligned = idx >= parentItems.length - 2;
+
+      if (children.length > 0) {
+        const isDropdownOpen = !isMeasuring && openDesktopDropdown === item.id;
+        return (
+          <div key={item.id} className="relative group py-2">
+            <button
+              type="button"
+              onClick={isMeasuring ? undefined : (e) => {
+                e.stopPropagation();
+                setOpenDesktopDropdown(isDropdownOpen ? null : item.id);
+              }}
+              className={`flex items-center gap-1 transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
+                  : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
+              }`}
+            >
+              <span>{getLabelForNavKey(item.labelKey)}</span>
+              <ChevronDown className={`w-3.5 h-3.5 opacity-60 transition-transform ${isDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
+            </button>
+            <div className={`absolute mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200 ${isRightAligned ? 'right-0' : 'left-0'} ${
+              isDropdownOpen ? 'block' : 'hidden group-hover:block'
+            }`}>
+              {children.map((subItem) => {
+                const isSubActive = currentView === 'public' && currentPath === subItem.url;
+                return (
+                  <button
+                    key={subItem.id}
+                    type="button"
+                    onClick={isMeasuring ? undefined : () => {
+                      handleNavClick(subItem.url);
+                      setOpenDesktopDropdown(null);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors flex items-center justify-between cursor-pointer ${
+                      isSubActive
+                        ? 'bg-blue-50 text-[var(--color-primary,#1e3a8a)] font-bold'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-[var(--color-primary,#1e3a8a)]'
+                    }`}
+                  >
+                    <span>{getLabelForNavKey(subItem.labelKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={isMeasuring ? undefined : () => handleNavClick(item.url)}
+          className={`transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
+            isActive
+              ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
+              : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
+          }`}
+        >
+          {getLabelForNavKey(item.labelKey)}
+        </button>
+      );
+    });
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
-        <Logo
-          variant="full"
-          size="md"
-          className="shrink-0 cursor-pointer"
-          onClick={() => handleNavClick('/')}
-        />
+        <div ref={logoRef} className="shrink-0 flex items-center">
+          <Logo
+            variant="full"
+            size="md"
+            className="cursor-pointer"
+            onClick={() => handleNavClick('/')}
+          />
+        </div>
 
         {/* CMS Dynamic Navigation Links (Desktop) */}
-        <nav className="hidden [@media(hover:hover)_and_(pointer:fine)]:xl:flex items-center gap-5 text-xs sm:text-sm font-medium">
-          {(() => {
-            const parentItems = allowedNavItems.filter((item) => !item.parentId);
-            const childItemsMap = allowedNavItems.reduce((acc, item) => {
-              if (item.parentId) {
-                if (!acc[item.parentId]) acc[item.parentId] = [];
-                acc[item.parentId].push(item);
-              }
-              return acc;
-            }, {} as Record<string, NavItem[]>);
+        {showDesktopNav && (
+          <nav className="flex items-center gap-5 text-xs sm:text-sm font-medium">
+            {renderNavigation(false)}
+          </nav>
+        )}
 
-            return parentItems.map((item, idx) => {
-              const children = childItemsMap[item.id] || [];
-              const isActive =
-                currentView === 'public' &&
-                (currentPath === item.url || (item.url !== '/' && currentPath.startsWith(item.url)));
-
-              const isRightAligned = idx >= parentItems.length - 2;
-
-              if (children.length > 0) {
-                const isDropdownOpen = openDesktopDropdown === item.id;
-                return (
-                  <div key={item.id} className="relative group py-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenDesktopDropdown(isDropdownOpen ? null : item.id);
-                      }}
-                      className={`flex items-center gap-1 transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
-                        isActive
-                          ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
-                          : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
-                      }`}
-                    >
-                      <span>{getLabelForNavKey(item.labelKey)}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 opacity-60 transition-transform ${isDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
-                    </button>
-                    <div className={`absolute mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200 ${isRightAligned ? 'right-0' : 'left-0'} ${
-                      isDropdownOpen ? 'block' : 'hidden group-hover:block'
-                    }`}>
-                      {children.map((subItem) => {
-                        const isSubActive = currentView === 'public' && currentPath === subItem.url;
-                        return (
-                          <button
-                            key={subItem.id}
-                            type="button"
-                            onClick={() => {
-                              handleNavClick(subItem.url);
-                              setOpenDesktopDropdown(null);
-                            }}
-                            className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors flex items-center justify-between cursor-pointer ${
-                              isSubActive
-                                ? 'bg-blue-50 text-[var(--color-primary,#1e3a8a)] font-bold'
-                                : 'text-slate-700 hover:bg-slate-50 hover:text-[var(--color-primary,#1e3a8a)]'
-                            }`}
-                          >
-                            <span>{getLabelForNavKey(subItem.labelKey)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleNavClick(item.url)}
-                  className={`transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
-                      : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
-                  }`}
-                >
-                  {getLabelForNavKey(item.labelKey)}
-                </button>
-              );
-            });
-          })()}
-        </nav>
+        {/* Hidden measuring wrapper to compute exact dynamic navigation width without displaying it */}
+        <div className="absolute pointer-events-none invisible left-[-9999px] top-[-9999px] flex whitespace-nowrap">
+          <nav ref={navMeasureRef} className="flex items-center gap-5 text-xs sm:text-sm font-medium">
+            {renderNavigation(true)}
+          </nav>
+        </div>
 
         {/* Layer Switcher & User Control */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div ref={rightRef} className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* MENU Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
