@@ -40,6 +40,19 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      setOpenDesktopDropdown(null);
+      const target = e.target as HTMLElement;
+      if (mobileMenuOpen && !target.closest('header')) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [mobileMenuOpen]);
 
   const isAuthorizedAdmin =
     hasRole('ADMIN') ||
@@ -140,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
         />
 
         {/* CMS Dynamic Navigation Links (Desktop) */}
-        <nav className="hidden lg:flex items-center gap-5 text-xs sm:text-sm font-medium">
+        <nav className="hidden xl:flex items-center gap-5 text-xs sm:text-sm font-medium">
           {(() => {
             const parentItems = allowedNavItems.filter((item) => !item.parentId);
             const childItemsMap = allowedNavItems.reduce((acc, item) => {
@@ -160,26 +173,38 @@ export const Header: React.FC<HeaderProps> = ({
               const isRightAligned = idx >= parentItems.length - 2;
 
               if (children.length > 0) {
+                const isDropdownOpen = openDesktopDropdown === item.id;
                 return (
                   <div key={item.id} className="relative group py-2">
                     <button
-                      className={`flex items-center gap-1 transition-all py-1 border-b-2 whitespace-nowrap ${
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDesktopDropdown(isDropdownOpen ? null : item.id);
+                      }}
+                      className={`flex items-center gap-1 transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
                         isActive
                           ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
                           : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
                       }`}
                     >
                       <span>{getLabelForNavKey(item.labelKey)}</span>
-                      <ChevronDown className="w-3.5 h-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                      <ChevronDown className={`w-3.5 h-3.5 opacity-60 transition-transform ${isDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
                     </button>
-                    <div className={`absolute mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200 ${isRightAligned ? 'right-0' : 'left-0'}`}>
+                    <div className={`absolute mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 min-w-[280px] max-h-[80vh] overflow-y-auto z-50 transition-all duration-200 ${isRightAligned ? 'right-0' : 'left-0'} ${
+                      isDropdownOpen ? 'block' : 'hidden group-hover:block'
+                    }`}>
                       {children.map((subItem) => {
                         const isSubActive = currentView === 'public' && currentPath === subItem.url;
                         return (
                           <button
                             key={subItem.id}
-                            onClick={() => handleNavClick(subItem.url)}
-                            className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors flex items-center justify-between ${
+                            type="button"
+                            onClick={() => {
+                              handleNavClick(subItem.url);
+                              setOpenDesktopDropdown(null);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors flex items-center justify-between cursor-pointer ${
                               isSubActive
                                 ? 'bg-blue-50 text-[var(--color-primary,#1e3a8a)] font-bold'
                                 : 'text-slate-700 hover:bg-slate-50 hover:text-[var(--color-primary,#1e3a8a)]'
@@ -197,8 +222,9 @@ export const Header: React.FC<HeaderProps> = ({
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => handleNavClick(item.url)}
-                  className={`transition-all py-1 border-b-2 whitespace-nowrap ${
+                  className={`transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
                     isActive
                       ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
                       : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'

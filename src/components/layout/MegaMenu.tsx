@@ -51,7 +51,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
   }, {} as Record<string, NavItem[]>);
 
   return (
-    <div className="bg-white border-b border-slate-200 px-4 pt-4 pb-6 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[85vh] overflow-y-auto z-50">
+    <div className="absolute top-16 left-0 right-0 w-full bg-white border-b border-slate-200 px-4 pt-4 pb-6 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[85vh] overflow-y-auto z-50">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header bar */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -71,13 +71,14 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
 
         {/* Quick link: Home */}
         <div>
-          <button
-            type="button"
-            onClick={() => {
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
               onNavigate('/');
               onClose();
             }}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all inline-flex items-center gap-2 cursor-pointer ${
               currentPath === '/'
                 ? 'bg-blue-900 text-white shadow-xs'
                 : 'bg-slate-50 border border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -85,7 +86,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
           >
             <span>🏠</span>
             <span>Domů</span>
-          </button>
+          </a>
         </div>
 
         {/* Grid layout with 7 Categories */}
@@ -105,10 +106,11 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
                     {children.map((subItem) => {
                       const isSubActive = currentPath === subItem.url;
                       return (
-                        <button
+                        <a
                           key={subItem.id}
-                          type="button"
-                          onClick={() => {
+                          href={subItem.url}
+                          onClick={(e) => {
+                            e.preventDefault();
                             onNavigate(subItem.url);
                             onClose();
                           }}
@@ -120,7 +122,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
                         >
                           <span>{subItem.labelKey}</span>
                           {subItem.isExternal && <ExternalLink className="w-3 h-3 opacity-60" />}
-                        </button>
+                        </a>
                       );
                     })}
                   </div>
