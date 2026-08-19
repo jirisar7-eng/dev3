@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
@@ -65,24 +65,26 @@ export const Header: React.FC<HeaderProps> = ({
 
   const effectiveNavItems = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
 
-  const allowedNavItems = effectiveNavItems.filter((item) => {
-    const isCategory7 = item.id === 'cat-7' || item.parentId === 'cat-7';
-    const isAdminRoute =
-      item.url === '/admin' ||
-      item.url.startsWith('/admin/') ||
-      item.url === '/administrace' ||
-      item.url.startsWith('/administrace/') ||
-      item.url === '/ai-admin' ||
-      item.url === '/ai-context';
+  const allowedNavItems = useMemo(() => {
+    return effectiveNavItems.filter((item) => {
+      const isCategory7 = item.id === 'cat-7' || item.parentId === 'cat-7';
+      const isAdminRoute =
+        item.url === '/admin' ||
+        item.url.startsWith('/admin/') ||
+        item.url === '/administrace' ||
+        item.url.startsWith('/administrace/') ||
+        item.url === '/ai-admin' ||
+        item.url === '/ai-context';
 
-    if ((isCategory7 || isAdminRoute) && !isAuthorizedAdmin) {
-      return false;
-    }
-    if (item.url === '/admin/vps' && !isSuperAdmin) {
-      return false;
-    }
-    return true;
-  });
+      if ((isCategory7 || isAdminRoute) && !isAuthorizedAdmin) {
+        return false;
+      }
+      if (item.url === '/admin/vps' && !isSuperAdmin) {
+        return false;
+      }
+      return true;
+    });
+  }, [effectiveNavItems, isAuthorizedAdmin, isSuperAdmin]);
 
   useEffect(() => {
     Promise.all([

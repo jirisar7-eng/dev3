@@ -92,3 +92,13 @@ Byl proveden kompletní audit napříč všemi specifikovanými viewporty a komb
 * **Linter & Typecheck:** `npm run lint` $\rightarrow$ **SUCCESS**
 * **Produkční sestavení:** `npm run build` $\rightarrow$ **SUCCESS**
 * **Pracovní větev:** `main` (změny zapsány přímo do produkční větve na základě požadavku)
+
+---
+
+## 8. STABILIZACE RE-RENDERŮ (HOTFIX)
+Při testování v reálném čase se objevila chyba překročení maximální hloubky aktualizací (`Maximum update depth exceeded`). Příčinou bylo, že pole `allowedNavItems` bylo v každém renderu vytvářeno jako nová reference (pomocí metody `.filter()`). Protože bylo v závislostech měřicího `useEffect` bloku, vyvolalo každé nastavení rozměrů (`setDimensions`) re-render, který vytvořil novou referenci pole a znovu spustil měřicí efekt $\rightarrow$ vznikl nekonečný cyklus aktualizací.
+
+**Nápravné opatření:**
+1. Zabalili jsme výpočet `allowedNavItems` do **`useMemo`** s přesnými závislostmi `[effectiveNavItems, isAuthorizedAdmin, isSuperAdmin]`.
+2. Reference pole je nyní plně stabilní a mění se pouze při skutečné změně zdrojových dat nebo uživatelské role.
+3. Nekonečný cyklus byl kompletně eliminován, hlavička renderuje naprosto čistě, bezchybně a optimálně.
