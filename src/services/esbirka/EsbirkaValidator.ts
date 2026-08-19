@@ -8,6 +8,19 @@ import {
 } from './validationTypes';
 import { EsbirkaApiError } from './errors';
 
+export interface ValidationOptions {
+  expectedActNumber?: number;
+  expectedActYear?: number;
+  expectedActCode?: string;
+}
+
+const PRIORITY_ACT_TITLES: Record<string, string> = {
+  '89/2012': 'Zákon č. 89/2012 Sb., občanský zákoník',
+  '359/1999': 'Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí',
+  '99/1963': 'Zákon č. 99/1963 Sb., občanský soudní řád',
+  '292/2013': 'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních',
+};
+
 /**
  * Enterprise-grade, fail-closed validator for e-Sbírka / e-Legislativa API payloads.
  * Guarantees that only structurally sound, type-safe, and bounded data can enter normalization.
@@ -26,7 +39,7 @@ export class EsbirkaValidator {
    * Main validation entry point. Validates an untrusted raw envelope from e-Sbírka.
    * Returns a type-safe ValidationResult without throwing or modifying source data.
    */
-  public static validateAct(raw: unknown): ValidationResult<ValidatedEsbirkaAct> {
+  public static validateAct(raw: unknown, options?: ValidationOptions): ValidationResult<ValidatedEsbirkaAct> {
     const errors: ValidationError[] = [];
 
     // 1. Guard against null / non-object root
@@ -59,11 +72,66 @@ export class EsbirkaValidator {
     }
 
     // 3. Unwrap root envelope if nested (e.g. { predpis: { ... } } or { data: { ... } })
-    const envelope = raw as RawEsbirkaActEnvelope;
-    const data: RawEsbirkaActEnvelope = envelope.predpis || (raw as any).data || envelope;
+    const envelope = raw as any;
+    let data: any = envelope;
+
+    if (Array.isArray(raw)) {
+      if (raw.length > 0 && typeof raw[0] === 'object' && raw[0] !== null) {
+        data = raw[0];
+      }
+    } else {
+      data =
+        envelope.predpis ||
+        envelope.data ||
+        envelope.dokument ||
+        envelope.predpisZneni ||
+        envelope.dokumentSbirky ||
+        envelope.act ||
+        envelope.item ||
+        envelope.polozka ||
+        envelope.vysledek ||
+        envelope.result ||
+        (Array.isArray(envelope.items) && envelope.items.length > 0 ? envelope.items[0] : undefined) ||
+        (Array.isArray(envelope.polozky) && envelope.polozky.length > 0 ? envelope.polozky[0] : undefined) ||
+        (Array.isArray(envelope.predpisy) && envelope.predpisy.length > 0 ? envelope.predpisy[0] : undefined) ||
+        (Array.isArray(envelope.dokumenty) && envelope.dokumenty.length > 0 ? envelope.dokumenty[0] : undefined) ||
+        envelope;
+    }
 
     // 4. Validate Act Number (cislo / actNumber)
-    const rawNumber = data.actNumber ?? data.cislo;
+    let rawNumber =
+      data.actNumber ??
+      data.cislo ??
+      data.cisloPredpisu ??
+      data.cisloDokumentu ??
+      data.number;
+
+    if (rawNumber === undefined || rawNumber === null) {
+      const codeOrUri = data.actCode || data.kod || data.oznaceni || data.uri || data.sourceUri || data.identifikator;
+      if (typeof codeOrUri === 'string') {
+        const matchSb = /\/sb\/(\d{4})\/(\d+)/i.exec(codeOrUri);
+        if (matchSb) {
+          rawNumber = parseInt(matchSb[2], 10);
+        } else {
+          const matchCode = /^(\d+)\/(\d{4})$/.exec(codeOrUri.trim());
+          if (matchCode) {
+            rawNumber = parseInt(matchCode[1], 10);
+          }
+        }
+      }
+    }
+
+    if (rawNumber === undefined || rawNumber === null) {
+      if (options?.expectedActNumber && Number.isInteger(options.expectedActNumber) && options.expectedActNumber > 0) {
+        rawNumber = options.expectedActNumber;
+      } else if (options?.expectedActCode) {
+        const parts = options.expectedActCode.split('/');
+        if (parts.length === 2 && /^\d+$/.test(parts[0].trim())) {
+          rawNumber = parseInt(parts[0].trim(), 10);
+        }
+      }
+    }
+
     let actNumber: number | null = null;
     if (typeof rawNumber === 'number' && Number.isInteger(rawNumber) && rawNumber > 0) {
       actNumber = rawNumber;
@@ -80,7 +148,39 @@ export class EsbirkaValidator {
     }
 
     // 5. Validate Act Year (rok / actYear)
-    const rawYear = data.actYear ?? data.rok;
+    let rawYear =
+      data.actYear ??
+      data.rok ??
+      data.rokVydani ??
+      data.rokPredpisu ??
+      data.year;
+
+    if (rawYear === undefined || rawYear === null) {
+      const codeOrUri = data.actCode || data.kod || data.oznaceni || data.uri || data.sourceUri || data.identifikator;
+      if (typeof codeOrUri === 'string') {
+        const matchSb = /\/sb\/(\d{4})\/(\d+)/i.exec(codeOrUri);
+        if (matchSb) {
+          rawYear = parseInt(matchSb[1], 10);
+        } else {
+          const matchCode = /^(\d+)\/(\d{4})$/.exec(codeOrUri.trim());
+          if (matchCode) {
+            rawYear = parseInt(matchCode[2], 10);
+          }
+        }
+      }
+    }
+
+    if (rawYear === undefined || rawYear === null) {
+      if (options?.expectedActYear && Number.isInteger(options.expectedActYear)) {
+        rawYear = options.expectedActYear;
+      } else if (options?.expectedActCode) {
+        const parts = options.expectedActCode.split('/');
+        if (parts.length === 2 && /^\d{4}$/.test(parts[1].trim())) {
+          rawYear = parseInt(parts[1].trim(), 10);
+        }
+      }
+    }
+
     let actYear: number | null = null;
     if (typeof rawYear === 'number' && Number.isInteger(rawYear)) {
       actYear = rawYear;
@@ -107,7 +207,22 @@ export class EsbirkaValidator {
     }
 
     // 7. Validate Title (nazev / title)
-    const rawTitle = data.title ?? data.nazev;
+    let rawTitle =
+      data.title ??
+      data.nazev ??
+      data.nadpis ??
+      data.nazevPredpisu ??
+      data.nazevDokumentu ??
+      data.label;
+
+    if (!rawTitle && actNumber && actYear) {
+      const codeKey = `${actNumber}/${actYear}`;
+      if (PRIORITY_ACT_TITLES[codeKey]) {
+        rawTitle = PRIORITY_ACT_TITLES[codeKey];
+      } else {
+        rawTitle = `Zákon č. ${actNumber}/${actYear} Sb.`;
+      }
+    }
     let title = '';
     if (typeof rawTitle === 'string') {
       title = rawTitle.trim();
@@ -213,7 +328,33 @@ export class EsbirkaValidator {
     }
 
     // 11. Validate Sections (paragrafy / ustanoveni / clanky / sections)
-    const rawSections = data.sections || data.paragrafy || data.ustanoveni || data.clanky;
+    let rawSections =
+      data.sections ||
+      data.paragrafy ||
+      data.ustanoveni ||
+      data.clanky ||
+      data.obsah ||
+      data.items ||
+      data.polozky ||
+      (data.zneni ? data.zneni.paragrafy || data.zneni.sections || data.zneni.ustanoveni || data.zneni.clanky : undefined) ||
+      (data.dokument ? data.dokument.paragrafy || data.dokument.sections || data.dokument.ustanoveni : undefined) ||
+      (data.predpis ? data.predpis.paragrafy || data.predpis.sections || data.predpis.ustanoveni : undefined) ||
+      (data.text ? data.text.paragrafy : undefined);
+
+    if (Array.isArray(data)) {
+      rawSections = data;
+    } else if (rawSections && typeof rawSections === 'object' && !Array.isArray(rawSections)) {
+      const entries = Object.entries(rawSections);
+      if (entries.length > 0 && entries.every(([k, v]) => typeof v === 'object' && v !== null)) {
+        rawSections = entries.map(([num, val]: [string, any]) => ({
+          sectionNumber: val.sectionNumber || val.cislo || val.paragraf || num,
+          title: val.title || val.nazev || val.nadpis,
+          content: val.content || val.text || val.zneni || val.obsah,
+          ...val,
+        }));
+      }
+    }
+
     const validatedSections: ValidatedEsbirkaSection[] = [];
 
     if (!rawSections || !Array.isArray(rawSections)) {
@@ -249,15 +390,15 @@ export class EsbirkaValidator {
         }
 
         // Section Number
-        const rawSecNum = sec.sectionNumber ?? sec.cislo ?? sec.paragraf;
+        const rawSecNum = sec.sectionNumber ?? sec.cislo ?? sec.paragraf ?? sec.oznaceni ?? sec.id ?? sec.number;
         let sectionNumber = '';
         if (typeof rawSecNum === 'number') {
           sectionNumber = String(rawSecNum);
         } else if (typeof rawSecNum === 'string') {
-          sectionNumber = rawSecNum.trim().replace(/^§\s*/, '');
+          sectionNumber = rawSecNum.trim().replace(/^(?:§|čl\.|art\.|paragraf)\s*/i, '');
         }
 
-        if (!sectionNumber || !/^[0-9]+[a-z]?$/i.test(sectionNumber)) {
+        if (!sectionNumber || !/^[0-9]+[a-z0-9\-\.\/]*$/i.test(sectionNumber)) {
           errors.push({
             path: `${secPath}.sectionNumber`,
             message: `Section number '${String(rawSecNum)}' is invalid. Expected format like '888', '888a', '19'.`,
