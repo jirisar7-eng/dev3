@@ -136,6 +136,35 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
           title: 'Zásady ochrany osobních údajů (GDPR)',
         },
       },
+    } : mod.slug === 'sitemap' ? {
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-sitemap',
+            badgeText: 'Mapa webu',
+            title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
+            description: 'Přehledná struktura všech sekcí a modulů portálu Táta má právo.',
+            ctaText: 'Zpět na domovskou stránku',
+            ctaUrl: '/',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-sitemap-1',
+            text: '### 📥 Sekce se aktuálně připravuje\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+            align: 'center',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        }
+      ],
+      root: {
+        props: {
+          title: 'Mapa stránek a architektura',
+        },
+      },
     } : mod.slug === 'user-manual' ? {
       content: [
         {

@@ -1339,7 +1339,36 @@ const defaultPages: Page[] = [
     id: 'pg-33-33',
     slug: 'sitemap',
     title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
-    content: '# Architektura & Vývoj Synthesis OS (Sitemap)\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-sitemap',
+            badgeText: 'Mapa webu',
+            title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
+            description: 'Přehledná struktura všech sekcí a modulů portálu Táta má právo.',
+            ctaText: 'Zpět na domovskou stránku',
+            ctaUrl: '/',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-sitemap-1',
+            text: '### 📥 Sekce se aktuálně připravuje\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+            align: 'center',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        }
+      ],
+      root: {
+        props: {
+          title: 'Mapa stránek a architektura',
+        },
+      },
+    }),
     published: true,
     seoTitle: 'Architektura & Vývoj Synthesis OS (Sitemap) | Táta má právo',
     seoDescription: 'Stránka je připravena pro budoucí obsah.',

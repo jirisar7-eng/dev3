@@ -12,6 +12,7 @@ import { VolunteerCodexPage } from './VolunteerCodexPage';
 import { GdprComplianceCenterPage } from './GdprComplianceCenterPage';
 import { FounderStoryPage } from './FounderStoryPage';
 import { UserManualPage } from './UserManualPage';
+import { SitemapPage } from './SitemapPage';
 import { StudyLibraryPage } from './StudyLibraryPage';
 import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
@@ -528,6 +529,19 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <UserManualPage onNavigate={onNavigate} />;
   }
 
-  // 6. Default CMS Page Router for all other slugs (/o-projektu, /zivotni-situace, /dobrovolnictvi, etc.)
+  // 6. Sitemap Route (/sitemap)
+  if (slug === 'sitemap') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_SITEMAP_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="sitemap" onNavigate={onNavigate} fallbackComponent={<SitemapPage onNavigate={onNavigate} />} />;
+    }
+    return <SitemapPage onNavigate={onNavigate} />;
+  }
+
+  // 7. Default CMS Page Router for all other slugs (/o-projektu, /zivotni-situace, /dobrovolnictvi, etc.)
   return <CmsPageRenderer slug={slug} onNavigate={onNavigate} />;
 };
