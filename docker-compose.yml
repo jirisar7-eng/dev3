@@ -61,7 +61,7 @@ volumes:
 networks:
   caddy_net:
     external: true
-    name: tatovacesta_app_network
+    name: ${APP_NETWORK_NAME:-tatovacesta_app_network}
   mailcow_network:
     external: true
     name: mailcow-dockerized_mailcow-network
