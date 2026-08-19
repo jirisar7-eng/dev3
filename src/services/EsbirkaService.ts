@@ -163,4 +163,37 @@ export class EsbirkaService {
     );
     return localLaw || null;
   }
+
+  /**
+   * Retrieves all stored time versions (časová znění) for a given legal act.
+   * 100% local database read (zero external requests).
+   */
+  public static async getActVersions(code: string, referenceDate: Date = new Date()) {
+    const formattedCode = code.replace('-', '/');
+    return EsbirkaLegalRepository.getActVersions(formattedCode, referenceDate);
+  }
+
+  /**
+   * Retrieves a specific historical/current version details and section wording snapshot.
+   * 100% local database read (zero external requests).
+   */
+  public static async getActVersionDetails(
+    code: string,
+    versionIdOrNumber: string,
+    referenceDate: Date = new Date()
+  ) {
+    const formattedCode = code.replace('-', '/');
+    return EsbirkaLegalRepository.getActVersionDetails(formattedCode, versionIdOrNumber, referenceDate);
+  }
+
+  /**
+   * Evaluates validity of a time version given effective dates and a reference date.
+   */
+  public static determineActWordingValidity(
+    effectiveFrom: Date,
+    effectiveTo: Date | null,
+    referenceDate: Date = new Date()
+  ) {
+    return EsbirkaLegalRepository.determineVersionValidity(effectiveFrom, effectiveTo, referenceDate);
+  }
 }

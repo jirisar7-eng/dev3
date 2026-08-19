@@ -1,5 +1,6 @@
 import { runEsbirkaApiClientTests } from './esbirkaApiClient.test';
 import { runEsbirkaContractPhase1Tests } from './esbirkaContractPhase1.test';
+import { runEsbirkaPhase2VersionsTests } from './esbirkaPhase2Versions.test';
 import { runValidationNormalizationTests } from './esbirkaValidationNormalization.test';
 import { runSyncEngineTests } from './esbirkaSyncEngine.test';
 import { runSchedulerTests } from './esbirkaScheduler.test';
@@ -13,6 +14,9 @@ async function runAll() {
 
   console.log('>>> RUNNING PHASE 1 CONTRACT TESTS...');
   const contractResults = await runEsbirkaContractPhase1Tests();
+
+  console.log('\n>>> RUNNING PHASE 2 TIME VERSIONS & VALIDITY TESTS...');
+  await runEsbirkaPhase2VersionsTests();
 
   console.log('\n>>> RUNNING API CLIENT TRANSPORT TESTS (ÚKOL 4/10)...');
   const clientResults = await runEsbirkaApiClientTests();

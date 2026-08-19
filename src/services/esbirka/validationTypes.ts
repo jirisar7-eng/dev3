@@ -22,6 +22,17 @@ export interface ValidationFailure {
 
 export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
 
+export type VersionValidityStatus = 'CURRENT' | 'PAST' | 'FUTURE';
+
+export interface VersionValidityInfo {
+  isValidAtDate: boolean;
+  isCurrent: boolean;
+  status: VersionValidityStatus;
+  effectiveFrom: Date;
+  effectiveTo: Date | null;
+  referenceDate: Date;
+}
+
 /**
  * Raw untrusted section payload as received from e-Sbírka / e-Legislativa REST endpoints.
  */
@@ -42,6 +53,59 @@ export interface RawEsbirkaSection {
   isKeySection?: boolean;
   practicalNote?: string;
   courtRelevance?: string;
+}
+
+/**
+ * Raw untrusted version item as received in casovaZneni / verze lists.
+ */
+export interface RawEsbirkaVersion {
+  versionNumber?: string | number;
+  verze?: string | number;
+  cisloVerze?: string | number;
+  oznaceniVerze?: string;
+  effectiveFrom?: string | Date;
+  datumUcinnostiOd?: string;
+  datumUcinnosti?: string;
+  ucinnostOd?: string;
+  effectiveTo?: string | Date;
+  datumUcinnostiDo?: string;
+  ucinnostDo?: string;
+  promulgationDate?: string | Date;
+  datumVyhlaseni?: string;
+  datumPlatnosti?: string;
+  contentHash?: string;
+  hash?: string;
+  changeSummary?: string;
+  popisZmeny?: string;
+  sourceNote?: string;
+  sections?: RawEsbirkaSection[];
+  paragrafy?: RawEsbirkaSection[];
+}
+
+/**
+ * Clean, verified data structure guaranteed to meet all mandatory structural constraints.
+ */
+export interface ValidatedEsbirkaSection {
+  sectionNumber: string; // e.g. "888", "888a", "19"
+  title?: string;
+  content: string; // Guaranteed non-empty normative legal text
+  isKeySection?: boolean;
+  practicalNote?: string;
+  courtRelevance?: string;
+}
+
+/**
+ * Validated version structure.
+ */
+export interface ValidatedEsbirkaVersion {
+  versionNumber: string;
+  effectiveFrom: Date;
+  effectiveTo: Date | null;
+  promulgationDate?: Date;
+  contentHash?: string;
+  changeSummary?: string;
+  sourceNote?: string;
+  sections?: ValidatedEsbirkaSection[];
 }
 
 /**
@@ -72,14 +136,24 @@ export interface RawEsbirkaActEnvelope {
   datumSchvaleni?: string;
   promulgationDate?: string | Date;
   datumVyhlaseni?: string;
+  datumPlatnosti?: string;
   effectiveFrom?: string | Date;
   datumUcinnostiOd?: string;
+  datumUcinnosti?: string;
+  ucinnostOd?: string;
   effectiveTo?: string | Date;
   datumUcinnostiDo?: string;
+  ucinnostDo?: string;
   lastAmendedDate?: string | Date;
   datumPosledniNovely?: string;
+  datumNovely?: string;
   versionNumber?: string;
   verze?: string;
+  cisloVerze?: string | number;
+  oznaceniVerze?: string;
+  casovaZneni?: RawEsbirkaVersion[];
+  verzeList?: RawEsbirkaVersion[];
+  historicalVersions?: RawEsbirkaVersion[];
   sections?: RawEsbirkaSection[];
   paragrafy?: RawEsbirkaSection[];
   ustanoveni?: RawEsbirkaSection[];
@@ -91,15 +165,6 @@ export interface RawEsbirkaActEnvelope {
 /**
  * Clean, verified data structure guaranteed to meet all mandatory structural constraints.
  */
-export interface ValidatedEsbirkaSection {
-  sectionNumber: string; // e.g. "888", "888a", "19"
-  title?: string;
-  content: string; // Guaranteed non-empty normative legal text
-  isKeySection?: boolean;
-  practicalNote?: string;
-  courtRelevance?: string;
-}
-
 export interface ValidatedEsbirkaAct {
   actNumber: number;
   actYear: number;
@@ -118,6 +183,7 @@ export interface ValidatedEsbirkaAct {
   lastAmendedDate?: Date;
   versionNumber?: string;
   sections: ValidatedEsbirkaSection[];
+  historicalVersions?: ValidatedEsbirkaVersion[];
   rawMetadata?: Record<string, any>;
 }
 
@@ -166,5 +232,6 @@ export interface NormalizedLegalAct {
   syncPriority: number;
   sections: NormalizedLegalSection[];
   versionSnapshot: NormalizedLegalVersion;
+  historicalVersions?: NormalizedLegalVersion[];
   rawMetadata: Record<string, any> | null;
 }

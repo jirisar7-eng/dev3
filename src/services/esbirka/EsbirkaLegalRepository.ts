@@ -1,9 +1,27 @@
 import crypto from 'crypto';
 import { prisma, isPrismaAvailable } from '../../db/prisma';
-import { NormalizedLegalAct, NormalizedLegalSection, NormalizedLegalVersion } from './validationTypes';
+import { NormalizedLegalAct, NormalizedLegalSection, NormalizedLegalVersion, VersionValidityInfo, VersionValidityStatus } from './validationTypes';
 import { SyncAuditStatusType, ActChangeType } from './syncTypes';
 import { ExistingActSnapshot } from './EsbirkaChangeDetector';
+import { EsbirkaNormalizer } from './EsbirkaNormalizer';
 import { EsbirkaApiError } from './errors';
+
+export interface LegalActVersionRecord {
+  id: string;
+  legalActId: string;
+  versionNumber: string;
+  effectiveFrom: Date;
+  effectiveTo: Date | null;
+  promulgationDate: Date | null;
+  contentSnapshot: any;
+  contentHash: string;
+  changeSummary: string | null;
+  sourceNote: string | null;
+  createdAt: Date;
+  isValidAtDate?: boolean;
+  isCurrent?: boolean;
+  validityStatus?: VersionValidityStatus;
+}
 
 export interface PersistSyncAuditParams {
   syncId: string;
@@ -691,6 +709,118 @@ export class EsbirkaLegalRepository {
     });
 
     return actsWithTimestamps[0].target;
+  }
+
+  /**
+   * Evaluates version validity based on effective dates and reference date.
+   */
+  public static determineVersionValidity(
+    effectiveFrom: Date,
+    effectiveTo: Date | null,
+    referenceDate: Date = new Date()
+  ): VersionValidityInfo {
+    return EsbirkaNormalizer.determineVersionValidity(effectiveFrom, effectiveTo, referenceDate);
+  }
+
+  /**
+   * Retrieves all available time versions (časová znění) for a given legal act.
+   * Versions are ordered by effectiveFrom descending.
+   */
+  public static async getActVersions(
+    actCode: string,
+    referenceDate: Date = new Date()
+  ): Promise<LegalActVersionRecord[]> {
+    const formattedCode = actCode.replace('-', '/');
+
+    if (isPrismaAvailable()) {
+      try {
+        const act = await prisma.legalAct.findFirst({
+          where: {
+            OR: [
+              { actCode: formattedCode },
+              { actCode: actCode },
+            ],
+          },
+          include: {
+            versions: {
+              orderBy: { effectiveFrom: 'desc' },
+            },
+          },
+        });
+
+        if (act && act.versions) {
+          return act.versions.map((v) => {
+            const valInfo = EsbirkaNormalizer.determineVersionValidity(v.effectiveFrom, v.effectiveTo, referenceDate);
+            return {
+              id: v.id,
+              legalActId: v.legalActId,
+              versionNumber: v.versionNumber,
+              effectiveFrom: v.effectiveFrom,
+              effectiveTo: v.effectiveTo,
+              promulgationDate: v.promulgationDate,
+              contentSnapshot: v.contentSnapshot,
+              contentHash: v.contentHash,
+              changeSummary: v.changeSummary,
+              sourceNote: v.sourceNote,
+              createdAt: v.createdAt,
+              isValidAtDate: valInfo.isValidAtDate,
+              isCurrent: valInfo.isCurrent,
+              validityStatus: valInfo.status,
+            };
+          });
+        }
+      } catch (err: any) {
+        console.warn(`[EsbirkaLegalRepository] DB getActVersions failed (${err?.message}), falling back to memory.`);
+      }
+    }
+
+    const memAct = this.memoryActs.get(formattedCode) || this.memoryActs.get(actCode);
+    if (!memAct || !memAct.versions) {
+      return [];
+    }
+
+    const sorted = [...memAct.versions].sort((a, b) => {
+      const aTime = a.effectiveFrom instanceof Date ? a.effectiveFrom.getTime() : new Date(a.effectiveFrom).getTime();
+      const bTime = b.effectiveFrom instanceof Date ? b.effectiveFrom.getTime() : new Date(b.effectiveFrom).getTime();
+      return bTime - aTime;
+    });
+
+    return sorted.map((v) => {
+      const effectiveFromDate = v.effectiveFrom instanceof Date ? v.effectiveFrom : new Date(v.effectiveFrom);
+      const effectiveToDate = v.effectiveTo ? (v.effectiveTo instanceof Date ? v.effectiveTo : new Date(v.effectiveTo)) : null;
+      const valInfo = EsbirkaNormalizer.determineVersionValidity(effectiveFromDate, effectiveToDate, referenceDate);
+      return {
+        id: v.id,
+        legalActId: memAct.id,
+        versionNumber: v.versionNumber,
+        effectiveFrom: effectiveFromDate,
+        effectiveTo: effectiveToDate,
+        promulgationDate: v.promulgationDate,
+        contentSnapshot: v.contentSnapshot,
+        contentHash: v.contentHash,
+        changeSummary: v.changeSummary,
+        sourceNote: v.sourceNote,
+        createdAt: new Date(),
+        isValidAtDate: valInfo.isValidAtDate,
+        isCurrent: valInfo.isCurrent,
+        validityStatus: valInfo.status,
+      };
+    });
+  }
+
+  /**
+   * Retrieves specific version details / snapshot for historical legal inspection.
+   */
+  public static async getActVersionDetails(
+    actCode: string,
+    versionIdOrNumber: string,
+    referenceDate: Date = new Date()
+  ): Promise<LegalActVersionRecord | null> {
+    const versions = await this.getActVersions(actCode, referenceDate);
+    const found = versions.find(
+      (v) => v.id === versionIdOrNumber || v.versionNumber === versionIdOrNumber
+    );
+    return found || null;
   }
 
   /**

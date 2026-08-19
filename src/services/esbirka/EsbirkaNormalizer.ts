@@ -5,6 +5,8 @@ import {
   NormalizedLegalAct,
   NormalizedLegalSection,
   NormalizedLegalVersion,
+  VersionValidityInfo,
+  VersionValidityStatus,
 } from './validationTypes';
 import { EsbirkaApiError } from './errors';
 
@@ -311,5 +313,50 @@ export class EsbirkaNormalizer {
       .join('\n\n---LEGAL_SECTION_BOUNDARY---\n\n');
 
     return crypto.createHash('sha256').update(canonicalPayload, 'utf8').digest('hex');
+  }
+
+  /**
+   * Evaluates the legal validity status of a version relative to a given reference date (defaults to current date).
+   * 
+   * Rules:
+   * - CURRENT: referenceDate >= effectiveFrom && (effectiveTo === null || referenceDate <= effectiveTo)
+   * - PAST: effectiveTo !== null && referenceDate > effectiveTo
+   * - FUTURE: referenceDate < effectiveFrom
+   */
+  public static determineVersionValidity(
+    effectiveFrom: Date,
+    effectiveTo: Date | null,
+    referenceDate: Date = new Date()
+  ): VersionValidityInfo {
+    const refTime = referenceDate.getTime();
+    const fromTime = effectiveFrom.getTime();
+    const toTime = effectiveTo ? effectiveTo.getTime() : null;
+
+    let status: VersionValidityStatus;
+    let isCurrent = false;
+    let isValidAtDate = false;
+
+    if (refTime < fromTime) {
+      status = 'FUTURE';
+      isValidAtDate = false;
+      isCurrent = false;
+    } else if (toTime !== null && refTime > toTime) {
+      status = 'PAST';
+      isValidAtDate = false;
+      isCurrent = false;
+    } else {
+      status = 'CURRENT';
+      isValidAtDate = true;
+      isCurrent = true;
+    }
+
+    return {
+      isValidAtDate,
+      isCurrent,
+      status,
+      effectiveFrom,
+      effectiveTo,
+      referenceDate,
+    };
   }
 }

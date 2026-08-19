@@ -52,10 +52,15 @@ export class EsbirkaApiClient {
     const rawBaseUrl = config?.baseUrl || process.env.ESBIRKA_BASE_URL || 'https://api.e-sbirka.gov.cz';
     this.baseUrl = EsbirkaApiClient.validateAndNormalizeUrl(rawBaseUrl);
 
-    // 2b. Resolve API Context Path (e.g., '' for official direct api.e-sbirka.gov.cz endpoints)
+    // 2b. Resolve API Context Path (empty string for direct official REST API routing)
     let contextPath = config?.apiContextPath !== undefined 
       ? config.apiContextPath 
-      : (process.env.ESBIRKA_API_CONTEXT_PATH !== undefined ? process.env.ESBIRKA_API_CONTEXT_PATH : '');
+      : (process.env.ESBIRKA_API_CONTEXT_PATH ?? '');
+
+    // The official api.e-sbirka.gov.cz domain uses direct root path /dokumenty-sbirky/...
+    if (this.baseUrl.includes('api.e-sbirka.gov.cz') && config?.apiContextPath === undefined) {
+      contextPath = '';
+    }
 
     if (contextPath && !contextPath.startsWith('/')) {
       contextPath = `/${contextPath}`;
