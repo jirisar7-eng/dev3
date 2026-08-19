@@ -5,7 +5,7 @@ import { SupportInterestModal } from '../components/support/SupportInterestModal
 import { AssociationDocumentsModal } from '../components/support/AssociationDocumentsModal';
 import { AssociationDemoModal } from '../components/support/AssociationDemoModal';
 
-const SupportUsPage: React.FC = () => {
+const SupportUsPage: React.FC<{ interactiveOnly?: boolean }> = ({ interactiveOnly }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'SPONSOR' | 'FOUNDER' | 'BOARD'>('SPONSOR');
   
@@ -30,12 +30,13 @@ const SupportUsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
-      <Navbar onLoginClick={() => {}} user={null} />
+      {!interactiveOnly && <Navbar onLoginClick={() => {}} user={null} />}
       
       <main className="flex-grow pt-24 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Hero Section */}
+          {!interactiveOnly && (
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-6 shadow-sm">
               <Heart className="w-8 h-8 fill-current" />
@@ -47,6 +48,7 @@ const SupportUsPage: React.FC = () => {
               Vyvíjíme bezplatné nástroje a AI asistenty pro táty v rozvodovém řízení. Zajišťujeme osvětu, pomáháme chránit zájmy dětí a usilujeme o rovnoprávnější a spravedlivější justici. K tomu potřebujeme vaši podporu.
             </p>
           </div>
+          )}
 
           {/* Cards Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">

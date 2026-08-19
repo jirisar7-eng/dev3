@@ -4,6 +4,7 @@ import { Article } from '../../types';
 import { SeoHead } from './SeoHead';
 import { Calendar, User, ArrowLeft, Tag } from 'lucide-react';
 import { stripMarkdown } from '../../utils/textUtils';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 
 interface ArticleDetailViewProps {
   slug: string;
@@ -16,11 +17,7 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onNa
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/cms/articles')
-      .then((res) => {
-        if (!res.ok) throw new Error('Network response was not ok');
-        return res.json();
-      })
+    fetchCmsPublic('/api/cms/articles')
       .then((data: Article[]) => {
         const decodedSlug = decodeURIComponent(slug);
         const found = data.find(

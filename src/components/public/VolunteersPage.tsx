@@ -19,7 +19,7 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 
-export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
+export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void; formOnly?: boolean }> = ({ onNavigate, formOnly }) => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,12 +125,14 @@ export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void }> = 
   }
 
   return (
-    <div className="space-y-20 pb-24">
-      <SeoHead 
-        title="Hledáme dobrovolníky | Táta má právo" 
-        description="Pomozte nám budovat spravedlivější prostředí pro táty a jejich děti. Hledáme dobrovolníky z oblasti práva, psychologie, IT, obsahu i komunity."
-        canonicalPath="/o-projektu/dobrovolnici"
-      />
+    <>
+      {!formOnly && (
+        <div className="space-y-20 pb-24">
+          <SeoHead 
+            title="Hledáme dobrovolníky | Táta má právo" 
+            description="Pomozte nám budovat spravedlivější prostředí pro táty a jejich děti. Hledáme dobrovolníky z oblasti práva, psychologie, IT, obsahu i komunity."
+            canonicalPath="/o-projektu/dobrovolnici"
+          />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-slate-50 border-b border-slate-200 py-16 sm:py-20 px-4">
@@ -448,8 +450,10 @@ export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void }> = 
           </div>
         </div>
       </section>
+        </div>
+      )} {/* End !formOnly */}
 
-      {/* Formulář */}
+      {/* Formulář (zobrazí se vždy, tedy i když formOnly=true) */}
       <section id="zapojit-se-formular" className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
           <div className="space-y-2 text-center sm:text-left">
@@ -675,6 +679,6 @@ export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void }> = 
           </form>
         </div>
       </section>
-    </div>
+    </>
   );
 };

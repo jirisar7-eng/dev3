@@ -5,11 +5,17 @@ import {
   PollBlockProps,
   FormComponent,
   FormBlockProps,
-  ImageBlockComponent,
   ImageBlockProps,
-  ColumnsBlockComponent,
   ColumnsBlockProps,
 } from './PuckInteractiveBlocks';
+
+import { HeroAdapter, HeroAdapterProps } from './adapters/HeroAdapter';
+import { TextAdapter, TextAdapterProps } from './adapters/TextAdapter';
+import { CtaAdapter, CtaAdapterProps } from './adapters/CtaAdapter';
+import { ImageAdapter, ImageAdapterProps } from './adapters/ImageAdapter';
+import { ColumnsAdapter, ColumnsAdapterProps } from './adapters/ColumnsAdapter';
+import { FaqFeedAdapter, FaqFeedAdapterProps } from './adapters/FaqFeedAdapter';
+import { ArticlesFeedAdapter, ArticlesFeedAdapterProps } from './adapters/ArticlesFeedAdapter';
 
 export function normalizePuckData(data: any): Data {
   if (!data || typeof data !== 'object') {
@@ -43,27 +49,15 @@ export function normalizePuckData(data: any): Data {
 }
 
 export type Props = {
-  HeroBlock: {
-    title: string;
-    description: string;
-    buttonText: string;
-    buttonUrl?: string;
-  };
-  TextBlock: {
-    text: string;
-    align: 'left' | 'center' | 'right';
-  };
-  CallToAction: {
-    title: string;
-    description: string;
-    buttonText: string;
-    buttonUrl?: string;
-    variant?: 'primary' | 'secondary' | 'dark';
-  };
-  ColumnsBlock: ColumnsBlockProps;
-  ImageBlock: ImageBlockProps;
+  HeroBlock: HeroAdapterProps;
+  TextBlock: TextAdapterProps;
+  CallToAction: CtaAdapterProps;
+  ColumnsBlock: ColumnsAdapterProps;
+  ImageBlock: ImageAdapterProps;
   PollBlock: PollBlockProps;
   FormBlock: FormBlockProps;
+  FaqFeedBlock: FaqFeedAdapterProps;
+  ArticlesFeedBlock: ArticlesFeedAdapterProps;
 };
 
 export const puckConfig: Config<Props> = {
@@ -72,29 +66,22 @@ export const puckConfig: Config<Props> = {
       fields: {
         title: { type: 'text' },
         description: { type: 'textarea' },
-        buttonText: { type: 'text' },
-        buttonUrl: { type: 'text' },
+        badgeText: { type: 'text' },
+        ctaText: { type: 'text' },
+        ctaUrl: { type: 'text' },
+        secondaryCtaText: { type: 'text' },
+        secondaryCtaUrl: { type: 'text' },
       },
       defaultProps: {
-        title: 'Vítejte na naší stránce',
-        description: 'Tohle je skvělý úvodní blok, který zaujme vaše návštěvníky na první pohled a přiměje je k akci.',
-        buttonText: 'Prozkoumat nabídku',
-        buttonUrl: '#',
+        title: 'Táta má právo. Dítě má právo na oba rodiče.',
+        description: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče.',
+        badgeText: 'Portál pro právní a psychologickou oporu otců v ČR',
+        ctaText: 'Prozkoumat poradnu',
+        ctaUrl: '#poradna',
+        secondaryCtaText: 'Přehled modulů',
+        secondaryCtaUrl: '#moduly',
       },
-      render: ({ title, description, buttonText, buttonUrl }) => (
-        <div className="py-16 px-6 md:px-12 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl my-4 text-center shadow-xl">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">{title}</h1>
-          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">{description}</p>
-          {buttonText && (
-            <a
-              href={buttonUrl || '#'}
-              className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-md hover:shadow-indigo-500/25 active:scale-95"
-            >
-              {buttonText}
-            </a>
-          )}
-        </div>
-      ),
+      render: (props) => <HeroAdapter {...props} />,
     },
 
     TextBlock: {
@@ -108,22 +95,32 @@ export const puckConfig: Config<Props> = {
             { label: 'Vpravo', value: 'right' },
           ],
         },
+        maxWidth: {
+          type: 'select',
+          options: [
+            { label: 'Malý (sm)', value: 'sm' },
+            { label: 'Střední (md)', value: 'md' },
+            { label: 'Velký (lg)', value: 'lg' },
+            { label: 'Extra velký (xl)', value: 'xl' },
+            { label: 'Plná šířka', value: 'full' },
+          ],
+        },
+        color: {
+          type: 'select',
+          options: [
+            { label: 'Výchozí', value: 'default' },
+            { label: 'Tlumený', value: 'muted' },
+            { label: 'Hlavní/Větší', value: 'lead' },
+          ],
+        },
       },
       defaultProps: {
         text: 'Zde zadejte váš text. Můžete zde sdílet důležité informace, příběhy nebo podrobnosti o vašich službách.',
         align: 'left',
+        maxWidth: 'lg',
+        color: 'default',
       },
-      render: ({ text, align }) => {
-        const alignClass =
-          align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left';
-        return (
-          <div className={`py-6 px-4 my-2 ${alignClass}`}>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-              {text}
-            </p>
-          </div>
-        );
-      },
+      render: (props) => <TextAdapter {...props} />,
     },
 
     CallToAction: {
@@ -148,38 +145,9 @@ export const puckConfig: Config<Props> = {
         buttonUrl: '#',
         variant: 'primary',
       },
-      render: ({ title, description, buttonText, buttonUrl, variant }) => {
-        let bannerStyle = 'bg-indigo-600 text-white';
-        let btnStyle = 'bg-white text-indigo-700 hover:bg-slate-100';
-
-        if (variant === 'secondary') {
-          bannerStyle = 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700';
-          btnStyle = 'bg-indigo-600 text-white hover:bg-indigo-500';
-        } else if (variant === 'dark') {
-          bannerStyle = 'bg-slate-900 text-white border border-slate-800';
-          btnStyle = 'bg-indigo-500 text-white hover:bg-indigo-400';
-        }
-
-        return (
-          <div className={`p-8 md:p-10 rounded-2xl my-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md ${bannerStyle}`}>
-            <div className="space-y-2 text-center md:text-left">
-              <h3 className="text-2xl font-bold">{title}</h3>
-              <p className="opacity-90 max-w-xl text-sm md:text-base">{description}</p>
-            </div>
-            {buttonText && (
-              <a
-                href={buttonUrl || '#'}
-                className={`whitespace-nowrap font-semibold px-6 py-3 rounded-xl transition-all shadow-sm active:scale-95 shrink-0 ${btnStyle}`}
-              >
-                {buttonText}
-              </a>
-            )}
-          </div>
-        );
-      },
+      render: (props) => <CtaAdapter {...props} />,
     },
 
-    // 1. Layoutové sloupce (bloky vedle sebe)
     ColumnsBlock: {
       fields: {
         columnsCount: {
@@ -240,10 +208,9 @@ export const puckConfig: Config<Props> = {
         col4Title: 'Čtvrtý sloupec',
         col4Text: 'Volitelný čtvrtý sloupec.',
       },
-      render: (props) => <ColumnsBlockComponent {...props} />,
+      render: (props) => <ColumnsAdapter {...props} />,
     },
 
-    // 2. Obrázky
     ImageBlock: {
       fields: {
         url: { type: 'text' },
@@ -299,10 +266,9 @@ export const puckConfig: Config<Props> = {
         maxWidth: 'lg',
         borderRadius: 'xl',
       },
-      render: (props) => <ImageBlockComponent {...props} />,
+      render: (props) => <ImageAdapter {...props} />,
     },
 
-    // 3. Ankety (Poll)
     PollBlock: {
       fields: {
         pollId: { type: 'text' },
@@ -319,7 +285,6 @@ export const puckConfig: Config<Props> = {
       render: (props) => <PollComponent {...props} />,
     },
 
-    // 4. Formuláře (Form)
     FormBlock: {
       fields: {
         formId: { type: 'text' },
@@ -340,6 +305,38 @@ export const puckConfig: Config<Props> = {
         successMessage: 'Děkujeme, váš formulář byl úspěšně doručen. Ozveme se vám zpět.',
       },
       render: (props) => <FormComponent {...props} />,
+    },
+
+    FaqFeedBlock: {
+      fields: {
+        title: { type: 'text' },
+        badgeText: { type: 'text' },
+        limit: { type: 'number' },
+        categoryFilter: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Nejčastější otázky v opatrovnickém řízení',
+        badgeText: 'Časté Dotazy (FAQ)',
+        limit: 10,
+        categoryFilter: '',
+      },
+      render: (props) => <FaqFeedAdapter {...props} />,
+    },
+
+    ArticlesFeedBlock: {
+      fields: {
+        title: { type: 'text' },
+        subtitle: { type: 'textarea' },
+        limit: { type: 'number' },
+        categoryFilter: { type: 'text' },
+      },
+      defaultProps: {
+        title: 'Opatrovnické právo v praxi',
+        subtitle: 'Odborné články, judikáty Ústavního soudu a osvědčené postupy pro otce.',
+        limit: 3,
+        categoryFilter: '',
+      },
+      render: (props) => <ArticlesFeedAdapter {...props} />,
     },
   },
 };

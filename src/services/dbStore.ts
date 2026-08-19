@@ -521,6 +521,140 @@ const defaultPageSections: PageSection[] = [
 ];
 
 const defaultPages: Page[] = [
+
+  {
+    id: 'pg-batch3-krizova-pomoc',
+    slug: 'krizova-pomoc',
+    title: 'Krizová pomoc a komunita',
+    content: 'Potřebujete okamžitou radu nebo pomoc? Naše komunita a krizové centrum jsou tu pro vás. Získejte podporu od zkušených otců nebo odborníků.',
+    published: true,
+    seoTitle: 'Krizová pomoc a podpora | Táta má právo',
+    seoDescription: 'Okamžitá pomoc a komunitní podpora pro otce v krizové rodinné situaci.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-sos-plan',
+    slug: 'sos-plan',
+    title: 'SOS Krizový plán',
+    content: 'Jak postupovat v prvních hodinách a dnech po rozpadu rodiny. První kroky pro ochranu dětí a vašich práv.',
+    published: true,
+    seoTitle: 'SOS Krizový plán pro otce | Táta má právo',
+    seoDescription: 'První kroky a důležitá opatření v krizové situaci při odebírání dětí z péče.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-forum',
+    slug: 'forum',
+    title: 'Diskusní fórum',
+    content: 'Prostor pro sdílení zkušeností, rad a vzájemnou podporu v komunitě otců.',
+    published: true,
+    seoTitle: 'Komunitní fórum pro otce | Táta má právo',
+    seoDescription: 'Diskusní fórum zaměřené na střídavou péči, práva dětí a sdílení osobních zkušeností.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-pribehy',
+    slug: 'pribehy',
+    title: 'Příběhy z praxe',
+    content: 'Skutečné příběhy otců, kterým se podařilo uspět v boji za svá práva a udržet si vztah s dětmi.',
+    published: true,
+    seoTitle: 'Kazuistiky a příběhy z praxe | Táta má právo',
+    seoDescription: 'Případové studie a pozitivní příběhy úspěšných rozhodnutí soudů ve prospěch dětí a obou rodičů.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-memento',
+    slug: 'memento',
+    title: 'Memento 2024',
+    content: 'Připomínka tragických událostí a selhání systému, ze kterých je nutné se poučit.',
+    published: true,
+    seoTitle: 'Memento – Důsledky selhání systému | Táta má právo',
+    seoDescription: 'Odborná reflexe krizových případů a systémových selhání v oblasti rodinného práva.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-pravni-poradna',
+    slug: 'pravni-poradna',
+    title: 'Bezplatná právní poradna',
+    content: 'Možnost konzultace vašeho případu s našimi spolupracujícími odborníky a advokáty pro oblast rodinného práva.',
+    published: true,
+    seoTitle: 'Bezplatná právní poradna pro otce | Táta má právo',
+    seoDescription: 'Získejte rychlou a bezplatnou právní radu v otázkách svěření do péče, výživného a styku s dětmi.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-podpora',
+    slug: 'podpora',
+    title: 'Podpořte nás',
+    content: 'Pomozte nám bojovat za spravedlnost pro děti a obvody rodiče. Každý příspěvek se počítá.',
+    published: true,
+    seoTitle: 'Podpořte naši činnost | Táta má právo',
+    seoDescription: 'Možnosti finanční i nefinanční podpory spolku a komunity.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-knihovna-studii',
+    slug: 'knihovna-studii',
+    title: 'Knihovna studií',
+    content: 'Rozsáhlá databáze odborných psychologických a sociologických studií prokazujících prospěšnost střídavé péče pro vývoj dítěte.',
+    published: true,
+    seoTitle: 'Databáze odborných studií o péči | Táta má právo',
+    seoDescription: 'Studie, metaanalýzy a vědecké práce o dopadech střídavé a výlučné péče na zdravý vývoj dítěte.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-videoteka',
+    slug: 'videoteka',
+    title: 'Videotéka a webináře',
+    content: 'Záznamy z konferencí, rozhovory s odborníky a návodná edukativní videa.',
+    published: true,
+    seoTitle: 'Videotéka a vzdělávací obsah | Táta má právo',
+    seoDescription: 'Videa, rozhovory a webináře na téma rodinného práva a sdíleného rodičovství.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-vzdelavani',
+    slug: 'vzdelavani',
+    title: 'E-learning a Kvízy',
+    content: 'Otestujte a rozšiřte své znalosti rodinného práva v interaktivním tréninkovém prostředí.',
+    published: true,
+    seoTitle: 'Právní a psychologické vzdělávání | Táta má právo',
+    seoDescription: 'Kvízy, případové simulace a interaktivní testy zaměřené na rodinně-právní agendu.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-legal-wiki',
+    slug: 'legal-wiki',
+    title: 'Legal Wiki a Slovník pojmů',
+    content: 'Komplexní výkladový slovník právních a psychologických pojmů spojených s rozvodem a péčí o děti.',
+    published: true,
+    seoTitle: 'Právní Wiki a slovník pojmů | Táta má právo',
+    seoDescription: 'Encyklopedie rodinného práva a slovník nejdůležitějších pojmů v opatrovnické agendě.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-batch3-studie',
+    slug: 'studie',
+    title: 'Vědecké studie a výzkum',
+    content: 'Databáze odborných textů prokazujících vliv uspořádání po rozvodu na děti.',
+    published: true,
+    seoTitle: 'Vědecké studie | Táta má právo',
+    seoDescription: 'Odborné psychologické a právní studie z celého světa.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+
   {
     id: 'pg-1',
     slug: 'domu',
@@ -536,11 +670,11 @@ const defaultPages: Page[] = [
     id: 'pg-2',
     slug: 'o-projektu',
     title: 'O projektu Táta má právo',
-    content: 'Projekt **Táta má právo** vznikl jako reakce na dlouhodobé nerovnosti v opatrovnickém soudnictví. Naším primárním cílem je obhajoba nezpochybnitelného práva každého dítěte na plnohodnotnou výchovu oběma rodiči.',
+    content: JSON.stringify("{\"content\":[{\"type\":\"HeroBlock\",\"props\":{\"id\":\"hero-1\",\"title\":\"O projektu Táta má právo\",\"description\":\"Projekt **Táta má právo** nevzniká proto, aby stavěl otce proti matkám. Vzniká proto, že otec má být rodičem svého dítěte.\"}},{\"type\":\"TextContent\",\"props\":{\"id\":\"text-1\",\"title\":\"Proč vzniká Táta má právo\",\"content\":\"Projekt Táta má právo nevzniká proto, aby stavěl otce proti matkám. Nevzniká ani proto, aby útočil na soudy, OSPOD nebo jiné instituce.\\n\\nVzniká proto, že po tisících rozhovorů, stovek prostudovaných spisů a mnoha analýzách rozsudků je zřejmé jedno: Český opatrovnický systém systematicky a často zcela bezdůvodně vymazává otce ze životů jejich dětí. A to i tehdy, pokud je otec plně kompetentní, trestně bezúhonný a o péči má prokazatelný zájem.\"}}],\"root\":{\"props\":{}}}"),
     published: true,
     seoTitle: 'O nás a našem poslání | Táta má právo',
     seoDescription: 'Informace o projektu Táta má právo, našem poslání, hodnotách a týmu.',
-    sections: defaultPageSections.filter((s) => s.pageId === 'pg-2'),
+    sections: [],
     updatedAt: new Date().toISOString(),
   },
   {
@@ -628,6 +762,264 @@ const defaultPages: Page[] = [
     published: true,
     seoTitle: 'Prohlášení o AI technologiích | Táta má právo',
     seoDescription: 'Informace o využití a limitech AI nástrojů na portálu.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-partneri',
+    slug: 'partneri',
+    title: 'Partneři a sponzoři',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-partneri',
+            badgeText: 'Naši partneři a sponzoři',
+            title: 'Podporují nás',
+            description: 'Zajištění dostupnosti poradenských materiálů, článků a vzorů právních podání 24 hodin denně, 7 dní v týdnu je pro otce v krizových situacích klíčové. Děkujeme těmto technologickým partnerům za jejich podporu, bez kterých by tento portál nemohl existovat.',
+            ctaText: 'Stát se partnerem',
+            ctaUrl: '/kontakt',
+            secondaryCtaText: 'Podpořit spolek',
+            secondaryCtaUrl: '/podporte-nas',
+          },
+        },
+        {
+          type: 'ArticlesFeedBlock',
+          props: {
+            id: 'feed-partneri',
+            title: 'Technologičtí a odborní partneři',
+            subtitle: 'Děkujeme za podporu infrastruktury a provozu portálu.',
+            categoryFilter: 'Partneři a sponzoři',
+            limit: 6,
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-partneri',
+            title: 'Chcete se stát partnerem projektu Táta má právo?',
+            description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje pro rodiny v opatrovnických řízeních.',
+            buttonText: 'Kontaktovat koordinátora',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Partneři a sponzoři',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Partneři a sponzoři • Táta má právo',
+    seoDescription: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-sponzori',
+    slug: 'sponzori',
+    title: 'Partneři a sponzoři',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-sponzori',
+            badgeText: 'Naši partneři a sponzoři',
+            title: 'Podporují nás',
+            description: 'Zajištění dostupnosti poradenských materiálů, článků a vzorů právních podání 24 hodin denně, 7 dní v týdnu je pro otce v krizových situacích klíčové. Děkujeme těmto technologickým partnerům za jejich podporu, bez kterých by tento portál nemohl existovat.',
+            ctaText: 'Stát se partnerem',
+            ctaUrl: '/kontakt',
+            secondaryCtaText: 'Podpořit spolek',
+            secondaryCtaUrl: '/podporte-nas',
+          },
+        },
+        {
+          type: 'ArticlesFeedBlock',
+          props: {
+            id: 'feed-sponzori',
+            title: 'Technologičtí a odborní partneři',
+            subtitle: 'Děkujeme za podporu infrastruktury a provozu portálu.',
+            categoryFilter: 'Partneři a sponzoři',
+            limit: 6,
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-sponzori',
+            title: 'Chcete se stát partnerem projektu Táta má právo?',
+            description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje pro rodiny v opatrovnických řízeních.',
+            buttonText: 'Kontaktovat koordinátora',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Partneři a sponzoři',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Partneři a sponzoři • Táta má právo',
+    seoDescription: 'Představujeme partnery a sponzory, díky kterým můžeme udržovat portál Táta má právo v chodu.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-kodex-dobrovolnika',
+    slug: 'kodex-dobrovolnika',
+    title: 'Dobrovolnický kodex',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-kodex-dobrovolnika',
+            badgeText: 'Synthesis OS • Samostatný modul compliance',
+            title: 'DOBROVOLNICKÝ KODEX',
+            description: 'Táta má právo / Synthesis OS • Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků. Verze dokumentu: 1.0 • ID: SYNTH-CODEX-VOL-2026-V1 • Účinnost od: 12. 8. 2026',
+            ctaText: 'Zpět na hlavní portál',
+            ctaUrl: '/',
+            secondaryCtaText: 'Podpořit projekt',
+            secondaryCtaUrl: '/podporte-nas',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-kodex-purpose',
+            text: '### I. ÚČEL KODEXU\n1. Tento kodex stanovuje základní pravidla chování všech dobrovolníků, spolupracovníků a osob s přístupem k projektu **Táta má právo / Synthesis OS**.\n2. Účelem kodexu je zajistit, aby projekt zůstal bezpečným, důvěryhodným a respektujícím prostředím pro rodiče, děti i všechny členy komunity.\n3. Dobrovolník přijímá skutečnost, že práce v projektu může mít přímý dopad na životní situace lidí, kteří se nacházejí v náročných rodinných, právních nebo psychických okolnostech.\n\n### II. POSLÁNÍ PROJEKTU\nDobrovolník při své činnosti podporuje zejména nejlepší zájem dítěte, zdravý vztah dítěte k oběma rodičům, respekt mezi rodiči, odpovědné rodičovství, dostupnost ověřených informací a lidský přístup k lidem v obtížné situaci.\n\n*Projekt není založen na boji proti jednotlivým osobám, ale na podpoře řešení, informovanosti a odpovědnosti.*',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-kodex-values',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: 'III. ZÁKLADNÍ HODNOTY',
+            col1Text: '1. Respekt ke každému člověku bez ohledu na pohlaví, věk či situaci.\n2. Ochrana dítěte – dítě není nástroj konfliktu.\n3. Pravdivost a odpovědnost – ověřování informací a uvádění zdrojů.',
+            col2Title: 'IV. KOMUNIKACE A PRAVIDLA',
+            col2Text: 'Slušná, klidná a věcná komunikace bez odsuzování, urážení či vyvolávání konfliktů. Zásada neútočení na druhého rodiče a důsledná ochrana soukromí.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-kodex-standards',
+            text: '### VII. OCHRANA SOUKROMÍ A ODBORNOST\nDobrovolník chrání identitu uživatelů, nesdílí screenshoty komunikace ani detaily případů. Nepředstírá kvalifikaci, kterou nemá, a jasně rozlišuje osobní názor od stanoviska projektu.\n\n### X. TECHNOLOGICKÁ ETIKA A AI\nBezpečnost systému znamená ochranu lidí. Při využití AI dobrovolník kontroluje výstupy a nevkládá citlivé osobní údaje do externích služeb.\n\n### XIV. SLIB DOBROVOLNÍKA\n> *„Přijímám odpovědnost za své jednání v projektu Táta má právo. Budu chránit soukromí lidí, respektovat důstojnost rodičů i dětí a využívat své schopnosti k pomoci, nikoliv k prohlubování konfliktů.“*',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-kodex-volunteer',
+            title: 'Chcete se zapojit do dobrovolnického týmu?',
+            description: 'Pomozte nám rozvíjet nezávislé právní a psychologické nástroje a komunitní podporu pro rodiny v opatrovnických řízeních.',
+            buttonText: 'Kontaktovat koordinátora',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Dobrovolnický kodex',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Dobrovolnický kodex • Táta má právo / Synthesis OS',
+    seoDescription: 'Etická pravidla, zásady komunikace a odpovědného jednání dobrovolníků projektu Táta má právo / Synthesis OS.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'pg-zasady-ochrany-osobnich-udaju',
+    slug: 'zasady-ochrany-osobnich-udaju',
+    title: 'Zásady ochrany osobních údajů (GDPR)',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-privacy-policy',
+            badgeText: 'Synthesis OS • Security & Privacy Compliance',
+            title: 'Zásady ochrany osobních údajů (GDPR)',
+            description: 'Transparentní zpracování a ochrana osobních údajů podle Nařízení Evropského parlamentu a Rady (EU) 2016/679 (GDPR). Release 0.5.1 • Účinnost od 12. 8. 2026.',
+            ctaText: 'Zpět na hlavní portál',
+            ctaUrl: '/',
+            secondaryCtaText: 'Kontaktní formulář',
+            secondaryCtaUrl: '/kontakt',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-privacy-controller',
+            text: '### 1. Identifikace správce\nSprávcem osobních údajů podle Nařízení Evropského parlamentu a Rady (EU) 2016/679 (GDPR) je:\n- **Jméno a příjmení:** Jiří Šár (fyzická osoba nepodnikající)\n- **Role:** Zakladatel a provozovatel projektu *Táta má právo / Synthesis OS*\n- **Webový portál:** www.tatovacesta.cz\n- **Kontaktní e-mail:** info@tatovacesta.cz | **Pověřený GDPR e-mail:** gdpr@tatamapravo.cz\n\n### 2. Kategorie a soubory zpracovávaných údajů\nZpracováváme osobní údaje nezbytné pro provoz portálu, komunitních funkcí a AI nástrojů:\n- **Identifikační a kontaktní údaje:** E-mailová adresa, uživatelské jméno, unikátní ID účtu.\n- **Technické údaje:** IP adresa, soubory cookies, logy přihlášení, typ prohlížeče.\n- **Autentizační údaje (Passkeys):** Systém **neukládá biometrické údaje**. Biometrická autentizace probíhá výhradně na zařízení uživatele (FIDO2/WebAuthn). Na server se přenáší pouze kryptografický veřejný klíč.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-privacy-sensitive',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: '2.4 Citlivé osobní údaje (Čl. 9)',
+            col1Text: 'Při vkládání podkladů do poradny systém zpracovává informace z rodinných vztahů a soudních spisů. Tyto údaje nejsou vyžadovány pro běžné použití a doporučuje se jejich důsledná anonymizace.',
+            col2Title: '3. Zpracování pomocí AI',
+            col2Text: 'AI nástroje uplatňují princip minimalizace dat. Výstupy slouží jako orientační podklad a nepředstavují automatizované rozhodování podle Čl. 22 GDPR.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-privacy-rights',
+            text: '### 5. Ochrana osobních údajů nezletilých dětí\nPortál **není určen k veřejnému zveřejňování identifikačních údajů o dětech**. V komunitních sekcích je zakázáno uvádět celá jména dětí, fotografie, rodná čísla nebo adresy škol a bydliště. Veškeré příběhy musí být důsledně anonymizovány.\n\n### 6. Uchování dat a zálohování\nOsobní údaje aktivních účtů uchováváme po dobu trvání registrace. Po žádosti o zrušení účtu dojde k výmazu údajů z aktivních systémů do 30 dnů. Technické zálohy jsou přemazávány v automatických cyklech (max. 90 dnů).\n\n### 7. Práva uživatelů podle GDPR\nMáte právo na přístup (Čl. 15), opravu (Čl. 16), výmaz / právo být zapomenut (Čl. 17), omezení zpracování (Čl. 18), přenositelnost údajů (Čl. 20) a vznesení námitky (Čl. 21). Svá práva můžete uplatnit na e-mailu gdpr@tatamapravo.cz.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-privacy-contact',
+            title: 'Máte dotaz k ochraně osobních údajů nebo chcete uplatnit svá práva?',
+            description: 'Náš pověřený tým pro ochranu osobních údajů vám rád odpoví a pomůže s uplatněním práv subjektu údajů podle GDPR.',
+            buttonText: 'Kontaktovat GDPR podporu',
+            buttonUrl: '/kontakt',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Zásady ochrany osobních údajů (GDPR)',
+        },
+      },
+    }),
+    published: true,
+    seoTitle: 'Zásady ochrany osobních údajů (GDPR) • Táta má právo / Synthesis OS',
+    seoDescription: 'Informace o zpracování a ochraně osobních údajů, práva subjektů údajů a zásady GDPR (Release 0.5.1).',
     sections: [],
     updatedAt: new Date().toISOString(),
   },
@@ -821,11 +1213,76 @@ const defaultPages: Page[] = [
   {
     id: 'pg-33-18',
     slug: 'cesta-zakladatele',
-    title: 'Příběh Zakladatele Synthesis OS',
-    content: '# Příběh Zakladatele Synthesis OS\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    title: 'Cesta zakladatele projektu',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-cesta-zakladatele',
+            badgeText: 'Synthesis OS • Osobní příběh & mise',
+            title: 'Cesta zakladatele projektu',
+            description: 'Proč vznikla platforma Táta má právo? Osobní zkušenost s opatrovnickým systémem, hledání spravedlnosti a vize digitální infrastruktury pro rodiny v krizi.',
+            ctaText: 'O projektu',
+            ctaUrl: '/o-projektu',
+            secondaryCtaText: 'Kontaktní formulář',
+            secondaryCtaUrl: '/kontakt',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-founder-story-1',
+            text: '### 1. Když se zhroutí jistoty\nKaždý velký projekt obvykle začíná hlubokou osobní krizí nebo silným impulzem. Platforma **Táta má právo** (součást ekosystému Synthesis OS) nevznikla u rýsovacího prkna marketingové agentury, ale z reálné potřeby v situaci, kdy se rodinný svět rozpadl a otcové se ocitli v labyrintu institucí, o kterých dříve nic nevěděli.\n\nV okamžiku, kdy dojde k rozchodu nebo rozvodu, se rodičovská role často zužuje na boj o termíny, peníze a paragrafy. Právní systém může působit chladně, nepřehledně a vyčerpávajícím dojmem.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-founder-pillars',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: 'Právní jistota & fakta',
+            col1Text: 'Všechny výstupy vycházejí z platné legislativy ČR, judikatury Ústavního a Nejvyššího soudu a ověřených odborných studií.',
+            col2Title: 'Dítě v centru zájmu',
+            col2Text: 'Hlavním motorem projektu je ochrana nejlepšího zájmu dítěte. Cílem není eskalace konfliktů, ale kultivace komunikace.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-founder-story-2',
+            text: '### 2. Od poznání k systémovému řešení\nPozorování praxe v opatrovnických řízeních ukázalo, že největším nepřítelem otců není zlá vůle jednotlivců, ale neinformovanost, roztříštěnost dat a absence metodiky. Otcové často přicházejí k soudu nepřipraveni, bez znalosti svých procesních práv a s emocemi, které jim v konfrontaci s institucemi nepomáhají.\n\n### 3. Vize Synthesis OS & budoucnost\nProjekt se postupně vyvinul v robustní ekosystém pod hlavičkou **Synthesis OS**. Spojuje moderní webové technologie, krizové akční plány SOS, analyzátory spisů, kalkulačky výživného a bezpečné úložiště.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-founder-support',
+            title: 'Chcete podpořit naši misi?',
+            description: 'Připojte se k naší komunitě dobrovolníků nebo podpořte provoz portálu Táta má právo.',
+            buttonText: 'Podpořit projekt',
+            buttonUrl: '/podporte-nas',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Cesta zakladatele projektu',
+        },
+      },
+    }),
     published: true,
-    seoTitle: 'Příběh Zakladatele Synthesis OS | Táta má právo',
-    seoDescription: 'Stránka je připravena pro budoucí obsah.',
+    seoTitle: 'Cesta zakladatele projektu • Táta má právo / Synthesis OS',
+    seoDescription: 'Příběh a motivace stojící za vznikem platformy Táta má právo a ekosystému Synthesis OS.',
     sections: [],
     updatedAt: new Date().toISOString(),
   },
@@ -976,7 +1433,36 @@ const defaultPages: Page[] = [
     id: 'pg-33-32',
     slug: 'user-manual',
     title: 'Nápověda & Uživatelský manuál',
-    content: '# Nápověda & Uživatelský manuál\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-user-manual',
+            badgeText: 'Nápověda k platformě',
+            title: 'Uživatelský manuál & Nápověda',
+            description: 'Kompletní průvodce platformou Táta má právo a systémem Synthesis OS. Od prvního přihlášení až po pokročilou správu opatrovnického spisu.',
+            ctaText: 'Začít s průvodcem',
+            ctaUrl: '/o-projektu',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-user-manual-1',
+            text: '### 📥 Sekce se aktuálně připravuje\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu. Brzy zde najdete detailní návody na použití AI asistentů, správu případů a práci se zabezpečeným úložištěm.',
+            align: 'center',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        }
+      ],
+      root: {
+        props: {
+          title: 'Uživatelská příručka a nápověda',
+        },
+      },
+    }),
     published: true,
     seoTitle: 'Nápověda & Uživatelský manuál | Táta má právo',
     seoDescription: 'Stránka je připravena pro budoucí obsah.',
@@ -987,13 +1473,67 @@ const defaultPages: Page[] = [
     id: 'pg-33-33',
     slug: 'sitemap',
     title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
-    content: '# Architektura & Vývoj Synthesis OS (Sitemap)\n\n**Kategorie:** 🛠️ ADMINISTRACE & SYSTÉM\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-sitemap',
+            badgeText: 'Mapa webu',
+            title: 'Architektura & Vývoj Synthesis OS (Sitemap)',
+            description: 'Přehledná struktura všech sekcí a modulů portálu Táta má právo.',
+            ctaText: 'Zpět na domovskou stránku',
+            ctaUrl: '/',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-sitemap-1',
+            text: '### 📥 Sekce se aktuálně připravuje\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+            align: 'center',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        }
+      ],
+      root: {
+        props: {
+          title: 'Mapa stránek a architektura',
+        },
+      },
+    }),
     published: true,
     seoTitle: 'Architektura & Vývoj Synthesis OS (Sitemap) | Táta má právo',
     seoDescription: 'Stránka je připravena pro budoucí obsah.',
     sections: [],
     updatedAt: new Date().toISOString(),
-  },
+  }, {
+    id: 'pg-podpora',
+    slug: 'podporte-nas',
+    title: 'Podpořte nás',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-podpora',
+            badgeText: 'Podpořte nás',
+            title: 'Pomozte nám budovat spravedlivé prostředí',
+            description: 'Vyvíjíme bezplatné nástroje a AI asistenty pro táty v rozvodovém řízení. Zajišťujeme osvětu a usilujeme o spravedlivější justici.',
+            ctaText: 'Chci podpořit projekt',
+            ctaUrl: '#support'
+          }
+        }
+      ],
+      root: { props: {} }
+    }),
+    published: true,
+    seoTitle: 'Podpořte nás | Táta má právo',
+    seoDescription: 'Pomozte nám budovat spravedlivější justici.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  }
 ];
 
 const defaultArticles: Article[] = [
@@ -1646,7 +2186,7 @@ class MemoryStore {
   userDocuments: UserDocument[] = [...defaultUserDocuments];
   accounts: any[] = [];
   passkeys: any[] = [];
-  
+
   // Osobní klientská složka otce (Client cases & sub-entities)
   cases: ClientCase[] = [
     {

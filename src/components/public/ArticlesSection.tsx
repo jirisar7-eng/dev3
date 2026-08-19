@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Article } from '../../types';
 import { ArticleCard } from './ArticleCard';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 
 export const ArticlesSection: React.FC<{ onNavigate?: (path: string) => void }> = ({ onNavigate }) => {
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    fetch('/api/cms/articles')
-      .then((res) => res.json())
+    fetchCmsPublic('/api/cms/articles')
       .then((data) => {
         if (Array.isArray(data)) {
           setArticles(data);

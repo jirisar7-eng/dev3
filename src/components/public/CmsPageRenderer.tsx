@@ -5,6 +5,7 @@ import { useText } from '../../context/TextContext';
 import { SeoHead } from './SeoHead';
 import { PageRender } from '../builder/PageRender';
 import { SchemaDrivenRenderer } from '../common/SchemaDrivenRenderer';
+import { fetchCmsPublic } from '../../lib/cmsCache';
 import {
   FileText,
   ArrowRight,
@@ -21,9 +22,10 @@ import {
 interface CmsPageRendererProps {
   slug: string;
   onNavigate?: (path: string) => void;
+  fallbackComponent?: React.ReactNode;
 }
 
-export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNavigate }) => {
+export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNavigate, fallbackComponent }) => {
   const [page, setPage] = useState<Page | null>(null);
   const [customModule, setCustomModule] = useState<CustomModule | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,9 +67,8 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
         setLoading(false);
       });
 
-    fetch('/api/cms/faqs')
-      .then((res) => res.json())
-      .then((data) => setFaqs(data))
+    fetchCmsPublic('/api/cms/faqs')
+      .then((data) => { if (Array.isArray(data)) setFaqs(data); })
       .catch(() => {});
   }, [slug]);
 
@@ -99,6 +100,9 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   }
 
   if (error || !page) {
+    if (fallbackComponent) {
+      return <>{fallbackComponent}</>;
+    }
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
         <SeoHead title="Stránka nenalezena" canonicalPath={`/${slug}`} />
@@ -125,12 +129,24 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   let puckData = null;
   try {
     const raw = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
-    if (raw && typeof raw === 'object' && Array.isArray(raw.content)) {
+    if (raw && typeof raw === 'object' && Array.isArray(raw.content) && raw.root && typeof raw.root.props === 'object') {
       puckData = raw;
+    } else {
+      console.warn('Puck data exists but has invalid structure for page:', slug);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Failed to parse Puck data for page:', slug, e);
+  }
+
+  // HARDENED FALLBACK LOGIC:
+  // If we have a fallbackComponent but no valid Puck data was loaded (either missing, invalid, or fetch failed),
+  // we MUST use the fallbackComponent. We only use legacy CMS rendering if there's no fallbackComponent.
+  if (fallbackComponent && !puckData) {
+    return <>{fallbackComponent}</>;
+  }
 
   if (puckData) {
+    const hasHeroBlock = Array.isArray(puckData.content) && puckData.content.some((b: any) => b?.type === 'HeroBlock');
     return (
       <div className="min-h-screen bg-slate-50/50 pb-20">
         <SeoHead
@@ -138,16 +154,22 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
           description={page.seoDescription || page.title}
           canonicalPath={`/${page.slug}`}
         />
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl font-black text-white">{page.title}</h1>
+        {!hasHeroBlock && (
+          <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+            <div className="max-w-5xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl font-black text-white">{page.title}</h1>
+            </div>
           </div>
-        </div>
-        <div className="max-w-5xl mx-auto px-4 py-8">
+        )}
+        <div className={hasHeroBlock ? 'w-full' : 'max-w-5xl mx-auto px-4 py-8'}>
           <PageRender data={puckData} />
         </div>
       </div>
     );
+  }
+
+  if (fallbackComponent && (!page.sections || page.sections.length === 0) && !page.content) {
+    return <>{fallbackComponent}</>;
   }
 
   return (

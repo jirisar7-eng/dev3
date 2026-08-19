@@ -10,6 +10,9 @@ import { PublicComplianceView } from './PublicComplianceView';
 import { VolunteerAgreementPage } from './VolunteerAgreementPage';
 import { VolunteerCodexPage } from './VolunteerCodexPage';
 import { GdprComplianceCenterPage } from './GdprComplianceCenterPage';
+import { FounderStoryPage } from './FounderStoryPage';
+import { UserManualPage } from './UserManualPage';
+import { SitemapPage } from './SitemapPage';
 import { StudyLibraryPage } from './StudyLibraryPage';
 import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
@@ -100,7 +103,20 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 0. Volunteers Route (/dobrovolnici, /o-projektu/dobrovolnici)
   if (slug === 'dobrovolnici' || slug === 'hledame-kolegy' || slug === 'o-projektu/dobrovolnici') {
-    return <VolunteersPage onNavigate={onNavigate} />;
+    const fallbackComponent = <VolunteersPage onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_DOBROVOLNICI_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <>
+          <CmsPageRenderer slug="dobrovolnici" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <VolunteersPage onNavigate={onNavigate} formOnly={true} />
+        </>
+      );
+    }
+    return fallbackComponent;
   }
 
   // 0.1 My Case / Osobní spis otce (/muj-pripad)
@@ -151,7 +167,8 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       const articleSlug = slug.replace(/^clanky\//, '').replace(/^metodika\//, '');
       return <ArticleDetailView slug={articleSlug} onNavigate={onNavigate} />;
     }
-    return (
+    
+    const fallbackComponent = (
       <div className="space-y-4 pt-4">
         <SeoHead
           title="Články & Judikatura"
@@ -161,11 +178,20 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <ArticlesSection onNavigate={onNavigate} />
       </div>
     );
+
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_CLANKY_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="clanky" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
+    }
+    return fallbackComponent;
   }
 
   // 3. FAQ Route (/faq)
   if (slug === 'faq') {
-    return (
+    const fallbackComponent = (
       <div className="space-y-4 pt-4">
         <SeoHead
           title="Časté dotazy (FAQ)"
@@ -175,29 +201,108 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <FaqSection />
       </div>
     );
+
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_FAQ_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="faq" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
+    }
+    return fallbackComponent;
   }
 
   // 3a. Krizová pomoc & Komunita Routes
   if (slug === 'krizova-pomoc') {
-    return <CrisisCommunityPortal onNavigate={onNavigate} />;
+    const fallbackComponent = <CrisisCommunityPortal onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_KRIZOVA_POMOC_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'sos-plan' || slug === 'crisis') {
-    return <SosPlanView onNavigate={onNavigate} />;
+    const fallbackComponent = <SosPlanView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_SOS_PLAN_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'forum') {
-    return <ForumView onNavigate={onNavigate} />;
+    const fallbackComponent = <ForumView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_FORUM_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'pribehy' || slug === 'stories') {
-    return <CaseStoriesView onNavigate={onNavigate} />;
+    const fallbackComponent = <CaseStoriesView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_PRIBEHY_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'memento') {
-    return <MementoView onNavigate={onNavigate} />;
+    const fallbackComponent = <MementoView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_MEMENTO_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'pravni-poradna' || slug === 'advice') {
-    return <LegalHelpView onNavigate={onNavigate} />;
+    const fallbackComponent = <LegalHelpView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_PRAVNI_PORADNA_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'podpora' || slug === 'support') {
-    return <SupportView onNavigate={onNavigate} />;
+    const fallbackComponent = <SupportView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_PODPORA_KOMUNITA_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
 
   // 3a1. AI Nástroje Routes
@@ -236,21 +341,61 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 3a3. Akademie Routes (/studia, /videoteka, /kvizy, /wiki)
   if (slug === 'studia' || slug === 'knihovna-studii' || slug === 'kurzy') {
-    return <StudiesView onNavigate={onNavigate} />;
+    const fallbackComponent = <StudiesView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_KNIHOVNA_STUDII_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'videoteka' || slug === 'videa' || slug === 'webinare') {
-    return <VideothequeView onNavigate={onNavigate} />;
+    const fallbackComponent = <VideothequeView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_VIDEOTEKA_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'kvizy' || slug === 'vzdelavani' || slug === 'trenazer') {
-    return <QuizzesView onNavigate={onNavigate} />;
+    const fallbackComponent = <QuizzesView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_VZDELAVANI_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
   if (slug === 'wiki' || slug === 'legal-wiki' || slug === 'slovnik' || slug === 'pojmy') {
-    return <WikiView onNavigate={onNavigate} />;
+    const fallbackComponent = <WikiView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_LEGAL_WIKI_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
 
   // 3b. Scientific Studies Route (/studie)
   if (slug === 'studie' || slug.startsWith('studie/')) {
-    return (
+    const fallbackComponent = (
       <div className="space-y-4 pt-2">
         <SeoHead
           title="Vědecké studie • Táta má právo"
@@ -260,6 +405,17 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <StudyLibraryPage />
       </div>
     );
+
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_STUDIE_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+      );
+    }
+    return fallbackComponent;
   }
 
   // 3c. State Data Routes: e-Sbírka / Laws (/state-laws, /e-sbirka, /zakony)
@@ -274,14 +430,68 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 3f. About Project Routes (/o-nas, /kontakt, /sponzori, /partneri)
   if (slug === 'o-nas' || slug === 'o-projektu') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_O_NAS_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="o-projektu" onNavigate={onNavigate} fallbackComponent={<AboutView onNavigate={onNavigate} />} />;
+    }
     return <AboutView onNavigate={onNavigate} />;
   }
   if (slug === 'kontakt') {
-    return <ContactView onNavigate={onNavigate} />;
+    const fallbackComponent = <ContactView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_KONTAKT_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <div className="space-y-8">
+          <CmsPageRenderer slug="kontakt" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <ContactView onNavigate={onNavigate} formOnly={true} />
+        </div>
+      );
+    }
+    return fallbackComponent;
   }
-  if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') { return <SupportUsPage />; }
+  if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') {
+    const fallbackComponent = <SupportUsPage />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_PODPORA_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <>
+          <CmsPageRenderer slug="podpora" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <SupportUsPage interactiveOnly={true} />
+        </>
+      );
+    }
+    return fallbackComponent;
+  }
 
   if (slug === 'partneri' || slug === 'partners') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_PARTNERI_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="partneri" onNavigate={onNavigate} fallbackComponent={<PartnersView />} />;
+    }
+    return <PartnersView />;
+  }
+
+  if (slug === 'sponzori' || slug === 'sponsors') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_SPONZORI_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="sponzori" onNavigate={onNavigate} fallbackComponent={<PartnersView />} />;
+    }
     return <PartnersView />;
   }
 
@@ -297,14 +507,40 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <VolunteerAgreementPage onNavigate={onNavigate} />;
   }
 
-  // 3d. Volunteer Codex Route (/kodex-dobrovolnika)
+  // 3d. Volunteer Codex Route (/kodex-dobrovolnika, /volunteer-code)
   if (slug === 'kodex-dobrovolnika' || slug === 'volunteer-code') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_KODEX_DOBROVOLNIKA_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="kodex-dobrovolnika" onNavigate={onNavigate} fallbackComponent={<VolunteerCodexPage onNavigate={onNavigate} />} />;
+    }
     return <VolunteerCodexPage onNavigate={onNavigate} />;
   }
 
-  // 3e. GDPR Compliance Center Route (/gdpr, /gdpr-center, /zasady-ochrany-osobnich-udaju)
-  if (slug === 'gdpr' || slug === 'gdpr-center' || slug === 'zasady-ochrany-osobnich-udaju' || slug === 'privacy-policy') {
+  // 3e. GDPR Compliance Center & Privacy Policy Route (/zasady-ochrany-osobnich-udaju, /privacy-policy, /gdpr, /gdpr-center)
+  if (slug === 'zasady-ochrany-osobnich-udaju' || slug === 'privacy-policy' || slug === 'gdpr' || slug === 'gdpr-center') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_PRIVACY_POLICY_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="zasady-ochrany-osobnich-udaju" onNavigate={onNavigate} fallbackComponent={<GdprComplianceCenterPage onNavigate={onNavigate} />} />;
+    }
     return <GdprComplianceCenterPage onNavigate={onNavigate} />;
+  }
+
+  // 3f. Founder Story Route (/cesta-zakladatele)
+  if (slug === 'cesta-zakladatele') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_CESTA_ZAKLADATELE_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="cesta-zakladatele" onNavigate={onNavigate} fallbackComponent={<FounderStoryPage onNavigate={onNavigate} />} />;
+    }
+    return <FounderStoryPage onNavigate={onNavigate} />;
   }
 
   // 4. Contact Route (/kontakt) with Interactive Form & CMS Renderer
@@ -465,6 +701,32 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <LegalDocsPage onNavigate={onNavigate} initialDocKey={initialKey} />;
   }
 
-  // 6. Default CMS Page Router for all other slugs (/o-projektu, /zivotni-situace, /dobrovolnictvi, etc.)
+  // 5. User Manual Route (/user-manual)
+  if (slug === 'user-manual') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_USER_MANUAL_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="user-manual" onNavigate={onNavigate} fallbackComponent={<UserManualPage onNavigate={onNavigate} />} />;
+    }
+    return <UserManualPage onNavigate={onNavigate} />;
+  }
+
+  // 6. Sitemap Route (/sitemap)
+  if (slug === 'sitemap') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_SITEMAP_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="sitemap" onNavigate={onNavigate} fallbackComponent={<SitemapPage onNavigate={onNavigate} />} />;
+    }
+    return <SitemapPage onNavigate={onNavigate} />;
+  }
+
+  // 7. Default CMS Page Router for all other slugs (/o-projektu, /zivotni-situace, /dobrovolnictvi, etc.)
   return <CmsPageRenderer slug={slug} onNavigate={onNavigate} />;
 };
