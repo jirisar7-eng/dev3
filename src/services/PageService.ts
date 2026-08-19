@@ -441,12 +441,22 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
           });
           createdCount++;
         } else {
-          await prismaClient.page.update({
-            where: { slug: mod.slug },
-            data: {
-              title: mod.title,
-            },
-          });
+          if (mod.slug === 'home' || mod.slug === 'domu') {
+            await prismaClient.page.update({
+              where: { slug: mod.slug },
+              data: {
+                title: mod.title,
+                content: DEFAULT_HOMEPAGE_PUCK_DATA,
+              },
+            });
+          } else {
+            await prismaClient.page.update({
+              where: { slug: mod.slug },
+              data: {
+                title: mod.title,
+              },
+            });
+          }
         }
       } catch (err) {
         console.warn(`[Ensure Module Pages] Prisma sync error pro ${mod.slug}:`, err);
@@ -467,6 +477,8 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
       if (!prismaClient) {
         createdCount++;
       }
+    } else if (mod.slug === 'home' || mod.slug === 'domu') {
+      existingInStore.content = DEFAULT_HOMEPAGE_PUCK_DATA as any;
     }
   }
 
@@ -489,6 +501,10 @@ export async function convertAllPagesToPuck(): Promise<{ success: boolean; conve
 
   // Helper to convert plain string/HTML/legacy content into Puck Data
   const convertToPuckFormat = (title: string, slug: string, rawContent: any) => {
+    if (slug === 'home' || slug === 'domu') {
+      return DEFAULT_HOMEPAGE_PUCK_DATA;
+    }
+
     let text = typeof rawContent === 'string' ? rawContent : '';
     if (typeof rawContent === 'object' && rawContent !== null) {
       if (Array.isArray(rawContent.content)) {
