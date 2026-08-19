@@ -103,7 +103,20 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 0. Volunteers Route (/dobrovolnici, /o-projektu/dobrovolnici)
   if (slug === 'dobrovolnici' || slug === 'hledame-kolegy' || slug === 'o-projektu/dobrovolnici') {
-    return <VolunteersPage onNavigate={onNavigate} />;
+    const fallbackComponent = <VolunteersPage onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_DOBROVOLNICI_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <>
+          <CmsPageRenderer slug="dobrovolnici" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <VolunteersPage onNavigate={onNavigate} formOnly={true} />
+        </>
+      );
+    }
+    return fallbackComponent;
   }
 
   // 0.1 My Case / Osobní spis otce (/muj-pripad)
@@ -154,7 +167,8 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       const articleSlug = slug.replace(/^clanky\//, '').replace(/^metodika\//, '');
       return <ArticleDetailView slug={articleSlug} onNavigate={onNavigate} />;
     }
-    return (
+    
+    const fallbackComponent = (
       <div className="space-y-4 pt-4">
         <SeoHead
           title="Články & Judikatura"
@@ -164,11 +178,20 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <ArticlesSection onNavigate={onNavigate} />
       </div>
     );
+
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_CLANKY_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="clanky" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
+    }
+    return fallbackComponent;
   }
 
   // 3. FAQ Route (/faq)
   if (slug === 'faq') {
-    return (
+    const fallbackComponent = (
       <div className="space-y-4 pt-4">
         <SeoHead
           title="Časté dotazy (FAQ)"
@@ -178,6 +201,15 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
         <FaqSection />
       </div>
     );
+
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_FAQ_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="faq" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
+    }
+    return fallbackComponent;
   }
 
   // 3a. Krizová pomoc & Komunita Routes
@@ -284,9 +316,37 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <AboutView onNavigate={onNavigate} />;
   }
   if (slug === 'kontakt') {
-    return <ContactView onNavigate={onNavigate} />;
+    const fallbackComponent = <ContactView onNavigate={onNavigate} />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_KONTAKT_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <div className="space-y-8">
+          <CmsPageRenderer slug="kontakt" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <ContactView onNavigate={onNavigate} formOnly={true} />
+        </div>
+      );
+    }
+    return fallbackComponent;
   }
-  if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') { return <SupportUsPage />; }
+  if (slug === 'podporte-nas' || slug === 'podpora-a-spolek') {
+    const fallbackComponent = <SupportUsPage />;
+    const isPuckEnabled = typeof window !== 'undefined' && 
+      (localStorage.getItem('PUCK_PODPORA_RENDERER_ENABLED') === 'true' || 
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <>
+          <CmsPageRenderer slug="podpora" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
+          <SupportUsPage interactiveOnly={true} />
+        </>
+      );
+    }
+    return fallbackComponent;
+  }
 
   if (slug === 'partneri' || slug === 'partners') {
     const isPuckEnabled =

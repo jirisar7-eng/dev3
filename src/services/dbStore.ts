@@ -1374,7 +1374,32 @@ const defaultPages: Page[] = [
     seoDescription: 'Stránka je připravena pro budoucí obsah.',
     sections: [],
     updatedAt: new Date().toISOString(),
-  },
+  }, {
+    id: 'pg-podpora',
+    slug: 'podporte-nas',
+    title: 'Podpořte nás',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-podpora',
+            badgeText: 'Podpořte nás',
+            title: 'Pomozte nám budovat spravedlivé prostředí',
+            description: 'Vyvíjíme bezplatné nástroje a AI asistenty pro táty v rozvodovém řízení. Zajišťujeme osvětu a usilujeme o spravedlivější justici.',
+            ctaText: 'Chci podpořit projekt',
+            ctaUrl: '#support'
+          }
+        }
+      ],
+      root: { props: {} }
+    }),
+    published: true,
+    seoTitle: 'Podpořte nás | Táta má právo',
+    seoDescription: 'Pomozte nám budovat spravedlivější justici.',
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  }
 ];
 
 const defaultArticles: Article[] = [

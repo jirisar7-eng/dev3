@@ -4,9 +4,10 @@ import { Mail, Phone, MapPin, Send, CheckCircle2, MessageSquare, Clock, HelpCirc
 
 interface ContactViewProps {
   onNavigate: (path: string) => void;
+  formOnly?: boolean;
 }
 
-export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
+export const ContactView: React.FC<ContactViewProps> = ({ onNavigate, formOnly }) => {
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +29,8 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
 
   return (
     <div className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-in fade-in duration-500">
+      {!formOnly && (
+        <>
       <SeoHead
         title="Kontakt • Táta má právo"
         description="Spojte se s týmem portálu Táta má právo. Poskytujeme konzultace, právní orientaci a podporu otcům v opatrovnických řízeních."
@@ -48,6 +51,8 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
         </p>
       </div>
 
+        </>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Contact Info Cards */}
         <div className="space-y-6">
