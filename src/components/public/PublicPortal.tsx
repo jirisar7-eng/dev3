@@ -10,6 +10,7 @@ import { PublicComplianceView } from './PublicComplianceView';
 import { VolunteerAgreementPage } from './VolunteerAgreementPage';
 import { VolunteerCodexPage } from './VolunteerCodexPage';
 import { GdprComplianceCenterPage } from './GdprComplianceCenterPage';
+import { FounderStoryPage } from './FounderStoryPage';
 import { StudyLibraryPage } from './StudyLibraryPage';
 import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
@@ -341,6 +342,18 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       return <CmsPageRenderer slug="zasady-ochrany-osobnich-udaju" onNavigate={onNavigate} fallbackComponent={<GdprComplianceCenterPage onNavigate={onNavigate} />} />;
     }
     return <GdprComplianceCenterPage onNavigate={onNavigate} />;
+  }
+
+  // 3f. Founder Story Route (/cesta-zakladatele)
+  if (slug === 'cesta-zakladatele') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_CESTA_ZAKLADATELE_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+    if (isPuckEnabled) {
+      return <CmsPageRenderer slug="cesta-zakladatele" onNavigate={onNavigate} fallbackComponent={<FounderStoryPage onNavigate={onNavigate} />} />;
+    }
+    return <FounderStoryPage onNavigate={onNavigate} />;
   }
 
   // 4. Contact Route (/kontakt) with Interactive Form & CMS Renderer

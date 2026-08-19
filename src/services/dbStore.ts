@@ -1079,11 +1079,76 @@ const defaultPages: Page[] = [
   {
     id: 'pg-33-18',
     slug: 'cesta-zakladatele',
-    title: 'Příběh Zakladatele Synthesis OS',
-    content: '# Příběh Zakladatele Synthesis OS\n\n**Kategorie:** 🎓 EDUKAČNÍ AKADEMIE\n\n---\n\n### 📥 Stránka je připravena pro budoucí obsah.\n\nVšechny technické cesty, oprávnění a navigační vazby byly úspěšně sestaveny. Tento modul je plně registrován v systému a čeká na napojení finálního obsahu v další fázi projektu.',
+    title: 'Cesta zakladatele projektu',
+    content: JSON.stringify({
+      content: [
+        {
+          type: 'HeroBlock',
+          props: {
+            id: 'hero-cesta-zakladatele',
+            badgeText: 'Synthesis OS • Osobní příběh & mise',
+            title: 'Cesta zakladatele projektu',
+            description: 'Proč vznikla platforma Táta má právo? Osobní zkušenost s opatrovnickým systémem, hledání spravedlnosti a vize digitální infrastruktury pro rodiny v krizi.',
+            ctaText: 'O projektu',
+            ctaUrl: '/o-projektu',
+            secondaryCtaText: 'Kontaktní formulář',
+            secondaryCtaUrl: '/kontakt',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-founder-story-1',
+            text: '### 1. Když se zhroutí jistoty\nKaždý velký projekt obvykle začíná hlubokou osobní krizí nebo silným impulzem. Platforma **Táta má právo** (součást ekosystému Synthesis OS) nevznikla u rýsovacího prkna marketingové agentury, ale z reálné potřeby v situaci, kdy se rodinný svět rozpadl a otcové se ocitli v labyrintu institucí, o kterých dříve nic nevěděli.\n\nV okamžiku, kdy dojde k rozchodu nebo rozvodu, se rodičovská role často zužuje na boj o termíny, peníze a paragrafy. Právní systém může působit chladně, nepřehledně a vyčerpávajícím dojmem.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'ColumnsBlock',
+          props: {
+            id: 'columns-founder-pillars',
+            columnsCount: '2',
+            ratio: 'equal',
+            gap: 'lg',
+            col1Title: 'Právní jistota & fakta',
+            col1Text: 'Všechny výstupy vycházejí z platné legislativy ČR, judikatury Ústavního a Nejvyššího soudu a ověřených odborných studií.',
+            col2Title: 'Dítě v centru zájmu',
+            col2Text: 'Hlavním motorem projektu je ochrana nejlepšího zájmu dítěte. Cílem není eskalace konfliktů, ale kultivace komunikace.',
+          },
+        },
+        {
+          type: 'TextBlock',
+          props: {
+            id: 'text-founder-story-2',
+            text: '### 2. Od poznání k systémovému řešení\nPozorování praxe v opatrovnických řízeních ukázalo, že největším nepřítelem otců není zlá vůle jednotlivců, ale neinformovanost, roztříštěnost dat a absence metodiky. Otcové často přicházejí k soudu nepřipraveni, bez znalosti svých procesních práv a s emocemi, které jim v konfrontaci s institucemi nepomáhají.\n\n### 3. Vize Synthesis OS & budoucnost\nProjekt se postupně vyvinul v robustní ekosystém pod hlavičkou **Synthesis OS**. Spojuje moderní webové technologie, krizové akční plány SOS, analyzátory spisů, kalkulačky výživného a bezpečné úložiště.',
+            align: 'left',
+            maxWidth: 'xl',
+            color: 'default',
+          },
+        },
+        {
+          type: 'CallToAction',
+          props: {
+            id: 'cta-founder-support',
+            title: 'Chcete podpořit naši misi?',
+            description: 'Připojte se k naší komunitě dobrovolníků nebo podpořte provoz portálu Táta má právo.',
+            buttonText: 'Podpořit projekt',
+            buttonUrl: '/podporte-nas',
+            variant: 'primary',
+          },
+        },
+      ],
+      root: {
+        props: {
+          title: 'Cesta zakladatele projektu',
+        },
+      },
+    }),
     published: true,
-    seoTitle: 'Příběh Zakladatele Synthesis OS | Táta má právo',
-    seoDescription: 'Stránka je připravena pro budoucí obsah.',
+    seoTitle: 'Cesta zakladatele projektu • Táta má právo / Synthesis OS',
+    seoDescription: 'Příběh a motivace stojící za vznikem platformy Táta má právo a ekosystému Synthesis OS.',
     sections: [],
     updatedAt: new Date().toISOString(),
   },
@@ -1904,7 +1969,7 @@ class MemoryStore {
   userDocuments: UserDocument[] = [...defaultUserDocuments];
   accounts: any[] = [];
   passkeys: any[] = [];
-  
+
   // Osobní klientská složka otce (Client cases & sub-entities)
   cases: ClientCase[] = [
     {
