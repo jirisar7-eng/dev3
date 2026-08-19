@@ -111,7 +111,7 @@ export const StateStatisticsView: React.FC = () => {
   const fetchNkodDatasets = async (keyword: string) => {
     setNkodLoading(true);
     try {
-      const res = await fetch(`/api/state-admin/csu/nkod?keyword=${encodeURIComponent(keyword)}`);
+      const res = await fetch(`/api/state-admin/nkod/search?keyword=${encodeURIComponent(keyword)}`);
       const data = await res.json();
       setNkodData(data);
     } catch (err) {

@@ -1,6 +1,6 @@
 /**
  * STATE ADMINISTRATION API HUB - P1: JUSTICE & MSP OPENDATA CONNECTOR
- * Ministerstvo spravedlnosti ČR - Otevřená data a statistiky soudnictví
+ * Ministerstvo spravedlnosti ČR - Otevřená data a judikatura
  * ZERO SYNTHETIC DATA / FAIL-CLOSED POLICY
  */
 
@@ -8,50 +8,38 @@ import { StateAdminApiClient } from './StateAdminApiClient.js';
 import { ConnectorResult, JudicialCasePayload, JudicialStatisticPayload } from './types.js';
 
 export class JusticeOpenDataConnector {
-  private static readonly MSP_OPENDATA_BASE = 'https://data.gov.cz/api/v2/datasets';
-  private static readonly MSP_PROVIDER_IRI = 'http://data.gov.cz/zdroj/organy-verejne-moci/00025429';
-
   /**
-   * Fetches official MSp judicial statistics (lengths of custody/family proceedings agendas P, Nc, C, court ročenka data).
+   * Fetches official MSp judicial statistics.
+   * UNVERIFIED IN NKOD SPARQL: Marked as BLOCKED / NOT_IMPLEMENTED (Zero synthetic data policy).
    */
   public static async getJudicialStatistics(agenda: string = 'P'): Promise<ConnectorResult<JudicialStatisticPayload>> {
-    const url = `${this.MSP_OPENDATA_BASE}?poskytovatel=${encodeURIComponent(this.MSP_PROVIDER_IRI)}&klicove-slovo=statistiky`;
-    const response = await StateAdminApiClient.executeGet('P1_JUSTICE', url);
-
-    if (response.status !== 200 || !response.data) {
-      return {
-        success: false,
-        source: 'P1_JUSTICE',
-        httpStatus: response.status,
-        data: [],
-        recordsCount: 0,
-        durationMs: response.durationMs,
-        error: {
-          code: response.error || 'JUSTICE_FETCH_FAILED',
-          message: `Otevřená data MSp navrátila chybový stav ${response.status}.`,
-        },
-      };
-    }
-
-    // Validate and normalize payload
-    const normalizedData = this.normalizeJudicialStatistics(response.data, agenda);
-
     return {
-      success: true,
+      success: false,
       source: 'P1_JUSTICE',
-      httpStatus: 200,
-      data: normalizedData,
-      recordsCount: normalizedData.length,
-      durationMs: response.durationMs,
+      httpStatus: 501,
+      data: [],
+      recordsCount: 0,
+      durationMs: 0,
+      error: {
+        code: 'SOURCE_BLOCKED_NOT_IMPLEMENTED',
+        message: 'Dataset délek soudních řízení MSp není publikován v NKOD SPARQL. Zdroj označen jako BLOCKED/NOT_IMPLEMENTED.',
+      },
     };
   }
 
   /**
-   * Fetches court case precedents & judicial decisions from MSp OpenData repository.
+   * Fetches court case precedents & judicial decision datasets from NKOD SPARQL endpoint.
    */
   public static async getJudicialCases(courtType: string = 'Ústavní soud'): Promise<ConnectorResult<JudicialCasePayload>> {
-    const url = `${this.MSP_OPENDATA_BASE}?poskytovatel=${encodeURIComponent(this.MSP_PROVIDER_IRI)}&klicove-slovo=judikatura`;
-    const response = await StateAdminApiClient.executeGet('P1_JUSTICE', url);
+    const query = `PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT DISTINCT ?ds ?title ?desc WHERE {
+  ?ds a dcat:Dataset ; dct:title ?title .
+  OPTIONAL { ?ds dct:description ?desc }
+  FILTER(CONTAINS(LCASE(?title), "judikát") || CONTAINS(LCASE(?title), "soudní rozhodnutí"))
+} LIMIT 25`;
+
+    const response = await StateAdminApiClient.executeSparqlQuery('P1_JUSTICE', query);
 
     if (response.status !== 200 || !response.data) {
       return {
@@ -63,7 +51,7 @@ export class JusticeOpenDataConnector {
         durationMs: response.durationMs,
         error: {
           code: response.error || 'JUSTICE_CASES_FETCH_FAILED',
-          message: `Data judikatury MSp navrátila chybový stav ${response.status}.`,
+          message: `Data judikatury v NKOD SPARQL navrátila chybový stav ${response.status}.`,
         },
       };
     }
@@ -81,76 +69,32 @@ export class JusticeOpenDataConnector {
   }
 
   /**
-   * Normalizer & Validator for MSp Judicial Statistics
+   * Normalizer & Validator for MSp Judicial Statistics SPARQL/Raw data.
    * Strict Fail-Closed: returns empty array if no valid data parsed.
    */
   public static normalizeJudicialStatistics(rawData: any, targetAgenda: string): JudicialStatisticPayload[] {
-    const items = Array.isArray(rawData)
-      ? rawData
-      : Array.isArray(rawData?.položky)
-      ? rawData.položky
-      : Array.isArray(rawData?.datasets)
-      ? rawData.datasets
-      : [];
-
-    const results: JudicialStatisticPayload[] = [];
-
-    for (const item of items) {
-      if (!item || typeof item !== 'object') continue;
-
-      const title = item.title?.cs || item.nazev?.cs || item.title || 'Statistika MSp';
-      const description = item.description?.cs || item.popis?.cs || '';
-
-      results.push({
-        courtCode: item.iri || item.id || '',
-        courtName: title,
-        agenda: targetAgenda === 'P' ? 'P' : targetAgenda === 'Nc' ? 'Nc' : 'ALL',
-        period: item.period || '2025/2026',
-        averageDurationDays: typeof item.duration === 'number' ? item.duration : 0,
-        sharedCarePercentage: item.sharedCarePercentage,
-        soleMotherCarePercentage: item.soleMotherCarePercentage,
-        soleFatherCarePercentage: item.soleFatherCarePercentage,
-        totalCasesCount: item.totalCasesCount || 0,
-        source: 'Ministerstvo spravedlnosti ČR (data.justice.cz / NKOD)',
-      });
-    }
-
-    return results;
+    if (!Array.isArray(rawData)) return [];
+    return [];
   }
 
   /**
-   * Normalizer & Validator for MSp Judicial Cases
+   * Normalizer & Validator for MSp Judicial Cases SPARQL bindings.
    * Strict Fail-Closed: returns empty array if no valid data parsed.
    */
   public static normalizeJudicialCases(rawData: any, courtType: string): JudicialCasePayload[] {
-    const items = Array.isArray(rawData)
-      ? rawData
-      : Array.isArray(rawData?.položky)
-      ? rawData.položky
-      : Array.isArray(rawData?.datasets)
-      ? rawData.datasets
-      : [];
+    if (!Array.isArray(rawData)) return [];
 
-    const results: JudicialCasePayload[] = [];
-
-    for (const item of items) {
-      if (!item || typeof item !== 'object') continue;
-
-      const title = item.title?.cs || item.title || '';
-      if (!title) continue;
-
-      results.push({
-        fileNumber: item.iri ? item.iri.split('/').pop() || '' : item.fileNumber || '',
+    return rawData
+      .filter((item) => item && item.title?.value)
+      .map((item: any) => ({
+        fileNumber: item.ds?.value ? item.ds.value.split('/').pop() || '' : '',
         court: courtType,
-        title,
-        summary: item.description?.cs || item.description || '',
-        legalRatio: item.legalRatio || '',
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        fullTextUrl: item.iri || item.fullTextUrl,
-        publishedAt: item.publishedAt || new Date().toISOString(),
-      });
-    }
-
-    return results;
+        title: item.title?.value || '',
+        summary: item.desc?.value || '',
+        legalRatio: '',
+        tags: ['Judikatura', 'Opatrovnictví'],
+        fullTextUrl: item.ds?.value,
+        publishedAt: new Date().toISOString().split('T')[0],
+      }));
   }
 }

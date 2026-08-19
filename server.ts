@@ -669,6 +669,36 @@ app.get('/api/state/court-cases', async (req: express.Request, res: express.Resp
 // ------------------------------------------------------
 // STATE ADMINISTRATION API HUB (PHASE 5)
 // ------------------------------------------------------
+function sendStateAdminResponse(res: express.Response, result: any) {
+  if (result.success) {
+    return res.status(200).json(result);
+  }
+
+  // Gateway status mapping according to Requirement 9:
+  // - Upstream 404, 429, 5xx, invalid payload -> 502 Bad Gateway
+  // - Timeout -> 504 Gateway Timeout
+  // - Missing API credentials -> 503 Service Unavailable
+  // - Not implemented -> 501 Not Implemented
+  let httpStatus = 502;
+  if (result.httpStatus === 504 || result.error?.code?.includes('TIMEOUT')) {
+    httpStatus = 504;
+  } else if (result.error?.code === 'E_LEGISLATIVA_AUTH_REQUIRED' || result.httpStatus === 503) {
+    httpStatus = 503;
+  } else if (result.httpStatus === 501 || result.error?.code?.includes('NOT_IMPLEMENTED')) {
+    httpStatus = 501;
+  }
+
+  return res.status(httpStatus).json({
+    success: false,
+    source: result.source,
+    data: Array.isArray(result.data) ? [] : null,
+    recordsCount: 0,
+    durationMs: result.durationMs || 0,
+    error: result.error || { code: 'UPSTREAM_ERROR', message: 'Služba státní správy je dočasně nedostupná.' },
+    httpStatus,
+  });
+}
+
 app.get('/api/state-admin/health', async (req: express.Request, res: express.Response) => {
   try {
     const health = await StateAdminHubService.getHealthStatus();
@@ -682,7 +712,7 @@ app.get('/api/state-admin/justice/statistics', async (req: express.Request, res:
   try {
     const agenda = (req.query.agenda as string) || 'P';
     const result = await StateAdminHubService.getJudicialStatistics(agenda);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching MSp judicial statistics' });
   }
@@ -692,7 +722,7 @@ app.get('/api/state-admin/justice/cases', async (req: express.Request, res: expr
   try {
     const court = (req.query.court as string) || 'Ústavní soud';
     const result = await StateAdminHubService.getJudicialCases(court);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching MSp judicial cases' });
   }
@@ -701,27 +731,30 @@ app.get('/api/state-admin/justice/cases', async (req: express.Request, res: expr
 app.get('/api/state-admin/csu/demographics', async (req: express.Request, res: express.Response) => {
   try {
     const result = await StateAdminHubService.getDemographicStatistics();
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching ČSÚ demographics' });
   }
 });
 
-app.get('/api/state-admin/csu/nkod', async (req: express.Request, res: express.Response) => {
+const handleNkodSearch = async (req: express.Request, res: express.Response) => {
   try {
-    const keyword = (req.query.keyword as string) || 'rodina';
+    const keyword = (req.query.keyword as string) || (req.query.q as string) || 'rodina';
     const result = await StateAdminHubService.searchNkodDatasets(keyword);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error searching NKOD datasets' });
   }
-});
+};
+
+app.get('/api/state-admin/csu/nkod', handleNkodSearch);
+app.get('/api/state-admin/nkod/search', handleNkodSearch);
 
 app.get('/api/state-admin/registries/ovm', async (req: express.Request, res: express.Response) => {
   try {
     const type = (req.query.type as 'SOUD' | 'OSPOD') || 'SOUD';
     const result = await StateAdminHubService.getOvmEntities(type);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching OVM entities' });
   }
@@ -734,7 +767,7 @@ app.get('/api/state-admin/registries/verify-professional', async (req: express.R
       return res.status(400).json({ success: false, error: 'Chybí kód IČO.', code: 'INVALID_ICO' });
     }
     const result = await StateAdminHubService.verifyLegalProfessional(ico);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error verifying professional in ARES' });
   }
@@ -744,7 +777,7 @@ app.get('/api/state-admin/e-legislativa/bills', async (req: express.Request, res
   try {
     const actCode = (req.query.actCode as string) || '89/2012';
     const result = await StateAdminHubService.getLegislativeBills(actCode);
-    res.status(result.httpStatus || 200).json(result);
+    sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching e-Legislativa bills' });
   }

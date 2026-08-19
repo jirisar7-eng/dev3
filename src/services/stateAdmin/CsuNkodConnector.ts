@@ -8,15 +8,19 @@ import { StateAdminApiClient } from './StateAdminApiClient.js';
 import { ConnectorResult, DemographicStatisticPayload, NkodDatasetItem } from './types.js';
 
 export class CsuNkodConnector {
-  private static readonly NKOD_DATASETS_URL = 'https://data.gov.cz/api/v2/datasets';
-  private static readonly CSU_PROVIDER_IRI = 'http://data.gov.cz/zdroj/organy-verejne-moci/00025593';
-
   /**
-   * Queries NKOD API for demography, family, divorce and child care datasets from ČSÚ.
+   * Queries NKOD SPARQL endpoint for demography, family, divorce and child care datasets from ČSÚ/NKOD.
    */
   public static async getDemographicStatistics(): Promise<ConnectorResult<DemographicStatisticPayload>> {
-    const url = `${this.NKOD_DATASETS_URL}?poskytovatel=${encodeURIComponent(this.CSU_PROVIDER_IRI)}&klicove-slovo=obyvatelstvo`;
-    const response = await StateAdminApiClient.executeGet('P2_CSU_NKOD', url);
+    const query = `PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT DISTINCT ?ds ?title ?desc WHERE {
+  ?ds a dcat:Dataset ; dct:title ?title .
+  OPTIONAL { ?ds dct:description ?desc }
+  FILTER(CONTAINS(LCASE(?title), "obyvatelst") || CONTAINS(LCASE(?title), "demograf") || CONTAINS(LCASE(?title), "rodin"))
+} LIMIT 25`;
+
+    const response = await StateAdminApiClient.executeSparqlQuery('P2_CSU_NKOD', query);
 
     if (response.status !== 200 || !response.data) {
       return {
@@ -28,7 +32,7 @@ export class CsuNkodConnector {
         durationMs: response.durationMs,
         error: {
           code: response.error || 'CSU_NKOD_FETCH_FAILED',
-          message: `Otevřená data ČSÚ / NKOD navrátila chybový stav ${response.status}.`,
+          message: `Otevřená data ČSÚ / NKOD SPARQL navrátila chybový stav ${response.status}.`,
         },
       };
     }
@@ -46,11 +50,21 @@ export class CsuNkodConnector {
   }
 
   /**
-   * Search NKOD catalogue datasets by keyword (e.g. "rozvodovost", "výživné", "rodina").
+   * Search NKOD catalogue datasets by keyword via SPARQL endpoint (e.g. "rozvodovost", "výživné", "rodina").
    */
   public static async searchNkodDatasets(keyword: string = 'rodina'): Promise<ConnectorResult<NkodDatasetItem>> {
-    const url = `${this.NKOD_DATASETS_URL}?klicove-slovo=${encodeURIComponent(keyword)}`;
-    const response = await StateAdminApiClient.executeGet('P2_CSU_NKOD', url);
+    const rawKw = (keyword || 'rodin').replace(/"/g, '').trim().toLowerCase();
+    const searchStem = rawKw === 'rodina' ? 'rodin' : rawKw;
+
+    const query = `PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT DISTINCT ?ds ?title ?desc WHERE {
+  ?ds a dcat:Dataset ; dct:title ?title .
+  OPTIONAL { ?ds dct:description ?desc }
+  FILTER(CONTAINS(LCASE(?title), "${searchStem}") || CONTAINS(LCASE(?desc), "${searchStem}"))
+} LIMIT 25`;
+
+    const response = await StateAdminApiClient.executeSparqlQuery('P2_CSU_NKOD', query);
 
     if (response.status !== 200 || !response.data) {
       return {
@@ -62,12 +76,12 @@ export class CsuNkodConnector {
         durationMs: response.durationMs,
         error: {
           code: response.error || 'NKOD_SEARCH_FAILED',
-          message: `Vyhledávání v NKOD navrátilo chybový stav ${response.status}.`,
+          message: `Vyhledávání v NKOD SPARQL navrátilo chybový stav ${response.status}.`,
         },
       };
     }
 
-    const items = this.normalizeNkodDatasets(response.data);
+    const items = this.normalizeNkodDatasets(response.data, rawKw);
 
     return {
       success: true,
@@ -80,66 +94,44 @@ export class CsuNkodConnector {
   }
 
   /**
-   * Normalizer & Validator for ČSÚ Demographic Statistics
+   * Normalizer for ČSÚ Demographic Statistics SPARQL bindings.
    * Strict Fail-Closed: returns empty array if no valid items.
    */
   public static normalizeDemographicStatistics(rawData: any): DemographicStatisticPayload[] {
-    const items = Array.isArray(rawData)
-      ? rawData
-      : Array.isArray(rawData?.položky)
-      ? rawData.položky
-      : Array.isArray(rawData?.datasets)
-      ? rawData.datasets
-      : [];
+    if (!Array.isArray(rawData)) return [];
 
-    const results: DemographicStatisticPayload[] = [];
-
-    for (const item of items) {
-      if (!item || typeof item !== 'object') continue;
-
-      const title = item.title?.cs || item.nazev?.cs || item.title;
-      if (!title) continue;
-
-      results.push({
-        category: item.category || 'Demografie a rodina',
-        title,
-        description: item.description?.cs || item.popis?.cs || '',
-        value: item.value || '',
-        unit: item.unit || '',
-        period: item.period || '2025/2026',
-        region: item.region || 'Česká republika',
+    return rawData
+      .filter((item) => item && item.title?.value)
+      .map((item: any) => ({
+        category: 'Demografie a rodina',
+        title: item.title?.value || '',
+        description: item.desc?.value || '',
+        value: 'Dataset NKOD',
+        unit: 'DCAT-AP',
+        period: '2025/2026',
+        region: 'Česká republika',
         source: 'Český statistický úřad (ČSÚ / NKOD data.gov.cz)',
-      });
-    }
-
-    return results;
+      }));
   }
 
   /**
-   * Normalizer for NKOD Dataset Items
+   * Normalizer for NKOD Dataset Items SPARQL bindings.
    * Strict Fail-Closed: returns empty array if no valid items.
    */
-  public static normalizeNkodDatasets(rawData: any): NkodDatasetItem[] {
-    const items = Array.isArray(rawData)
-      ? rawData
-      : Array.isArray(rawData?.položky)
-      ? rawData.položky
-      : Array.isArray(rawData?.datasets)
-      ? rawData.datasets
-      : [];
+  public static normalizeNkodDatasets(rawData: any, searchKeyword: string = 'rodina'): NkodDatasetItem[] {
+    if (!Array.isArray(rawData)) return [];
 
-    return items
-      .filter((item) => item && typeof item === 'object')
+    return rawData
+      .filter((item) => item && item.title?.value)
       .map((item: any) => ({
-        id: item.iri || item.id || '',
-        title: item.title?.cs || item.title || '',
-        description: item.description?.cs || item.description || '',
-        provider: item.poskytovatel || 'Český statistický úřad',
-        issuedDate: item.issued || '',
-        keywords: Array.isArray(item.klicova_slova) ? item.klicova_slova : [],
-        downloadUrl: item.dostupnost || item.iri || '',
-        format: item.format || 'JSON/DCAT-AP',
-      }))
-      .filter((item) => item.id !== '' || item.title !== '');
+        id: item.ds?.value || '',
+        title: item.title?.value || '',
+        description: item.desc?.value || '',
+        provider: 'Národní katalog otevřených dat (data.gov.cz)',
+        issuedDate: new Date().toISOString().split('T')[0],
+        keywords: [searchKeyword],
+        downloadUrl: item.ds?.value || '',
+        format: 'RDF/DCAT-AP',
+      }));
   }
 }

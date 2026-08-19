@@ -1,5 +1,6 @@
 import { legalDocumentsContent } from '../data/legalDocuments';
 import { NAVIGATION_ITEMS } from '../config/navigation';
+import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 import {
   User,
   TextItem,
@@ -659,7 +660,7 @@ const defaultPages: Page[] = [
     id: 'pg-1',
     slug: 'domu',
     title: 'Táta má právo • Hlavní strana',
-    content: 'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.',
+    content: JSON.stringify(DEFAULT_HOMEPAGE_PUCK_DATA),
     published: true,
     seoTitle: 'Táta má právo | Opatrovnictví & Dítě v rozvodu',
     seoDescription: 'Komplexní podpora otců v opatrovnickém řízení se zaměřením na nejlepší zájem dítěte.',
