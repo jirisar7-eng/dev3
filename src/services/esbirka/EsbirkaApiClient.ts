@@ -52,10 +52,10 @@ export class EsbirkaApiClient {
     const rawBaseUrl = config?.baseUrl || process.env.ESBIRKA_BASE_URL || 'https://api.e-sbirka.gov.cz';
     this.baseUrl = EsbirkaApiClient.validateAndNormalizeUrl(rawBaseUrl);
 
-    // 2b. Resolve API Context Path (e.g., /esel-esbir-daver)
+    // 2b. Resolve API Context Path (e.g., '' for official direct api.e-sbirka.gov.cz endpoints)
     let contextPath = config?.apiContextPath !== undefined 
       ? config.apiContextPath 
-      : (process.env.ESBIRKA_API_CONTEXT_PATH !== undefined ? process.env.ESBIRKA_API_CONTEXT_PATH : '/esel-esbir-daver');
+      : (process.env.ESBIRKA_API_CONTEXT_PATH !== undefined ? process.env.ESBIRKA_API_CONTEXT_PATH : '');
 
     if (contextPath && !contextPath.startsWith('/')) {
       contextPath = `/${contextPath}`;
@@ -460,10 +460,69 @@ export class EsbirkaApiClient {
   }
 
   /**
+   * Normalizes legal act number and year into official e-Sbírka URI identifier path (e.g. '/sb/2012/89').
+   */
+  public static normalizeActIdentifier(actNumber: number, actYear: number): string {
+    return `/sb/${actYear}/${actNumber}`;
+  }
+
+  /**
+   * Constructs the official OpenAPI document endpoint for a legal act.
+   * E.g. for Act 89/2012 -> '/dokumenty-sbirky/%2Fsb%2F2012%2F89'
+   */
+  public static buildDocumentEndpoint(actNumber: number, actYear: number): string {
+    const identifier = EsbirkaApiClient.normalizeActIdentifier(actNumber, actYear);
+    return `/dokumenty-sbirky/${encodeURIComponent(identifier)}`;
+  }
+
+  /**
    * Convenience method to fetch a legal act by year and act number.
    */
   public async getAct(actNumber: number, actYear: number, options?: Partial<EsbirkaRequestOptions>): Promise<EsbirkaApiResponse<any>> {
-    return this.get<any>({ endpoint: `/dokumenty-sbirky/%2Fsb%2F${actYear}%2F${actNumber}`, ...options });
+    const endpoint = EsbirkaApiClient.buildDocumentEndpoint(actNumber, actYear);
+    return this.get<any>({ endpoint, ...options });
+  }
+
+  /**
+   * Convenience method to fetch a legal act by code string (e.g. '89/2012' or '/sb/2012/89').
+   */
+  public async getActByCode(code: string, options?: Partial<EsbirkaRequestOptions>): Promise<EsbirkaApiResponse<any>> {
+    if (!code || typeof code !== 'string') {
+      throw new EsbirkaApiError({
+        message: 'Invalid act code. Must be in format "number/year" (e.g. "89/2012") or "/sb/year/number".',
+        code: 'CONFIGURATION_ERROR',
+        requestId: crypto.randomUUID(),
+        endpoint: String(code),
+      });
+    }
+
+    const clean = code.trim();
+    if (clean.startsWith('/sb/')) {
+      const parts = clean.slice(4).split('/');
+      if (parts.length === 2) {
+        const actYear = parseInt(parts[0], 10);
+        const actNumber = parseInt(parts[1], 10);
+        if (!isNaN(actNumber) && !isNaN(actYear)) {
+          return this.getAct(actNumber, actYear, options);
+        }
+      }
+    }
+
+    const parts = clean.split('/');
+    if (parts.length === 2) {
+      const actNumber = parseInt(parts[0], 10);
+      const actYear = parseInt(parts[1], 10);
+      if (!isNaN(actNumber) && !isNaN(actYear)) {
+        return this.getAct(actNumber, actYear, options);
+      }
+    }
+
+    throw new EsbirkaApiError({
+      message: `Invalid act code format: '${code}'. Expected format "number/year" (e.g. "89/2012").`,
+      code: 'CONFIGURATION_ERROR',
+      requestId: crypto.randomUUID(),
+      endpoint: clean,
+    });
   }
 
   /**
