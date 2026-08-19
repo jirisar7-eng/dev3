@@ -2,6 +2,15 @@
  * Výchozí Puck JSON struktury pro všechny veřejné stránky a moduly Krizové pomoci.
  */
 
+import {
+  DEFAULT_CO_NEDELAT_HUB_PUCK_DATA,
+  PRACTICAL_CO_NEDELAT_PAGES,
+  PRACTICAL_DITE_V_KONFLIKTU_PAGES,
+  PRACTICAL_TVRZENI_PAGES,
+  PRACTICAL_OSPOD_PAGES,
+  PRACTICAL_DOKUMENTACE_PAGES
+} from './practicalExpansionData';
+
 export const DEFAULT_HOMEPAGE_PUCK_DATA = {
   content: [
     {
@@ -775,5 +784,13 @@ export const LEGAL_PAGES_PUCK_DATA: Record<string, any> = {
   'dokumentace-a-dokazy': DEFAULT_DOKUMENTACE_A_DOKAZY_PUCK_DATA,
   'tvrzeni-druheho-rodice': DEFAULT_TVRZENI_DRUHEHO_RODICE_PUCK_DATA,
   'dite-v-konfliktu': DEFAULT_DITE_V_KONFLIKTU_PUCK_DATA,
+  
+  // Phase 7.2 Practical Content Expansion Pages
+  'co-nedelat': DEFAULT_CO_NEDELAT_HUB_PUCK_DATA,
+  ...PRACTICAL_CO_NEDELAT_PAGES,
+  ...PRACTICAL_DITE_V_KONFLIKTU_PAGES,
+  ...PRACTICAL_TVRZENI_PAGES,
+  ...PRACTICAL_OSPOD_PAGES,
+  ...PRACTICAL_DOKUMENTACE_PAGES,
 };
 
