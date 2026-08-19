@@ -187,84 +187,6 @@ export class EsbirkaService {
   }
 
   /**
-   * Retrieves all supported legal acts with rich metadata for public portal and legal lists.
-   * 100% local database read (zero external requests).
-   */
-  public static async getSupportedActs(referenceDate: Date = new Date()) {
-    const acts = await EsbirkaLegalRepository.getAllActs();
-    return acts.map((act) => {
-      const effFrom = act.effectiveFrom ? (act.effectiveFrom instanceof Date ? act.effectiveFrom : new Date(act.effectiveFrom)) : new Date();
-      const effTo = act.effectiveTo ? (act.effectiveTo instanceof Date ? act.effectiveTo : new Date(act.effectiveTo)) : null;
-      const valInfo = EsbirkaLegalRepository.determineVersionValidity(effFrom, effTo, referenceDate);
-      return {
-        id: act.id,
-        actCode: act.actCode,
-        actNumber: act.actNumber,
-        actYear: act.actYear,
-        collection: act.collection,
-        title: act.title,
-        shortTitle: act.shortTitle,
-        actType: act.actType,
-        category: act.category,
-        status: act.status,
-        source: act.source,
-        promulgationDate: act.promulgationDate,
-        passedDate: act.passedDate,
-        effectiveFrom: act.effectiveFrom,
-        effectiveTo: act.effectiveTo,
-        lastAmendedDate: act.lastAmendedDate,
-        lastSyncedAt: act.lastSyncedAt,
-        sectionsCount: act.sections?.length || 0,
-        versionsCount: act.versions?.length || 0,
-        validityStatus: valInfo.status,
-        isCurrent: valInfo.isCurrent,
-        isValidAtDate: valInfo.isValidAtDate,
-      };
-    });
-  }
-
-  /**
-   * Retrieves full details of a single legal act including validity, sections, and versions.
-   * 100% local database read (zero external requests).
-   */
-  public static async getActDetails(code: string, referenceDate: Date = new Date()) {
-    const formattedCode = code.replace('-', '/');
-    const act = await EsbirkaLegalRepository.getActDetailsByCode(formattedCode);
-    if (!act) return null;
-
-    const effFrom = act.effectiveFrom ? (act.effectiveFrom instanceof Date ? act.effectiveFrom : new Date(act.effectiveFrom)) : new Date();
-    const effTo = act.effectiveTo ? (act.effectiveTo instanceof Date ? act.effectiveTo : new Date(act.effectiveTo)) : null;
-    const valInfo = EsbirkaLegalRepository.determineVersionValidity(effFrom, effTo, referenceDate);
-    const versions = await EsbirkaLegalRepository.getActVersions(formattedCode, referenceDate);
-
-    return {
-      ...act,
-      validityStatus: valInfo.status,
-      isCurrent: valInfo.isCurrent,
-      isValidAtDate: valInfo.isValidAtDate,
-      versions,
-    };
-  }
-
-  /**
-   * Retrieves current wording (sections snapshot) valid today.
-   * 100% local database read (zero external requests).
-   */
-  public static async getCurrentActWording(code: string) {
-    const formattedCode = code.replace('-', '/');
-    return EsbirkaLegalRepository.getActWordingAtDate(formattedCode, new Date());
-  }
-
-  /**
-   * Retrieves historical or future wording (sections snapshot) valid at a specific date.
-   * 100% local database read (zero external requests).
-   */
-  public static async getActWordingAtDate(code: string, referenceDate: Date) {
-    const formattedCode = code.replace('-', '/');
-    return EsbirkaLegalRepository.getActWordingAtDate(formattedCode, referenceDate);
-  }
-
-  /**
    * Evaluates validity of a time version given effective dates and a reference date.
    */
   public static determineActWordingValidity(
@@ -273,5 +195,33 @@ export class EsbirkaService {
     referenceDate: Date = new Date()
   ) {
     return EsbirkaLegalRepository.determineVersionValidity(effectiveFrom, effectiveTo, referenceDate);
+  }
+
+  /**
+   * Retrieves all supported/stored legal acts.
+   */
+  public static async getSupportedActs(referenceDate: Date = new Date()): Promise<any[]> {
+    return EsbirkaLegalRepository.getAllActs();
+  }
+
+  /**
+   * Retrieves the current wording snapshot of a legal act.
+   */
+  public static async getCurrentActWording(code: string): Promise<any> {
+    return EsbirkaLegalRepository.getActWordingAtDate(code, new Date());
+  }
+
+  /**
+   * Retrieves the wording snapshot of a legal act valid at a specific date.
+   */
+  public static async getActWordingAtDate(code: string, referenceDate: Date): Promise<any> {
+    return EsbirkaLegalRepository.getActWordingAtDate(code, referenceDate);
+  }
+
+  /**
+   * Retrieves detailed act metadata by code.
+   */
+  public static async getActDetails(code: string, referenceDate: Date = new Date()): Promise<any> {
+    return EsbirkaLegalRepository.getActDetailsByCode(code);
   }
 }

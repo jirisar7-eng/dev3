@@ -29,6 +29,11 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
   { slug: 'rights', title: 'Práva rodičů a dětí (EN)', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
   { slug: 'judikatura', title: 'Přehled judikatury a judikátů', description: 'Klíčové nálezy Ústavního soudu a judikáty k opatrovnické péči a výživnému.', category: 'Opatrovnictví & Právo' },
   { slug: 'ke-stazeni', title: 'Vzory podání a dokumenty ke stažení', description: 'Praktické vzory žádostí, návrhů, odvolání a dokumentů pro opatrovnické soudy.', category: 'Opatrovnictví & Právo' },
+  { slug: 'rozchod-a-dite', title: 'Průvodce životní cestou otce', description: 'Kompletní životní cesta: Rozchod, Dítě, OSPOD, Soud, Rozhodnutí a stabilní péče.', category: 'Opatrovnictví & Právo' },
+  { slug: 'ospod-a-z', title: 'Ucelený průvodce OSPOD od A do Z', description: 'Kompletní praktická příručka pro jednání s orgánem sociálně-právní ochrany dětí.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dokumentace-a-dokazy', title: 'Metodika dokumentace a důkazů', description: 'Praktický návod na bezpečné a legální shromažďování důkazních materiálů.', category: 'Opatrovnictví & Právo' },
+  { slug: 'tvrzeni-druheho-rodice', title: 'Reakční matice na nepravdivá tvrzení', description: 'Jak věcně, deeskalačně a s důkazy reagovat na nepravdivá tvrzení u soudu a OSPOD.', category: 'Opatrovnictví & Právo' },
+  { slug: 'dite-v-konfliktu', title: 'Dítě uprostřed konfliktu', description: 'Psychologická a procesní doporučení pro ochranu dítěte před partnerským konfliktem.', category: 'Opatrovnictví & Právo' },
 
   // 3. 🏛️ Státní data
   { slug: 'state-laws', title: 'e-Sbírka • Opatrovnická e-Legislativa', description: 'Interaktivní paragrafové znění OZ, ZSPOD a o.s.ř. s citacemi pro soudní podání.', category: 'Státní data' },
@@ -74,7 +79,7 @@ export async function ensureAllModulePagesExist(): Promise<{ success: boolean; c
     const prismaClient = isPrismaAvailable() ? getPrismaClient() : null;
 
   for (const mod of MENU_MODULE_PAGES) {
-    const defaultPuckData = mod.slug === 'domu' || mod.slug === 'home' ? DEFAULT_HOMEPAGE_PUCK_DATA : mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
+    const defaultPuckData = (mod.slug === 'domu' || mod.slug === 'home') ? DEFAULT_HOMEPAGE_PUCK_DATA : LEGAL_PAGES_PUCK_DATA[mod.slug] ? LEGAL_PAGES_PUCK_DATA[mod.slug] : CRISIS_COMMUNITY_PAGES_PUCK_DATA[mod.slug] ? CRISIS_COMMUNITY_PAGES_PUCK_DATA[mod.slug] : mod.slug === 'zasady-ochrany-osobnich-udaju' ? {
       content: [
         {
           type: 'HeroBlock',
