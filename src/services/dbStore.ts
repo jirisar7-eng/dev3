@@ -670,11 +670,11 @@ const defaultPages: Page[] = [
     id: 'pg-2',
     slug: 'o-projektu',
     title: 'O projektu Táta má právo',
-    content: 'Projekt **Táta má právo** vznikl jako reakce na dlouhodobé nerovnosti v opatrovnickém soudnictví. Naším primárním cílem je obhajoba nezpochybnitelného práva každého dítěte na plnohodnotnou výchovu oběma rodiči.',
+    content: JSON.stringify("{\"content\":[{\"type\":\"HeroBlock\",\"props\":{\"id\":\"hero-1\",\"title\":\"O projektu Táta má právo\",\"description\":\"Projekt **Táta má právo** nevzniká proto, aby stavěl otce proti matkám. Vzniká proto, že otec má být rodičem svého dítěte.\"}},{\"type\":\"TextContent\",\"props\":{\"id\":\"text-1\",\"title\":\"Proč vzniká Táta má právo\",\"content\":\"Projekt Táta má právo nevzniká proto, aby stavěl otce proti matkám. Nevzniká ani proto, aby útočil na soudy, OSPOD nebo jiné instituce.\\n\\nVzniká proto, že po tisících rozhovorů, stovek prostudovaných spisů a mnoha analýzách rozsudků je zřejmé jedno: Český opatrovnický systém systematicky a často zcela bezdůvodně vymazává otce ze životů jejich dětí. A to i tehdy, pokud je otec plně kompetentní, trestně bezúhonný a o péči má prokazatelný zájem.\"}}],\"root\":{\"props\":{}}}"),
     published: true,
     seoTitle: 'O nás a našem poslání | Táta má právo',
     seoDescription: 'Informace o projektu Táta má právo, našem poslání, hodnotách a týmu.',
-    sections: defaultPageSections.filter((s) => s.pageId === 'pg-2'),
+    sections: [],
     updatedAt: new Date().toISOString(),
   },
   {
