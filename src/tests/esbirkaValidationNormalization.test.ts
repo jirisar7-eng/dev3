@@ -363,6 +363,32 @@ export async function runValidationNormalizationTests() {
   assert(EsbirkaNormalizer.calculateSectionOrder('888b') === 88802, 'TEST 23: § 888b -> 88802');
   assert(EsbirkaNormalizer.calculateSectionOrder('888z') === 88826, 'TEST 23: § 888z -> 88826');
 
+  // --------------------------------------------------------------------------
+  // TEST 24: Validation options, envelope unwrapping, and context fallback
+  // --------------------------------------------------------------------------
+  const envelopePayloadWithoutTopLevelIdent = {
+    dokument: {
+      nazev: 'Zákon č. 89/2012 Sb., občanský zákoník',
+      ustanoveni: [
+        {
+          cislo: '858',
+          text: 'Rodičovská odpovědnost.',
+        },
+      ],
+    },
+  };
+  const valRes24 = EsbirkaValidator.validateAct(envelopePayloadWithoutTopLevelIdent, {
+    expectedActNumber: 89,
+    expectedActYear: 2012,
+    expectedActCode: '89/2012',
+  });
+  assert(valRes24.isValid === true, 'TEST 24: Envelope unwrapping and context fallback succeeded for missing top-level cislo/rok');
+  if (valRes24.isValid) {
+    assert(valRes24.data.actNumber === 89, 'TEST 24: Act number resolved to 89');
+    assert(valRes24.data.actYear === 2012, 'TEST 24: Act year resolved to 2012');
+    assert(valRes24.data.sections[0].sectionNumber === '858', 'TEST 24: Section number resolved to 858');
+  }
+
   console.log('\n=== ÚKOL 5/10 TEST RESULTS ===');
   console.log(`Passed: ${passed}`);
   console.log(`Failed: ${failed}`);

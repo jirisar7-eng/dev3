@@ -1,6 +1,6 @@
 import { getPrismaClient, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
-import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
+import { DEFAULT_HOMEPAGE_PUCK_DATA, LEGAL_PAGES_PUCK_DATA, CRISIS_COMMUNITY_PAGES_PUCK_DATA } from '../puck/defaultPageData';
 
 export interface ModulePageDef {
   slug: string;
@@ -25,7 +25,8 @@ export const MENU_MODULE_PAGES: ModulePageDef[] = [
 
   // 2. ⚖️ Opatrovnictví & Právo
   { slug: 'opatrovnicka-agenda', title: 'Opatrovnická agenda a kroky', description: 'Kompletní průvodce opatrovnickou agendou od podání návrhu po rozsudek.', category: 'Opatrovnictví & Právo' },
-  { slug: 'rights', title: 'Práva rodičů a dětí', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'prava', title: 'Práva rodičů a dětí', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
+  { slug: 'rights', title: 'Práva rodičů a dětí (EN)', description: 'Přehled ústavních a zákonných práv dítěte na oboustrannou rodičovskou péči.', category: 'Opatrovnictví & Právo' },
   { slug: 'judikatura', title: 'Přehled judikatury a judikátů', description: 'Klíčové nálezy Ústavního soudu a judikáty k opatrovnické péči a výživnému.', category: 'Opatrovnictví & Právo' },
   { slug: 'ke-stazeni', title: 'Vzory podání a dokumenty ke stažení', description: 'Praktické vzory žádostí, návrhů, odvolání a dokumentů pro opatrovnické soudy.', category: 'Opatrovnictví & Právo' },
 

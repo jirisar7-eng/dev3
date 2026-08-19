@@ -269,7 +269,11 @@ export class EsbirkaSyncEngine {
       const fetchDuration = Date.now() - fetchStartMs;
 
       // 5. VALIDATOR: Fail-Closed validation
-      const validationResult = EsbirkaValidator.validateAct(rawApiResponse);
+      const validationResult = EsbirkaValidator.validateAct(rawApiResponse, {
+        expectedActNumber: actNumber,
+        expectedActYear: actYear,
+        expectedActCode: actCode,
+      });
 
       if (!validationResult.isValid) {
         await EsbirkaQuotaGuard.recordCallResult(
