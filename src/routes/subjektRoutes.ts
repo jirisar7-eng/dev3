@@ -24,6 +24,62 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST /api/subjekty/verify-ico - Verify subject by IČO via server-side ARES v3
+router.post('/verify-ico', async (req, res) => {
+  try {
+    const { ico } = req.body;
+    if (!ico) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_ICO',
+          message: 'Nebylo zadáno IČO k ověření.',
+        },
+      });
+    }
+
+    const result = await subjektService.verifySubjectByIco(ico);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error in /api/subjekty/verify-ico:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: error?.message || 'Interní chyba při ověřování subjektu v ARES.',
+      },
+    });
+  }
+});
+
+// GET /api/subjekty/verify-ico/:ico - Verify subject by IČO via GET param
+router.get('/verify-ico/:ico', async (req, res) => {
+  try {
+    const { ico } = req.params;
+    if (!ico) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_ICO',
+          message: 'Nebylo zadáno IČO k ověření.',
+        },
+      });
+    }
+
+    const result = await subjektService.verifySubjectByIco(ico);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error in /api/subjekty/verify-ico/:ico:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: error?.message || 'Interní chyba při ověřování subjektu v ARES.',
+      },
+    });
+  }
+});
+
 // GET /api/subjekty/:id - Get single Subjekt detail
 router.get('/:id', async (req, res) => {
   try {

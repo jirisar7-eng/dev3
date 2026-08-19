@@ -96,7 +96,7 @@ export class EsbirkaSyncEngine {
 
     let lockAcquired = false;
     let quotaSlot: QuotaSlotReservation | null = null;
-    const endpoint = `/dokumenty-sbirky/%2Fsb%2F${actYear}%2F${actNumber}`;
+    const endpoint = EsbirkaApiClient.buildDocumentEndpoint(actNumber, actYear);
 
     try {
       // 2. CONCURRENCY GUARD: Acquire distributed lock
@@ -211,7 +211,12 @@ export class EsbirkaSyncEngine {
         }
       } catch (apiErr: any) {
         const fetchDuration = Date.now() - fetchStartMs;
-        const status = apiErr?.httpStatus || (apiErr?.code === 'UNAUTHORIZED' ? 401 : apiErr?.code === 'FORBIDDEN' ? 403 : apiErr?.code === 'RATE_LIMITED' ? 429 : 500);
+        const status = apiErr?.httpStatus || (
+          apiErr?.code === 'UNAUTHORIZED' || apiErr?.code === 'AUTHENTICATION_ERROR' ? 401 :
+          apiErr?.code === 'FORBIDDEN' || apiErr?.code === 'AUTHORIZATION_ERROR' ? 403 :
+          apiErr?.code === 'NOT_FOUND' ? 404 :
+          apiErr?.code === 'RATE_LIMITED' ? 429 : 500
+        );
 
         // Update quota audit record with error
         await EsbirkaQuotaGuard.recordCallResult(

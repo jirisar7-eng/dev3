@@ -175,12 +175,42 @@ export class EsbirkaValidator {
     }
     const status = (validStatuses.includes(rawStatus) ? rawStatus : 'ACTIVE') as ValidatedEsbirkaAct['status'];
 
-    // 10. Validate Dates
-    const passedDate = EsbirkaValidator.parseAndValidateDate(data.passedDate ?? data.datumSchvaleni, 'passedDate', errors);
-    const promulgationDate = EsbirkaValidator.parseAndValidateDate(data.promulgationDate ?? data.datumVyhlaseni, 'promulgationDate', errors);
-    const effectiveFrom = EsbirkaValidator.parseAndValidateDate(data.effectiveFrom ?? data.datumUcinnostiOd, 'effectiveFrom', errors);
-    const effectiveTo = EsbirkaValidator.parseAndValidateDate(data.effectiveTo ?? data.datumUcinnostiDo, 'effectiveTo', errors);
-    const lastAmendedDate = EsbirkaValidator.parseAndValidateDate(data.lastAmendedDate ?? data.datumPosledniNovely, 'lastAmendedDate', errors);
+    // 10. Validate Dates (supporting official e-Sbírka aliases)
+    const passedDate = EsbirkaValidator.parseAndValidateDate(
+      data.passedDate ?? data.datumSchvaleni,
+      'passedDate',
+      errors
+    );
+    const promulgationDate = EsbirkaValidator.parseAndValidateDate(
+      data.promulgationDate ?? data.datumVyhlaseni ?? data.datumPlatnosti,
+      'promulgationDate',
+      errors
+    );
+    const effectiveFrom = EsbirkaValidator.parseAndValidateDate(
+      data.effectiveFrom ?? data.datumUcinnostiOd ?? data.datumUcinnosti ?? data.ucinnostOd,
+      'effectiveFrom',
+      errors
+    );
+    const effectiveTo = EsbirkaValidator.parseAndValidateDate(
+      data.effectiveTo ?? data.datumUcinnostiDo ?? data.ucinnostDo,
+      'effectiveTo',
+      errors
+    );
+    const lastAmendedDate = EsbirkaValidator.parseAndValidateDate(
+      data.lastAmendedDate ?? data.datumPosledniNovely ?? data.datumNovely,
+      'lastAmendedDate',
+      errors
+    );
+
+    // Validate Version Identifier (versionNumber / verze / cisloVerze / oznaceniVerze)
+    const rawVersionNumber = data.versionNumber ?? data.verze ?? data.cisloVerze ?? data.oznaceniVerze;
+    let versionNumber: string | undefined = undefined;
+    if (rawVersionNumber !== undefined && rawVersionNumber !== null) {
+      const vStr = String(rawVersionNumber).trim();
+      if (vStr.length > 0 && vStr.length <= 100) {
+        versionNumber = vStr;
+      }
+    }
 
     // 11. Validate Sections (paragrafy / ustanoveni / clanky / sections)
     const rawSections = data.sections || data.paragrafy || data.ustanoveni || data.clanky;
@@ -343,7 +373,7 @@ export class EsbirkaValidator {
         effectiveFrom,
         effectiveTo,
         lastAmendedDate,
-        versionNumber: typeof data.versionNumber === 'string' ? data.versionNumber.trim() : typeof data.verze === 'string' ? data.verze.trim() : undefined,
+        versionNumber,
         sections: validatedSections,
         rawMetadata: data.rawMetadata,
       },

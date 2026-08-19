@@ -42,6 +42,11 @@ export class EsbirkaQuotaGuard {
   public static readonly MAX_API_CALLS_PER_DAY = 5;
   public static readonly TARGET_API_CALLS_PER_DAY = 3;
   public static readonly MIN_INTERVAL_MS = 1000; // 1 second
+  private static dynamicMinIntervalMs = 1000;
+
+  public static setMinIntervalForTesting(ms: number): void {
+    this.dynamicMinIntervalMs = ms;
+  }
 
   // Synchronized in-memory audit store for testing, fallback & atomic race prevention
   private static inMemoryQuotaAudits: QuotaAuditRecord[] = [];
@@ -89,18 +94,18 @@ export class EsbirkaQuotaGuard {
     const now = new Date();
     const nowMs = now.getTime();
 
-    // 1. Check Minimum Interval (1,000 ms)
+    // 1. Check Minimum Interval (1,000 ms by default)
     const timeSinceLastCall = nowMs - this.lastCallTimestamp;
-    if (this.lastCallTimestamp > 0 && timeSinceLastCall < this.MIN_INTERVAL_MS) {
-      const waitNeeded = this.MIN_INTERVAL_MS - timeSinceLastCall;
+    if (this.lastCallTimestamp > 0 && timeSinceLastCall < this.dynamicMinIntervalMs) {
+      const waitNeeded = this.dynamicMinIntervalMs - timeSinceLastCall;
       throw new EsbirkaApiError({
-        message: `Rate limit violation: last request occurred ${timeSinceLastCall}ms ago. Minimum interval is ${this.MIN_INTERVAL_MS}ms. Request blocked.`,
+        message: `Rate limit violation: last request occurred ${timeSinceLastCall}ms ago. Minimum interval is ${this.dynamicMinIntervalMs}ms. Request blocked.`,
         code: 'RATE_LIMITED',
         requestId: syncAuditId || crypto.randomUUID(),
         endpoint,
         safeDetails: {
           timeSinceLastCallMs: timeSinceLastCall,
-          minIntervalMs: this.MIN_INTERVAL_MS,
+          minIntervalMs: this.dynamicMinIntervalMs,
           waitNeededMs: waitNeeded,
         },
       });
@@ -230,6 +235,13 @@ export class EsbirkaQuotaGuard {
    * Counts the total API calls recorded for a given time window.
    */
   public static async countCallsForDay(startOfDay: Date, endOfDay: Date): Promise<number> {
+    const startMs = startOfDay.getTime();
+    const endMs = endOfDay.getTime();
+    const memCount = this.inMemoryQuotaAudits.filter((a) => {
+      const callMs = a.calledAt.getTime();
+      return callMs >= startMs && callMs <= endMs;
+    }).length;
+
     if (isPrismaAvailable()) {
       try {
         const count = await prisma.esbirkaQuotaAudit.count({
@@ -240,19 +252,15 @@ export class EsbirkaQuotaGuard {
             },
           },
         });
-        return count;
+        if (typeof count === 'number' && count >= memCount) {
+          return count;
+        }
       } catch (err: any) {
         console.warn(`[EsbirkaQuotaGuard] DB count query failed, calculating from memory store.`);
       }
     }
 
-    // In-memory fallback
-    const startMs = startOfDay.getTime();
-    const endMs = endOfDay.getTime();
-    return this.inMemoryQuotaAudits.filter((a) => {
-      const callMs = a.calledAt.getTime();
-      return callMs >= startMs && callMs <= endMs;
-    }).length;
+    return memCount;
   }
 
   /**

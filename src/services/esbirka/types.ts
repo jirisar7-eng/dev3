@@ -7,6 +7,7 @@ export type EsbirkaErrorCode =
   | 'CONFIGURATION_ERROR'
   | 'AUTHENTICATION_ERROR'
   | 'AUTHORIZATION_ERROR'
+  | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'TIMEOUT'
   | 'NETWORK_ERROR'
@@ -37,8 +38,8 @@ export interface EsbirkaClientConfig {
   baseUrl?: string;
 
   /**
-   * The API context path prefix.
-   * Defaults to process.env.ESBIRKA_API_CONTEXT_PATH or '/esel-esbir-daver'.
+   * The API context path prefix (empty string by default for direct official REST API routing).
+   * Defaults to process.env.ESBIRKA_API_CONTEXT_PATH or ''.
    */
   apiContextPath?: string;
 

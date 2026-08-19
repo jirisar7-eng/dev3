@@ -399,6 +399,55 @@ export async function runEsbirkaApiClientTests() {
     `TEST 12: Handles empty context path correctly: ${resolvedUrl3}`
   );
 
+  // --------------------------------------------------------------------------
+  // TEST 13: Official OpenAPI Endpoint & Identifier Normalization
+  // --------------------------------------------------------------------------
+  const normalizedId = EsbirkaApiClient.normalizeActIdentifier(89, 2012);
+  assert(normalizedId === '/sb/2012/89', `TEST 13: normalizeActIdentifier produced '/sb/2012/89': ${normalizedId}`);
+
+  const endpointBuilt = EsbirkaApiClient.buildDocumentEndpoint(89, 2012);
+  assert(endpointBuilt === '/dokumenty-sbirky/%2Fsb%2F2012%2F89', `TEST 13: buildDocumentEndpoint produced '/dokumenty-sbirky/%2Fsb%2F2012%2F89': ${endpointBuilt}`);
+
+  let defaultUrlObserved = '';
+  const clientDefaultContext = new EsbirkaApiClient({
+    baseUrl: 'https://api.e-sbirka.gov.cz',
+    apiKey: 'test-key',
+    minIntervalMs: 0,
+    customFetch: async (url: string) => {
+      defaultUrlObserved = url;
+      return {
+        status: 200,
+        headers: new Map([['content-type', 'application/json']]),
+        text: async () => JSON.stringify({ ok: true }),
+      };
+    },
+  });
+  await clientDefaultContext.getAct(89, 2012);
+  assert(
+    defaultUrlObserved === 'https://api.e-sbirka.gov.cz/dokumenty-sbirky/%2Fsb%2F2012%2F89',
+    `TEST 13: Default context path is empty and yields official endpoint: ${defaultUrlObserved}`
+  );
+
+  let codeUrlObserved = '';
+  const clientCode = new EsbirkaApiClient({
+    baseUrl: 'https://api.e-sbirka.gov.cz',
+    apiKey: 'test-key',
+    minIntervalMs: 0,
+    customFetch: async (url: string) => {
+      codeUrlObserved = url;
+      return {
+        status: 200,
+        headers: new Map([['content-type', 'application/json']]),
+        text: async () => JSON.stringify({ ok: true }),
+      };
+    },
+  });
+  await clientCode.getActByCode('89/2012');
+  assert(
+    codeUrlObserved === 'https://api.e-sbirka.gov.cz/dokumenty-sbirky/%2Fsb%2F2012%2F89',
+    `TEST 13: getActByCode('89/2012') correctly routes to official endpoint: ${codeUrlObserved}`
+  );
+
   console.log('\n=== ÚKOL 4/10 TEST RESULTS ===');
   console.log(`Passed: ${passed}`);
   console.log(`Failed: ${failed}`);

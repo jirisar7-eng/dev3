@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Scale, ExternalLink, Tag, Gavel, Filter, Calendar, BookOpen, ShieldCheck, Sparkles } from 'lucide-react';
+import { Search, Scale, ExternalLink, Tag, Gavel, Filter, Calendar, BookOpen, ShieldCheck, Sparkles, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { SeoHead } from './SeoHead';
 
 interface CourtCaseItem {
@@ -12,65 +12,17 @@ interface CourtCaseItem {
   tags: string[];
   fullTextUrl?: string;
   publishedAt: string | Date;
+  source?: string;
 }
 
-const FALLBACK_CASES: CourtCaseItem[] = [
-  {
-    id: 'case-us-1506-23',
-    fileNumber: 'I. ÚS 1506/23',
-    court: 'Ústavní soud',
-    title: 'Právo dítěte na péči obou rodičů a presumpce střídavé péče',
-    summary: 'Stěžovatel (otec) se domáhal střídavé péče o nezletilého syna. Obecné soudy ji zamítly s odkazem na pracovní vytížení otce a nesouhlas matky. Ústavní soud rozhodnutí zrušil pro porušení článku 32 odst. 4 Listiny základních práv a svobod.',
-    legalRatio: 'Svěření dítěte do střídavé péče by mělo být pravidlem, pokud jsou oba rodiče způsobilí dítě vychovávat a mají o jeho výchovu zájem. Nesouhlas jednoho z rodičů nebo jeho subjektivní výhrady samy o sobě nemohou být důvodem pro vyloučení střídavé péče.',
-    tags: ['střídavá péče', 'základní práva', 'nesouhlas matky', 'rovnoprávnost rodičů'],
-    fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=1-1506-23',
-    publishedAt: '2023-10-18',
-  },
-  {
-    id: 'case-us-3242-22',
-    fileNumber: 'II. ÚS 3242/22',
-    court: 'Ústavní soud',
-    title: 'Předběžná opatření v opatrovnických věcech a bezdůvodné maření styku',
-    summary: 'Matka opakovaně znemožňovala otci styk s dcerou pod záminkou onemocnění bez lékařského potvrzení. Otec požádal o předběžné opatření k úpravě styku, které krajský soud zamítl.',
-    legalRatio: 'Pokud jeden z rodičů systematicky a bezdůvodně maří styk druhého rodiče s dítětem, je povinností obecných soudů zakročit pomocí předběžného opatření a zajistit obnovení a udržení rodičovské vazby bez zbytečného prodlení.',
-    tags: ['předběžné opatření', 'maření styku', 'vynutitelnost práva', 'rychlost řízení'],
-    fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=2-3242-22',
-    publishedAt: '2023-03-14',
-  },
-  {
-    id: 'case-us-1200-21',
-    fileNumber: 'III. ÚS 1200/21',
-    court: 'Ústavní soud',
-    title: 'Zjišťování názoru nezletilého dítěte a role OSPOD',
-    summary: 'Obecný soud neprovedl výslech 10letého dítěte ani nepřihlédl k jeho přání střídavé péče, přičemž se spolehl výhradně na stanovisko OSPOD, který střídavou péči nedoporučil.',
-    legalRatio: 'OSPOD je pouze kolizním opatrovníkem, jehož názor nezavazuje soud. Soud je povinen zjišťovat názor dítěte odpovídajícím způsobem vzhledem k jeho věku a rozvojové úrovni a přihlížet k němu.',
-    tags: ['názor dítěte', 'OSPOD', 'dokazování', 'vyslechnutí nezletilého'],
-    fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=3-1200-21',
-    publishedAt: '2021-11-02',
-  },
-  {
-    id: 'case-ns-1890-22',
-    fileNumber: '21 Cdo 1890/2022',
-    court: 'Nejvyšší soud',
-    title: 'Kritéria pro stanovení výživného při změně poměrů a střídavé péči',
-    summary: 'Přezkum rozhodnutí o výši výživného při přechodu z výhradní péče matky na střídavou péči s ohledem na odlišné příjmy rodičů a úhradu mimořádných nákladů.',
-    legalRatio: 'Při střídavé péči se výživné určuje oběma rodičům vzájemně tak, aby byla zajištěna srovnatelná životní úroveň dítěte u obou rodičů. Samotný fakt střídavé péče nevylučuje stanovení výživného rodiči s výrazně vyššími příjmy.',
-    tags: ['výživné', 'změna poměrů', 'životní úroveň', 'příjmy rodičů'],
-    fullTextUrl: 'https://www.nsoud.cz/Judikatura/judikatura_ns.nsf/WebSearch/21Cdo1890-2022',
-    publishedAt: '2022-08-25',
-  },
-  {
-    id: 'case-us-2482-24',
-    fileNumber: 'I. ÚS 2482/24',
-    court: 'Ústavní soud',
-    title: 'Vzdálenost bydlišť rodičů a střídavá péče při nástupu do školy',
-    summary: 'Matka se bez souhlasu otce odstěhovala s dítětem do vzdálenosti 120 km a tvrdila, že střídavá péče již není z důvodu vzdálenosti možná.',
-    legalRatio: 'Jednostranné odstěhování jednoho z rodičů bez souhlasu druhého rodiče či rozhodnutí soudu nemůže jít k tíži rodiče, který změnu nezpůsobil. Soudy musí zkoumat motivaci k odstěhování a možnost zachování střídavé péče či úpravy širšího styku.',
-    tags: ['odstěhování', 'vzdálenost bydlišť', 'školní docházka', 'střídavá péče'],
-    fullTextUrl: 'https://nalus.usoud.cz/Search/GetText.aspx?sz=1-2482-24',
-    publishedAt: '2024-05-10',
-  },
-];
+interface StateAdminResult<T> {
+  success: boolean;
+  source: string;
+  fetchedAt: string;
+  recordsCount: number;
+  data: T;
+  error?: string;
+}
 
 const PRESET_TAGS = [
   'Vše',
@@ -85,23 +37,57 @@ const PRESET_TAGS = [
 export const CaseDatabaseView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('Vše');
-  const [cases, setCases] = useState<CourtCaseItem[]>(FALLBACK_CASES);
+  const [cases, setCases] = useState<CourtCaseItem[]>([]);
+  const [stateCasesResult, setStateCasesResult] = useState<StateAdminResult<CourtCaseItem[]> | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch('/api/state/cases')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          const list = data.cases || data.courtCases || data.data;
+    fetchCases();
+  }, []);
+
+  const fetchCases = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch from P1 State Admin Hub API
+      const res = await fetch('/api/state-admin/justice/cases?court=Ústavní+soud');
+      const data: StateAdminResult<CourtCaseItem[]> = await res.json();
+      setStateCasesResult(data);
+
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        setCases(data.data);
+      } else {
+        // Also query legacy local endpoint if needed
+        const legacyRes = await fetch('/api/state/cases');
+        if (legacyRes.ok) {
+          const legacyData = await legacyRes.json();
+          const list = legacyData.cases || legacyData.courtCases || legacyData.data;
           if (Array.isArray(list) && list.length > 0) {
             setCases(list);
           }
         }
-      })
-      .catch(() => {
-        // Fallback already set
+      }
+    } catch (err) {
+      setStateCasesResult({
+        success: false,
+        source: 'P1_JUSTICE',
+        fetchedAt: new Date().toISOString(),
+        recordsCount: 0,
+        data: [],
+        error: 'Chyba při komunikaci s MSp ČR / Ústavním soudem.',
       });
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (isoStr: string) => {
+    if (!isoStr) return '—';
+    try {
+      return new Date(isoStr).toLocaleDateString('cs-CZ');
+    } catch {
+      return isoStr;
+    }
+  };
 
   const filteredCases = cases.filter((c) => {
     const matchesTag =
@@ -109,11 +95,11 @@ export const CaseDatabaseView: React.FC = () => {
 
     const s = searchTerm.toLowerCase();
     const matchesSearch =
-      c.fileNumber.toLowerCase().includes(s) ||
-      c.title.toLowerCase().includes(s) ||
-      c.summary.toLowerCase().includes(s) ||
-      c.legalRatio.toLowerCase().includes(s) ||
-      c.court.toLowerCase().includes(s) ||
+      (c.fileNumber || '').toLowerCase().includes(s) ||
+      (c.title || '').toLowerCase().includes(s) ||
+      (c.summary || '').toLowerCase().includes(s) ||
+      (c.legalRatio || '').toLowerCase().includes(s) ||
+      (c.court || '').toLowerCase().includes(s) ||
       (Array.isArray(c.tags) && c.tags.some((t) => t.toLowerCase().includes(s)));
 
     return matchesTag && matchesSearch;
@@ -122,8 +108,8 @@ export const CaseDatabaseView: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <SeoHead
-        title="Případová databáze rozsudků & Precedentů • Táta má právo"
-        description="Rejstřík klíčové judikatury Ústavního a Nejvyššího soudu k opatrovnictví, střídavé péči, bránění ve styku a výživnému."
+        title="Případová databáze rozsudků & Precedentů • MSp ČR • Táta má právo"
+        description="Oficiální rejstřík klíčové judikatury Ústavního a Nejvyššího soudu z MSp ČR k opatrovnictví, střídavé péči, bránění ve styku a výživnému."
         canonicalPath="/pripadova-databaze"
       />
 
@@ -135,14 +121,31 @@ export const CaseDatabaseView: React.FC = () => {
         <div className="relative z-10 max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-semibold">
             <Scale className="w-3.5 h-3.5" />
-            <span>Databáze judikatury Ústavního & Nejvyššího soudu</span>
+            <span>Oficiální judikatura Ústavního & Nejvyššího soudu (MSp OpenData)</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
             Případová Databáze Rozsudků
           </h1>
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Vyhledávejte v přehledu přelomových nálezů Ústavního soudu a rozsudků Nejvyššího soudu. Získejte právní věty (precedenty), které můžete přímou citací použít jako argumentační základ ve vašem opatrovnickém řízení.
+            Přímo napojená oficiální judikatura z Ministerstva spravedlnosti ČR a Nalús Ústavního soudu ČR. Oficiální právní věty a judikáty použitelné jako argumentační základ ve vašem opatrovnickém řízení.
           </p>
+
+          <div className="pt-2 flex items-center gap-2 flex-wrap text-xs">
+            <span className="font-bold text-slate-200 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+              Zdroj: Ministerstvo spravedlnosti ČR (MSp OpenData) / Ústavní soud ČR
+            </span>
+            {stateCasesResult?.success && stateCasesResult.recordsCount > 0 ? (
+              <span className="font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Dostupné (Aktualizováno: {formatDate(stateCasesResult.fetchedAt)})</span>
+              </span>
+            ) : (
+              <span className="font-bold px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Oficiální MSp konektor: Nedostupné z rozhraní</span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -157,7 +160,7 @@ export const CaseDatabaseView: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Hledat např. I. ÚS 1506/23, střídavá péče, OSPOD..."
-              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
+              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all font-medium text-slate-800"
             />
           </div>
 
@@ -168,7 +171,7 @@ export const CaseDatabaseView: React.FC = () => {
               <button
                 key={tag}
                 onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   selectedTag === tag
                     ? 'bg-blue-900 text-white shadow-sm'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -183,11 +186,24 @@ export const CaseDatabaseView: React.FC = () => {
 
       {/* Rulings / Cases List */}
       <div className="space-y-6">
-        {filteredCases.length === 0 ? (
+        {loading ? (
+          <div className="py-12 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
+            <RefreshCw className="w-6 h-6 animate-spin text-blue-900" />
+            <span>Načítám oficiální judikaturu MSp ČR...</span>
+          </div>
+        ) : filteredCases.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 space-y-3">
             <Gavel className="w-10 h-10 text-slate-300 mx-auto" />
-            <h3 className="text-base font-bold text-slate-800">Žádný rozsudek neodpovídá vyhledávání</h3>
-            <p className="text-xs text-slate-500">Zkuste zadat jinou spisovou značku nebo zvolte jiný tag.</p>
+            <h3 className="text-base font-bold text-slate-800">
+              {stateCasesResult && !stateCasesResult.success
+                ? 'Data judikatury momentálně nejsou dostupná z oficiálního zdroje'
+                : 'Žádný rozsudek neodpovídá vyhledávání'}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {stateCasesResult && !stateCasesResult.success
+                ? 'Upstream server MSp ČR nenavrátil požadovaná data. V souladu s pravidly nebyla zobrazena žádná syntetická data.'
+                : 'Zkuste zadat jinou spisovou značku nebo zvolte jiný tag.'}
+            </p>
           </div>
         ) : (
           filteredCases.map((caseItem) => (
@@ -212,7 +228,7 @@ export const CaseDatabaseView: React.FC = () => {
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <span className="text-[11px] text-slate-500 flex items-center gap-1 bg-white px-2.5 py-1 rounded-md border border-slate-200">
                     <Calendar className="w-3 h-3 text-slate-400" />
-                    <span>{new Date(caseItem.publishedAt).toLocaleDateString('cs-CZ')}</span>
+                    <span>{formatDate(caseItem.publishedAt.toString())}</span>
                   </span>
 
                   {caseItem.fullTextUrl && (
@@ -253,20 +269,26 @@ export const CaseDatabaseView: React.FC = () => {
                 </div>
 
                 {/* Tags Footer */}
-                {Array.isArray(caseItem.tags) && caseItem.tags.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    {caseItem.tags.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setSelectedTag(t)}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold rounded-md transition-all"
-                      >
-                        #{t}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                  {Array.isArray(caseItem.tags) && caseItem.tags.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Tag className="w-3.5 h-3.5 text-slate-400" />
+                      {caseItem.tags.map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setSelectedTag(t)}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold rounded-md transition-all cursor-pointer"
+                        >
+                          #{t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <span className="text-[10px] text-slate-400 italic">
+                    {caseItem.source || 'Zdroj: Ministerstvo spravedlnosti ČR'}
+                  </span>
+                </div>
               </div>
             </div>
           ))
@@ -276,10 +298,10 @@ export const CaseDatabaseView: React.FC = () => {
       {/* Footer info box */}
       <div className="bg-slate-100 border border-slate-200 rounded-2xl p-5 text-center space-y-1.5">
         <p className="text-xs text-slate-600">
-          Judikatura je průběžně doplňována z oficiální databáze <strong>Nalús (Ústavní soud ČR)</strong> a <strong>Sbírky rozhodnutí Nejvyššího soudu ČR</strong>.
+          Judikatura je napojena na oficiální otevřené datové sady <strong>Ministerstva spravedlnosti ČR</strong> a <strong>Nalús (Ústavní soud ČR)</strong>.
         </p>
         <span className="text-[11px] text-slate-400 block">
-          Zdroj: Ústavní soud ČR & Nejvyšší soud ČR (2025/2026)
+          Zdroj: Ministerstvo spravedlnosti ČR (MSp OpenData) & Ústavní soud ČR
         </span>
       </div>
     </div>

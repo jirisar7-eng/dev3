@@ -19,7 +19,11 @@ import {
   HeartHandshake,
   MessageSquare,
   MapPin,
-  X
+  X,
+  Loader2,
+  Check,
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 
 const CZECH_REGIONS = [
@@ -68,6 +72,13 @@ export const SubjektManager: React.FC = () => {
 
   const [saving, setSaving] = useState<boolean>(false);
 
+  // ARES State
+  const [aresIco, setAresIco] = useState<string>('');
+  const [aresLoading, setAresLoading] = useState<boolean>(false);
+  const [aresResult, setAresResult] = useState<any | null>(null);
+  const [aresError, setAresError] = useState<string | null>(null);
+  const [aresApplied, setAresApplied] = useState<boolean>(false);
+
   useEffect(() => {
     fetchSubjekty();
   }, [selectedType, selectedRegion, search]);
@@ -94,6 +105,10 @@ export const SubjektManager: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingSubjekt(null);
+    setAresIco('');
+    setAresResult(null);
+    setAresError(null);
+    setAresApplied(false);
     setForm({
       type: 'SOUD',
       name: '',
@@ -113,6 +128,10 @@ export const SubjektManager: React.FC = () => {
 
   const handleOpenEdit = (item: Subjekt) => {
     setEditingSubjekt(item);
+    setAresIco('');
+    setAresResult(null);
+    setAresError(null);
+    setAresApplied(false);
     setForm({
       type: item.type,
       name: item.name,
@@ -128,6 +147,55 @@ export const SubjektManager: React.FC = () => {
       isVerified: item.isVerified,
     });
     setShowModal(true);
+  };
+
+  const handleVerifyAres = async () => {
+    const cleanIco = aresIco.trim();
+    if (!cleanIco) {
+      setAresError('Zadejte platné IČO subjektu (6 až 8 číslic).');
+      setAresResult(null);
+      return;
+    }
+
+    setAresLoading(true);
+    setAresError(null);
+    setAresResult(null);
+    setAresApplied(false);
+
+    try {
+      const res = await fetch('/api/subjekty/verify-ico', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ico: cleanIco }),
+      });
+      const data = await res.json();
+      if (data.success && data.subject) {
+        setAresResult(data.subject);
+      } else {
+        setAresError(data.error?.message || 'Subjekt s tímto IČO nebyl v registru ARES nalezen.');
+      }
+    } catch (err: any) {
+      console.error('Error verifying IČO with ARES in UI:', err);
+      setAresError('Chyba při komunikaci se serverem při dotazu na ARES.');
+    } finally {
+      setAresLoading(false);
+    }
+  };
+
+  const handleApplyAresData = () => {
+    if (!aresResult) return;
+    setForm((prev) => ({
+      ...prev,
+      name: aresResult.name || prev.name,
+      city: aresResult.city || prev.city,
+      region: aresResult.region || prev.region,
+      address: aresResult.address || prev.address,
+      type: (aresResult.suggestedType && ['SOUD', 'OSPOD', 'ZNALEC', 'ADVOKAT', 'PORADNA_CHARITA'].includes(aresResult.suggestedType))
+        ? (aresResult.suggestedType as EntityType)
+        : prev.type,
+      isVerified: true,
+    }));
+    setAresApplied(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -333,6 +401,121 @@ export const SubjektManager: React.FC = () => {
             <h3 className="text-lg font-extrabold text-slate-900">
               {editingSubjekt ? 'Upravit subjekt' : 'Přidat nový subjekt'}
             </h3>
+
+            {/* ARES IČO Verification Section */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold text-indigo-700">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                  <span>Ověření v ARES (v3 REST API)</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  Oficiální registr MF ČR
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={aresIco}
+                  onChange={(e) => setAresIco(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="Zadejte IČO (např. 00023841)..."
+                  className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleVerifyAres();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyAres}
+                  disabled={aresLoading || !aresIco.trim()}
+                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs shrink-0"
+                >
+                  {aresLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Ověřuji...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Ověřit v ARES</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* ARES Error Display */}
+              {aresError && (
+                <div className="flex items-start gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-800">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <span className="font-bold">Ověření selhalo: </span>
+                    <span>{aresError}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* ARES Result Card with Explicit Apply Action */}
+              {aresResult && (
+                <div className="bg-white border border-emerald-200 rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Subjekt ověřen v registru ARES</span>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      aresResult.isEntityActive
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}>
+                      {aresResult.isEntityActive ? 'Aktivní subjekt' : 'Zaniklý subjekt'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-700">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Obchodní jméno / Název</span>
+                      <span className="font-bold text-slate-900">{aresResult.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">IČO & Právní forma</span>
+                      <span className="font-mono font-bold text-slate-800">{aresResult.ico}</span>
+                      {aresResult.legalForm && <span className="text-slate-500 text-[10px] ml-1">({aresResult.legalForm})</span>}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-slate-400 block text-[10px]">Sídlo / Adresa</span>
+                      <span className="text-slate-800">{aresResult.address}</span>
+                      <span className="text-slate-500 text-[10px] ml-1">({aresResult.region})</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex items-center justify-between border-t border-slate-100">
+                    <span className="text-[10px] text-slate-400">
+                      Ověřeno: {new Date(aresResult.verifiedAt).toLocaleTimeString()}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleApplyAresData}
+                      className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Použít údaje z ARES do formuláře</span>
+                    </button>
+                  </div>
+
+                  {aresApplied && (
+                    <div className="text-[11px] text-emerald-800 font-medium bg-emerald-50/80 p-2 rounded-lg border border-emerald-200/80 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Údaje byly přeneseny do formuláře. Můžete je zkontrolovat a uložit.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <form onSubmit={handleSave} className="space-y-3 text-xs">
               <div>

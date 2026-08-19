@@ -2,6 +2,7 @@ import { EntityType } from '@prisma/client';
 import { dbStore } from './dbStore';
 import { Subjekt, Review } from '../types';
 import { prisma } from '../db/prisma';
+import { AresApiClient, AresVerifyResult } from './ares';
 
 export class SubjektService {
   /**
@@ -460,6 +461,22 @@ export class SubjektService {
   }
 
   /**
+   * Verifies an economic entity by IČO using official server-side ARES REST API v3.
+   * Pure read-only verification: does not modify or create unapproved database records.
+   */
+  async verifySubjectByIco(ico: string | number): Promise<AresVerifyResult> {
+    const aresClient = new AresApiClient();
+    return await aresClient.fetchSubjectByIco(ico);
+  }
+
+  /**
+   * Alias for verifySubjectByIco for backward compatibility.
+   */
+  async verifyIcoWithAres(ico: string | number): Promise<AresVerifyResult> {
+    return this.verifySubjectByIco(ico);
+  }
+
+  /**
    * Recalculate rating in Prisma
    */
   private async recalculateRating(subjektId: string) {
@@ -485,3 +502,10 @@ export class SubjektService {
 }
 
 export const subjektService = new SubjektService();
+
+/**
+ * Standalone server-side function to verify a subject by IČO using official ARES REST API v3.
+ */
+export async function verifySubjectByIco(ico: string | number): Promise<AresVerifyResult> {
+  return subjektService.verifySubjectByIco(ico);
+}
