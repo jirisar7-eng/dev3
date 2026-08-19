@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
         />
 
         {/* CMS Dynamic Navigation Links (Desktop) */}
-        <nav className="hidden xl:flex items-center gap-5 text-xs sm:text-sm font-medium">
+        <nav className="hidden [@media(hover:hover)_and_(pointer:fine)]:xl:flex items-center gap-5 text-xs sm:text-sm font-medium">
           {(() => {
             const parentItems = allowedNavItems.filter((item) => !item.parentId);
             const childItemsMap = allowedNavItems.reduce((acc, item) => {
