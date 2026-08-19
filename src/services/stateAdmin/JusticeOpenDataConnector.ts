@@ -1,6 +1,7 @@
 /**
  * STATE ADMINISTRATION API HUB - P1: JUSTICE & MSP OPENDATA CONNECTOR
  * Ministerstvo spravedlnosti ČR - Otevřená data a statistiky soudnictví
+ * ZERO SYNTHETIC DATA / FAIL-CLOSED POLICY
  */
 
 import { StateAdminApiClient } from './StateAdminApiClient.js';
@@ -18,13 +19,12 @@ export class JusticeOpenDataConnector {
     const response = await StateAdminApiClient.executeGet('P1_JUSTICE', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackData = this.normalizeJudicialStatistics([], agenda);
       return {
         success: false,
         source: 'P1_JUSTICE',
         httpStatus: response.status,
-        data: fallbackData,
-        recordsCount: fallbackData.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'JUSTICE_FETCH_FAILED',
@@ -54,13 +54,12 @@ export class JusticeOpenDataConnector {
     const response = await StateAdminApiClient.executeGet('P1_JUSTICE', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackCases = this.normalizeJudicialCases([], courtType);
       return {
         success: false,
         source: 'P1_JUSTICE',
         httpStatus: response.status,
-        data: fallbackCases,
-        recordsCount: fallbackCases.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'JUSTICE_CASES_FETCH_FAILED',
@@ -83,6 +82,7 @@ export class JusticeOpenDataConnector {
 
   /**
    * Normalizer & Validator for MSp Judicial Statistics
+   * Strict Fail-Closed: returns empty array if no valid data parsed.
    */
   public static normalizeJudicialStatistics(rawData: any, targetAgenda: string): JudicialStatisticPayload[] {
     const items = Array.isArray(rawData)
@@ -101,41 +101,17 @@ export class JusticeOpenDataConnector {
       const title = item.title?.cs || item.nazev?.cs || item.title || 'Statistika MSp';
       const description = item.description?.cs || item.popis?.cs || '';
 
-      // Validate relevance for family/custody justice
-      const isFamilyRelevant =
-        title.toLowerCase().includes('opatrov') ||
-        title.toLowerCase().includes('péče') ||
-        title.toLowerCase().includes('délka') ||
-        description.toLowerCase().includes('soud');
-
-      if (isFamilyRelevant || items.length <= 5) {
-        results.push({
-          courtCode: item.iri || item.id || 'MSP-CZ-01',
-          courtName: 'Ministerstvo spravedlnosti ČR (Otevřená data)',
-          agenda: targetAgenda === 'P' ? 'P' : targetAgenda === 'Nc' ? 'Nc' : 'ALL',
-          period: '2025/2026',
-          averageDurationDays: 184, // Průměrná délka opatrovnických řízení v ČR
-          sharedCarePercentage: 34.5,
-          soleMotherCarePercentage: 58.2,
-          soleFatherCarePercentage: 7.3,
-          totalCasesCount: 28450,
-          source: 'Ministerstvo spravedlnosti ČR (data.justice.cz / NKOD)',
-        });
-      }
-    }
-
-    // Fallback if dataset format is abstract
-    if (results.length === 0) {
       results.push({
-        courtName: 'Souhrnná statistika opatrovnických soudů ČR',
+        courtCode: item.iri || item.id || '',
+        courtName: title,
         agenda: targetAgenda === 'P' ? 'P' : targetAgenda === 'Nc' ? 'Nc' : 'ALL',
-        period: '2025/2026',
-        averageDurationDays: 184,
-        sharedCarePercentage: 34.5,
-        soleMotherCarePercentage: 58.2,
-        soleFatherCarePercentage: 7.3,
-        totalCasesCount: 28450,
-        source: 'Ministerstvo spravedlnosti ČR (data.justice.cz)',
+        period: item.period || '2025/2026',
+        averageDurationDays: typeof item.duration === 'number' ? item.duration : 0,
+        sharedCarePercentage: item.sharedCarePercentage,
+        soleMotherCarePercentage: item.soleMotherCarePercentage,
+        soleFatherCarePercentage: item.soleFatherCarePercentage,
+        totalCasesCount: item.totalCasesCount || 0,
+        source: 'Ministerstvo spravedlnosti ČR (data.justice.cz / NKOD)',
       });
     }
 
@@ -144,6 +120,7 @@ export class JusticeOpenDataConnector {
 
   /**
    * Normalizer & Validator for MSp Judicial Cases
+   * Strict Fail-Closed: returns empty array if no valid data parsed.
    */
   public static normalizeJudicialCases(rawData: any, courtType: string): JudicialCasePayload[] {
     const items = Array.isArray(rawData)
@@ -159,29 +136,18 @@ export class JusticeOpenDataConnector {
     for (const item of items) {
       if (!item || typeof item !== 'object') continue;
 
-      const title = item.title?.cs || item.title || 'Nález Ústavního soudu k péči o děti';
+      const title = item.title?.cs || item.title || '';
+      if (!title) continue;
+
       results.push({
-        fileNumber: item.iri ? item.iri.split('/').pop() || 'I. ÚS 1506/23' : 'I. ÚS 1506/23',
+        fileNumber: item.iri ? item.iri.split('/').pop() || '' : item.fileNumber || '',
         court: courtType,
         title,
-        summary: item.description?.cs || 'Kritéria pro rozhodování o střídavé péči a rovnoměrném zastoupení obou rodičů.',
-        legalRatio: 'Při rozhodování o úpravě péče je nutné vycházet z práva dítěte na péči obou rodičů.',
-        tags: ['střídavá péče', 'nejlepší zájem dítěte', 'rovný přístup'],
-        fullTextUrl: item.iri || 'https://nalus.usoud.cz',
-        publishedAt: new Date().toISOString(),
-      });
-    }
-
-    if (results.length === 0) {
-      results.push({
-        fileNumber: 'I. ÚS 1506/23',
-        court: 'Ústavní soud ČR',
-        title: 'Nález k preferenci střídavé péče při splnění zákonných předpokladů',
-        summary: 'Oba rodiče mají rovné právo vychovávat své děti. Výhradní péče jednoho rodiče vyžaduje závažné důvody.',
-        legalRatio: 'Střídavá péče je primárním modelem při splnění výchovných předpokladů obou rodičů.',
-        tags: ['střídavá péče', 'Ústavní soud', 'čl. 32 Listiny'],
-        fullTextUrl: 'https://nalus.usoud.cz',
-        publishedAt: '2024-05-15T00:00:00.000Z',
+        summary: item.description?.cs || item.description || '',
+        legalRatio: item.legalRatio || '',
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        fullTextUrl: item.iri || item.fullTextUrl,
+        publishedAt: item.publishedAt || new Date().toISOString(),
       });
     }
 

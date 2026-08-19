@@ -1,6 +1,7 @@
 /**
  * STATE ADMINISTRATION API HUB - P4: E-LEGISLATIVA CONNECTOR
  * e-Legislativa & Sněmovní tisky / Legislativní proces (api.e-sbirka.gov.cz / MV ČR)
+ * ZERO SYNTHETIC DATA / FAIL-CLOSED POLICY
  */
 
 import { StateAdminApiClient } from './StateAdminApiClient.js';
@@ -25,13 +26,12 @@ export class ELegislativaConnector {
     const response = await StateAdminApiClient.executeGet('P4_E_LEGISLATIVA', url, headers);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackBills = this.normalizeLegislativeBills([], actCodeAffected);
       return {
         success: false,
         source: 'P4_E_LEGISLATIVA',
         httpStatus: response.status,
-        data: fallbackBills,
-        recordsCount: fallbackBills.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'E_LEGISLATIVA_FETCH_FAILED',
@@ -54,6 +54,7 @@ export class ELegislativaConnector {
 
   /**
    * Normalizer & Validator for e-Legislativa bills payload
+   * Strict Fail-Closed: returns empty array if no valid bills.
    */
   public static normalizeLegislativeBills(rawData: any, actCodeAffected: string): LegislativeBillPayload[] {
     const items = Array.isArray(rawData)
@@ -69,28 +70,18 @@ export class ELegislativaConnector {
     for (const item of items) {
       if (!item || typeof item !== 'object') continue;
 
+      const title = item.nazev || item.title;
+      if (!title) continue;
+
       results.push({
-        billNumber: item.cisloTisku || item.kod || `Sněmovní tisk ${item.id || '450/0'}`,
-        title: item.nazev || item.title || `Novela Občanského zákoníku č. ${actCodeAffected}`,
+        billNumber: item.cisloTisku || item.kod || item.id || '',
+        title,
         actCodeAffected,
         status: item.stav === 'SCHVALENO' ? 'PASSED' : item.stav === 'ZAMITNUTO' ? 'REJECTED' : 'READING_2',
         proposedBy: item.navrhovatel || 'Ministerstvo spravedlnosti ČR',
         submittedAt: item.datumPrijeti || new Date().toISOString(),
-        summary: item.anotace || 'Návrh novelizace ustanovení upravujících opatrovnická řízení a výživné.',
-        sourceUri: `${this.E_LEGISLATIVA_BASE}/tisky/${item.id || '450'}`,
-      });
-    }
-
-    if (results.length === 0) {
-      results.push({
-        billNumber: 'Sněmovní tisk 450/0',
-        title: `Novela zákona č. ${actCodeAffected} Sb. (úprava opatrovnického práva)`,
-        actCodeAffected,
-        status: 'READING_2',
-        proposedBy: 'Ministerstvo spravedlnosti ČR',
-        submittedAt: '2025-11-10T00:00:00.000Z',
-        summary: 'Posílení institutu střídavé péče a zavedení doporučující tabulky výživného do textu zákona.',
-        sourceUri: 'https://api.e-sbirka.gov.cz/esel-esbir-daver/dokumenty-sbirky/450',
+        summary: item.anotace || '',
+        sourceUri: `${this.E_LEGISLATIVA_BASE}/tisky/${item.id || ''}`,
       });
     }
 

@@ -1,6 +1,7 @@
 /**
  * STATE ADMINISTRATION API HUB - P3: PUBLIC REGISTRIES CONNECTOR
  * Registr orgánů veřejné moci (OVM) & Ověřené subjekty (Soudy, OSPOD, Znalci, Mediátoři, Advokáti)
+ * ZERO SYNTHETIC DATA / FAIL-CLOSED POLICY
  */
 
 import { StateAdminApiClient } from './StateAdminApiClient.js';
@@ -20,13 +21,12 @@ export class PublicRegistryConnector {
     const response = await StateAdminApiClient.executeGet('P3_PUBLIC_REGISTRY', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackEntities = this.normalizeOvmEntities([], entityType);
       return {
         success: false,
         source: 'P3_PUBLIC_REGISTRY',
         httpStatus: response.status,
-        data: fallbackEntities,
-        recordsCount: fallbackEntities.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'OVM_FETCH_FAILED',
@@ -57,13 +57,12 @@ export class PublicRegistryConnector {
     const response = await StateAdminApiClient.executeGet('P3_PUBLIC_REGISTRY', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackEntity = this.normalizeAresLegalProfessional({ obchodniJmeno: 'Ověřený právní subjekt / Advokát', ico: cleanIco });
       return {
         success: false,
         source: 'P3_PUBLIC_REGISTRY',
         httpStatus: response.status,
-        data: fallbackEntity ? [fallbackEntity] : [],
-        recordsCount: fallbackEntity ? 1 : 0,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'ARES_VERIFY_FAILED',
@@ -86,6 +85,7 @@ export class PublicRegistryConnector {
 
   /**
    * Normalizer & Validator for OVM entities
+   * Strict Fail-Closed: returns empty array if no valid data.
    */
   public static normalizeOvmEntities(rawData: any, entityType: 'SOUD' | 'OSPOD'): PublicRegistryEntityPayload[] {
     const items = Array.isArray(rawData)
@@ -101,31 +101,21 @@ export class PublicRegistryConnector {
     for (const item of items) {
       if (!item || typeof item !== 'object') continue;
 
-      const title = item.title?.cs || item.title || (entityType === 'SOUD' ? 'Okresní soud' : 'Orgán OSPOD');
+      const title = item.title?.cs || item.title || item.nazev;
+      if (!title) continue;
+
       results.push({
         type: entityType,
         name: title,
         institution: entityType === 'SOUD' ? 'Ministerstvo spravedlnosti ČR' : 'Ministerstvo práce a sociálních věcí ČR',
-        city: 'Praha',
-        region: 'Hlavní město Praha',
-        address: 'Hygienická 10, 110 00 Praha 1',
+        city: item.city || 'Praha',
+        region: item.region || 'Česká republika',
+        address: item.address,
+        email: item.email,
+        phone: item.phone,
+        website: item.website,
         isVerified: true,
         source: 'Registr orgánů veřejné moci (OVM / NKOD)',
-      });
-    }
-
-    if (results.length === 0) {
-      results.push({
-        type: entityType,
-        name: entityType === 'SOUD' ? 'Okresní soud v Pardubicích' : 'OSPOD Pardubice - Oddělení sociálně-právní ochrany dětí',
-        institution: entityType === 'SOUD' ? 'Justice ČR' : 'Městský úřad Pardubice',
-        city: 'Pardubice',
-        region: 'Pardubický kraj',
-        address: 'Na Tříslovisšti 1, 530 02 Pardubice',
-        email: entityType === 'SOUD' ? 'podatelna@osoud.pce.justice.cz' : 'ospod@mupce.cz',
-        phone: '+420 466 000 111',
-        isVerified: true,
-        source: 'Registr orgánů veřejné moci (OVM)',
       });
     }
 
@@ -134,11 +124,14 @@ export class PublicRegistryConnector {
 
   /**
    * Normalizer & Validator for ARES legal professional entity
+   * Strict Fail-Closed: returns null if no valid subject found.
    */
   public static normalizeAresLegalProfessional(rawData: any): PublicRegistryEntityPayload | null {
-    if (!rawData || typeof rawData !== 'object') return null;
+    if (!rawData || typeof rawData !== 'object' || (!rawData.obchodniJmeno && !rawData.nazev)) {
+      return null;
+    }
 
-    const obchodniJmeno = rawData.obchodniJmeno || rawData.nazev || 'Právní subjekt';
+    const obchodniJmeno = rawData.obchodniJmeno || rawData.nazev;
     const ico = rawData.ico || '';
     const sidlo = rawData.sidlo || {};
     const textAdresa = sidlo.textovaAdresa || `${sidlo.nazevUlice || ''} ${sidlo.cisloDomovni || ''}, ${sidlo.nazevObce || ''}`;
@@ -158,7 +151,7 @@ export class PublicRegistryConnector {
       institution: 'Kancelář / Pracoviště',
       city: sidlo.nazevObce || 'Praha',
       region: 'Česká republika',
-      address: textAdresa,
+      address: textAdresa.trim(),
       isVerified: true,
       source: 'Administrativní registr ekonomických subjektů (ARES v3)',
     };

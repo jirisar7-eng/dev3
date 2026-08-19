@@ -1,6 +1,7 @@
 /**
  * STATE ADMINISTRATION API HUB - P2: ČSÚ / NKOD CONNECTOR
  * Národní katalog otevřených dat (data.gov.cz) & Český statistický úřad (ČSÚ)
+ * ZERO SYNTHETIC DATA / FAIL-CLOSED POLICY
  */
 
 import { StateAdminApiClient } from './StateAdminApiClient.js';
@@ -18,13 +19,12 @@ export class CsuNkodConnector {
     const response = await StateAdminApiClient.executeGet('P2_CSU_NKOD', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackData = this.normalizeDemographicStatistics([]);
       return {
         success: false,
         source: 'P2_CSU_NKOD',
         httpStatus: response.status,
-        data: fallbackData,
-        recordsCount: fallbackData.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'CSU_NKOD_FETCH_FAILED',
@@ -53,13 +53,12 @@ export class CsuNkodConnector {
     const response = await StateAdminApiClient.executeGet('P2_CSU_NKOD', url);
 
     if (response.status !== 200 || !response.data) {
-      const fallbackItems = this.normalizeNkodDatasets([]);
       return {
         success: false,
         source: 'P2_CSU_NKOD',
         httpStatus: response.status,
-        data: fallbackItems,
-        recordsCount: fallbackItems.length,
+        data: [],
+        recordsCount: 0,
         durationMs: response.durationMs,
         error: {
           code: response.error || 'NKOD_SEARCH_FAILED',
@@ -82,6 +81,7 @@ export class CsuNkodConnector {
 
   /**
    * Normalizer & Validator for ČSÚ Demographic Statistics
+   * Strict Fail-Closed: returns empty array if no valid items.
    */
   public static normalizeDemographicStatistics(rawData: any): DemographicStatisticPayload[] {
     const items = Array.isArray(rawData)
@@ -97,29 +97,18 @@ export class CsuNkodConnector {
     for (const item of items) {
       if (!item || typeof item !== 'object') continue;
 
-      const title = item.title?.cs || item.nazev?.cs || item.title || 'Demografická statistika ČSÚ';
-      results.push({
-        category: 'Demografie a rodina',
-        title,
-        description: item.description?.cs || item.popis?.cs || 'Oficiální demografická data ČSÚ o rodinách a dětech v ČR.',
-        value: '34.5 %',
-        unit: '%',
-        period: '2025/2026',
-        region: 'Česká republika',
-        source: 'Český statistický úřad (ČSÚ / NKOD data.gov.cz)',
-      });
-    }
+      const title = item.title?.cs || item.nazev?.cs || item.title;
+      if (!title) continue;
 
-    if (results.length === 0) {
       results.push({
-        category: 'Péče o děti a rozvodovost',
-        title: 'Podíl střídavé péče u rozvedených manželství s nezletilými dětmi',
-        description: 'Oficiální roční statistický ukazatel ČSÚ o uspořádání péče o nezletilé děti.',
-        value: '34.5 %',
-        unit: '%',
-        period: '2025/2026',
-        region: 'Česká republika',
-        source: 'Český statistický úřad (ČSÚ)',
+        category: item.category || 'Demografie a rodina',
+        title,
+        description: item.description?.cs || item.popis?.cs || '',
+        value: item.value || '',
+        unit: item.unit || '',
+        period: item.period || '2025/2026',
+        region: item.region || 'Česká republika',
+        source: 'Český statistický úřad (ČSÚ / NKOD data.gov.cz)',
       });
     }
 
@@ -128,6 +117,7 @@ export class CsuNkodConnector {
 
   /**
    * Normalizer for NKOD Dataset Items
+   * Strict Fail-Closed: returns empty array if no valid items.
    */
   public static normalizeNkodDatasets(rawData: any): NkodDatasetItem[] {
     const items = Array.isArray(rawData)
@@ -138,30 +128,18 @@ export class CsuNkodConnector {
       ? rawData.datasets
       : [];
 
-    const results = items.map((item: any) => ({
-      id: item.iri || item.id || `nkod-${Math.random().toString(36).substring(2, 8)}`,
-      title: item.title?.cs || item.title || 'Datová sada NKOD',
-      description: item.description?.cs || item.description || '',
-      provider: item.poskytovatel || 'Český statistický úřad',
-      issuedDate: item.issued || new Date().toISOString(),
-      keywords: Array.isArray(item.klicova_slova) ? item.klicova_slova : ['rodina', 'statistika'],
-      downloadUrl: item.dostupnost || item.iri,
-      format: 'JSON/DCAT-AP',
-    }));
-
-    if (results.length === 0) {
-      results.push({
-        id: 'nkod-csu-rodina-01',
-        title: 'Demografická ročenka rodin a manželství s nezletilými dětmi',
-        description: 'Pravidelná datová sada NKOD poskytovaná ČSÚ.',
-        provider: 'Český statistický úřad',
-        issuedDate: '2025-01-15T00:00:00.000Z',
-        keywords: ['rodina', 'statistika', 'rozvodovost', 'péče'],
-        downloadUrl: 'https://data.gov.cz/api/v2/datasets',
-        format: 'JSON/DCAT-AP',
-      });
-    }
-
-    return results;
+    return items
+      .filter((item) => item && typeof item === 'object')
+      .map((item: any) => ({
+        id: item.iri || item.id || '',
+        title: item.title?.cs || item.title || '',
+        description: item.description?.cs || item.description || '',
+        provider: item.poskytovatel || 'Český statistický úřad',
+        issuedDate: item.issued || '',
+        keywords: Array.isArray(item.klicova_slova) ? item.klicova_slova : [],
+        downloadUrl: item.dostupnost || item.iri || '',
+        format: item.format || 'JSON/DCAT-AP',
+      }))
+      .filter((item) => item.id !== '' || item.title !== '');
   }
 }
