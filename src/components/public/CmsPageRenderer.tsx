@@ -129,10 +129,21 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   let puckData = null;
   try {
     const raw = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
-    if (raw && typeof raw === 'object' && Array.isArray(raw.content)) {
+    if (raw && typeof raw === 'object' && Array.isArray(raw.content) && raw.root && typeof raw.root.props === 'object') {
       puckData = raw;
+    } else {
+      console.warn('Puck data exists but has invalid structure for page:', slug);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Failed to parse Puck data for page:', slug, e);
+  }
+
+  // HARDENED FALLBACK LOGIC:
+  // If we have a fallbackComponent but no valid Puck data was loaded (either missing, invalid, or fetch failed),
+  // we MUST use the fallbackComponent. We only use legacy CMS rendering if there's no fallbackComponent.
+  if (fallbackComponent && !puckData) {
+    return <>{fallbackComponent}</>;
+  }
 
   if (puckData) {
     const hasHeroBlock = Array.isArray(puckData.content) && puckData.content.some((b: any) => b?.type === 'HeroBlock');
