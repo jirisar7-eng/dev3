@@ -47,6 +47,13 @@ export const SupportView: React.FC<SupportViewProps> = ({ onNavigate }) => {
       badge: 'BKB Pomoc',
       color: 'border-amber-200 bg-amber-50/50',
     },
+    {
+      name: 'Liga otevřených mužů (LOM) – Psychologická pomoc',
+      phone: '+420 733 642 905',
+      detail: 'Odborná psychologická pomoc, krizová intervence a poradenství zaměřené specificky na muže v obtížných životních situacích, při rozpadu rodiny nebo v tísni.',
+      badge: 'LOM Pomoc',
+      color: 'border-indigo-200 bg-indigo-50/50',
+    },
   ];
 
   return (
@@ -157,6 +164,107 @@ export const SupportView: React.FC<SupportViewProps> = ({ onNavigate }) => {
             >
               Chci se stát mentorem
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Ověřené specializované organizace */}
+      <div id="section-organizations" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="bg-slate-50 rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
+          <div>
+            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+              <span>Odborné státní a nestátní organizace (Ověřené zdroje k srpnu 2026)</span>
+            </h3>
+            <p className="text-xs text-slate-600 mt-1">
+              Oficiální instituce a organizace, na které se můžete obrátit pro odbornou psychologickou, právní a sociální pomoc.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="card-cak" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-amber-50 text-amber-700 border border-amber-200 rounded-md">Právní zastoupení</span>
+                <h4 className="text-sm font-black text-slate-900">Česká advokátní komora (ČAK)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Oficiální profesní komora advokátů. Umožňuje bezplatné přidělení advokáta (§ 18a zákona o advokacii) a nabízí online vyhledávač specialistů na rodinné právo.
+                </p>
+              </div>
+              <a href="https://www.cak.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>Přejít na cak.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div id="card-aop" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">Bezplatná pomoc</span>
+                <h4 className="text-sm font-black text-slate-900">Asociace občanských poraden (AOP)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Síť nezávislých občanských poraden po celé ČR. Poskytují bezplatné, anonymní a nestranné sociálně-právní poradenství v otázkách bydlení, rodiny, dluhů a práva.
+                </p>
+              </div>
+              <a href="https://www.obcanskeporadny.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>obcanskeporadny.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div id="card-amcr" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200 rounded-md">Mimosoudní smír</span>
+                <h4 className="text-sm font-black text-slate-900">Asociace mediátorů ČR (AMČR)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Zastřešující asociace akreditovaných zapsaných mediátorů. Pomáhá vyhledat nezávislé odborníky pro rodinnou mediaci a uzavření mimosoudní rodičovské dohody.
+                </p>
+              </div>
+              <a href="https://www.amcr.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>amcr.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div id="card-aperio" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md">Podpora rodiny</span>
+                <h4 className="text-sm font-black text-slate-900">Aperio – zdravé rodičovství</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Nezisková organizace specializovaná na podporu rodičů při rozchodu. Nabízí prověřené metodiky pro střídavou péči, bezplatné psychologické i právní poradny a kurzy.
+                </p>
+              </div>
+              <a href="https://www.aperio.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>aperio.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div id="card-lom" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-purple-50 text-purple-700 border border-purple-200 rounded-md">Psychická pomoc</span>
+                <h4 className="text-sm font-black text-slate-900">Liga otevřených mužů (LOM)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Nezisková organizace zaměřená na rozvoj aktivního otcovství a psychologickou pomoc mužům. Nabízí specializované konzultace při rozpadu rodiny, kurzy zvládání hněvu a krize.
+                </p>
+              </div>
+              <a href="https://ilom.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>ilom.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div id="card-ombudsman" className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="px-2 py-0.5 text-[9px] font-black tracking-wider uppercase bg-rose-50 text-rose-700 border border-rose-200 rounded-md">Státní kontrola</span>
+                <h4 className="text-sm font-black text-slate-900">Veřejný ochránce práv (Ombudsman)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Státní orgán kontroly veřejné správy. Přejímá a prošetřuje stížnosti rodičů na pochybení, podjatost či nečinnost kolizního opatrovníka OSPOD a navrhuje nápravná opatření.
+                </p>
+              </div>
+              <a href="https://www.ochrance.cz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <span>ochrance.cz</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
         </div>
       </div>

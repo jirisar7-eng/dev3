@@ -32,17 +32,72 @@ interface TermItem {
 
 const WIKI_TERMS: TermItem[] = [
   {
+    id: 'asistovane-predavani',
+    term: 'Asistované předávání',
+    firstLetter: 'A',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 908 o.z.',
+    definition: 'Předávání dítěte mezi rodiči za účasti odborného pracovníka (např. v krizovém nebo rodinném centru) nebo jiné určené nezávislé osoby s cílem zabránit verbálním i fyzickým konfliktům před zraky dětí.',
+    practicalTips: [
+      'Využívá se tam, kde jsou předávání provázena vysoce konfliktním chováním rodičů.',
+      'Můžete jej navrhnout sami, nebo ho nařídí soud předběžným opatřením.'
+    ],
+    relatedTerms: ['Asistovaný styk', 'Předběžné opatření']
+  },
+  {
+    id: 'asistovany-styk',
+    term: 'Asistovaný styk (Setkávání s dohledem)',
+    firstLetter: 'A',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 891 odst. 2 o.z.',
+    definition: 'Setkávání rodiče s dítětem za přítomnosti odborného pracovníka (psychologa, sociálního pracovníka), nejčastěji v neutrálním prostředí specializovaného centra (např. APERIO, krizová centra).',
+    practicalTips: [
+      'Slouží k obnovení narušeného kontaktu po dlouhé odluce nebo při traumatech.',
+      'Je to dočasné opatření s cílem přejít k běžnému neřízenému styku.'
+    ],
+    relatedTerms: ['Asistované předávání', 'OSPOD']
+  },
+  {
+    id: 'aktivni-otcovstvi',
+    term: 'Aktivní otcovství po rozchodu',
+    firstLetter: 'A',
+    category: 'ospod',
+    categoryLabel: 'Komunikace & Psychologie',
+    definition: 'Koncept plnohodnotné, přímé a každodenní péče otce o dítě i po rozpadu rodiny. Otec se podílí nejen na zábavě, ale i na povinnostech (výchova, lékaři, škola, kroužky).',
+    practicalTips: [
+      'Prokazujte aktivní otcovství doložením e-mailové komunikace se školou, přihláškami na kroužky a lékařskými zprávami.',
+      'Nezaměřujte se u soudu pouze na volnočasové aktivity.'
+    ],
+    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost']
+  },
+  {
     id: 'biff',
     term: 'BIFF Komunikace',
     firstLetter: 'B',
     category: 'ospod',
     categoryLabel: 'Komunikace & Psychologie',
-    definition: 'Metoda písomné komunikace s vysoce konfliktním druhým rodičem vyvinutá High Conflict Institute. Zkratka znamená Brief (Stručná), Informative (Informativní), Friendly (Přátelská), Firm (Pevná).',
+    definition: 'Metoda písemné komunikace s vysoce konfliktním druhým rodičem vyvinutá High Conflict Institute. Zkratka znamená Brief (Stručná), Informative (Informativní), Friendly (Přátelská), Firm (Pevná).',
     practicalTips: [
       'Eliminuje emoce, obvinění a dlouhé slohové práce.',
       'Služba pro bezpečný výkaz pro opatrovnický soud.'
     ],
     relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'OSPOD']
+  },
+  {
+    id: 'bezplatny-advokat',
+    term: 'Bezplatný advokát (Určení ČAK)',
+    firstLetter: 'B',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: '§ 18a zákona o advokacii',
+    definition: 'Rozhodnutí České advokátní komory o bezplatném určení zástupce pro osoby, které doloží nízké příjmy a písemné odmítnutí zastupování alespoň dvěma advokáty.',
+    practicalTips: [
+      'Formulář žádosti je k dispozici na webu cak.cz.',
+      'Je třeba přiložit čestné prohlášení o příjmech a dvě písemná odmítnutí od advokátů.'
+    ],
+    relatedTerms: ['Životní minimum', 'Soudní řízení']
   },
   {
     id: 'cochemska-praxe',
@@ -58,6 +113,19 @@ const WIKI_TERMS: TermItem[] = [
     relatedTerms: ['Kolizní opatrovník', 'Soudní smír']
   },
   {
+    id: 'cochemsky-smir',
+    term: 'Cochemský smír',
+    firstLetter: 'C',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    definition: 'Dohoda rodičů uzavřená v průběhu opatrovnického řízení za interdisciplinární podpory soudce, OSPOD a mediátora, která je následně schválena rozsudkem.',
+    practicalTips: [
+      'Cochemský smír eliminuje potřebu psychologických znaleckých posudků.',
+      'Zajišťuje vysokou míru dodržování dohody v budoucnu.'
+    ],
+    relatedTerms: ['Cochemská praxe', 'Soudní smír']
+  },
+  {
     id: 'dolozka-pravni-moci',
     term: 'Doložka právní moci',
     firstLetter: 'D',
@@ -67,9 +135,23 @@ const WIKI_TERMS: TermItem[] = [
     definition: 'Oficiální razítko a potvrzení soudu na písemném vyhotovení rozsudku nebo usnesení, které osvědčuje, že rozhodnutí je konečné, nelze proti němu podat řádný opravný prostředek (odvolání) a je právně závazné a vykonatelné.',
     practicalTips: [
       'Bez doložky právní moci nelze vymáhat plnění exekučně.',
-      'Vyžádejte si vyznačení doložky na kancekáři soudu po uplynutí odvolací lhůty (15 dní).'
+      'Vyžádejte si vyznačení doložky na kanceláři soudu po uplynutí odvolací lhůty (15 dní).'
     ],
     relatedTerms: ['Vykonatelnost', 'Petit']
+  },
+  {
+    id: 'dohoda-o-vyzivnem',
+    term: 'Dohoda o výživném',
+    firstLetter: 'D',
+    category: 'finance',
+    categoryLabel: 'Finance & Výživné',
+    citation: '§ 910 o.z.',
+    definition: 'Písemné ujednání rodičů o výši, splatnosti a způsobu hrazení výživného na nezletilé dítě, které pro svou vykonatelnost vyžaduje schválení opatrovnickým soudem.',
+    practicalTips: [
+      'Dohoda musí být vždy v zájmu dítěte a odpovídat možnostem obou rodičů.',
+      'Soud zkoumá, zda výše výživného není diskriminační.'
+    ],
+    relatedTerms: ['Životní minimum', 'Soudní smír']
   },
   {
     id: 'exekuce-styku',
@@ -86,6 +168,20 @@ const WIKI_TERMS: TermItem[] = [
     relatedTerms: ['Předběžné opatření', 'Doložka právní moci']
   },
   {
+    id: 'informacni-povinnost',
+    term: 'Informační povinnost rodičů',
+    firstLetter: 'I',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: '§ 890 o.z.',
+    definition: 'Zákonná povinnost obou rodičů se vzájemně informovat o všem důležitém, co se týká dítěte – zejména o jeho zdravotním stavu, studijních výsledcích, mimořádných událostech a zájmové činnosti.',
+    practicalTips: [
+      'Záměrné zatajování informací o škole nebo zdraví dítěte je porušením rodičovské odpovědnosti.',
+      'Komunikujte tyto informace písemně (např. e-mailem nebo přes sdílenou aplikaci).'
+    ],
+    relatedTerms: ['Rodičovská odpovědnost', 'Společná odpovědnost rodičů']
+  },
+  {
     id: 'kolizni-opatrovnik',
     term: 'Kolizní opatrovník',
     firstLetter: 'K',
@@ -98,6 +194,47 @@ const WIKI_TERMS: TermItem[] = [
       'Máte právo předkládat opatrovníkovi své návrhy a důkazy.'
     ],
     relatedTerms: ['OSPOD', 'Předběžné opatření']
+  },
+  {
+    id: 'kolizni-opatrovnik-extended',
+    term: 'Kolizní opatrovník (Pravomoci)',
+    firstLetter: 'K',
+    category: 'ospod',
+    categoryLabel: 'OSPOD & Postupy',
+    citation: '§ 469 z.ř.s.',
+    definition: 'Soudem jmenovaný opatrovník (typicky OSPOD), který v opatrovnickém řízení zastupuje zájmy dítěte, podává soudu zprávy o poměrech a navrhuje rozhodnutí.',
+    practicalTips: [
+      'Opatrovník je samostatným účastníkem řízení s právem podávat odvolání.',
+      'Můžete nahlížet do jeho spisu vedeného o dítěti.'
+    ],
+    relatedTerms: ['Kolizní opatrovník', 'Nestrannost OSPOD']
+  },
+  {
+    id: 'nahliceni-do-spisu',
+    term: 'Nahlížení do soudního spisu',
+    firstLetter: 'N',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 44 o.s.ř.',
+    definition: 'Zákonné právo každého účastníka řízení (rodiče) prostudovat celý soudní spis vedený ve věci jeho dětí (spisová značka „Nc“), pořizovat si z něj výpisky a fotokopie.',
+    practicalTips: [
+      'Před každým soudním jednáním doporučujeme nahlédnout do spisu na infocentru soudu, zda protistrana či OSPOD nezaslali nová vyjádření.',
+      'S sebou si vezměte mobilní telefon a veškeré nově vložené listy si vyfoťte.'
+    ],
+    relatedTerms: ['Doložka právní moci', 'Soudní řízení']
+  },
+  {
+    id: 'nestrannost-ospod',
+    term: 'Nestrannost OSPOD',
+    firstLetter: 'N',
+    category: 'ospod',
+    categoryLabel: 'OSPOD & Postupy',
+    definition: 'Povinnost orgánu sociálně-právní ochrany dětí přistupovat k oběma rodičům bez předsudků, zjišťovat objektivně poměry a chránit zájmy nezletilého dítěte, nikoli zájmy matky nebo otce.',
+    practicalTips: [
+      'Pokud se setkáte s nerovným přístupem (např. pracovník mluví pouze s matkou), písemně na to upozorněte vedoucího odboru.',
+      'Požadujte, aby byla do spisu zaznamenána všechna vaše vyjádření.'
+    ],
+    relatedTerms: ['Podjatost sociálního pracovníka', 'OSPOD']
   },
   {
     id: 'ospod',
@@ -114,6 +251,20 @@ const WIKI_TERMS: TermItem[] = [
     relatedTerms: ['Kolizní opatrovník', 'BIFF Komunikace']
   },
   {
+    id: 'odvolani-proti-rozsudku',
+    term: 'Odvolání proti rozsudku',
+    firstLetter: 'O',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 201 o.s.ř.',
+    definition: 'Řádný opravný prostředek proti nepravomocnému rozhodnutí opatrovnického soudu prvního stupně, o kterém rozhoduje nadřízený Krajský úřad nebo Krajský soud.',
+    practicalTips: [
+      'Lhůta pro podání odvolání je 15 dnů od doručení písemného vyhotovení rozsudku.',
+      'Podává se u soudu, který rozsudek vydal.'
+    ],
+    relatedTerms: ['Soudní řízení', 'Doložka právní moci']
+  },
+  {
     id: 'pas',
     term: 'PAS (Syndrom zavrženého rodiče)',
     firstLetter: 'P',
@@ -124,7 +275,48 @@ const WIKI_TERMS: TermItem[] = [
       'Důležité je včasné podání návrhu na soud k zamezení odcizení.',
       'Vyžaduje odborný psychologický posudek a krizovou terapii.'
     ],
-    relatedTerms: ['BIFF Komunikace', 'Znalecký posudek']
+    relatedTerms: ['BIFF Komunikace', 'Programování dítěte']
+  },
+  {
+    id: 'programovani-ditete',
+    term: 'Programování dítěte',
+    firstLetter: 'P',
+    category: 'ospod',
+    categoryLabel: 'Komunikace & Psychologie',
+    definition: 'Systematické očerňování a manipulace dítěte jedním z rodičů s cílem vytvořit u dítěte odpor, strach a nenávist vůči druhému rodiči.',
+    practicalTips: [
+      'Dokumentujte projevy programování (např. naučené fráze dítěte, odmítání bez reálného důvodu).',
+      'Požádejte soud o nařízení rodinné terapie nebo krizové intervence.'
+    ],
+    relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'BIFF Komunikace']
+  },
+  {
+    id: 'podjatost-pracovnika',
+    term: 'Podjatost sociálního pracovníka',
+    firstLetter: 'P',
+    category: 'ospod',
+    categoryLabel: 'OSPOD & Postupy',
+    citation: '§ 14 správního řádu',
+    definition: 'Stav, kdy u sociálního pracovníka OSPOD existují důvodné pochybnosti o jeho nestrannosti z důvodu poměru k věci, k účastníkům (rodičům) nebo jejich zástupcům.',
+    practicalTips: [
+      'Názorový nesouhlas s doporučením OSPOD není sám o sobě důvodem pro podjatost.',
+      'Důvodem je osobní nebo příbuzenský vztah pracovníka s druhým rodičem, případně prokazatelné přátelství či nepřátelství.'
+    ],
+    relatedTerms: ['Nestrannost OSPOD', 'OSPOD']
+  },
+  {
+    id: 'predbezna-vykonatelnost',
+    term: 'Předběžná vykonatelnost rozsudku',
+    firstLetter: 'P',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 162 o.s.ř.',
+    definition: 'Právní status, kdy rozhodnutí ve věcech péče o nezletilé a výživného nabývá vykonatelnosti bez ohledu na to, zda bylo podáno odvolání – stává se závazným okamžikem doručení účastníkům.',
+    practicalTips: [
+      'Odvolání proti rozsudku o péči o dítě nemá odkladný účinek.',
+      'Pravidla v něm určená musíte dodržovat ihned po doručení písemného vyhotovení.'
+    ],
+    relatedTerms: ['Doložka právní moci', 'Odvolání proti rozsudku']
   },
   {
     id: 'petit',
@@ -135,7 +327,7 @@ const WIKI_TERMS: TermItem[] = [
     citation: '§ 79 o.s.ř.',
     definition: 'Závěrečná a zcela zásadní část soudního návrhu, ve které žalobce/navrhovatel přesně formuluje, jaké rozhodnutí má soud vynést.',
     practicalTips: [
-      'Petit musí být naprosto přesný, určitý a vykonatelný (dny, hodiny, místo předání).',
+      'Petit must be naprosto přesný, určitý a vykonatelný (dny, hodiny, místo předání).',
       'Soud je petitem v opatrovnickém řízení vázán z hlediska vykonatelnosti.'
     ],
     relatedTerms: ['Předběžné opatření', 'Doložka právní moci']
@@ -155,6 +347,34 @@ const WIKI_TERMS: TermItem[] = [
     relatedTerms: ['Exekuce styku', 'Petit']
   },
   {
+    id: 'rodinna-mediace',
+    term: 'Rodinná mediace',
+    firstLetter: 'M',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: 'Zákon č. 202/2012 Sb.',
+    definition: 'Mimosoudní metoda řešení sporů za účasti zapsaného akreditovaného mediátora, která pomáhá oběma rodičům najít kompromis a uzavřít udržitelnou rodičovskou dohodu.',
+    practicalTips: [
+      'Soud může nařídit první setkání s mediátorem v rozsahu 3 hodin.',
+      'Dohoda dosažená v mediaci může být následně schválena soudem jako rozsudek.'
+    ],
+    relatedTerms: ['Soudní smír', 'Cochemská praxe']
+  },
+  {
+    id: 'rodicovska-odpovednost',
+    term: 'Rodičovská odpovědnost',
+    firstLetter: 'R',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: '§ 858 o.z.',
+    definition: 'Soubor práv a povinností rodiče, který zahrnuje péči o dítě, ochranu jeho zdraví, jeho tělesný, citový, rozumový a mravní vývoj, jeho zastupování a správu jeho jmění.',
+    practicalTips: [
+      'Rodičovská odpovědnost náleží oběma rodičům stejně, ledaže ji soud omezil nebo jí rodiče zbavil.',
+      'Rozchodem rodičů odpovědnost nezaniká ani se nemění.'
+    ],
+    relatedTerms: ['Společná odpovědnost rodičů', 'Informační povinnost rodičů']
+  },
+  {
     id: 'status-quo',
     term: 'Status Quo',
     firstLetter: 'S',
@@ -165,6 +385,118 @@ const WIKI_TERMS: TermItem[] = [
       'Svévolná změna status quo jedním rodičem (únos dítěte, přestěhování) má být soudem okamžitě korigována předběžným opatřením.'
     ],
     relatedTerms: ['Předběžné opatření', 'OSPOD']
+  },
+  {
+    id: 'socialni-setreni',
+    term: 'Sociální šetření OSPOD',
+    firstLetter: 'S',
+    category: 'ospod',
+    categoryLabel: 'OSPOD & Postupy',
+    citation: '§ 15 zákona o SPOD',
+    definition: 'Návštěva sociálního pracovníka v obydlí rodiče za účelem zjištění bytových, materiálních, hygienických a rodinných poměrů, v nichž dítě vyrůstá nebo má vyrůstat.',
+    practicalTips: [
+      'Pracovník posuzuje, zda má dítě vlastní postel, klidné místo na učení, dostatek jídla a bezpečné prostředí.',
+      'Buďte připraveni, vystupujte klidně a ukažte připravené zázemí pro dítě.'
+    ],
+    relatedTerms: ['OSPOD', 'Nestrannost OSPOD']
+  },
+  {
+    id: 'stridava-pece',
+    term: 'Střídavá péče (Shared Residency)',
+    firstLetter: 'S',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: '§ 907 odst. 2 o.z.',
+    definition: 'Forma péče, při které dítě tráví srovnatelný časový úsek (např. střídání po týdnu, 10/4 dny) s oběma rodiči. Cílem je zachování rovnocenného výchovného vlivu obou rodičů.',
+    practicalTips: [
+      'Ústavní soud ČR judikoval, že střídavá péče je prioritní volbou, pokud jsou oba rodiče způsobilí a mají o péči zájem.',
+      'Soudy zkoumají komunikaci rodičů a blízkost bydliště / školských zařízení.'
+    ],
+    relatedTerms: ['Společná péče obou rodičů', 'Rodičovská odpovědnost']
+  },
+  {
+    id: 'spolecna-odpovednost',
+    term: 'Společná odpovědnost rodičů',
+    firstLetter: 'S',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: 'čl. 18 Úmluvy o právech dítěte',
+    definition: 'Mezinárodněprávní princip, podle kterého mají oba rodiče společnou a prvotní odpovědnost za výchovu a vývoj dítěte.',
+    practicalTips: [
+      'Tento princip brání tomu, aby jeden z rodičů po rozpadu vztahu svévolně rozhodoval o dítěti bez vědomí druhého.',
+      'Je základem pro střídavou a společnou péči.'
+    ],
+    relatedTerms: ['Rodičovská odpovědnost', 'Informační povinnost rodičů']
+  },
+  {
+    id: 'spolecna-pece',
+    term: 'Společná péče obou rodičů',
+    firstLetter: 'S',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: '§ 907 odst. 1 o.z.',
+    definition: 'Forma péče, kdy soud nesvěřuje dítě do péče jednoho z rodičů ani do střídavé péče, ale ponechává ho ve společné péči obou rodičů. Vyžaduje plnou shodu a nadstandardní komunikaci.',
+    practicalTips: [
+      'Tato forma je vhodná, pokud rodiče i po rozchodu žijí v těsné blízkosti (nebo ve společném domě) a jsou schopni se na všem dohodnout bez pevných rozsudků.',
+      'Je nejméně formalizovaná.'
+    ],
+    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost']
+  },
+  {
+    id: 'soudni-smir',
+    term: 'Soudní smír',
+    firstLetter: 'S',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 99 o.s.ř.',
+    definition: 'Dohoda účastníků řízení (rodičů) uzavřená před soudem a schválená usnesením, která má účinky pravomocného rozsudku.',
+    practicalTips: [
+      'Soud se má vždy pokusit o smírné vyřešení sporu.',
+      'Smír šetří čas, náklady a minimalizuje psychické trauma dětí.'
+    ],
+    relatedTerms: ['Cochemský smír', 'Rodinná mediace']
+  },
+  {
+    id: 'vyjadreni-ditete',
+    term: 'Vyjádření názoru dítěte',
+    firstLetter: 'V',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 867 o.z.',
+    definition: 'Právo dítěte vyjádřit se ke všem otázkám, které se ho v opatrovnickém řízení týkají. Soud a OSPOD musí názoru dítěte věnovat patřičnou pozornost odpovídající jeho věku a rozumové vyspělosti.',
+    practicalTips: [
+      'U dětí starších 12 let se předpokládá, že jsou schopné svůj názor formulovat samy.',
+      'Názor dítěte může soud zjišťovat přímo u výslechu bez přítomnosti rodičů, nebo prostřednictvím OSPODu.'
+    ],
+    relatedTerms: ['Zájem dítěte (Best Interests of the Child)', 'Kolizní opatrovník']
+  },
+  {
+    id: 'vymahani-rozhodnuti',
+    term: 'Vymáhání soudního rozhodnutí',
+    firstLetter: 'V',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení',
+    citation: '§ 500 z.ř.s.',
+    definition: 'Nástroj soudu k vynucení plnění rozsudku o styku s dítětem, zejména ukládáním opakovaných pokut do výše 50 000 Kč rodiči, který styk maří.',
+    practicalTips: [
+      'Při každém maření styku podejte písemný návrh na výkon rozhodnutí k opatrovnickému soudu.',
+      'Dokumentujte každé neúspěšné předání.'
+    ],
+    relatedTerms: ['Exekuce styku', 'Předběžné opatření']
+  },
+  {
+    id: 'zajem-ditete',
+    term: 'Zájem dítěte (Best Interests of the Child)',
+    firstLetter: 'Z',
+    category: 'pravo',
+    categoryLabel: 'Právní pojmy',
+    citation: 'čl. 3 Úmluvy o právech dítěte',
+    definition: 'Přední hledisko pro jakékoli rozhodování týkající se dětí, ať už prováděné veřejnými institucemi, soudy nebo rodiči. Jde o komplexní posouzení bezpečnosti, stability, citových vazeb a vývoje dítěte.',
+    practicalTips: [
+      'Argumentace u soudu musí být vždy postavena na tom, proč je váš návrh v zájmu dítěte, nikoli ve vašem osobním zájmu.',
+      'Pojem zájem dítěte nesmí být zneužíván k svévolnému vylučování otce z výchovy.'
+    ],
+    relatedTerms: ['Vyjádření názoru dítěte', 'Rodičovská odpovědnost']
   },
   {
     id: 'znalecky-posudek',
@@ -179,10 +511,24 @@ const WIKI_TERMS: TermItem[] = [
       'Výhrady k posudku je nutné podat písemně v zákonné lhůtě.'
     ],
     relatedTerms: ['Cochemská praxe', 'PAS (Syndrom zavrženého rodiče)']
+  },
+  {
+    id: 'zivotni-minimum',
+    term: 'Životní minimum',
+    firstLetter: 'Z',
+    category: 'finance',
+    categoryLabel: 'Finance & Výživné',
+    citation: 'Zákon č. 110/2006 Sb.',
+    definition: 'Společensky uznaná minimální hranice peněžních příjmů k zajištění výživy a ostatních základních osobních potřeb. Je zásadním limitem pro výpočet výživného a posouzení nároku na bezplatnou právní pomoc (ČAK).',
+    practicalTips: [
+      'Bezplatný advokát od ČAK se určuje, pokud příjem rodiny nepřesahuje 3násobek životního minima.',
+      'Aktuální výši životního minima najdete na stránkách MPSV ČR.'
+    ],
+    relatedTerms: ['Bezplatný advokát (Určení ČAK)', 'Dohoda o výživném']
   }
 ];
 
-const ALPHABET = ['Vše', 'B', 'C', 'D', 'E', 'K', 'O', 'P', 'S', 'Z'];
+const ALPHABET = ['Vše', 'A', 'B', 'C', 'D', 'E', 'I', 'K', 'M', 'N', 'O', 'P', 'R', 'S', 'V', 'Z'];
 
 export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
   const [selectedLetter, setSelectedLetter] = useState<string>('Vše');
@@ -279,6 +625,14 @@ export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
               }`}
             >
               Soudní řízení
+            </button>
+            <button
+              onClick={() => setSelectedCategory('finance')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                selectedCategory === 'finance' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Finance & Výživné
             </button>
           </div>
         </div>

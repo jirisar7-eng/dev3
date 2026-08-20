@@ -83,7 +83,8 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
         ],
         tips: [
           'Z každého jednání na OSPOD si udělejte písemný zápis a zašlete jej sociální pracovnici e-mailem jako rekapitulaci.',
-          'Předložte fotografie dětského pokoje, plán kroužků a důkazy o vašem zapojení do školy/lékařské péče.'
+          'Předložte fotografie dětského pokoje, plán kroužků a důkazy o vašem zapojení do školy/lékařské péče.',
+          'Podle Veřejného ochránce práv (Ombudsmana) má OSPOD absolutní povinnost nestrannosti. Pokud se setkáte s nečinností či zjevnou podjatostí sociální pracovnice, máte právo podat oficiální stížnost tajemníkovi městského úřadu podle § 175 správního řádu.'
         ],
         recommendedForm: 'Vyjádření rodiče pro OSPOD',
         formUrl: '/ai-formulare'
@@ -114,7 +115,8 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
         ],
         tips: [
           'Využijte náš AI Generátor formulářů pro sestavení právně přesného petitu propojeného s e-Sbírkou.',
-          'Soudní řízení ve věcech péče o nezletilé je osvobozeno od soudních poplatků.'
+          'Soudní řízení ve věcech péče o nezletilé je osvobozeno od soudních poplatků.',
+          'Pokud jste v tíživé finanční situaci, můžete požádat Českou advokátní komoru (ČAK) o bezplatné určení advokáta podle § 18a zákona o advokacii, pokud doložíte odmítnutí právní pomoci od alespoň dvou advokátů a čistý příjem pod 3násobkem životního minima.'
         ],
         recommendedForm: 'Návrh na střídavou péči',
         formUrl: '/ai-formulare'
@@ -239,7 +241,8 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
         ],
         tips: [
           'Soudní pokuty uložené podle § 500 z.ř.s. přapadají státu a jsou účinným tlakem na mařícího rodiče.',
-          'Judikatura Ústavního soudu potvrzuje, že dlouhodobé maření styku je závažným selháním rodičovské způsobilosti.'
+          'Judikatura Ústavního soudu potvrzuje, že dlouhodobé maření styku je závažným selháním rodičovské způsobilosti.',
+          'Při opakovaném zamezování kontaktu doporučuje Ombudsman ČR vyžadovat od opatrovnického soudu průběžné vymáhání rozhodnutí ukládáním pokut do výše 50 000 Kč (§ 500 z.ř.s.) s cílem vytvořit trvalý tlak na dodržování rozsudku.'
         ],
         recommendedForm: 'Návrh na výkon rozhodnutí (pokuta)',
         formUrl: '/ai-formulare'

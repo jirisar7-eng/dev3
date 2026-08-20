@@ -143,6 +143,81 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Sekce ČAK & Ombudsman - Bezplatná pomoc a obrana proti OSPOD */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4" id="section-cak-ombudsman">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* ČAK - Bezplatný advokát */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4" id="card-cak">
+            <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-xs uppercase tracking-wider" id="header-cak">
+              <Gavel className="w-5 h-5 text-indigo-500" />
+              <span>Bezplatná právní pomoc • Česká advokátní komora</span>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight" id="title-cak">
+              Jak získat bezplatného advokáta pro opatrovnický spor
+            </h3>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Kvalitní zastoupení je pro ochranu dětí i rodičů klíčové. Pokud nemáte prostředky na komerčního advokáta, zákon o advokacii (§ 18a) vám umožňuje požádat Českou advokátní komoru (ČAK) o bezplatné určení zástupce.
+            </p>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+              <strong className="text-slate-900 text-xs block font-bold">Klíčové podmínky pro určení ČAK:</strong>
+              <ul className="space-y-2 text-xs text-slate-600 list-disc pl-4">
+                <li>Nesplňujete podmínky pro bezplatné ustanovení zástupce přímo soudem (např. řízení ještě nezačalo).</li>
+                <li>Doložíte, že vás písemně odmítli zastoupit alespoň dva oslovení komerční advokáti (písemné odmítnutí).</li>
+                <li>Doložíte nízké příjmy – čistý příjem žadatele a společně posuzovaných osob nedosahuje 3násobku životního minima.</li>
+              </ul>
+            </div>
+
+            <div className="bg-slate-100/60 p-3 rounded-xl text-[10px] text-slate-500 border border-slate-200 leading-relaxed">
+              <strong>Jak postupovat:</strong> Stáhněte si formulář „Žádost o určení advokáta k poskytnutí právní služby bezplatně“ na portálu <strong>cak.cz</strong>, vyplňte čestné prohlášení o majetku a příjmech, přiložte 2 odmítnutí a zašlete na ČAK (poštou či datovou schránkou).
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between items-center">
+              <span>Zdroj: Česká advokátní komora (§ 18a zákona č. 85/1996 Sb.)</span>
+              <span>Ověřeno: 19. srpna 2026</span>
+            </div>
+          </div>
+
+          {/* Ombudsman - Stížnosti na OSPOD */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4" id="card-ombudsman">
+            <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-xs uppercase tracking-wider" id="header-ombudsman">
+              <Scale className="w-5 h-5 text-indigo-500" />
+              <span>Obrana proti pochybení OSPOD • Veřejný ochránce práv</span>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight" id="title-ombudsman">
+              Jak podat stížnost na nečinnost či podjatost OSPOD
+            </h3>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              OSPOD vystupuje jako kolizní opatrovník dítěte a má absolutní povinnost nestrannosti. Pokud se setkáte s podjatostí, pasivitou či neprofesionálním chováním sociálního pracovníka, máte plné právo se bránit.
+            </p>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+              <strong className="text-slate-900 text-xs block font-bold">Tříkrokový postup obrany podle Ombudsmana:</strong>
+              <ol className="space-y-2 text-xs text-slate-600 list-decimal pl-4">
+                <li><strong>Stížnost vedoucímu OSPOD:</strong> Podejte písemnou stížnost tajemníkovi městského úřadu podle § 175 správního řádu (lhůta na vyřízení je 60 dnů).</li>
+                <li><strong>Podnět na Krajský úřad:</strong> Pokud úřad stížnost zamítne, požádejte nadřízený Krajský úřad o výkon hierarchického dozoru a nápravu.</li>
+                <li><strong>Podnět Ombudsmanovi:</strong> Pokud dozor selže, obraťte se přímo na Veřejného ochránce práv v Brně, který zahájí nezávislé šetření.</li>
+              </ol>
+            </div>
+
+            <div className="bg-slate-100/60 p-3 rounded-xl text-[10px] text-slate-500 border border-slate-200 leading-relaxed">
+              <strong>Zásada:</strong> OSPOD nesmí nadržovat žádné straně. Jakákoliv jednostranná nečinnost při zamezování styku, ignorování vašich důkazů nebo odmítání zapsat vaše vyjádření je závažným pochybením.
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between items-center">
+              <span>Zdroj: Oficiální metodické sborníky Kanceláře Veřejného ochránce práv</span>
+              <span>Ověřeno: 19. srpna 2026</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       {/* Downloads / Templates */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">

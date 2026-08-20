@@ -83,6 +83,18 @@ const LEGAL_RIGHTS: LegalRightItem[] = [
     legalText: '„Rodič, který má dítě v péči, je povinen nehatit styk druhého rodiče s dítětem. Opakované bezdůvodné maření styku nebo navádění dítěte proti druhému rodiči (syndrom zavrženého rodiče) zakládá důvod pro změnu rozhodnutí o péči a uložení soudních pokut.“',
     practicalAdvice: 'Každé nepředání dítěte pečlivě dokumentujte (zprávy, fotky, svědkové). Podejte návrh na výkon rozhodnutí uložením pokuty (§ 500 z.ř.s.).',
     commonViolations: 'Omlouvání nepředání dítěte výmluvami typu "dítě má rýmu" bez lékařské zprávy nebo "dítě nechce jít".'
+  },
+  {
+    id: 'mezinarodni-standardy-un',
+    category: 'rovnocenna-pece',
+    categoryTitle: '1. Rovnocenná péče obou rodičů',
+    paragraph: 'čl. 9 & čl. 18 Úmluvy',
+    title: 'Mezinárodní standardy a právo na rovnocennou péči obou rodičů',
+    source: 'Úmluva o právech dítěte (vyhl. pod č. 104/1991 Sb.) & Rezoluce Rady Evropy č. 2079 (2015)',
+    summary: 'Mezinárodní smlouvy mají v ČR ústavní přednost před standardními zákony. Úmluva o právech dítěte a Rezoluce RE č. 2079 jednoznačně garantují právo dítěte na rovnocennou péči obou rodičů.',
+    legalText: '„Smluvní státy uznávají právo dítěte odděleného od jednoho nebo obou rodičů udržovat pravidelné osobní styky a přímé spojení s oběma rodiči... a vyvinou veškeré úsilí k tomu, aby byla zajištěna zásada, že oba rodiče mají společnou odpovědnost... Rezoluce Rady Evropy č. 2079 vyzývá členské státy, aby zavedly princip střídavé péče (shared residency) jako výchozí bod s cílem eliminovat diskriminaci.“',
+    practicalAdvice: 'Česká republika je plně vázána Úmluvou o právech dítěte podle čl. 10 Ústavy ČR. Argumentujte čl. 9 a 18 Úmluvy a Rezolucí Rady Evropy č. 2079 u opatrovnických soudů k překonání lokálních předsudků o výhradní péči jednoho rodiče.',
+    commonViolations: 'Lokální opatrovnické orgány (OSPOD) a některé soudy argumentují zastaralými genderovými stereotypy a ignorují čl. 10 Ústavy ČR, který dává mezinárodním smlouvám aplikační přednost před vnitrostátními předpisy.'
   }
 ];
 

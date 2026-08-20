@@ -121,7 +121,7 @@ export const SosPlanView: React.FC<SosPlanViewProps> = ({ onNavigate }) => {
 
       {/* 4 Kroký Algoritmus */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        
+
         {/* KROK 1 */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
@@ -313,6 +313,92 @@ export const SosPlanView: React.FC<SosPlanViewProps> = ({ onNavigate }) => {
           </div>
         </div>
 
+      </div>
+
+      {/* Aperio Metodická sekce - Ochrana psychiky dětí a nastavení prozatímní dohody */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4" id="section-aperio">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+          <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-xs uppercase tracking-wider" id="header-aperio">
+            <Info className="w-5 h-5 text-indigo-500" />
+            <span>Odborná metodika • APERIO – Společnost pro zdravé rodičovství</span>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" id="title-aperio">
+            První kroky při rozchodu: Jak ochránit psychiku dětí a nastavit dohodu o péči
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed" id="desc-aperio">
+            Způsob, jakým rodiče zvládnou počáteční fázi rozpadu rodiny, má zásadní dopad na budoucí psychické zdraví dětí. Organizace APERIO vypracovala klíčová doporučení a praktické checklisty pro zvládnutí této fáze.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-aperio-pillars">
+            <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2" id="pillar-aperio-1">
+              <strong className="text-slate-900 text-xs sm:text-sm block font-extrabold">1. Konflikt mimo děti</strong>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Děti nesmí být nikdy přítomny hádkám, výčitkám, napadání ani rozhovorům o financích či majetku.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2" id="pillar-aperio-2">
+              <strong className="text-slate-900 text-xs sm:text-sm block font-extrabold">2. Společné oznámení</strong>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Oznámit dětem rozchod společně, bez svalování viny. Ujistit je o lásce obou rodičů a eliminovat pocity viny u dětí.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2" id="pillar-aperio-3">
+              <strong className="text-slate-900 text-xs sm:text-sm block font-extrabold">3. Stabilita rutiny</strong>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Udržet stávající rituály, kontakty na kamarády, školku/školu a kroužky. Minimalizace náhlých a velkých změn.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200" id="checklist-container-aperio">
+            <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm mb-3">
+              Checklist prozatímní dohody o dětech (podle metodiky APERIO):
+            </h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5" id="aperio-item-1">
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-xs block font-bold">Jasný a pravidelný režim</strong>
+                  <span className="text-[11px] text-slate-600 leading-normal">Písemné určení, ve které dny a časy je dítko s otcem a ve které s matkou, aby byl režim předvídatelný.</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5" id="aperio-item-2">
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-xs block font-bold">Standardní logistika předávání</strong>
+                  <span className="text-[11px] text-slate-600 leading-normal">Přesné vymezení, kde, kdy a za jakých podmínek předávání probíhá (vhodné je neutrální místo, nebo rozhraní školky/školy).</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5" id="aperio-item-3">
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-xs block font-bold">Způsob komunikace rodičů</strong>
+                  <span className="text-[11px] text-slate-600 leading-normal">Stanovení komunikačního kanálu (např. e-mail, sdílený kalendář) pro sdílení důležitých zpráv o zdraví, škole a chování dítka.</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5" id="aperio-item-4">
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-xs block font-bold">Řešení krizových situací</strong>
+                  <span className="text-[11px] text-slate-600 leading-normal">Postup při nemoci dítka, prázdninách či mimořádných změnách (např. včasné informování alespoň 48 hodin předem).</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-100/50 p-4 rounded-xl text-[11px] text-slate-500 border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2" id="provenance-aperio">
+            <div>
+              <strong>Zdroj informací:</strong> APERIO – Společnost pro zdravé rodičovství (Průvodce rozchodem a metodiky pro sociálně-právní ochranu dětí v ČR).
+            </div>
+            <div>
+              <strong>Ověřeno:</strong> 19. srpna 2026 • <strong>Stav:</strong> Plně v souladu s metodikami MPSV ČR
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Checklist tisk / stažení */}
