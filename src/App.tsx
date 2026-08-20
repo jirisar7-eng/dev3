@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { PublicPortal } from './components/public/PublicPortal';
 import { LoginPage } from './components/public/LoginPage';
 import { RegisterPage } from './components/public/RegisterPage';
+import { BetaNoticeModal } from './components/public/BetaNoticeModal';
 import { ComplianceModal } from './components/public/ComplianceModal';
 
 import { UserDashboard } from './components/private/UserDashboard';
@@ -82,6 +83,9 @@ function MainApp() {
 
       {/* Footer with Compliance Links */}
       <Footer onOpenComplianceDoc={(docKey) => handleNavigate(`/pravni-dokumenty?doc=${docKey}`)} onNavigate={handleNavigate} />
+
+      {/* Beta 1.0 First-Visit Notice */}
+      <BetaNoticeModal onNavigate={handleNavigate} />
 
       {/* Compliance Modal for versioned legal documents */}
       <ComplianceModal
