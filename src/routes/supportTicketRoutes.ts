@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
-const prisma = new PrismaClient();
+
 
 // Get tickets for current user (or all if admin)
 router.get('/', requireAuth, async (req: any, res) => {
