@@ -70,7 +70,7 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
         title: '2. První jednání s OSPOD a vytvoření spisu Om',
         subtitle: 'Procesní role Orgánu sociálně-právní ochrany dětí',
         timeframe: '2–4 týdny',
-        description: 'OSPOD je opatrovnickým soudem jmenován jako kolizní opatrovník dítěte. Jeho úkolem je zastupovat zájem dítěte, nikoliv zájem matky nebo otce. První dojem a věcnost jednání s klíčovou sociální pracovnicí je zásadní pro celý následující proces.',
+        description: 'U sporných rozvodů je OSPOD opatrovnickým soudem jmenován jako kolizní opatrovník dítěte. Jeho úkolem je zastupovat zájem dítěte. (Od 1. 1. 2026 po novele č. 268/2025 Sb. platí, že u smluvených rozvodů rodičů OSPOD do řízení nevstupuje, nehrozí-li střet zájmů). První dojem a věcnost jednání s klíčovou sociální pracovnicí je pro proces zásadní.',
         keyTasks: [
           'Sjednejte si osobní schůzku na OSPOD a předložte písemný věcný přehled své dosavadní péče.',
           'Prezentujte se jako aktivní, milující rodič, který plně respektuje roli druhého rodiče a usiluje o dohody.',
@@ -105,7 +105,7 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
         description: 'Návrh se podává u okresního soudu, v jehož obvodu má dítě své faktické bydliště. Návrh musí přesně splňovat formální náležitosti podle § 466 a násl. z.ř.s. a občanského zákoníku.',
         keyTasks: [
           'Přesná specifikace účastníků: Navrhovatel (otec), Odpůrkyně (matka), Nezletilé dítě.',
-          'Formulace jasného petitu: Návrh na střídavou péči (např. týden/týden s předáním v pondělí v 17:00) a úpravu výživného.',
+          'Formulace jasného petitu: Návrh na úpravu rozsahu péče (např. vyrovnaná/střídavá péče: týden/týden s předáním v pondělí v 17:00) a úpravu výživného.',
           'Doložení důkazních návrhů: Výpis z banky, rodný list dítěte, fotodokumentace zázemí, rozpis pracovní doby.',
           'Citování judikatury Ústavního soudu (I. ÚS 2482/13, II. ÚS 1642/22).'
         ],
@@ -118,7 +118,7 @@ const AGENDA_PHASES: { id: number; number: string; title: string; badge: string;
           'Soudní řízení ve věcech péče o nezletilé je osvobozeno od soudních poplatků.',
           'Pokud jste v tíživé finanční situaci, můžete požádat Českou advokátní komoru (ČAK) o bezplatné určení advokáta podle § 18a zákona o advokacii, pokud doložíte odmítnutí právní pomoci od alespoň dvou advokátů a čistý příjem pod 3násobkem životního minima.'
         ],
-        recommendedForm: 'Návrh na střídavou péči',
+        recommendedForm: 'Návrh na úpravu péče (střídavou péči)',
         formUrl: '/ai-formulare'
       },
       {
@@ -261,7 +261,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigate }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <SeoHead
         title="Opatrovnická Agenda & Časová osa řízení • Táta má právo"
-        description="Interaktivní průvodce 4 fázemi opatrovnického řízení v ČR: OSPOD, návrhy na střídavou péči, předběžná opatření, znalecké posudky a výkon rozhodnutí."
+        description="Interaktivní průvodce 4 fázemi opatrovnického řízení v ČR: OSPOD, návrhy na úpravu péče (býv. střídavou), předběžná opatření, znalecké posudky a výkon rozhodnutí."
         canonicalPath="/agenda"
       />
 
@@ -276,7 +276,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigate }) => {
               4 Fáze Opatrovnického Řízení v ČR
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-              Krok za krokem od prvního kontaktu s OSPOD, přes podání návrhu na střídavou péči, dokazování u soudu až po vymáhání stanoveného styku.
+              Krok za krokem od prvního kontaktu s OSPOD, přes podání návrhu na rovnocennou péči, dokazování u soudu až po vymáhání stanoveného styku.
             </p>
           </div>
 

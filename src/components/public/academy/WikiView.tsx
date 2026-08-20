@@ -406,8 +406,8 @@ const WIKI_TERMS: TermItem[] = [
     firstLetter: 'S',
     category: 'pravo',
     categoryLabel: 'Právní pojmy',
-    citation: '§ 907 odst. 2 o.z.',
-    definition: 'Forma péče, při které dítě tráví srovnatelný časový úsek (např. střídání po týdnu, 10/4 dny) s oběma rodiči. Cílem je zachování rovnocenného výchovného vlivu obou rodičů.',
+    citation: '§ 907 o.z. (po novele č. 268/2025 Sb. řešeno obecně jako rozsah péče)',
+    definition: 'Smluvní státy uznávají právo dítěte udržovat pravidelné osobní styky a spojení s oběma rodiči. Novela 268/2025 Sb. od 1. 1. 2026 ruší formální nálepku střídavé péče; soudy určují přesný časový "rozsah péče". V praxi a judikatuře se pojem nadále užívá.',
     practicalTips: [
       'Ústavní soud ČR judikoval, že střídavá péče je prioritní volbou, pokud jsou oba rodiče způsobilí a mají o péči zájem.',
       'Soudy zkoumají komunikaci rodičů a blízkost bydliště / školských zařízení.'
@@ -434,8 +434,8 @@ const WIKI_TERMS: TermItem[] = [
     firstLetter: 'S',
     category: 'pravo',
     categoryLabel: 'Právní pojmy',
-    citation: '§ 907 odst. 1 o.z.',
-    definition: 'Forma péče, kdy soud nesvěřuje dítě do péče jednoho z rodičů ani do střídavé péče, ale ponechává ho ve společné péči obou rodičů. Vyžaduje plnou shodu a nadstandardní komunikaci.',
+    citation: '§ 907 o.z. (po novele č. 268/2025 Sb. řešeno jako dohoda o péči bez formálních nálepek)',
+    definition: 'Od roku 2026 výchozí přístup u dohodnutých rodičů, kdy soud formálně nevyjmenovává typ péče, ale potvrdí společnou odpovědnost a dohodu rodičů. Vyžaduje plnou shodu a nadstandardní komunikaci bez pevných rozsudkových harmonogramů.',
     practicalTips: [
       'Tato forma je vhodná, pokud rodiče i po rozchodu žijí v těsné blízkosti (nebo ve společném domě) a jsou schopni se na všem dohodnout bez pevných rozsudků.',
       'Je nejméně formalizovaná.'

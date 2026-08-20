@@ -45,7 +45,7 @@ const LEGAL_RIGHTS: LegalRightItem[] = [
     source: 'Zákon č. 89/2012 Sb., občanský zákoník + čl. 32 odst. 4 Listiny',
     summary: 'Oba rodiče mají rovnocenná práva a povinnosti při výchově a péči o dítě. Péče a výchova dětí je právem rodičů a děti mají právo na péči obou rodičů.',
     legalText: '„Rodičovská odpovědnost náleží rovněž oběma rodičům. Dítě, které je v péči jednoho rodiče, má právo stýkat se s druhým rodičem v rozsahu, který je v zájmu dítěte, a druhý rodič má právo se s dítětem stýkat... Rodič, který má dítě v péči, je povinen dítě na styk s druhým rodičem řádně připravit, styk dítěte s druhým rodičem umožnit a při výkonu práva styku s druhým rodičem v potřebném rozsahu spolupracovat.“',
-    practicalAdvice: 'I když dítě žije převážně u jednoho rodiče, druhý rodič neztrácí svá práva. Žádejte střídavou péči nebo maximální rovnocenný rozsah péče.',
+    practicalAdvice: 'I když dítě žije převážně u jednoho rodiče, druhý rodič neztrácí svá práva. Žádejte maximální rovnocenný rozsah péče (dříve střídavou péči).',
     commonViolations: 'Druhý rodič tvrdí: „Já jsem matka/otec, já rozhoduji, kdy dítě uvidíš.“ Všechny jednostranné diktáty jsou v rozporu se zákonem.'
   },
   {
@@ -92,7 +92,7 @@ const LEGAL_RIGHTS: LegalRightItem[] = [
     title: 'Mezinárodní standardy a právo na rovnocennou péči obou rodičů',
     source: 'Úmluva o právech dítěte (vyhl. pod č. 104/1991 Sb.) & Rezoluce Rady Evropy č. 2079 (2015)',
     summary: 'Mezinárodní smlouvy mají v ČR ústavní přednost před standardními zákony. Úmluva o právech dítěte a Rezoluce RE č. 2079 jednoznačně garantují právo dítěte na rovnocennou péči obou rodičů.',
-    legalText: '„Smluvní státy uznávají právo dítěte odděleného od jednoho nebo obou rodičů udržovat pravidelné osobní styky a přímé spojení s oběma rodiči... a vyvinou veškeré úsilí k tomu, aby byla zajištěna zásada, že oba rodiče mají společnou odpovědnost... Rezoluce Rady Evropy č. 2079 vyzývá členské státy, aby zavedly princip střídavé péče (shared residency) jako výchozí bod s cílem eliminovat diskriminaci.“',
+    legalText: '„Smluvní státy uznávají právo dítěte odděleného od jednoho nebo obou rodičů udržovat pravidelné osobní styky a přímé spojení s oběma rodiči... a vyvinou veškeré úsilí k tomu, aby byla zajištěna zásada, že oba rodiče mají společnou odpovědnost... Rezoluce Rady Evropy č. 2079 vyzývá členské státy, aby zavedly princip vyrovnaného rozsahu péče (shared residency) jako výchozí bod s cílem eliminovat diskriminaci.“',
     practicalAdvice: 'Česká republika je plně vázána Úmluvou o právech dítěte podle čl. 10 Ústavy ČR. Argumentujte čl. 9 a 18 Úmluvy a Rezolucí Rady Evropy č. 2079 u opatrovnických soudů k překonání lokálních předsudků o výhradní péči jednoho rodiče.',
     commonViolations: 'Lokální opatrovnické orgány (OSPOD) a některé soudy argumentují zastaralými genderovými stereotypy a ignorují čl. 10 Ústavy ČR, který dává mezinárodním smlouvám aplikační přednost před vnitrostátními předpisy.'
   }
