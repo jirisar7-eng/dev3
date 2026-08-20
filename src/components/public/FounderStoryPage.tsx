@@ -193,6 +193,76 @@ export const FounderStoryPage: React.FC<FounderStoryPageProps> = ({ onNavigate }
           </p>
         </div>
 
+        {/* Section - Vibecoding & Google AI Studio */}
+        <div className="space-y-4 pt-8 border-t border-slate-100">
+          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+            <span className="text-blue-600 font-mono text-xl select-none">&lt;/&gt;</span>
+            VIBECODING & GOOGLE AI STUDIO
+          </h2>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Zároveň chci otevřeně říct, že projekt Táta má právo vzniká také s pomocí moderních nástrojů umělé inteligence.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Pro vývoj používám mimo jiné <strong>Google AI Studio</strong> a <strong>Gemini</strong> pro tvorbu a analýzu kódu. Při návrhu, kontrole a řešení problémů využívám také <strong>ChatGPT</strong>. Pracuji přitom metodou známou jako <strong>„vibecoding“</strong> – tedy způsobem vývoje, při kterém člověk využívá schopnosti AI k rychlejšímu převodu svých myšlenek, návrhů a požadavků do funkčního softwaru.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg font-bold">
+            AI ale není autorem koncepce projektu.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Celou koncepci, strukturu portálu, obsah, funkce, směřování projektu i jeho hodnotové a právní zaměření navrhuji a řídím já.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            AI používám jako nástroj – podobně jako může jiný člověk využít programátorský framework, WordPress, grafický editor nebo jiný moderní vývojový nástroj. Pomáhá mi rychleji hledat řešení, vytvářet kód, analyzovat chyby, provádět audity a rozvíjet funkce, které bych jinak jako jeden člověk vytvářel výrazně déle.
+          </p>
+        </div>
+
+        {/* Section - Od první verze k dnešnímu portálu */}
+        <div className="space-y-4 pt-8 border-t border-slate-100">
+          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            OD PRVNÍ VERZE K DNEŠNÍMU PORTÁLU
+          </h2>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Táta má právo nevzniklo jako hotový profesionální produkt.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            První verze projektu byla experimentálním začátkem. Obsahovala řadu nedostatků, technických omezení a věcí, které bych dnes udělal jinak.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg font-medium">
+            Právě na tom je ale vidět skutečný vývoj projektu.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Z původní myšlenky a prvních pokusů postupně vznikla současná platforma, která prochází systematickým vývojem, bezpečnostními kontrolami, audity, testováním a postupným rozšiřováním funkcí.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Nechci svou minulou práci skrývat.
+          </p>
+          <p className="text-slate-700 leading-relaxed text-lg">
+            Chci ukázat, že projekt se může vyvíjet stejně jako jeho zakladatel.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
+              <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Začátek</span>
+              <span className="text-lg font-black text-slate-800">První verze</span>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 text-center ring-2 ring-blue-500/20">
+              <span className="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Současnost</span>
+              <span className="text-lg font-black text-blue-900">Beta 1.0</span>
+            </div>
+            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-center">
+              <span className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Cíl</span>
+              <span className="text-lg font-black text-emerald-900">Kontinuální vývoj</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 mt-2 text-slate-500 text-sm italic">
+            <p>První verze byla začátek.</p>
+            <p>Beta 1.0 je další etapa.</p>
+            <p>A vývoj pokračuje dál.</p>
+          </div>
+        </div>
+
         {/* Section 8 */}
         <div className="bg-slate-900 text-white rounded-2xl p-8 shadow-md">
           <h2 className="text-2xl font-black mb-4 flex items-center gap-3">
