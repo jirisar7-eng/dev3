@@ -2,8 +2,8 @@
 
 **Datum:** 20. 8. 2026
 **Branch:** main
-**HEAD:** 96cf6df (bude aktualizován novým commitem)
-**origin/main:** 96cf6df (synchronizováno)
+**HEAD:** 0ef5236cafc2c2735f54661731e5dcd7c3857302
+**origin/main:** 0ef5236cafc2c2735f54661731e5dcd7c3857302 (synchronizováno)
 
 ## 1. Obsahová verifikace (51/51)
 Kompletní sada 51 obsahových prvků (krizové postupy, právní pojmy, kontaktní karty organizací a procesní agendy) byla ověřena z hlediska úplnosti, aktuálnosti a souladu s novelou č. 268/2025 Sb. (účinnou od 1. 1. 2026).
