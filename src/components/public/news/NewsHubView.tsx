@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SeoHead } from '../SeoHead';
 import { Newspaper, Calendar, ExternalLink, Search, Filter, Tag, ArrowRight } from 'lucide-react';
 
@@ -7,55 +7,36 @@ interface NewsItem {
   title: string;
   summary: string;
   date: string;
-  category: 'legislativa' | 'judikatura' | 'projekt' | 'studie';
+  category: string;
   source?: string;
   url?: string;
   tags: string[];
 }
 
-const MOCK_NEWS: NewsItem[] = [
-  {
-    id: 'n1',
-    title: 'Novela zákona o rodině: Změny v definici péče od 1. 1. 2026',
-    summary: 'Soudy opouští formální označení výlučná/střídavá/společná péče a nově definují pouze "rozsah péče". Co to znamená pro stávající rozsudky?',
-    date: '2025-10-15',
-    category: 'legislativa',
-    source: 'e-Sbírka',
-    tags: ['Zákon 268/2025 Sb.', 'Rozsah péče']
-  },
-  {
-    id: 'n2',
-    title: 'Přelomový nález Ústavního soudu k právu na spravedlivý proces',
-    summary: 'ÚS se zastal otce, kterému obecné soudy odepřely možnost vyjádřit se k novým důkazům OSPOD před vynesením rozsudku.',
-    date: '2026-02-28',
-    category: 'judikatura',
-    source: 'Ústavní soud ČR',
-    tags: ['Ústavní soud', 'Spravedlivý proces', 'OSPOD']
-  },
-  {
-    id: 'n3',
-    title: 'Nová studie: Vliv rovnocenné péče na psychiku dětí v adolescentním věku',
-    summary: 'Rozsáhlá metaanalýza ukazuje, že děti v uspořádání rovnocenného rozsahu péče vykazují nižší míru úzkostí než děti ve výhradní péči.',
-    date: '2026-05-12',
-    category: 'studie',
-    url: 'https://example.com/study',
-    tags: ['Psychologie', 'Výzkum', 'Adolescenti']
-  },
-  {
-    id: 'n4',
-    title: 'Spuštění nového modulu: AI Case Manager pro prémiové účty',
-    summary: 'Nový nástroj analyzuje vaše nahrané dokumenty a upozorní vás na termíny, procesní vady a doporučí další kroky.',
-    date: '2026-08-01',
-    category: 'projekt',
-    tags: ['AI Nástroje', 'Aktualizace', 'Premium']
-  }
-];
-
 export const NewsHubView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [newsData, setNewsData] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredNews = MOCK_NEWS.filter(news => {
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch('/api/news');
+        if (response.ok) {
+          const data = await response.json();
+          setNewsData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch news', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, []);
+
+  const filteredNews = newsData.filter(news => {
     const matchesSearch = news.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           news.summary.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'all' || news.category === activeCategory;
@@ -69,7 +50,6 @@ export const NewsHubView: React.FC = () => {
         description="Sledujte nejnovější legislativní změny, přelomovou judikaturu a novinky v projektu Táta má právo."
         canonicalPath="/novinky"
       />
-
       <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2 text-xs text-amber-400 font-bold uppercase tracking-wider mb-3">
@@ -84,7 +64,6 @@ export const NewsHubView: React.FC = () => {
           </p>
         </div>
       </div>
-
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-6 relative z-10">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-96">
@@ -114,9 +93,12 @@ export const NewsHubView: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="space-y-6">
-          {filteredNews.length === 0 ? (
+          {loading ? (
+             <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
+               <p className="text-slate-500 font-bold">Načítám novinky...</p>
+             </div>
+          ) : filteredNews.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
               <Newspaper className="w-12 h-12 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-slate-900">Žádné novinky nenalezeny</h3>
@@ -154,7 +136,6 @@ export const NewsHubView: React.FC = () => {
                 <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
                   {news.summary}
                 </p>
-
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-slate-100">
                   <div className="flex flex-wrap gap-2">
                     {news.tags.map(tag => (

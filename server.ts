@@ -46,6 +46,9 @@ import { getDns, addDns, deleteDns } from './src/controllers/dnsController.ts';
 import { getPrismaClient, isPrismaAvailable, checkDatabaseReachable, markPrismaUnavailable, prisma, waitForDatabase } from './src/db/prisma';
 import { parseAuthToken, requireAuth, requireRole, AuthenticatedRequest } from './src/middleware/authMiddleware';
 import pageRoutes from './src/routes/pageRoutes';
+import newsRoutes from "./src/routes/newsRoutes";
+import helpRoutes from "./src/routes/helpRoutes";
+import supportTicketRoutes from "./src/routes/supportTicketRoutes";
 import systemRoutes from './src/routes/system';
 import partnerRoutes from './src/routes/partnerRoutes';
 import templateRoutes from './src/routes/templateRoutes';
@@ -178,6 +181,9 @@ EsbirkaService.initCronScheduler();
 // --- API ROUTES ---
 
 app.use('/api/pages', pageRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/help', helpRoutes);
+app.use('/api/portal/tickets', supportTicketRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/system', systemRoutes);
 // Direct alias routes for webhook deployment
