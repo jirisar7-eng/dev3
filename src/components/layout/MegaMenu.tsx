@@ -28,14 +28,14 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
   if (!isOpen) return null;
 
   const allowedNavItems = items.filter((item) => {
-    const isCategory7 = item.id === 'cat-7' || item.parentId === 'cat-7';
+    const isCategory10 = item.id === 'cat-10' || item.parentId === 'cat-10';
     const isAdminRoute =
       item.url === '/admin' ||
       item.url.startsWith('/admin/') ||
       item.url === '/administrace' ||
       item.url === '/ai-admin';
 
-    if ((isCategory7 || isAdminRoute) && !isAuthorizedAdmin) {
+    if ((isCategory10 || isAdminRoute) && !isAuthorizedAdmin) {
       return false;
     }
     if (item.url === '/admin/vps' && !isSuperAdmin) {
