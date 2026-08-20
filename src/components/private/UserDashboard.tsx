@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UserOverviewView } from './UserOverviewView';
 import { UserProfileView } from './UserProfileView';
 import { UserDocumentsView } from './UserDocumentsView';
+import { UserSupportTicketingView } from './UserSupportTicketingView';
 import { MyCasePage } from '../../pages/MyCasePage';
 import { CoParentPage } from '../../pages/portal/CoParentPage';
 import { CareHubPage } from '../../pages/CareHubPage';
@@ -139,6 +140,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
       </div>
     );
   }
+  if (currentPath.includes("/portal/podpora") || currentPath.includes("/portal/tikety")) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <UserSupportTicketingView user={currentUser} />
+      </div>
+    );
+  }
+
 
   if (currentPath.includes('/portal/prehled')) {
     return (
