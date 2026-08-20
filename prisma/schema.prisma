@@ -986,7 +986,9 @@ model Subjekt {
   titleBefore String? // Např. "PhDr.", "JUDr."
   position    String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
   institution String? // Název pracoviště / Úřadu / Kanceláře
-  city        String // Např. "Pardubice", "Přelouč"
+  city        String
+  lat         Float?
+  lng         Float? // Např. "Pardubice", "Přelouč"
   region      String // Např. "Pardubický kraj"
   address     String?
   email       String?     @unique

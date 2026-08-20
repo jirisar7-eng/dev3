@@ -988,6 +988,8 @@ export interface Subjekt {
   position?: string | null;
   institution?: string | null;
   city: string;
+  lat?: number;
+  lng?: number;
   region: string;
   address?: string | null;
   email?: string | null;

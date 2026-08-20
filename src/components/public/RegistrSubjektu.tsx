@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
+import { SubjektyMap } from './SubjektyMap';
 import {
   Scale,
   Users,
@@ -90,6 +91,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
   const [selectedRegion, setSelectedRegion] = useState<string>('Všechny kraje');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'LIST' | 'MAP'>('LIST');
 
   // P3 ARES Verification state
   const [aresIco, setAresIco] = useState('');
@@ -537,43 +539,62 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       {/* Subjekty List */}
       {(() => {
         const filteredSubjekty = subjekty.filter((item) => {
-          if (!selectedRegion || selectedRegion === 'Všechny kraje') return true;
+          if (!selectedRegion || selectedRegion === "Všechny kraje") return true;
           const selectedNorm = selectedRegion.trim().toLowerCase();
-          const itemRegion = (item.region || '').trim().toLowerCase();
+          const itemRegion = (item.region || "").trim().toLowerCase();
           return itemRegion === selectedNorm || itemRegion.includes(selectedNorm);
         });
 
-        return loading ? (
-          <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center space-y-3">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium">Načítám registr subjektů...</p>
-          </div>
-        ) : filteredSubjekty.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
-            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-900">Nenalezeny žádné zadané subjekty</h3>
-            <p className="text-slate-500 text-sm max-w-md mx-auto">
-              Zkus upravit vyhledávací dotaz nebo filtr krajů. Můžeš také do registru vložit nový subjekt.
-            </p>
-            <button
-              onClick={() => setShowAddSubjektModal(true)}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow-xs transition-all text-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Přidat nový subjekt</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSubjekty.map((item) => {
-              const cfg = ENTITY_CONFIG[item.type] || ENTITY_CONFIG.SOUD;
-              const Icon = cfg.icon;
-
-              return (
-              <div
-                key={item.id}
-                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 group"
-              >
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <div className="bg-slate-100 p-1 rounded-xl flex items-center shadow-inner inline-flex">
+                <button
+                  onClick={() => setViewMode("LIST")}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === "LIST" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  Seznam
+                </button>
+                <button
+                  onClick={() => setViewMode("MAP")}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === "MAP" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  Mapa
+                </button>
+              </div>
+            </div>
+            {loading ? (
+              <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center space-y-3">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-medium">Načítám registr subjektů...</p>
+              </div>
+            ) : viewMode === "MAP" ? (
+              <SubjektyMap subjekty={filteredSubjekty} />
+            ) : filteredSubjekty.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
+                <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
+                <h3 className="text-lg font-bold text-slate-900">Nenalezeny žádné zadané subjekty</h3>
+                <p className="text-slate-500 text-sm max-w-md mx-auto">
+                  Zkus upravit vyhledávací dotaz nebo filtr krajů. Můžeš také do registru vložit nový subjekt.
+                </p>
+                <button
+                  onClick={() => setShowAddSubjektModal(true)}
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow-xs transition-all text-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Přidat nový subjekt</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredSubjekty.map((item) => {
+                  const cfg = ENTITY_CONFIG[item.type] || ENTITY_CONFIG.SOUD;
+                  const Icon = cfg.icon;
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 group"
+                    >
                 <div className="space-y-3">
                   {/* Category Badge & Rating */}
                   <div className="flex items-center justify-between gap-2">
@@ -643,7 +664,9 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
             );
           })}
         </div>
-      );
+            )}
+          </div>
+        );
       })()}
 
       {/* DETAIL MODAL */}
