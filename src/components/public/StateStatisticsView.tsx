@@ -39,10 +39,10 @@ interface NkodDataset {
   id: string;
   title: string;
   description: string;
-  publisher: string;
-  keyword: string[];
-  distributionUrl: string;
-  issuedAt: string;
+  provider: string;
+  keywords: string[];
+  downloadUrl: string;
+  issuedDate: string;
 }
 
 export const StateStatisticsView: React.FC = () => {
@@ -359,24 +359,24 @@ export const StateStatisticsView: React.FC = () => {
                 <div key={ds.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/90 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-blue-900 px-2 py-0.5 bg-blue-100 rounded">
-                      {ds.publisher}
+                      {ds.provider}
                     </span>
-                    <span className="text-[10px] text-slate-400">Vydáno: {ds.issuedAt}</span>
+                    <span className="text-[10px] text-slate-400">Vydáno: {ds.issuedDate}</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-900">{ds.title}</h4>
                   <p className="text-[11px] text-slate-600 leading-snug">{ds.description}</p>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                     <div className="flex items-center gap-1 flex-wrap">
-                      {ds.keyword.slice(0, 3).map((kw) => (
+                      {(ds.keywords || []).slice(0, 3).map((kw) => (
                         <span key={kw} className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
                           #{kw}
                         </span>
                       ))}
                     </div>
-                    {ds.distributionUrl && (
+                    {ds.downloadUrl && (
                       <a
-                        href={ds.distributionUrl}
+                        href={ds.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[11px] font-bold text-blue-900 hover:text-blue-950 flex items-center gap-1"
