@@ -13,7 +13,7 @@ export default defineConfig(() => {
     },
     server: {
       host: '0.0.0.0',
-      allowedHosts: ['dev3.tatovacesta.cz', '.run.app', 'localhost'],
+      allowedHosts: ['tatovacesta.cz', 'dev3.tatovacesta.cz', '.run.app', 'localhost'],
       proxy: {
         '/api': {
           target: 'http://localhost:3000',

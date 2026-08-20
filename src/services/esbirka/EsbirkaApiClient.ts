@@ -226,7 +226,7 @@ export class EsbirkaApiClient {
     const headers: Record<string, string> = {
       'esel-api-access-key': this.apiKey,
       'Accept': 'application/json, application/problem+json',
-      'User-Agent': 'TataMaPravo-LegislativeSync/1.0 (dev3.tatovacesta.cz)',
+      'User-Agent': 'TataMaPravo-LegislativeSync/1.0 (tatovacesta.cz)',
       ...(options.headers || {}),
     };
 

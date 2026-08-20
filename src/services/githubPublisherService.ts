@@ -137,8 +137,8 @@ export class GithubPublisherService {
     if (!isRepo) {
       try {
         await execFileAsync('git', ['init'], { cwd: workDir });
-        await execFileAsync('git', ['config', 'user.name', 'DEV3 Admin Publisher'], { cwd: workDir });
-        await execFileAsync('git', ['config', 'user.email', 'admin@dev3.local'], { cwd: workDir });
+        await execFileAsync('git', ['config', 'user.name', 'System Admin Publisher'], { cwd: workDir });
+        await execFileAsync('git', ['config', 'user.email', 'admin@tatovacesta.cz'], { cwd: workDir });
         await execFileAsync('git', ['checkout', '-B', 'main'], { cwd: workDir });
         console.log(`[GithubPublisherService] Initialized new Git repository in '${workDir}'.`);
       } catch (err: any) {
@@ -147,8 +147,8 @@ export class GithubPublisherService {
     }
 
     try {
-      await execFileAsync('git', ['config', 'user.name', 'DEV3 Admin Publisher'], { cwd: workDir });
-      await execFileAsync('git', ['config', 'user.email', 'admin@dev3.local'], { cwd: workDir });
+      await execFileAsync('git', ['config', 'user.name', 'System Admin Publisher'], { cwd: workDir });
+      await execFileAsync('git', ['config', 'user.email', 'admin@tatovacesta.cz'], { cwd: workDir });
     } catch {
       // non-fatal
     }
@@ -313,7 +313,7 @@ export class GithubPublisherService {
 
         if (behindCount > 0) {
           throw new Error(
-            'GitHub obsahuje změny, které lokální DEV3 nemá. Použijte Force Push, pokud chcete vzdálený repository přepsat aktuálním stavem DEV3.'
+            'GitHub obsahuje změny, které lokální verze nemá. Použijte Force Push, pokud chcete vzdálený repository přepsat aktuálním lokálním stavem.'
           );
         }
       } catch (fetchErr: any) {
@@ -361,7 +361,7 @@ export class GithubPublisherService {
         safeErrorMsg.includes('GitHub obsahuje změny')
       ) {
         userFacingError =
-          'GitHub obsahuje změny, které lokální DEV3 nemá. Použijte Force Push, pokud chcete vzdálený repository přepsat aktuálním stavem DEV3.';
+          'GitHub obsahuje změny, které lokální verze nemá. Použijte Force Push, pokud chcete vzdálený repository přepsat aktuálním lokálním stavem.';
       }
 
       // Audit failure log (safe message)

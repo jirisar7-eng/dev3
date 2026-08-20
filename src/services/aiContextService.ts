@@ -134,7 +134,7 @@ export class AiContextService {
     return PRIVATE_SLUGS_PREFIXES.some((prefix) => clean === prefix || clean.startsWith(prefix + '/'));
   }
 
-  public static async generateLlmsTxt(baseUrl = 'https://dev3.tatovacesta.cz'): Promise<string> {
+  public static async generateLlmsTxt(baseUrl = 'https://tatovacesta.cz'): Promise<string> {
     const index = await this.getIndex();
     
     let md = `# Táta má právo\n\n`;
@@ -161,7 +161,7 @@ export class AiContextService {
     return md;
   }
 
-  public static async generateSitemapXml(baseUrl = 'https://dev3.tatovacesta.cz'): Promise<string> {
+  public static async generateSitemapXml(baseUrl = 'https://tatovacesta.cz'): Promise<string> {
     const index = await this.getIndex();
     
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -181,7 +181,7 @@ export class AiContextService {
     return xml;
   }
 
-  public static generateRobotsTxt(baseUrl = 'https://dev3.tatovacesta.cz'): string {
+  public static generateRobotsTxt(baseUrl = 'https://tatovacesta.cz'): string {
     let txt = `User-agent: *\n`;
     txt += `Allow: /\n\n`;
     
@@ -206,7 +206,7 @@ export class AiContextService {
     return txt;
   }
 
-  public static async getStatus(baseUrl = 'https://dev3.tatovacesta.cz'): Promise<AiContextIndexStatus> {
+  public static async getStatus(baseUrl = 'https://tatovacesta.cz'): Promise<AiContextIndexStatus> {
     const index = await this.getIndex();
     return {
       lastGenerated: index.lastGenerated,

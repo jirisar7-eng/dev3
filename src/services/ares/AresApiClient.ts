@@ -75,7 +75,7 @@ export class AresApiClient {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          'User-Agent': 'TataMaPravo-Dev3/1.0 (StateAdmin-Integration)',
+          'User-Agent': 'TataMaPravo/1.0 (StateAdmin-Integration)',
         },
         signal: abortController.signal,
       });

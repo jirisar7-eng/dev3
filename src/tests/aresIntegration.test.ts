@@ -13,7 +13,7 @@ import { dbStore } from '../services/dbStore';
  */
 export async function runAresIntegrationTests() {
   console.log('====================================================');
-  console.log('--- STARTING DEV3: STATE ADMIN ARES TEST SUITE ---');
+  console.log('--- STARTING STATE ADMIN ARES TEST SUITE ---');
   console.log('====================================================');
 
   let passed = 0;
@@ -320,7 +320,7 @@ export async function runAresIntegrationTests() {
   }
 
   console.log('====================================================');
-  console.log(`DEV3 ARES TEST SUMMARY: PASSED=${passed}, FAILED=${failed}`);
+  console.log(`ARES TEST SUMMARY: PASSED=${passed}, FAILED=${failed}`);
   console.log('====================================================');
 
   if (failed > 0) {

@@ -6,7 +6,7 @@ const router = Router();
 
 function getBaseUrl(req: Request): string {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'dev3.tatovacesta.cz';
+  const host = req.get('host') || 'tatovacesta.cz';
   return `${protocol}://${host}`;
 }
 

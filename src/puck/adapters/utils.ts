@@ -32,7 +32,7 @@ export function sanitizeCtaUrl(url?: string): string {
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       const parsed = new URL(trimmed);
-      const allowedHosts = ['dev3.tatovacesta.cz', 'tatovacesta.cz', 'api.e-sbirka.gov.cz'];
+      const allowedHosts = ['tatovacesta.cz', 'api.e-sbirka.gov.cz'];
       const host = parsed.hostname;
       
       const isAllowed = allowedHosts.some(allowed => host === allowed || host.endsWith('.' + allowed));

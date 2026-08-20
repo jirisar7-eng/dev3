@@ -288,7 +288,7 @@ export const GitHubPublisher: React.FC = () => {
             GitHub Publisher
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Bezpečné nasazení a verzování projektu dev3 přímo do oficiálního repozitáře na GitHubu.
+            Bezpečné nasazení a verzování projektu přímo do oficiálního repozitáře na GitHubu.
           </p>
         </div>
 
@@ -627,7 +627,7 @@ export const GitHubPublisher: React.FC = () => {
                 <span className="font-extrabold text-sm block text-rose-800">
                   «⚠️ FORCE PUSH
                   <br />
-                  Aktuální stav DEV3 přepíše vzdálenou větev main na GitHubu.
+                  Aktuální lokální stav přepíše vzdálenou větev main na GitHubu.
                   <br />
                   Historie vzdálené větve může být přepsána.
                   <br />

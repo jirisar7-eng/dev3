@@ -4527,7 +4527,7 @@ async function startServer() {
       configFile: './vite.config.ts',
       server: {
         middlewareMode: true,
-        allowedHosts: ['dev3.tatovacesta.cz', '.run.app', 'localhost'],
+        allowedHosts: ['tatovacesta.cz', 'dev3.tatovacesta.cz', '.run.app', 'localhost'],
       },
       appType: 'spa',
     });

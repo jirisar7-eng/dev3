@@ -50,7 +50,7 @@ export const sendQuickCreateEmail = (email: string, name: string, tempPassword: 
       <li><strong>E-mail:</strong> ${email}</li>
       <li><strong>Heslo:</strong> ${tempPassword}</li>
     </ul>
-    <p>Přihlásit se můžete na adrese: <a href="https://dev3.tatovacesta.cz/login">https://dev3.tatovacesta.cz/login</a></p>
+    <p>Přihlásit se můžete na adrese: <a href="https://tatovacesta.cz/login">https://tatovacesta.cz/login</a></p>
     <p>Doporučujeme si heslo po prvním přihlášení změnit.</p>
   `;
   return sendEmail(email, 'Váš účet na Táta má právo byl vytvořen', html);
