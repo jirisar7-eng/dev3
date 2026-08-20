@@ -82,10 +82,49 @@ class StartupErrorBoundary extends Component<Props, State> {
   }
 }
 
+const LOADING_INFOS = [
+  { icon: '⚖️', title: 'Právní poradna', desc: 'Získejte přehled o možnostech a právních otázkách, které mohou souviset s péčí o dítě.' },
+  { icon: '📚', title: 'Judikatura', desc: 'Přístup k důležitým rozhodnutím soudů a nálezům Ústavního soudu na jednom místě.' },
+  { icon: '👨‍👧', title: 'CoParent Hub', desc: 'Nástroj pro zjednodušení komunikace a sdílení informací s druhým rodičem.' },
+  { icon: '📁', title: 'Můj případ', desc: 'Bezpečné úložiště pro vaši složku, dokumenty a termíny stání.' },
+  { icon: '🤖', title: 'AI Právní Asistent', desc: 'Pomůže vám s návrhy, analýzou dokumentů a odpoví na právní dotazy.' },
+  { icon: '🧮', title: 'Simulátor', desc: 'Spočítejte si pravděpodobnost úspěchu a predikci výživného.' },
+  { icon: '🎓', title: 'Akademie', desc: 'Vzdělávejte se v oblasti práva, rodičovství a komunikace.' },
+  { icon: '🎥', title: 'Videotéka', desc: 'Rozhovory s odborníky, záznamy webinářů a edukační materiály.' },
+  { icon: '📰', title: 'Novinky', desc: 'Zůstaňte v obraze díky pravidelným aktualitám z rodinného práva.' },
+  { icon: '👨‍👧‍👦', title: 'Příběhy otců', desc: 'Inspirujte se zkušenostmi ostatních, kteří si prošli podobnou cestou.' },
+  { icon: '🆘', title: 'SOS plán', desc: 'Krok za krokem, jak postupovat v akutní krizi nebo při bránění ve styku.' },
+  { icon: '📊', title: 'Statistiky', desc: 'Data o opatrovnických sporech, střídavé péči a rozhodování soudů.' },
+  { icon: '🔐', title: 'Bezpečnost účtu', desc: 'Vaše data jsou šifrována a chráněna podle nejvyšších standardů.' },
+  { icon: '❤️', title: 'Proč jsme vznikli', desc: 'Pomáháme otcům zůstat aktivní součástí života jejich dětí.' },
+  { icon: '🧭', title: 'Mapa portálu', desc: 'Rychlá navigace ke všem důležitým nástrojům a službám.' },
+  { icon: '💬', title: 'Komunita', desc: 'Prostor pro sdílení, podporu a diskuzi s ostatními členy.' },
+  { icon: '📋', title: 'Generátor formulářů', desc: 'Vytvořte si podání k soudu rychle, správně a bez zbytečných chyb.' },
+  { icon: '📑', title: 'Vzory dokumentů', desc: 'Ověřené šablony smluv, návrhů a dohod připravené k použití.' },
+  { icon: '📖', title: 'Wiki', desc: 'Slovník pojmů a komplexní průvodce opatrovnickým řízením.' },
+  { icon: '🏛️', title: 'O projektu', desc: 'Táta má právo je nezisková iniciativa za rovná práva obou rodičů.' }
+];
+
+function setRandomLoadingInfo() {
+  const infoTitle = document.getElementById('sp-info-title');
+  const infoDesc = document.getElementById('sp-info-desc');
+  const box = document.getElementById('sp-info-box');
+  
+  if (infoTitle && infoDesc && box) {
+    const randomInfo = LOADING_INFOS[Math.floor(Math.random() * LOADING_INFOS.length)];
+    // Add subtle fade out/in effect
+    box.style.opacity = '0';
+    setTimeout(() => {
+      infoTitle.textContent = `${randomInfo.icon} ${randomInfo.title}`;
+      infoDesc.textContent = randomInfo.desc;
+      box.style.opacity = '1';
+    }, 300); // Wait for fade out transition (0.3s) defined in CSS
+  }
+}
+
 export const StartupInitializer: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
-
   const auth = useAuth();
   const text = useText();
   const theme = useTheme();
@@ -93,6 +132,14 @@ export const StartupInitializer: React.FC<{ children: ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Initialize random info
+    setRandomLoadingInfo();
+    
+    // Rotate every 4 seconds if loading is taking a while
+    const infoInterval = setInterval(() => {
+      if (isMounted) setRandomLoadingInfo();
+    }, 4000);
 
     const bootstrapApp = async () => {
       try {
@@ -111,11 +158,13 @@ export const StartupInitializer: React.FC<{ children: ReactNode }> = ({ children
 
         if (isMounted) {
           setIsReady(true);
+          clearInterval(infoInterval);
           removePreloader();
         }
       } catch (err: any) {
         console.error('[Startup Bootstrap Error]:', err);
         if (isMounted) {
+          clearInterval(infoInterval);
           const msg = err?.message || 'Nepodařilo se načíst potřebná data ze serveru.';
           setInitError(msg);
           showPreloaderError(msg);
@@ -127,6 +176,7 @@ export const StartupInitializer: React.FC<{ children: ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
+      clearInterval(infoInterval);
     };
   }, []);
 

@@ -91,8 +91,44 @@
       .sp-subtitle {
         font-size: 0.925rem;
         color: var(--sp-text);
-        margin: 0 0 1.75rem 0;
+        margin: 0 0 1.25rem 0; /* Reduced from 1.75rem to fit the info box */
         font-weight: 400;
+      }
+      .sp-info-box {
+        min-height: 72px; /* Prevent layout shift */
+        margin: 0 0 1.5rem 0;
+        padding: 0.75rem 1rem;
+        background: rgba(37, 99, 235, 0.04);
+        border-radius: 12px;
+        border: 1px solid rgba(37, 99, 235, 0.1);
+        width: 100%;
+        box-sizing: border-box;
+        transition: opacity 0.3s ease;
+      }
+      .sp-info-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--sp-brand);
+        margin: 0 0 0.35rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+      }
+      .sp-info-desc {
+        font-size: 0.8rem;
+        color: var(--sp-text);
+        margin: 0;
+        line-height: 1.4;
+      }
+      @media (prefers-color-scheme: dark) {
+        .sp-info-box {
+          background: rgba(96, 165, 250, 0.05);
+          border-color: rgba(96, 165, 250, 0.1);
+        }
+        .sp-info-title {
+          color: var(--sp-brand-light);
+        }
       }
       .sp-status-wrapper {
         display: flex;
@@ -177,6 +213,11 @@
         </div>
         <h1 class="sp-title">Táta má právo</h1>
         <p class="sp-subtitle">Připravujeme obsah portálu</p>
+
+        <div id="sp-info-box" class="sp-info-box" style="opacity: 0;">
+          <h3 id="sp-info-title" class="sp-info-title"></h3>
+          <p id="sp-info-desc" class="sp-info-desc"></p>
+        </div>
 
         <div class="sp-status-wrapper" id="sp-loading-box">
           <div class="sp-spinner" aria-hidden="true"></div>
