@@ -213,6 +213,12 @@ export const CarePlanPrintView: React.FC<CarePlanPrintViewProps> = ({
             <div className="text-[10px] text-slate-400">Datum: ........................................</div>
           </div>
         </div>
+
+        {/* Support attribution */}
+        <div className="pt-6 border-t border-slate-100 text-center text-[10px] text-slate-400">
+          <span className="font-semibold text-slate-500">Technologická podpora projektu:</span>{' '}
+          <span>ALGOTECH a.s. • VEDOS Internet, a.s. • FORPSI</span>
+        </div>
       </div>
     </div>
   );

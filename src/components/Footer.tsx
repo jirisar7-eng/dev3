@@ -187,6 +187,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
             </div>
           </div>
 
+          {/* Sponsors Attribution Block */}
+          <div className="pt-6 border-t border-slate-800 text-center space-y-2">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+              Děkujeme našim sponzorům a technologickým partnerům
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-sm text-slate-400 font-medium">
+              <a href="https://www.algotech.cz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ALGOTECH a.s.</a>
+              <span className="text-slate-700 select-none">•</span>
+              <a href="https://www.vedos.cz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">VEDOS Internet, a.s.</a>
+              <span className="text-slate-700 select-none">•</span>
+              <a href="https://www.forpsi.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">FORPSI</a>
+            </div>
+          </div>
+
           {/* Desktop Bottom Bar */}
           <div className="space-y-3 pt-2 text-xs text-slate-400">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -335,11 +349,27 @@ export const Footer: React.FC<FooterProps> = ({ onOpenComplianceDoc, onNavigate 
 
           {/* 6. Oddělovací linka */}
           <div className="border-t border-slate-800 pt-4 space-y-2 text-center text-xs text-slate-400">
-            {/* 7. Autorská práva */}
-            <div>Táta má právo © {currentYear}</div>
-            <div className="flex items-center justify-center gap-1 text-slate-500 text-[11px]">
-              <span>Pro spravedlivou péči o děti v ČR</span>
-              <Heart className="w-3 h-3 text-rose-500 fill-rose-500 inline" />
+            {/* Sponsors Attribution Block */}
+            <div className="pb-2 space-y-1">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">
+                Děkujeme našim sponzorům a technologickým partnerům
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 font-medium">
+                <a href="https://www.algotech.cz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ALGOTECH a.s.</a>
+                <span className="hidden sm:inline text-slate-700 select-none">•</span>
+                <a href="https://www.vedos.cz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">VEDOS Internet, a.s.</a>
+                <span className="hidden sm:inline text-slate-700 select-none">•</span>
+                <a href="https://www.forpsi.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">FORPSI</a>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800/60 pt-3">
+              {/* 7. Autorská práva */}
+              <div>Táta má právo © {currentYear}</div>
+              <div className="flex items-center justify-center gap-1 text-slate-500 text-[11px] mt-1">
+                <span>Pro spravedlivou péči o děti v ČR</span>
+                <Heart className="w-3 h-3 text-rose-500 fill-rose-500 inline" />
+              </div>
             </div>
           </div>
         </div>
