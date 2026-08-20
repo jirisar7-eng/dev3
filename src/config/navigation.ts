@@ -55,11 +55,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   // Category 8: 🏛️ O projektu & Podpora
   { id: 'cat-8', labelKey: '🏛️ O projektu & Podpora', url: '/o-projektu', order: 80, target: '_self', isExternal: false },
   { id: 'sub-8-1', labelKey: 'O nás', url: '/o-projektu', order: 81, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-2', labelKey: 'Podpořte nás', url: '/podporte-nas', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-3', labelKey: 'Kontakt', url: '/kontakt', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-4', labelKey: 'Hledáme dobrovolníky', url: '/dobrovolnici', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-5', labelKey: 'Kodex dobrovolníka', url: '/kodex-dobrovolnika', order: 85, target: '_self', isExternal: false, parentId: 'cat-8' },
-  { id: 'sub-8-6', labelKey: 'Sponzoři & Partneři', url: '/partneri', order: 86, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-1b', labelKey: 'Moje cesta zakladatele', url: '/moje-cesta-zakladatele', order: 82, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-2', labelKey: 'Podpořte nás', url: '/podporte-nas', order: 83, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-3', labelKey: 'Kontakt', url: '/kontakt', order: 84, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-4', labelKey: 'Hledáme dobrovolníky', url: '/dobrovolnici', order: 85, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-5', labelKey: 'Kodex dobrovolníka', url: '/kodex-dobrovolnika', order: 86, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-6', labelKey: 'Sponzoři & Partneři', url: '/partneri', order: 87, target: '_self', isExternal: false, parentId: 'cat-8' },
 
   // Category 9: 👤 Můj účet
   { id: 'cat-9', labelKey: '👤 Můj účet', url: '/portal/profil', order: 90, target: '_self', isExternal: false },

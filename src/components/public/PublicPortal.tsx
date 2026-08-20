@@ -538,14 +538,14 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <GdprComplianceCenterPage onNavigate={onNavigate} />;
   }
 
-  // 3f. Founder Story Route (/cesta-zakladatele)
-  if (slug === 'cesta-zakladatele') {
+  // 3f. Founder Story Route (/moje-cesta-zakladatele)
+  if (slug === 'cesta-zakladatele' || slug === 'moje-cesta-zakladatele') {
     const isPuckEnabled =
       typeof window !== 'undefined' &&
       (localStorage.getItem('PUCK_CESTA_ZAKLADATELE_RENDERER_ENABLED') === 'true' ||
        localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
     if (isPuckEnabled) {
-      return <CmsPageRenderer slug="cesta-zakladatele" onNavigate={onNavigate} fallbackComponent={<FounderStoryPage onNavigate={onNavigate} />} />;
+      return <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={<FounderStoryPage onNavigate={onNavigate} />} />;
     }
     return <FounderStoryPage onNavigate={onNavigate} />;
   }
