@@ -16,6 +16,7 @@ import { SitemapPage } from './SitemapPage';
 import { StudyLibraryPage } from './StudyLibraryPage';
 import { StateLawsView } from './StateLawsView';
 import { StateStatisticsView } from './StateStatisticsView';
+import { NewsHubView } from './news/NewsHubView';
 import { CaseDatabaseView } from './CaseDatabaseView';
 import { PartnersView } from './PartnersView';
 import { AboutView } from './AboutView';
@@ -339,6 +340,10 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
   if (slug === 'dokumenty' || slug === 'ke-stazeni' || slug === 'vzory') {
     return <DocumentsView onNavigate={onNavigate} />;
+  }
+
+  if (slug === "novinky" || slug === "aktuality") {
+    return <NewsHubView />;
   }
 
   // 3a3. Akademie Routes (/studia, /videoteka, /kvizy, /wiki)

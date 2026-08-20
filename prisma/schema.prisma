@@ -31,39 +31,41 @@ enum AccountStatus {
 }
 
 model User {
-  id                 String        @id @default(uuid())
-  email              String        @unique
+  supportTickets     SupportTicket[]
+  supportMessages    SupportTicketMessage[]
+  id                 String                 @id @default(uuid())
+  email              String                 @unique
   passwordHash       String?
   name               String
-  gender             String?       // "MALE", "FEMALE"
-  hasChildrenInitial Boolean?      @default(false)
-  role               UserRoleType  @default(USER)
-  status             AccountStatus @default(ACTIVE)
-  totpEnabled     Boolean       @default(false)
-  totpSecret      String?
-  totpTempSecret  String?
-  totpBackupCodes String[]
-  phone           String?
-  bio             String?
-  avatar          String?
-  googleId        String?       @unique
-  microsoftId     String?       @unique
-  lastLoginAt     DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  gender             String? // "MALE", "FEMALE"
+  hasChildrenInitial Boolean?               @default(false)
+  role               UserRoleType           @default(USER)
+  status             AccountStatus          @default(ACTIVE)
+  totpEnabled        Boolean                @default(false)
+  totpSecret         String?
+  totpTempSecret     String?
+  totpBackupCodes    String[]
+  phone              String?
+  bio                String?
+  avatar             String?
+  googleId           String?                @unique
+  microsoftId        String?                @unique
+  lastLoginAt        DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   // Relationships
-  profile      UserProfile?
-  documentData UserDocumentData[]
-  userRoles    UserRole[]
-  articles     Article[]           @relation("UserArticles")
-  auditLogs    AuditLog[]
-  consents     Consent[]
-  cases        UserCase[]
-  children     UserChild[]
-  events       UserCalendarEvent[]
-  notes        UserNote[]
-  documents    UserDocument[]
+  profile                  UserProfile?
+  documentData             UserDocumentData[]
+  userRoles                UserRole[]
+  articles                 Article[]                 @relation("UserArticles")
+  auditLogs                AuditLog[]
+  consents                 Consent[]
+  cases                    UserCase[]
+  children                 UserChild[]
+  events                   UserCalendarEvent[]
+  notes                    UserNote[]
+  documents                UserDocument[]
   volunteerCodexAgreements VolunteerCodexAgreement[]
   userConsentLogs          UserConsentLog[]
   sensitiveAccessLogs      SensitiveAccessLog[]
@@ -71,7 +73,7 @@ model User {
   cookieConsents           CookieConsent[]
   legalAuditLogs           LegalAuditLog[]
   clientCases              Case[]
-  coparentSpaces           CoParentSpace[]     @relation("CoParentSpaceOwner")
+  coparentSpaces           CoParentSpace[]           @relation("CoParentSpaceOwner")
   coparentMemberships      CoParentMember[]
   coparentMessages         CoParentMessage[]
   coparentRequests         CoParentRequest[]
@@ -346,8 +348,8 @@ model ThemeVariable {
   id        String   @id @default(uuid())
   themeId   String?
   theme     Theme?   @relation(fields: [themeId], references: [id], onDelete: Cascade)
-  key       String   // e.g., "primary", "background"
-  value     String   // e.g., "#1e3a8a"
+  key       String // e.g., "primary", "background"
+  value     String // e.g., "#1e3a8a"
   label     String
   category  String   @default("color")
   createdAt DateTime @default(now())
@@ -400,7 +402,7 @@ model ModulePermission {
   id          String   @id @default(uuid())
   moduleId    String
   module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  key         String   // e.g., "calc:execute", "calc:export"
+  key         String // e.g., "calc:execute", "calc:export"
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -454,8 +456,8 @@ model Consent {
   user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   versionId   String?
   version     LegalDocumentVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
-  docKey      String                // e.g. "terms", "privacy", "cookies", "legal", "volunteer_code", "ai_statement"
-  docVersion  String                // e.g. "1.0.0"
+  docKey      String // e.g. "terms", "privacy", "cookies", "legal", "volunteer_code", "ai_statement"
+  docVersion  String // e.g. "1.0.0"
   status      String                @default("ACCEPTED") // "ACCEPTED", "REVOKED"
   ipAddress   String?               @default("127.0.0.1")
   consentedAt DateTime              @default(now())
@@ -506,32 +508,32 @@ model AuditLog {
 // ------------------------------------------------------
 
 model UserCase {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  caseNumber  String?
-  courtName   String?
-  status      String   @default("active") // "active", "pending", "closed"
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  caseNumber String?
+  courtName  String?
+  status     String   @default("active") // "active", "pending", "closed"
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([userId])
 }
 
 model UserChild {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  firstName   String?
-  lastName    String?
-  birthDate   String?
-  isStudying  Boolean? @default(false)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  firstName  String?
+  lastName   String?
+  birthDate  String?
+  isStudying Boolean? @default(false)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([userId])
 }
@@ -551,29 +553,29 @@ model UserCalendarEvent {
 }
 
 model UserNote {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  content     String
-  category    String   @default("general")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
 
 model UserDocument {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  fileUrl     String?
-  fileType    String   @default("pdf")
-  size        Int      @default(0)
-  category    String   @default("court_filing")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  fileUrl   String?
+  fileType  String   @default("pdf")
+  size      Int      @default(0)
+  category  String   @default("court_filing")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -653,41 +655,41 @@ enum SyncAuditStatus {
 }
 
 model LegalAct {
-  id               String            @id @default(uuid())
-  actCode          String            @unique // Např. "89/2012", "359/1999"
-  actNumber        Int               // 89
-  actYear          Int               // 2012
-  collection       String            @default("Sb.") // "Sb.", "Sb.m.s."
-  title            String            // "Zákon č. 89/2012 Sb., občanský zákoník"
-  shortTitle       String?           // "Občanský zákoník" / "OZ"
-  actType          String            @default("ZAKON") // "ZAKON", "USTAVNI_ZAKON", "VYHLASKA", "NARIZENI_VLADY"
-  category         String            @default("FAMILY_LAW") // "FAMILY_LAW", "CHILD_PROTECTION", "CIVIL_PROCEDURE", "EXECUTION", "CONSTITUTIONAL"
-  status           LegalActStatus    @default(ACTIVE) // ACTIVE, AMENDED, REPEALED
-  source           String            @default("ESBIRKA") // "ESBIRKA", "E_LEGISLATIVA"
-  sourceUri        String?           // URI v e-Sbírce / e-Legislativě
-  
-  // Časová razítka a účinnost
-  passedDate       DateTime?         // Datum přijetí
-  promulgationDate DateTime?         // Datum vyhlášení ve Sbírce
-  effectiveFrom    DateTime?         // Datum nabytí účinnosti aktuálního znění
-  effectiveTo      DateTime?         // Datum konce účinnosti (pokud známo)
-  lastAmendedDate  DateTime?         // Datum poslední novely
-  
-  // Synchronizační a ověřovací metadata
-  lastSyncedAt     DateTime?         // Datum a čas posledního kontaktu s e-Sbírka API
-  lastVerifiedAt   DateTime?         // Datum a čas, kdy byl obsah ověřen jako platný
-  contentHash      String            // SHA-256 hash konsolidovaného normativního textu
-  etag             String?           // ETag hlavička z HTTP odezvy pro If-None-Match
-  syncPriority     Int               @default(10) // 1 = nejvyšší (P0), 10 = standard
-  rawMetadata      Json?             // Původní metadata z e-Sbírky
-  
-  // Vazby
-  sections         LegalActSection[]
-  versions         LegalActVersion[]
-  syncAudits       LegalSyncAudit[]
+  id         String         @id @default(uuid())
+  actCode    String         @unique // Např. "89/2012", "359/1999"
+  actNumber  Int // 89
+  actYear    Int // 2012
+  collection String         @default("Sb.") // "Sb.", "Sb.m.s."
+  title      String // "Zákon č. 89/2012 Sb., občanský zákoník"
+  shortTitle String? // "Občanský zákoník" / "OZ"
+  actType    String         @default("ZAKON") // "ZAKON", "USTAVNI_ZAKON", "VYHLASKA", "NARIZENI_VLADY"
+  category   String         @default("FAMILY_LAW") // "FAMILY_LAW", "CHILD_PROTECTION", "CIVIL_PROCEDURE", "EXECUTION", "CONSTITUTIONAL"
+  status     LegalActStatus @default(ACTIVE) // ACTIVE, AMENDED, REPEALED
+  source     String         @default("ESBIRKA") // "ESBIRKA", "E_LEGISLATIVA"
+  sourceUri  String? // URI v e-Sbírce / e-Legislativě
 
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  // Časová razítka a účinnost
+  passedDate       DateTime? // Datum přijetí
+  promulgationDate DateTime? // Datum vyhlášení ve Sbírce
+  effectiveFrom    DateTime? // Datum nabytí účinnosti aktuálního znění
+  effectiveTo      DateTime? // Datum konce účinnosti (pokud známo)
+  lastAmendedDate  DateTime? // Datum poslední novely
+
+  // Synchronizační a ověřovací metadata
+  lastSyncedAt   DateTime? // Datum a čas posledního kontaktu s e-Sbírka API
+  lastVerifiedAt DateTime? // Datum a čas, kdy byl obsah ověřen jako platný
+  contentHash    String // SHA-256 hash konsolidovaného normativního textu
+  etag           String? // ETag hlavička z HTTP odezvy pro If-None-Match
+  syncPriority   Int       @default(10) // 1 = nejvyšší (P0), 10 = standard
+  rawMetadata    Json? // Původní metadata z e-Sbírky
+
+  // Vazby
+  sections   LegalActSection[]
+  versions   LegalActVersion[]
+  syncAudits LegalSyncAudit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([actCode])
   @@index([category])
@@ -698,22 +700,22 @@ model LegalAct {
 }
 
 model LegalActSection {
-  id               String       @id @default(uuid())
-  legalActId       String
-  legalAct         LegalAct     @relation(fields: [legalActId], references: [id], onDelete: Cascade)
-  
-  sectionNumber    String       // "858", "888", "888a", "19", "452"
-  sectionOrder     Int          @default(0) // Pořadí pro řazení (např. 88800)
-  title            String?      // Např. "Rodičovská odpovědnost a styk s dítětem"
-  content          String       @db.Text // Úplné znění paragrafu včetně odstavců
-  
+  id         String   @id @default(uuid())
+  legalActId String
+  legalAct   LegalAct @relation(fields: [legalActId], references: [id], onDelete: Cascade)
+
+  sectionNumber String // "858", "888", "888a", "19", "452"
+  sectionOrder  Int     @default(0) // Pořadí pro řazení (např. 88800)
+  title         String? // Např. "Rodičovská odpovědnost a styk s dítětem"
+  content       String  @db.Text // Úplné znění paragrafu včetně odstavců
+
   // Opatrovnická metadata
-  isKeySection     Boolean      @default(false) // Označení klíčových paragrafů pro otce
-  practicalNote    String?      @db.Text // Praktický výklad a metodický komentář
-  courtRelevance   String?      @db.Text // Jak argumentovat u soudu / na OSPOD
-  
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  isKeySection   Boolean @default(false) // Označení klíčových paragrafů pro otce
+  practicalNote  String? @db.Text // Praktický výklad a metodický komentář
+  courtRelevance String? @db.Text // Jak argumentovat u soudu / na OSPOD
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([legalActId, sectionNumber])
   @@index([legalActId])
@@ -722,20 +724,20 @@ model LegalActSection {
 }
 
 model LegalActVersion {
-  id               String       @id @default(uuid())
-  legalActId       String
-  legalAct         LegalAct     @relation(fields: [legalActId], references: [id], onDelete: Cascade)
-  
-  versionNumber    String       // Identifikátor novely (např. "novela-450/2025" nebo "v1.0")
-  effectiveFrom    DateTime     // Účinnost této verze od
-  effectiveTo      DateTime?    // Účinnost této verze do (null = aktuální znění)
-  promulgationDate DateTime?    // Datum vyhlášení novely
-  contentSnapshot  Json?        // Úplný JSON snapshot znění k danému období
-  contentHash      String       // SHA-256 hash dané verze
-  changeSummary    String?      @db.Text // Přehled změn přinesených novelou
-  sourceNote       String?      // Poznámka ke zdroji / číslu novely
-  
-  createdAt        DateTime     @default(now())
+  id         String   @id @default(uuid())
+  legalActId String
+  legalAct   LegalAct @relation(fields: [legalActId], references: [id], onDelete: Cascade)
+
+  versionNumber    String // Identifikátor novely (např. "novela-450/2025" nebo "v1.0")
+  effectiveFrom    DateTime // Účinnost této verze od
+  effectiveTo      DateTime? // Účinnost této verze do (null = aktuální znění)
+  promulgationDate DateTime? // Datum vyhlášení novely
+  contentSnapshot  Json? // Úplný JSON snapshot znění k danému období
+  contentHash      String // SHA-256 hash dané verze
+  changeSummary    String?   @db.Text // Přehled změn přinesených novelou
+  sourceNote       String? // Poznámka ke zdroji / číslu novely
+
+  createdAt DateTime @default(now())
 
   @@index([legalActId])
   @@index([effectiveFrom])
@@ -743,33 +745,33 @@ model LegalActVersion {
 }
 
 model LegalSyncAudit {
-  id               String          @id @default(uuid())
-  legalActId       String?
-  legalAct         LegalAct?       @relation(fields: [legalActId], references: [id], onDelete: SetNull)
-  
-  actCode          String          // "89/2012", "ALL"
-  syncType         String          @default("AUTOMATIC_CRON") // "AUTOMATIC_CRON", "ADMIN_MANUAL", "SYSTEM_BOOTSTRAP"
-  startedAt        DateTime        @default(now())
-  finishedAt       DateTime?
-  durationMs       Int?
-  
-  status           SyncAuditStatus // PENDING, RUNNING, SUCCESS, UNCHANGED, FAILED, SKIPPED, RATE_LIMITED, QUOTA_EXCEEDED
-  httpStatus       Int?            // 200, 304, 429, 500, 502, 503
-  apiCallsCount    Int             @default(1)
-  
+  id         String    @id @default(uuid())
+  legalActId String?
+  legalAct   LegalAct? @relation(fields: [legalActId], references: [id], onDelete: SetNull)
+
+  actCode    String // "89/2012", "ALL"
+  syncType   String    @default("AUTOMATIC_CRON") // "AUTOMATIC_CRON", "ADMIN_MANUAL", "SYSTEM_BOOTSTRAP"
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+
+  status        SyncAuditStatus // PENDING, RUNNING, SUCCESS, UNCHANGED, FAILED, SKIPPED, RATE_LIMITED, QUOTA_EXCEEDED
+  httpStatus    Int? // 200, 304, 429, 500, 502, 503
+  apiCallsCount Int             @default(1)
+
   // Datová statistika
-  recordsReceived  Int             @default(0)
-  recordsNew       Int             @default(0)
-  recordsChanged   Int             @default(0)
-  recordsUnchanged Int             @default(0)
-  errorsCount      Int             @default(0)
-  
-  responseHash     String?         // SHA-256 příchozího payloadu
-  errorMessage     String?         @db.Text
-  initiatedBy      String          @default("SYSTEM") // "CRON", "ADMIN:userId", "BOOTSTRAP"
-  quotaUsageIn24h  Int             @default(1) // Kolikáté volání v klouzavém okně to bylo (1..5)
-  
-  createdAt        DateTime        @default(now())
+  recordsReceived  Int @default(0)
+  recordsNew       Int @default(0)
+  recordsChanged   Int @default(0)
+  recordsUnchanged Int @default(0)
+  errorsCount      Int @default(0)
+
+  responseHash    String? // SHA-256 příchozího payloadu
+  errorMessage    String? @db.Text
+  initiatedBy     String  @default("SYSTEM") // "CRON", "ADMIN:userId", "BOOTSTRAP"
+  quotaUsageIn24h Int     @default(1) // Kolikáté volání v klouzavém okně to bylo (1..5)
+
+  createdAt DateTime @default(now())
 
   @@index([actCode])
   @@index([status])
@@ -778,18 +780,18 @@ model LegalSyncAudit {
 }
 
 model EsbirkaQuotaAudit {
-  id               String       @id @default(uuid())
-  calledAt         DateTime     @default(now()) // Čas odeslání HTTP požadavku na e-Sbírku
-  requestType      String       @default("GET_ACT") // "GET_ACT", "CHECK_METADATA", "GET_SECTIONS"
-  endpoint         String       // "/predpisy/2012/89"
-  actCode          String?      // "89/2012"
-  httpStatus       Int?         // 200, 304, 429, 500, etc.
-  result           String       @default("SUCCESS") // "SUCCESS", "NOT_MODIFIED", "ERROR", "TIMEOUT"
-  syncAuditId      String?      // Vazba na LegalSyncAudit.id
-  responseHash     String?
-  durationMs       Int?
-  
-  createdAt        DateTime     @default(now())
+  id           String   @id @default(uuid())
+  calledAt     DateTime @default(now()) // Čas odeslání HTTP požadavku na e-Sbírku
+  requestType  String   @default("GET_ACT") // "GET_ACT", "CHECK_METADATA", "GET_SECTIONS"
+  endpoint     String // "/predpisy/2012/89"
+  actCode      String? // "89/2012"
+  httpStatus   Int? // 200, 304, 429, 500, etc.
+  result       String   @default("SUCCESS") // "SUCCESS", "NOT_MODIFIED", "ERROR", "TIMEOUT"
+  syncAuditId  String? // Vazba na LegalSyncAudit.id
+  responseHash String?
+  durationMs   Int?
+
+  createdAt DateTime @default(now())
 
   @@index([calledAt])
   @@index([actCode])
@@ -798,14 +800,14 @@ model EsbirkaQuotaAudit {
 
 model StateStatistic {
   id          String   @id @default(uuid())
-  category    String   // "Péče o děti", "Délka řízení", "Výživné"
+  category    String // "Péče o děti", "Délka řízení", "Výživné"
   title       String
   description String?  @db.Text
-  value       String   // Např. "32 %"
-  unit        String?  // "%", "dní", "Kč"
-  period      String   // "2025/2026"
-  source      String   // "Ministerstvo spravedlnosti ČR / ČSÚ"
-  chartData   Json?    // Strukturovaná data pro grafy
+  value       String // Např. "32 %"
+  unit        String? // "%", "dní", "Kč"
+  period      String // "2025/2026"
+  source      String // "Ministerstvo spravedlnosti ČR / ČSÚ"
+  chartData   Json? // Strukturovaná data pro grafy
   createdAt   DateTime @default(now())
 
   @@index([category])
@@ -814,7 +816,7 @@ model StateStatistic {
 model CourtCase {
   id          String   @id @default(uuid())
   fileNumber  String   @unique // Např. "I. ÚS 1506/23"
-  court       String   // "Ústavní soud", "Nejvyšší soud"
+  court       String // "Ústavní soud", "Nejvyšší soud"
   title       String
   summary     String   @db.Text // Stručný popis případu
   legalRatio  String   @db.Text // Klíčová právní věta / Precedent
@@ -834,11 +836,11 @@ enum PartnerType {
 
 model Partner {
   id          String      @id @default(uuid())
-  name        String      // Např. "ALGOTECH a.s."
+  name        String // Např. "ALGOTECH a.s."
   type        PartnerType @default(PARTNER)
-  description String      // Např. "Cloud VPS"
-  logoUrl     String?     // Odkaz na logo v MinIO nebo externí URL
-  websiteUrl  String?     // Odkaz na web partnera
+  description String // Např. "Cloud VPS"
+  logoUrl     String? // Odkaz na logo v MinIO nebo externí URL
+  websiteUrl  String? // Odkaz na web partnera
   order       Int         @default(0)
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
@@ -857,53 +859,53 @@ model VolunteerCodexAgreement {
 }
 
 model VolunteerApplication {
-  id          String   @id @default(uuid())
-  name        String
-  email       String
-  phone       String?
-  birthDate   String?
-  address     String?
-  motivation  String   @db.Text
-  linkedin    String?
-  position    String
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  name       String
+  email      String
+  phone      String?
+  birthDate  String?
+  address    String?
+  motivation String   @db.Text
+  linkedin   String?
+  position   String
+  createdAt  DateTime @default(now())
 }
 
 model UserConsentLog {
   id              String   @id @default(uuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentType    String   // "PRIVACY_POLICY", "TERMS", "VOLUNTEER_CODEX", "VOLUNTEER_AGREEMENT", "COOKIES"
-  documentVersion String   // Např. "0.5.1"
+  documentType    String // "PRIVACY_POLICY", "TERMS", "VOLUNTEER_CODEX", "VOLUNTEER_AGREEMENT", "COOKIES"
+  documentVersion String // Např. "0.5.1"
   agreedAt        DateTime @default(now())
   ipAddress       String?
   userAgent       String?
 }
 
 model SensitiveAccessLog {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action     String   // Např. "VIEW_SENSITIVE_CASE", "EXPORT_GDPR_DATA", "AI_PROCESSING"
-  resource   String?
-  ipAddress  String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String // Např. "VIEW_SENSITIVE_CASE", "EXPORT_GDPR_DATA", "AI_PROCESSING"
+  resource  String?
+  ipAddress String?
+  createdAt DateTime @default(now())
 }
 
 model GdprDeletionRequest {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, REJECTED
-  requestedAt DateTime @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, REJECTED
+  requestedAt DateTime  @default(now())
   completedAt DateTime?
   notes       String?
 }
 
 model PollVote {
   id          String   @id @default(uuid())
-  pollId      String   // Identifikátor ankety na stránce
-  optionIndex Int      // Index zvolené možnosti
+  pollId      String // Identifikátor ankety na stránce
+  optionIndex Int // Index zvolené možnosti
   ipAddress   String?
   userId      String?
   createdAt   DateTime @default(now())
@@ -911,7 +913,7 @@ model PollVote {
 
 model FormSubmission {
   id        String   @id @default(uuid())
-  formId    String   // Identifikátor formuláře
+  formId    String // Identifikátor formuláře
   formName  String
   dataJson  String   @db.Text // JSON s vyplněnými poli
   createdAt DateTime @default(now())
@@ -920,7 +922,7 @@ model FormSubmission {
 model PageTemplate {
   id           String   @id @default(uuid())
   name         String
-  category     String   // "LANDING", "ARTICLE", "LEGAL", "FORM", "CUSTOM"
+  category     String // "LANDING", "ARTICLE", "LEGAL", "FORM", "CUSTOM"
   description  String?
   puckDataJson String   @db.Text
   isSystem     Boolean  @default(false)
@@ -978,24 +980,24 @@ enum EntityType {
 }
 
 model Subjekt {
-  id            String       @id @default(uuid())
-  type          EntityType
-  name          String       // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
-  titleBefore   String?      // Např. "PhDr.", "JUDr."
-  position      String?      // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
-  institution   String?      // Název pracoviště / Úřadu / Kanceláře
-  city          String       // Např. "Pardubice", "Přelouč"
-  region        String       // Např. "Pardubický kraj"
-  address       String?
-  email         String?      @unique
-  phone         String?
-  website       String?
-  avgRating     Float        @default(0.0)
-  reviewCount   Int          @default(0)
-  isVerified    Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  reviews       Review[]
-  pracovnici    Pracovnik[]
+  id          String      @id @default(uuid())
+  type        EntityType
+  name        String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore String? // Např. "PhDr.", "JUDr."
+  position    String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution String? // Název pracoviště / Úřadu / Kanceláře
+  city        String // Např. "Pardubice", "Přelouč"
+  region      String // Např. "Pardubický kraj"
+  address     String?
+  email       String?     @unique
+  phone       String?
+  website     String?
+  avgRating   Float       @default(0.0)
+  reviewCount Int         @default(0)
+  isVerified  Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  reviews     Review[]
+  pracovnici  Pracovnik[]
 }
 
 model Pracovnik {
@@ -1014,24 +1016,24 @@ model Pracovnik {
 }
 
 model Review {
-  id                   String     @id @default(uuid())
-  subjektId            String
-  subjekt              Subjekt    @relation(fields: [subjektId], references: [id], onDelete: Cascade)
-  pracovnikId          String?
-  pracovnik            Pracovnik? @relation(fields: [pracovnikId], references: [id], onDelete: Cascade)
-  userId               String?
-  rating               Int        // Overall 1-5 hvězdiček
+  id                String     @id @default(uuid())
+  subjektId         String
+  subjekt           Subjekt    @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  pracovnikId       String?
+  pracovnik         Pracovnik? @relation(fields: [pracovnikId], references: [id], onDelete: Cascade)
+  userId            String?
+  rating            Int // Overall 1-5 hvězdiček
   // Strukturovaná věcná kritéria (1-5):
-  supportSharedCare    Int        // Podpora střídavé/společné péče
-  professionalism      Int        // Věcnost a odbornost
-  speedAndDeadlines    Int        // Dodržování lhůt a rychlost
-  objektivita          Int?
-  komunikace           Int?
-  rychlost             Int?
-  status               String     @default("PENDING") // PENDING, APPROVED, REJECTED
-  comment              String     @db.Text
-  isAnonymous          Boolean    @default(true)
-  createdAt            DateTime   @default(now())
+  supportSharedCare Int // Podpora střídavé/společné péče
+  professionalism   Int // Věcnost a odbornost
+  speedAndDeadlines Int // Dodržování lhůt a rychlost
+  objektivita       Int?
+  komunikace        Int?
+  rychlost          Int?
+  status            String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  comment           String     @db.Text
+  isAnonymous       Boolean    @default(true)
+  createdAt         DateTime   @default(now())
 }
 
 model CookieConsent {
@@ -1052,8 +1054,8 @@ model LegalAuditLog {
   id           String   @id @default(uuid())
   userId       String?
   user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action       String   // e.g., "DOCUMENT_CREATED", "DOCUMENT_PUBLISHED", "CONSENT_RECORDED"
-  entity       String   // e.g., "LegalDocument", "CookieConsent"
+  action       String // e.g., "DOCUMENT_CREATED", "DOCUMENT_PUBLISHED", "CONSENT_RECORDED"
+  entity       String // e.g., "LegalDocument", "CookieConsent"
   entityId     String?
   metadataJson String?  @db.Text // Store custom metadata as JSON string
   createdAt    DateTime @default(now())
@@ -1064,18 +1066,18 @@ model LegalAuditLog {
 // ------------------------------------------------------
 
 model Case {
-  id               String              @id @default(uuid())
-  ownerId          String
-  owner            User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  title            String
-  caseNumber       String?
-  court            String?
-  caseType         String              @default("OPATROVNICKE")
-  status           String              @default("ACTIVE")
-  description      String?             @db.Text
-  currentCareType  String?             @default("STRIDAVA")
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  id              String   @id @default(uuid())
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title           String
+  caseNumber      String?
+  court           String?
+  caseType        String   @default("OPATROVNICKE")
+  status          String   @default("ACTIVE")
+  description     String?  @db.Text
+  currentCareType String?  @default("STRIDAVA")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   participants     CaseParticipant[]
   children         Child[]
@@ -1125,32 +1127,32 @@ model Child {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  carePlans    CarePlanChild[]
+  carePlans CarePlanChild[]
 
   @@index([caseId])
 }
 
 model CaseEvent {
-  id          String         @id @default(uuid())
+  id          String    @id @default(uuid())
   caseId      String
-  case        Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
   createdBy   String
   title       String
-  description String?        @db.Text
-  category    String         @default("OTHER")
+  description String?   @db.Text
+  category    String    @default("OTHER")
   eventDate   DateTime
   endDate     DateTime?
   location    String?
   attachments Json?
-  sourceType  String?        @default("MANUAL") // "MANUAL", "CARE_PLAN"
+  sourceType  String?   @default("MANUAL") // "MANUAL", "CARE_PLAN"
   carePlanId  String?
-  carePlan    CarePlan?      @relation("CarePlanEvents", fields: [carePlanId], references: [id], onDelete: Cascade)
+  carePlan    CarePlan? @relation("CarePlanEvents", fields: [carePlanId], references: [id], onDelete: Cascade)
   careDayId   String?
-  careDay     CareDay?       @relation("CareDayEvents", fields: [careDayId], references: [id], onDelete: SetNull)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  careDay     CareDay?  @relation("CareDayEvents", fields: [careDayId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  evidence    CaseEvidence[]
+  evidence CaseEvidence[]
 
   @@index([caseId])
   @@index([eventDate])
@@ -1213,26 +1215,26 @@ model CaseNote {
 }
 
 model CaseDocument {
-  id              String         @id @default(uuid())
+  id              String   @id @default(uuid())
   caseId          String
-  case            Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case            Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   uploadedBy      String
   name            String
-  category        String         @default("OTHER")
+  category        String   @default("OTHER")
   fileUrl         String?
   s3Bucket        String?
   s3ObjectKey     String?
-  fileType        String         @default("pdf")
-  mimeType        String         @default("application/pdf")
-  size            Int            @default(0)
+  fileType        String   @default("pdf")
+  mimeType        String   @default("application/pdf")
+  size            Int      @default(0)
   fileHash        String?
-  storageProvider String         @default("MinIO")
-  scanStatus      String         @default("CLEAN")
-  notes           String?        @db.Text
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  storageProvider String   @default("MinIO")
+  scanStatus      String   @default("CLEAN")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  evidence        CaseEvidence[]
+  evidence CaseEvidence[]
 
   @@index([caseId])
   @@index([category])
@@ -1307,13 +1309,13 @@ enum ConflictMode {
 }
 
 model CoParentSpace {
-  id           String         @id @default(uuid())
-  title        String         @default("Spolurodičovský prostor")
-  conflictMode ConflictMode   @default(COOPERATION)
+  id           String       @id @default(uuid())
+  title        String       @default("Spolurodičovský prostor")
+  conflictMode ConflictMode @default(COOPERATION)
   ownerId      String
-  owner        User           @relation("CoParentSpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  owner        User         @relation("CoParentSpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   members      CoParentMember[]
   children     CoParentChild[]
@@ -1347,15 +1349,15 @@ model CoParentMember {
 }
 
 model CoParentChild {
-  id          String        @id @default(uuid())
-  spaceId     String
-  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  firstName   String
-  lastName    String
-  birthDate   String?
-  notes       String?       @db.Text
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  birthDate String?
+  notes     String?       @db.Text
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   dailyUpdates CoParentDailyUpdate[]
 
@@ -1378,17 +1380,17 @@ model CoParentEvent {
 }
 
 model CoParentHandover {
-  id                 String        @id @default(uuid())
-  spaceId            String
-  space              CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  scheduledAt        DateTime
-  location           String?
-  status             String        @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "DISPUTED"
-  notes              String?       @db.Text
-  confirmedByFather  Boolean       @default(false)
-  confirmedByMother  Boolean       @default(false)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  spaceId           String
+  space             CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  scheduledAt       DateTime
+  location          String?
+  status            String        @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "DISPUTED"
+  notes             String?       @db.Text
+  confirmedByFather Boolean       @default(false)
+  confirmedByMother Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([spaceId])
 }
@@ -1437,29 +1439,29 @@ model CoParentExpense {
 }
 
 model CoParentDailyUpdate {
-  id           String        @id @default(uuid())
-  spaceId      String
-  space        CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  childId      String
-  child        CoParentChild @relation(fields: [childId], references: [id], onDelete: Cascade)
-  date         DateTime      @default(now())
-  mood         String        @default("HAPPY") // "HAPPY", "CALM", "TIRED", "SAD", "ANGRY"
-  healthNotes  String?       @db.Text
-  schoolNotes  String?       @db.Text
-  createdAt    DateTime      @default(now())
+  id          String        @id @default(uuid())
+  spaceId     String
+  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  childId     String
+  child       CoParentChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+  date        DateTime      @default(now())
+  mood        String        @default("HAPPY") // "HAPPY", "CALM", "TIRED", "SAD", "ANGRY"
+  healthNotes String?       @db.Text
+  schoolNotes String?       @db.Text
+  createdAt   DateTime      @default(now())
 
   @@index([spaceId])
 }
 
 model CoParentItem {
-  id       String        @id @default(uuid())
-  spaceId  String
-  space    CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  name     String        // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
-  holderId String        // User ID of who currently has the item
-  location String?       // e.g., "U tatínka", "U maminky"
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id        String        @id @default(uuid())
+  spaceId   String
+  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  name      String // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
+  holderId  String // User ID of who currently has the item
+  location  String? // e.g., "U tatínka", "U maminky"
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@index([spaceId])
 }
@@ -1470,7 +1472,7 @@ model CoParentRequest {
   space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   requesterId String
   requester   User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
-  type        String        // "SCHEDULE_CHANGE", "EXPENSE_APPROVAL", "AGREEMENT_MODIFICATION"
+  type        String // "SCHEDULE_CHANGE", "EXPENSE_APPROVAL", "AGREEMENT_MODIFICATION"
   details     String        @db.Text
   status      String        @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
   createdAt   DateTime      @default(now())
@@ -1484,8 +1486,8 @@ model CoParentAuditLog {
   spaceId   String
   space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   userId    String?
-  action    String        // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
-  entity    String        // e.g., "CoParentAgreement", "CoParentExpense"
+  action    String // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
+  entity    String // e.g., "CoParentAgreement", "CoParentExpense"
   entityId  String?
   details   String        @db.Text
   createdAt DateTime      @default(now())
@@ -1494,14 +1496,14 @@ model CoParentAuditLog {
 }
 
 model CoParentDocument {
-  id          String        @id @default(uuid())
-  spaceId     String
-  space       CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  title       String
-  fileUrl     String?
-  category    String        @default("COURT_ORDER")
-  uploadedBy  String
-  createdAt   DateTime      @default(now())
+  id         String        @id @default(uuid())
+  spaceId    String
+  space      CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  title      String
+  fileUrl    String?
+  category   String        @default("COURT_ORDER")
+  uploadedBy String
+  createdAt  DateTime      @default(now())
 
   @@index([spaceId])
 }
@@ -1553,42 +1555,42 @@ enum CareLocationType {
 }
 
 model CarePlan {
-  id                   String           @id @default(uuid())
+  id                   String         @id @default(uuid())
   caseId               String
-  case                 Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case                 Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
   title                String
-  description          String?          @db.Text
-  status               CarePlanStatus   @default(DRAFT)
-  type                 CarePlanType     @default(PROPOSED)
-  source               CarePlanSource   @default(MANUAL)
+  description          String?        @db.Text
+  status               CarePlanStatus @default(DRAFT)
+  type                 CarePlanType   @default(PROPOSED)
+  source               CarePlanSource @default(MANUAL)
   startDate            DateTime?
   endDate              DateTime?
-  rotationPattern      String?          @default("7/7")
-  rotationIntervalDays Int              @default(7)
-  version              Int              @default(1)
-  isSharedWithCoParent Boolean          @default(false)
+  rotationPattern      String?        @default("7/7")
+  rotationIntervalDays Int            @default(7)
+  version              Int            @default(1)
+  isSharedWithCoParent Boolean        @default(false)
   createdBy            String?
-  parentAName          String?          @default("Otec")
-  parentBName          String?          @default("Matka")
+  parentAName          String?        @default("Otec")
+  parentBName          String?        @default("Matka")
   parentAAddress       String?
   parentBAddress       String?
   parentALat           Float?
   parentALng           Float?
   parentBLat           Float?
   parentBLng           Float?
-  parentAPreferences   String?          @db.Text
-  parentBPreferences   String?          @db.Text
-  defaultHandoverTime  String?          @default("16:00")
-  metricsJson          String?          @db.Text
-  notes                String?          @db.Text
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  parentAPreferences   String?        @db.Text
+  parentBPreferences   String?        @db.Text
+  defaultHandoverTime  String?        @default("16:00")
+  metricsJson          String?        @db.Text
+  notes                String?        @db.Text
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
-  children             CarePlanChild[]
-  locations            CareLocation[]
-  days                 CareDay[]
-  holidayRules         CareHolidayRule[]
-  generatedEvents      CaseEvent[]      @relation("CarePlanEvents")
+  children        CarePlanChild[]
+  locations       CareLocation[]
+  days            CareDay[]
+  holidayRules    CareHolidayRule[]
+  generatedEvents CaseEvent[]       @relation("CarePlanEvents")
 
   @@index([caseId])
   @@index([status])
@@ -1609,19 +1611,19 @@ model CarePlanChild {
 }
 
 model CareLocation {
-  id          String           @id @default(uuid())
-  carePlanId  String
-  carePlan    CarePlan         @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
-  name        String
-  address     String?
-  latitude    Float?
-  longitude   Float?
-  type        CareLocationType @default(NEUTRAL)
-  notes       String?          @db.Text
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id         String           @id @default(uuid())
+  carePlanId String
+  carePlan   CarePlan         @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  name       String
+  address    String?
+  latitude   Float?
+  longitude  Float?
+  type       CareLocationType @default(NEUTRAL)
+  notes      String?          @db.Text
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
-  careDays    CareDay[]
+  careDays CareDay[]
 
   @@index([carePlanId])
   @@index([type])
@@ -1649,26 +1651,26 @@ model CareDay {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  generatedEvents    CaseEvent[]   @relation("CareDayEvents")
+  generatedEvents CaseEvent[] @relation("CareDayEvents")
 
   @@index([carePlanId])
   @@index([date])
 }
 
 model CareHolidayRule {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   carePlanId      String
-  carePlan        CarePlan @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  carePlan        CarePlan  @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
   holidayType     String
   name            String
   startDate       DateTime?
   endDate         DateTime?
-  allocationModel String   @default("ALTERNATING_YEARS")
-  evenYearParent  String?  @default("PARENT_A")
-  oddYearParent   String?  @default("PARENT_B")
-  notes           String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  allocationModel String    @default("ALTERNATING_YEARS")
+  evenYearParent  String?   @default("PARENT_A")
+  oddYearParent   String?   @default("PARENT_B")
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([carePlanId])
   @@index([holidayType])
@@ -1710,51 +1712,51 @@ model QAModule {
 }
 
 model QAEndpoint {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   moduleId   String
-  module     QAModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module     QAModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   method     String
   path       String
   sourceFile String
   status     String
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime @default(now())
 }
 
 model QARun {
-  id               String      @id @default(uuid())
-  projectId        String
-  project          QAProject   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  status           String      // RUNNING, COMPLETED, FAILED
-  runDate          DateTime    @default(now())
-  commitSha        String?     @default("main-HEAD")
-  branch           String?     @default("main")
-  environment      String?     @default("development")
-  isIncremental    Boolean?    @default(false)
-  auditType        String?     @default("FULL") // "FULL" or "INCREMENTAL"
-  
+  id            String    @id @default(uuid())
+  projectId     String
+  project       QAProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status        String // RUNNING, COMPLETED, FAILED
+  runDate       DateTime  @default(now())
+  commitSha     String?   @default("main-HEAD")
+  branch        String?   @default("main")
+  environment   String?   @default("development")
+  isIncremental Boolean?  @default(false)
+  auditType     String?   @default("FULL") // "FULL" or "INCREMENTAL"
+
   // Quality Scores (0 - 100)
-  functionalScore  Float       @default(100.0)
-  securityScore    Float       @default(100.0)
-  apiScore         Float       @default(100.0)
-  persistenceScore Float       @default(100.0)
-  e2eScore         Float       @default(100.0)
-  overallScore     Float       @default(100.0)
+  functionalScore  Float @default(100.0)
+  securityScore    Float @default(100.0)
+  apiScore         Float @default(100.0)
+  persistenceScore Float @default(100.0)
+  e2eScore         Float @default(100.0)
+  overallScore     Float @default(100.0)
 
   // Counts & Stats stored as JSON
-  statsJson        String?     @db.Text
-  
-  // AI Analyst Report & Verdict
-  aiReportJson     String?     @db.Text
-  verdict          String?     @default("PRODUCTION READY")
+  statsJson String? @db.Text
 
-  findings         QAFinding[]
+  // AI Analyst Report & Verdict
+  aiReportJson String? @db.Text
+  verdict      String? @default("PRODUCTION READY")
+
+  findings QAFinding[]
 }
 
 model QAFinding {
   id         String   @id @default(uuid())
   runId      String
   run        QARun    @relation(fields: [runId], references: [id], onDelete: Cascade)
-  severity   String   // P0, P1, P2, P3 or CRITICAL, HIGH, MEDIUM, LOW
+  severity   String // P0, P1, P2, P3 or CRITICAL, HIGH, MEDIUM, LOW
   category   String?  @default("FUNCTIONAL") // FUNCTIONAL, SECURITY, API, PERSISTENCE, E2E, INTEGRATION, INVARIANT, STATIC
   message    String   @db.Text
   endpointId String?
@@ -1762,21 +1764,21 @@ model QAFinding {
 }
 
 model QARegistryItem {
-  id             String         @id @default(uuid())
-  key            String         @unique // e.g. "PAGE:CareHubPage", "ENDPOINT:GET:/api/health", "COMPONENT:ArticleCard"
+  id             String    @id @default(uuid())
+  key            String    @unique // e.g. "PAGE:CareHubPage", "ENDPOINT:GET:/api/health", "COMPONENT:ArticleCard"
   name           String
-  type           String         // "SERVICE", "ENDPOINT", "COMPONENT", "PAGE", "TEST"
+  type           String // "SERVICE", "ENDPOINT", "COMPONENT", "PAGE", "TEST"
   filePath       String?
   contentHash    String?
   lastCommitSha  String?
-  status         String         @default("DISCOVERED") // VERIFIED, CHANGED, INVALIDATED, FAILED, SKIPPED, DISCOVERED
+  status         String    @default("DISCOVERED") // VERIFIED, CHANGED, INVALIDATED, FAILED, SKIPPED, DISCOVERED
   lastVerifiedAt DateTime?
-  lastResultJson String?        @db.Text
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  lastResultJson String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  dependencies   QADependency[] @relation("ItemDependencies")
-  dependents     QADependency[] @relation("ItemDependents")
+  dependencies QADependency[] @relation("ItemDependencies")
+  dependents   QADependency[] @relation("ItemDependents")
 
   @@index([type])
   @@index([status])
@@ -1809,16 +1811,55 @@ model QAAICache {
 }
 
 model QAAIStats {
-  id               String   @id @default(uuid())
-  totalCalls       Int      @default(0)
-  cacheHits        Int      @default(0)
-  skipped          Int      @default(0)
-  promptTokens     Int      @default(0)
-  completionTokens Int      @default(0)
-  estimatedCostUsd Float    @default(0.0)
+  id               String    @id @default(uuid())
+  totalCalls       Int       @default(0)
+  cacheHits        Int       @default(0)
+  skipped          Int       @default(0)
+  promptTokens     Int       @default(0)
+  completionTokens Int       @default(0)
+  estimatedCostUsd Float     @default(0.0)
   lastCallAt       DateTime?
-  skippedReasons   String?  @db.Text
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  skippedReasons   String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
+model SupportTicket {
+  id          String                 @id @default(uuid())
+  subject     String
+  category    String
+  status      String                 @default("open") // open, in_progress, resolved
+  priority    String                 @default("normal") // low, normal, high
+  description String                 @db.Text
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  messages    SupportTicketMessage[]
+}
+
+model SupportTicketMessage {
+  id         String        @id @default(uuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    String        @db.Text
+  isInternal Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+}
+
+model NewsItem {
+  id        String   @id @default(uuid())
+  title     String
+  summary   String   @db.Text
+  content   String?  @db.Text
+  date      DateTime
+  category  String // legislativa, judikatura, projekt, studie
+  source    String?
+  url       String?
+  tags      String[]
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

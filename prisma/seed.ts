@@ -4,6 +4,7 @@ dotenv.config();
 import { prisma, isPrismaAvailable } from '../src/db/prisma';
 import { dbStore } from '../src/services/dbStore';
 import { ensureSuperAdminAccount } from '../src/services/seedService';
+import { runHelpNewsSeed } from "./seed-help-news";
 
 export const realSubjektyData = [
   // --- HLAVNÍ MĚSTO PRAHA ---
@@ -1490,6 +1491,7 @@ export async function runSeed() {
         }
       }
 
+      await runHelpNewsSeed();
       console.log('[Prisma Seed] Úspěšně naseedován výchozí CMS i Registr Subjektů v PostgreSQL!');
     } else {
       console.log('[Prisma Seed] Databáze není připojena, plním in-memory dbStore.');
