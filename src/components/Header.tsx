@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const allowedNavItems = useMemo(() => {
     return effectiveNavItems.filter((item) => {
-      const isCategory7 = item.id === 'cat-7' || item.parentId === 'cat-7';
+      const isCategory10 = item.id === 'cat-10' || item.parentId === 'cat-10';
       const isAdminRoute =
         item.url === '/admin' ||
         item.url.startsWith('/admin/') ||
@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
         item.url === '/ai-admin' ||
         item.url === '/ai-context';
 
-      if ((isCategory7 || isAdminRoute) && !isAuthorizedAdmin) {
+      if ((isCategory10 || isAdminRoute) && !isAuthorizedAdmin) {
         return false;
       }
       if (item.url === '/admin/vps' && !isSuperAdmin) {
