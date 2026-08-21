@@ -31,7 +31,18 @@ const OFFLINE_PUBLIC_ROUTES = [
   '/soud',
   '/soudni-rizeni',
   '/soudni-pruvodce',
-  '/court'
+  '/court',
+  '/vykon-rozhodnuti',
+  '/mareni-styku',
+  '/znalecke-posudky',
+  '/znalci',
+  '/odvolani',
+  '/opravne-prostredky',
+  '/dovolani',
+  '/ustavni-stiznost',
+  '/mezinarodni-spory',
+  '/umpod',
+  '/unos-ditete'
 ];
 
 // Sensitive routes that must NEVER be cached or returned from cache

@@ -51,6 +51,10 @@ import {
   OspodGuideView,
   CaseFileGuideView,
   CourtGuideView,
+  EnforcementGuideView,
+  ExpertReportsGuideView,
+  AppealsGuideView,
+  InternationalDisputesGuideView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -344,6 +348,22 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   }
   if (slug === 'soud' || slug === 'soudni-rizeni' || slug === 'soudni-pruvodce' || slug === 'court') {
     return <CourtGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'vykon-rozhodnuti' || slug === 'mareni-styku') {
+    return <EnforcementGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'znalecke-posudky' || slug === 'znalci') {
+    return <ExpertReportsGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'odvolani' || slug === 'opravne-prostredky' || slug === 'dovolani' || slug === 'ustavni-stiznost') {
+    return <AppealsGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'mezinarodni-spory' || slug === 'umpod' || slug === 'unos-ditete') {
+    return <InternationalDisputesGuideView onNavigate={onNavigate} />;
   }
 
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {

@@ -5,3 +5,7 @@ export * from './DocumentsView';
 export * from './OspodGuideView';
 export * from './CaseFileGuideView';
 export * from './CourtGuideView';
+export * from './EnforcementGuideView';
+export * from './ExpertReportsGuideView';
+export * from './AppealsGuideView';
+export * from './InternationalDisputesGuideView';
