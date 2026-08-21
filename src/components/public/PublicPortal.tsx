@@ -48,6 +48,15 @@ import {
   AiFormsView
 } from './ai';
 import {
+  OspodGuideView,
+  CaseFileGuideView,
+  CourtGuideView,
+  EnforcementGuideView,
+  ExpertReportsGuideView,
+  AppealsGuideView,
+  InternationalDisputesGuideView,
+  HealthcareGuideView,
+  SchoolsGuideView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -333,6 +342,40 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   if (slug === 'registr-subjektu' || slug === 'subjekty' || slug === 'hodnoceni-subjektu' || slug === 'hodnoceni') {
     return <RegistrSubjektu onNavigate={onNavigate} />;
   }
+  if (slug === 'ospod' || slug === 'socialni-setreni') {
+    return <OspodGuideView onNavigate={onNavigate} />;
+  }
+  if (slug === 'spis' || slug === 'nahlizeni-do-spisu' || slug === 'case-file') {
+    return <CaseFileGuideView onNavigate={onNavigate} />;
+  }
+  if (slug === 'soud' || slug === 'soudni-rizeni' || slug === 'soudni-pruvodce' || slug === 'court') {
+    return <CourtGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'vykon-rozhodnuti' || slug === 'mareni-styku') {
+    return <EnforcementGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'znalecke-posudky' || slug === 'znalci') {
+    return <ExpertReportsGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'odvolani' || slug === 'opravne-prostredky' || slug === 'dovolani' || slug === 'ustavni-stiznost') {
+    return <AppealsGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'mezinarodni-spory' || slug === 'umpod' || slug === 'unos-ditete') {
+    return <InternationalDisputesGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'zdravotni-pece' || slug === 'zdravotni-dokumentace' || slug === 'ocr') {
+    return <HealthcareGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'skola' || slug === 'skolka' || slug === 'skolni-informace' || slug === 'zmena-skoly') {
+    return <SchoolsGuideView onNavigate={onNavigate} />;
+  }
+
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {
     return <AgendaView onNavigate={onNavigate} />;
   }
