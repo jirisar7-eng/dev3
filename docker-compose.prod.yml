@@ -1,0 +1,52 @@
+services:
+  app:
+    container_name: tatovacesta_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav_scanner}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      MAILCOW_PUBLIC_URL: ${MAILCOW_PUBLIC_URL:-https://mail.tatovacesta.cz}
+      MAILCOW_URL: ${MAILCOW_URL:-https://mail.tatovacesta.cz}
+      MAILCOW_INTERNAL_URL: ${MAILCOW_INTERNAL_URL:-https://172.22.1.14}
+      MAILCOW_INTERNAL_IP: ${MAILCOW_INTERNAL_IP:-172.22.1.14}
+      MAILCOW_API_KEY: ${MAILCOW_API_KEY:-}
+    extra_hosts:
+      - "mail.tatovacesta.cz:${MAILCOW_INTERNAL_IP:-172.22.1.14}"
+    networks:
+      - default
+      - caddy_net
+      - mailcow_network
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_prod3
+    restart: always
+    environment:
+      POSTGRES_DB: tatovacesta_prod3
+      POSTGRES_USER: tatovacesta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_prod3:/var/lib/postgresql/data
+    networks:
+      - default
+volumes:
+  postgres_data_prod3:
+
+networks:
+  caddy_net:
+    external: true
+    name: tatovacesta_app_network
+
+  mailcow_network:
+    external: true
+    name: mailcow-dockerized_mailcow-network
