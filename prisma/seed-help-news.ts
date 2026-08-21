@@ -157,7 +157,7 @@ export async function runHelpNewsSeed() {
 }
 
 // Support direct run
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('seed-help-news.ts')) {
+if (process.argv[1]?.endsWith('seed-help-news.ts')) {
   runHelpNewsSeed()
     .then(() => {
       console.log('[Prisma Seed CLI] Dokončeno.');

@@ -978,7 +978,7 @@ export async function seedArticles() {
 }
 
 // Pokud je skript spuštěn přímo přes `tsx prisma/seed-articles.ts`
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (false) {
   seedArticles()
     .then(() => process.exit(0))
     .catch((err) => {

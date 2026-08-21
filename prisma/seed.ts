@@ -1565,7 +1565,7 @@ function seedInMemoryDbStore() {
 }
 
 // Podpora přímého spuštění přes CLI (`npx prisma db seed` / `tsx prisma/seed.ts`)
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('seed.ts')) {
+if (process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js') || process.argv[1]?.includes('seed')) {
   runSeed()
     .then(() => {
       console.log('[Prisma Seed CLI] Dokončeno.');
