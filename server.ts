@@ -122,6 +122,15 @@ const authRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for audit log (max. 60 requests per 15 minutes)
+const auditRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { error: 'Překročen limit pro zápis do audit logu.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // HEALTH CHECK ROUTE
 app.get('/api/health', async (_req, res) => {
   const prismaClient = getPrismaClient();
@@ -4370,10 +4379,28 @@ app.get('/api/audit', requireAuth as any, requireRole('ADMIN') as any, async (re
   res.json(logs);
 });
 
-app.post('/api/audit', async (req: AuthenticatedRequest, res) => {
-  const { action, module, details } = req.body;
-  const log = await AuditService.recordLog(action, module, details, req.user);
-  res.json(log);
+app.post('/api/audit', auditRateLimiter, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { action, module, details } = req.body;
+    
+    // Validate inputs to prevent spam and DB bloat
+    if (!action || typeof action !== 'string' || action.length > 50) {
+      return res.status(400).json({ error: 'Neplatná nebo příliš dlouhá akce (max 50 znaků).' });
+    }
+    if (!module || typeof module !== 'string' || module.length > 50) {
+      return res.status(400).json({ error: 'Neplatný nebo příliš dlouhý modul (max 50 znaků).' });
+    }
+    if (!details || typeof details !== 'string' || details.length > 1000) {
+      return res.status(400).json({ error: 'Neplatné nebo příliš dlouhé detaily (max 1000 znaků).' });
+    }
+
+    // Always use req.user (from parseAuthToken) if available, ignoring any client-provided user ID 
+    // to prevent spoofing. If not logged in, user is undefined (which is allowed for public errors like login failed).
+    const log = await AuditService.recordLog(action, module, details, req.user, req.ip);
+    res.json(log);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Chyba při zápisu do audit logu.' });
+  }
 });
 
 // 8. SYSTEM SETTINGS

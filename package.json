@@ -14,7 +14,8 @@
     "seed:admin": "tsx scripts/seedAdmin.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-pages": "tsx prisma/seed-pages.ts",
-    "db:seed-articles": "tsx prisma/seed-articles.ts"
+    "db:seed-articles": "tsx prisma/seed-articles.ts",
+    "test": "node scripts/test-runner.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

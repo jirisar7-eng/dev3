@@ -444,6 +444,18 @@ ${analysis.counterArguments.map((a, i) => `${i + 1}. ${a}`).join('\n')}`;
           )}
         </div>
       </div>
+      
+      {/* AI Disclaimer */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-4">
+        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex gap-3 text-xs text-amber-900">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <p>
+            <strong>Právní upozornění:</strong> Umělá inteligence (AI) může obsahovat chyby a generovat nepřesné informace. 
+            Analýza dokumentu slouží pouze jako informační pomoc a nenahrazuje odbornou právní nebo psychologickou pomoc. 
+            Výstup není právní radou ani právním zastoupením. Pro právní hodnocení dokumentu kontaktujte advokáta.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

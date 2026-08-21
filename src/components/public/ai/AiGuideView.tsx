@@ -568,6 +568,18 @@ export const AiGuideView: React.FC<AiGuideViewProps> = ({ onNavigate }) => {
           )}
         </div>
       )}
+      
+      {/* AI Disclaimer */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-4">
+        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex gap-3 text-xs text-amber-900">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <p>
+            <strong>Právní upozornění:</strong> Vygenerovaný procesní plán (AI) slouží pouze jako orientační průvodce. 
+            Právní situace v rodinném právu je vždy vysoce individuální. Tento výstup není právní radou, 
+            nenahrazuje odbornou pomoc advokáta a negarantuje výsledek u soudu. 
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

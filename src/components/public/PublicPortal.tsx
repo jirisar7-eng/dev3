@@ -27,6 +27,7 @@ import { LegalHubPage } from '../../pages/LegalHubPage';
 import { LegalDocsPage } from '../../pages/LegalDocsPage';
 import { MyCasePage } from '../../pages/MyCasePage';
 import { CoParentHubPage } from '../../pages/CoParentHubPage';
+import { AlimonyCalculatorPage } from '../../pages/AlimonyCalculatorPage';
 import SupportUsPage from "../../pages/SupportUsPage";
 import { AiContextView } from './AiContextView';
 import {
@@ -323,6 +324,9 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
   if (slug === 'ai-formulare' || slug === 'centrum-formularu' || slug === 'formulare') {
     return <AiFormsView onNavigate={onNavigate} />;
+  }
+if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
+    return <AlimonyCalculatorPage onNavigate={onNavigate} />;
   }
 
   // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty, /registr-subjektu)
