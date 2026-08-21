@@ -15,7 +15,8 @@ import {
   ExternalLink,
   ChevronRight,
   Play,
-  UserPlus
+  UserPlus,
+  AlertTriangle
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
 import { useAuth } from '../../../context/AuthContext';
@@ -1031,6 +1032,18 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
               {compiledText}
             </div>
           </div>
+        </div>
+      </div>
+      
+      {/* AI Disclaimer */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-4">
+        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex gap-3 text-xs text-amber-900">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <p>
+            <strong>Právní upozornění:</strong> Vygenerovaný dokument pomocí umělé inteligence (AI) slouží pouze jako předloha a inspirace. 
+            Může obsahovat faktické či právní nepřesnosti. Výstup nenahrazuje odbornou právní pomoc ani právní zastoupení. 
+            Před podáním na soud dokument důkladně zkontrolujte a případně zkonzultujte s advokátem.
+          </p>
         </div>
       </div>
     </div>
