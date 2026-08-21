@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# E2E / Playwright / Midscene test outputs
+test-results/
+midscene_run/
+playwright-report/
+blob-report/
