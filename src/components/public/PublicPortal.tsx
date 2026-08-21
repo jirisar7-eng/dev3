@@ -48,6 +48,8 @@ import {
   AiFormsView
 } from './ai';
 import {
+  OspodGuideView,
+  CaseFileGuideView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -333,6 +335,13 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   if (slug === 'registr-subjektu' || slug === 'subjekty' || slug === 'hodnoceni-subjektu' || slug === 'hodnoceni') {
     return <RegistrSubjektu onNavigate={onNavigate} />;
   }
+  if (slug === 'ospod' || slug === 'socialni-setreni') {
+    return <OspodGuideView onNavigate={onNavigate} />;
+  }
+  if (slug === 'spis' || slug === 'nahlizeni-do-spisu' || slug === 'case-file') {
+    return <CaseFileGuideView onNavigate={onNavigate} />;
+  }
+
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {
     return <AgendaView onNavigate={onNavigate} />;
   }

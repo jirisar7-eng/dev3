@@ -22,7 +22,12 @@ const OFFLINE_PUBLIC_ROUTES = [
   '/kontakt',
   '/kontakty',
   '/podpora',
-  '/support'
+  '/support',
+  '/ospod',
+  '/socialni-setreni',
+  '/spis',
+  '/nahlizeni-do-spisu',
+  '/case-file'
 ];
 
 // Sensitive routes that must NEVER be cached or returned from cache
