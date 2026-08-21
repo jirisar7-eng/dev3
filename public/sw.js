@@ -42,7 +42,14 @@ const OFFLINE_PUBLIC_ROUTES = [
   '/ustavni-stiznost',
   '/mezinarodni-spory',
   '/umpod',
-  '/unos-ditete'
+  '/unos-ditete',
+  '/zdravotni-pece',
+  '/zdravotni-dokumentace',
+  '/ocr',
+  '/skola',
+  '/skolka',
+  '/skolni-informace',
+  '/zmena-skoly'
 ];
 
 // Sensitive routes that must NEVER be cached or returned from cache

@@ -292,6 +292,77 @@ __________________________________________
 {{user.firstName}} {{user.lastName}}
 
 {{esbirka.clause}}`
+  },
+  {
+    id: 'zdravotni-informace',
+    title: '7. Žádost lékaři o informace o zdravotním stavu dítěte',
+    category: 'Zdravotnictví & Škola',
+    description: 'Písemná žádost poskytovateli zdravotních služeb (pediatrovi) o sdělení informací o zdravotním stavu dítěte podle zákona o zdravotních službách.',
+    lawsCited: [
+      'Zákon č. 372/2011 Sb., o zdravotních službách (§ 31 odst. 1 a § 41)',
+      'Zákon č. 89/2012 Sb., občanský zákoník (§ 858 a § 876 o.z.)'
+    ],
+    content: `Vážená paní doktorko / Vážený pane doktore,
+
+Žádost o sdělení informací o zdravotním stavu dítěte podle § 31 a násl. zákona č. 372/2011 Sb., o zdravotních službách
+
+Žadatel (zákonný zástupce):
+{{user.firstName}} {{user.lastName}}, nar. {{user.birthDate}}
+Bytem: {{user.street}}, {{user.city}}, {{user.zip}}
+Kontakt: [Váš e-mail / telefon]
+
+Nezletilý pacient:
+{{child.firstName}} {{child.lastName}}, nar. {{child.birthDate}}
+
+Jako zákonný zástupce výše jmenovaného nezletilého dítěte Vás žádám o poskytnutí úplných informací o jeho zdravotním stavu, probíhající léčbě a plánovaných zdravotních úkonech. 
+
+Podle § 31 zákona č. 372/2011 Sb., o zdravotních službách, mám jako zákonný zástupce nezletilého pacienta plné právo na tyto informace, bez ohledu na to, u kterého z rodičů se dítě zrovna nachází. Souhlas druhého rodiče k poskytnutí těchto informací není vyžadován.
+
+Prosím o zaslání informací nebo o návrh termínu osobní konzultace, na které by mi byl zdravotní stav dítěte vysvětlen.
+
+Předem Vám děkuji za součinnost a spolupráci.
+
+V {{user.city}} dne {{current.date}}
+
+__________________________________________
+{{user.firstName}} {{user.lastName}}
+zákonný zástupce nezletilého pacienta`
+  },
+  {
+    id: 'skolni-pristup',
+    title: '8. Žádost řediteli o přístup do školního systému (Bakaláři/EduPage)',
+    category: 'Zdravotnictví & Škola',
+    description: 'Písemná žádost škole o zřízení vlastního rodičovského přístupového účtu k elektronickému systému školy (známky, rozvrh, omluvenky).',
+    lawsCited: [
+      'Zákon č. 561/2004 Sb., školský zákon (§ 21 odst. 1 písm. b)',
+      'Zákon č. 89/2012 Sb., občanský zákoník (§ 858 a § 876 o.z.)'
+    ],
+    content: `Vážený pan ředitel / Vážená paní ředitelko,
+
+Žádost o zřízení samostatného rodičovského přístupu do školního informačního systému
+
+Žadatel (zákonný zástupce):
+{{user.firstName}} {{user.lastName}}, nar. {{user.birthDate}}
+Bytem: {{user.street}}, {{user.city}}, {{user.zip}}
+Kontakt: [Váš e-mail / telefon]
+
+Nezletilý žák / žákyně:
+{{child.firstName}} {{child.lastName}}, nar. {{child.birthDate}}
+Třída: [Doplňte třídu]
+
+Jako zákonný zástupce výše uvedeného nezletilého žáka / žákyně si Vás dovoluji požádat o zřízení a zaslání mých vlastních přihlašovacích údajů do elektronického informačního systému vaší školy (např. Bakaláři, EduPage, Škola OnLine).
+
+Podle § 21 odst. 1 písm. b) zákona č. 561/2004 Sb., školský zákon, mám jako zákonný zástupce právo na informace o průběhu a výsledcích vzdělávání dítěte. Rodičovská odpovědnost, jejíž součástí je dohled nad vzděláváním dítěte, náleží oběma rodičům bez ohledu na to, komu bylo dítě svěřeno do péče.
+
+Prosím o zaslání přístupových údajů na můj e-mail: [Váš e-mail]. Pokud systém neumožňuje zřídit dva nezávislé rodičovské účty, žádám Vás o návrh alternativního způsobu, jak mi budou tyto povinné informace ze strany školy doručovány (např. pravidelný e-mailový výpis, předávání papírové žákovské knížky atd.).
+
+Předem děkuji za spolupráci a Váš čas.
+
+V {{user.city}} dne {{current.date}}
+
+__________________________________________
+{{user.firstName}} {{user.lastName}}
+zákonný zástupce`
   }
 ];
 

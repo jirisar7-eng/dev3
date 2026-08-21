@@ -55,6 +55,8 @@ import {
   ExpertReportsGuideView,
   AppealsGuideView,
   InternationalDisputesGuideView,
+  HealthcareGuideView,
+  SchoolsGuideView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -364,6 +366,14 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
 
   if (slug === 'mezinarodni-spory' || slug === 'umpod' || slug === 'unos-ditete') {
     return <InternationalDisputesGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'zdravotni-pece' || slug === 'zdravotni-dokumentace' || slug === 'ocr') {
+    return <HealthcareGuideView onNavigate={onNavigate} />;
+  }
+
+  if (slug === 'skola' || slug === 'skolka' || slug === 'skolni-informace' || slug === 'zmena-skoly') {
+    return <SchoolsGuideView onNavigate={onNavigate} />;
   }
 
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {

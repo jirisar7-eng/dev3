@@ -9,3 +9,5 @@ export * from './EnforcementGuideView';
 export * from './ExpertReportsGuideView';
 export * from './AppealsGuideView';
 export * from './InternationalDisputesGuideView';
+export * from './HealthcareGuideView';
+export * from './SchoolsGuideView';
