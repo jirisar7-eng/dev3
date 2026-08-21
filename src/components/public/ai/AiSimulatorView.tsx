@@ -455,8 +455,8 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
         <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex gap-3 text-xs text-amber-900">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
           <p>
-            <strong>Právní upozornění:</strong> Tréninkový simulátor (AI) poskytuje pouze fiktivní scénáře pro nácvik komunikace. 
-            Hodnocení AI nenahrazuje skutečné stanovisko soudu ani orgánu OSPOD. 
+            <strong>Právní a psychologické upozornění:</strong> Tréninkový simulátor (AI) poskytuje pouze fiktivní scénáře pro nácvik komunikace. 
+            Hodnocení AI nenahrazuje skutečné stanovisko soudu ani orgánu OSPOD, a stejně tak nenahrazuje odbornou psychologickou pomoc. 
             Simulace neslouží jako právní rada a neposkytuje přesnou predikci chování reálných aktérů ve vašem případu.
           </p>
         </div>
