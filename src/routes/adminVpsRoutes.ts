@@ -1,17 +1,20 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
+import { AuditService } from '../services/auditService';
 import https from 'https';
 import http from 'http';
 import { URL } from 'url';
 
 const router = Router();
 
-// Ignorování neplatných/self-signed SSL certifikátů pro lokální/VPS komunikaci
-const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+// Bezpečné řízení TLS certifikátů: v produkci vyžadujeme platný certifikát (rejectUnauthorized: true),
+// ignorování certifikátu je povoleno pouze pokud je výslovně povoleno proměnnou ALLOW_INSECURE_PODMAN_TLS=true
+const allowInsecureTls = process.env.ALLOW_INSECURE_PODMAN_TLS === 'true';
+const httpsAgent = new https.Agent({ rejectUnauthorized: !allowInsecureTls });
 const httpAgent = new http.Agent();
 
 /**
- * Vrátí konfigurovanou URL adresu pro Podman / Docker REST API
+ * Vrátí konfigurovanou URL adresu nebo socket pro Podman / Docker REST API
  */
 function getPodmanApiUrl(): string {
   let url = process.env.PODMAN_API_URL || process.env.DOCKER_HOST || 'https://10.211.2.130:9090';
@@ -19,6 +22,18 @@ function getPodmanApiUrl(): string {
     url = url.replace('tcp://', 'http://');
   }
   return url.replace(/\/+$/, '');
+}
+
+/**
+ * Sanitizuje identifikátor kontejneru pro zamezení path traversal / injection
+ */
+function sanitizeContainerId(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const clean = String(input).trim();
+  if (/^[a-zA-Z0-9_.-]{1,128}$/.test(clean)) {
+    return clean;
+  }
+  return null;
 }
 
 /**
@@ -32,6 +47,60 @@ async function callPodmanApi(
 ): Promise<{ status: number; data: any; raw: string }> {
   const baseUrl = getPodmanApiUrl();
   const token = process.env.PODMAN_API_TOKEN || process.env.DOCKER_API_TOKEN;
+
+  // Podpora Unix domain socket (např. unix:///var/run/docker.sock)
+  if (baseUrl.startsWith('unix://')) {
+    const socketPath = baseUrl.replace('unix://', '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+    return new Promise((resolve, reject) => {
+      const reqOptions: http.RequestOptions = {
+        socketPath,
+        path: cleanPath,
+        method,
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Host': 'localhost',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        timeout: timeoutMs,
+      };
+
+      const req = http.request(reqOptions, (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          const raw = buffer.toString('binary');
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(buffer.toString('utf-8'));
+          } catch {
+            parsed = buffer.toString('utf-8');
+          }
+          resolve({
+            status: res.statusCode || 500,
+            data: parsed,
+            raw,
+          });
+        });
+      });
+
+      req.on('error', (err) => reject(err));
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error(`Časový limit vypršel (${timeoutMs}ms) při volání socketu (${socketPath})`));
+      });
+
+      if (body) {
+        const payload = typeof body === 'string' ? body : JSON.stringify(body);
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('Content-Length', Buffer.byteLength(payload));
+        req.write(payload);
+      }
+      req.end();
+    });
+  }
 
   const targetUrl = new URL(path.startsWith('/') ? path : `/${path}`, baseUrl);
   const isHttps = targetUrl.protocol === 'https:';
@@ -244,8 +313,9 @@ router.get('/status', requireAuth, requireRole('SUPER_ADMIN'), async (req: Reque
 // GET /api/admin/vps/logs - Načte logy kontejneru z Podman/Docker REST API
 router.get('/logs', requireAuth, requireRole('SUPER_ADMIN'), async (req: Request, res: Response) => {
   const apiUrl = getPodmanApiUrl();
-  const tail = parseInt(String(req.query.tail || '150'), 10) || 150;
-  const requestedContainer = req.query.container ? String(req.query.container) : null;
+  const rawTail = parseInt(String(req.query.tail || '150'), 10);
+  const tail = Math.min(Math.max(Number.isFinite(rawTail) ? rawTail : 150, 10), 1000);
+  const requestedContainer = sanitizeContainerId(req.query.container as string);
 
   try {
     const listResult = await fetchContainersList();
@@ -277,15 +347,16 @@ router.get('/logs', requireAuth, requireRole('SUPER_ADMIN'), async (req: Request
       }) || containers[0];
     }
 
-    const containerId = targetContainer.Id || targetContainer.id || targetContainer.ID;
+    const rawContainerId = targetContainer.Id || targetContainer.id || targetContainer.ID;
+    const containerId = sanitizeContainerId(rawContainerId) || 'unknown';
     const containerName = Array.isArray(targetContainer.Names)
       ? targetContainer.Names[0]
       : targetContainer.Names || targetContainer.name || containerId;
 
     const logPaths = [
-      `/v1.41/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`,
-      `/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`,
-      `/api/v1/podman/containers/${containerId}/logs?tail=${tail}`,
+      `/v1.41/containers/${encodeURIComponent(containerId)}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`,
+      `/containers/${encodeURIComponent(containerId)}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`,
+      `/api/v1/podman/containers/${encodeURIComponent(containerId)}/logs?tail=${tail}`,
     ];
 
     let rawLogText = '';
@@ -300,7 +371,7 @@ router.get('/logs', requireAuth, requireRole('SUPER_ADMIN'), async (req: Request
           break;
         }
       } catch (e) {
-        // Zkusíme další cesto
+        // Zkusíme další cestu
       }
     }
 
@@ -348,15 +419,32 @@ router.post('/update', requireAuth, requireRole('SUPER_ADMIN'), async (req: Requ
       return names.includes('app') || names.includes('dev3') || names.includes('tatovacesta');
     }) || listResult.containers[0];
 
-    const containerId = appContainer.Id || appContainer.id || appContainer.ID;
+    const rawContainerId = appContainer.Id || appContainer.id || appContainer.ID;
+    const containerId = sanitizeContainerId(rawContainerId);
+    if (!containerId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Neplatný identifikátor kontejneru',
+      });
+    }
+
     const containerName = Array.isArray(appContainer.Names) ? appContainer.Names[0] : appContainer.name || containerId;
 
     // Požadavek na restart kontejneru
     try {
-      await callPodmanApi(`/v1.41/containers/${containerId}/restart`, 'POST', null, 10000);
+      await callPodmanApi(`/v1.41/containers/${encodeURIComponent(containerId)}/restart`, 'POST', null, 10000);
     } catch {
-      await callPodmanApi(`/containers/${containerId}/restart`, 'POST', null, 10000);
+      await callPodmanApi(`/containers/${encodeURIComponent(containerId)}/restart`, 'POST', null, 10000);
     }
+
+    // Zaznamenání do audit logu
+    await AuditService.recordLog(
+      'VPS_CONTAINER_RESTART',
+      'VPS',
+      `SuperAdmin restartoval kontejner ${containerName} (${containerId})`,
+      (req as any).user,
+      req.ip || '127.0.0.1'
+    );
 
     return res.json({
       success: true,

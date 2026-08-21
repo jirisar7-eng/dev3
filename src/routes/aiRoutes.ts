@@ -1,8 +1,18 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { AiService } from '../services/AiService';
 
 const router = express.Router();
+
+// Strict rate limiter for public AI endpoints (10 requests per hour per IP)
+const aiRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: { error: 'Překročen limit dotazů na umělou inteligenci. Zkuste to prosím znovu za hodinu.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
@@ -34,7 +44,7 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
 });
 
 // Chat endpoint for AiAssistantView
-router.post('/chat', async (req, res) => {
+router.post('/chat', aiRateLimiter, async (req, res) => {
   try {
     const { messages, systemPrompt, mode } = req.body;
     const historyText = (messages || [])
@@ -57,7 +67,7 @@ Odpověz věcně, srozumitelně a strukturovaně v češtině.`;
 });
 
 // BIFF Message Converter
-router.post('/biff-convert', async (req, res) => {
+router.post('/biff-convert', aiRateLimiter, async (req, res) => {
   try {
     const { rawMessage } = req.body;
     if (!rawMessage) return res.status(400).json({ error: 'Chybí zpráva k převodu.' });
@@ -93,7 +103,7 @@ Vystup ve formátu JSON:
 });
 
 // Guide Action Plan Generator
-router.post('/guide-plan', async (req, res) => {
+router.post('/guide-plan', aiRateLimiter, async (req, res) => {
   try {
     const { childAge, conflictStage, ospodStance, primaryGoal } = req.body;
     const prompt = `Jsi stratég opatrovnického práva v ČR. Na základě následujících parametrů vytvoř personalizovaný akční plán na 7-30 dní:
@@ -134,7 +144,7 @@ Vystup ve formátu JSON:
 });
 
 // Document Analysis for AiCaseManagerView
-router.post('/analyze-document', async (req, res) => {
+router.post('/analyze-document', aiRateLimiter, async (req, res) => {
   try {
     const { documentText, documentType } = req.body;
     if (!documentText) return res.status(400).json({ error: 'Chybí text dokumentu.' });
@@ -180,7 +190,7 @@ Vystup ve formátu JSON:
 });
 
 // Simulator Evaluation
-router.post('/simulator-evaluate', async (req, res) => {
+router.post('/simulator-evaluate', aiRateLimiter, async (req, res) => {
   try {
     const { scenario, history } = req.body;
     const prompt = `Jsi lektor komunikace a právní taktiky v opatrovnických řízeních.
