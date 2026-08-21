@@ -11,7 +11,7 @@ import {
   Zap,
   ArrowRight,
   FileText,
-  AlertCircle,
+  AlertCircle, AlertTriangle,
   BookOpen
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
@@ -40,7 +40,7 @@ const PRESET_QUESTIONS = [
     prompt: 'Jaká je aktuální judikatura Ústavního soudu ohledně střídavé péče a přespávání dětí útlého věku (kojenec/batole) u obou rodičů?'
   },
   {
-    icon: AlertCircle,
+    icon: AlertCircle, AlertTriangle,
     label: 'Postup při bránění a odepření styku',
     prompt: 'Matka mi bezdůvodně odepřela styk s dcerou. Jaký je přesný procesní postup v prvních 24 a 48 hodinách (OSPOD, PČR, soud)?'
   },
@@ -272,6 +272,14 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Vyčistit chat</span>
               </button>
+            </div>
+
+            {/* Legal Disclaimer */}
+            <div className="bg-amber-50 border-b border-amber-100 px-4 py-2.5 flex items-start gap-2 text-[11px] text-amber-800">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="leading-tight">
+                <strong>Upozornění:</strong> Odpovědi AI asistenta mají pouze informativní charakter a <strong>nenahrazují závaznou právní radu advokáta</strong>. Před provedením zásadních právních úkonů se poraďte s odborníkem.
+              </p>
             </div>
 
             {/* Messages Body */}
