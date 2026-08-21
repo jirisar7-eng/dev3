@@ -1,10 +1,47 @@
-const CACHE_NAME = 'tata-ma-pravo-v1';
+const CACHE_NAME = 'tata-ma-pravo-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/offline.html',
   '/manifest.json',
   '/icon.svg',
   '/robots.txt'
+];
+
+// Offline public routes that should render the React App Shell when offline
+const OFFLINE_PUBLIC_ROUTES = [
+  '/krizova-pomoc',
+  '/sos-plan',
+  '/crisis',
+  '/pravni-poradna',
+  '/advice',
+  '/prava',
+  '/rights',
+  '/faq',
+  '/clanky',
+  '/metodika',
+  '/kontakt',
+  '/kontakty',
+  '/podpora',
+  '/support'
+];
+
+// Sensitive routes that must NEVER be cached or returned from cache
+const SENSITIVE_ROUTES = [
+  '/api',
+  '/auth/',
+  '/mfa',
+  '/login',
+  '/register',
+  '/registrace',
+  '/admin',
+  '/administrace',
+  '/private',
+  '/muj-pripad',
+  '/moje-slozka',
+  '/pripad',
+  '/coparent-hub',
+  '/coparent',
+  '/spolurodicovsky-hub'
 ];
 
 // Install Event - Precache kritické assets
@@ -45,18 +82,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. NECACHEOVAT /api/*, auth, mfa, login, registr, admin nebo citlivé endpoints
-  if (
-    url.pathname.startsWith('/api') ||
-    url.pathname.includes('/auth/') ||
-    url.pathname.includes('/mfa') ||
-    url.pathname.includes('/login') ||
-    url.pathname.includes('/register') ||
-    url.pathname.includes('/administrace') ||
-    url.pathname.includes('/admin') ||
-    url.pathname.includes('/private/')
-  ) {
+  // 2. NECACHEOVAT citlivé endpoints a privátní stránky
+  const isSensitive = SENSITIVE_ROUTES.some(route => url.pathname.startsWith(route));
+  if (isSensitive) {
     // Network only - absolutní bezpečnost citlivých dat
+    event.respondWith(fetch(event.request).catch(() => caches.match('/offline.html')));
     return;
   }
 
@@ -75,11 +105,19 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Pokud síť selže, zkusit vrátit cachovanou verzi nebo offline fallback
+          // Pokud síť selže, zkusit vrátit cachovanou verzi
           return caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
               return cachedResponse;
             }
+            
+            // Je to veřejná krizová nebo info stránka? Vrátit App Shell (root /) aby React mohl zobrazit UI
+            const isOfflinePublicRoute = OFFLINE_PUBLIC_ROUTES.some(route => url.pathname === route || url.pathname.startsWith(route + '/')) || url.pathname === '/';
+            if (isOfflinePublicRoute) {
+              return caches.match('/');
+            }
+            
+            // Jinak nativní offline fallback
             return caches.match('/offline.html');
           });
         })
@@ -89,8 +127,8 @@ self.addEventListener('fetch', (event) => {
 
   // 4. Statické assets (JS, CSS, Obrázky, Fonty) - Cache First s Network fallbackem
   const isStaticAsset = 
-    url.pathname.includes('/assets/') || 
-    url.pathname.includes('/fonts/') ||
+     url.pathname.includes('/assets/') || 
+     url.pathname.includes('/fonts/') ||
     url.pathname.endsWith('.js') ||
     url.pathname.endsWith('.css') ||
     url.pathname.endsWith('.svg') ||
@@ -114,13 +152,15 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, responseClone);
           });
           return response;
+        }).catch(() => {
+          // Ignorovat u static assets
         });
       })
     );
     return;
   }
 
-  // 5. Ostatní requesty - Network First s fallbackem do cache
+  // 5. Ostatní veřejné requesty (např. externí obrázky) - Network First s fallbackem do cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
