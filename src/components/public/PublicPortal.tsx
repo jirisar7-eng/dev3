@@ -50,6 +50,7 @@ import {
 import {
   OspodGuideView,
   CaseFileGuideView,
+  CourtGuideView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -340,6 +341,9 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   }
   if (slug === 'spis' || slug === 'nahlizeni-do-spisu' || slug === 'case-file') {
     return <CaseFileGuideView onNavigate={onNavigate} />;
+  }
+  if (slug === 'soud' || slug === 'soudni-rizeni' || slug === 'soudni-pruvodce' || slug === 'court') {
+    return <CourtGuideView onNavigate={onNavigate} />;
   }
 
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {

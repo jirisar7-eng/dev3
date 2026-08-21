@@ -27,7 +27,11 @@ const OFFLINE_PUBLIC_ROUTES = [
   '/socialni-setreni',
   '/spis',
   '/nahlizeni-do-spisu',
-  '/case-file'
+  '/case-file',
+  '/soud',
+  '/soudni-rizeni',
+  '/soudni-pruvodce',
+  '/court'
 ];
 
 // Sensitive routes that must NEVER be cached or returned from cache
