@@ -1,0 +1,25 @@
+{
+  "name": "Táta má právo",
+  "short_name": "Táta má právo",
+  "description": "Informační a klientský portál pro otce v rozvodové situaci, sdílené rodičovství a krizovou pomoc.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1e3a8a",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

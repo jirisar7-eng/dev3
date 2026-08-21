@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jste offline | Táta má právo</title>
+    <style>
+      :root {
+        --sp-bg: #f8fafc;
+        --sp-card: #ffffff;
+        --sp-title: #0f172a;
+        --sp-text: #64748b;
+        --sp-brand: #1e3a8a;
+        --sp-brand-light: #2563eb;
+        --sp-border: #e2e8f0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --sp-bg: #0f172a;
+          --sp-card: #1e293b;
+          --sp-title: #f8fafc;
+          --sp-text: #94a3b8;
+          --sp-brand: #3b82f6;
+          --sp-brand-light: #60a5fa;
+          --sp-border: #334155;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--sp-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 1.5rem;
+      }
+      .sp-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 440px;
+        width: 100%;
+        background: var(--sp-card);
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--sp-border);
+      }
+      .sp-logo {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ef4444, #f43f5e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px -5px rgba(244, 63, 94, 0.3);
+      }
+      .sp-logo svg {
+        width: 36px;
+        height: 36px;
+        color: #ffffff;
+      }
+      .sp-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--sp-title);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.025em;
+      }
+      .sp-subtitle {
+        font-size: 0.95rem;
+        color: var(--sp-text);
+        margin: 0 0 2rem 0;
+        line-height: 1.5;
+      }
+      .sp-retry-btn {
+        background-color: var(--sp-brand);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        width: 100%;
+        box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.1);
+      }
+      .sp-retry-btn:hover {
+        background-color: var(--sp-brand-light);
+      }
+      .sp-retry-btn:active {
+        transform: scale(0.98);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sp-card">
+      <div class="sp-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+      <h1 class="sp-title">Jste offline</h1>
+      <p class="sp-subtitle">
+        Momentálně nemáte připojení k internetu. Základní obsah aplikace bude dostupný pouze tehdy, pokud byl předem načten a uložen do vašeho zařízení.
+      </p>
+      <button class="sp-retry-btn" onclick="window.location.reload()">Zkusit znovu</button>
+    </div>
+  </body>
+</html>
