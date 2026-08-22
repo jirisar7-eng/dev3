@@ -3544,6 +3544,139 @@ app.delete('/api/cms/studies/:id', requireAuth as any, requireRole('ADMIN') as a
   }
 });
 
+// --- WIKI / ENCYKLOPEDIE CMS ROUTES ---
+app.get('/api/cms/wiki', async (req, res) => {
+  try {
+    const { status, category, search, letter } = req.query;
+    const terms = await CmsService.getWikiTerms({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+      letter: letter as string,
+    });
+    res.json(terms);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/wiki/slug/:slug', async (req, res) => {
+  try {
+    const term = await CmsService.getWikiTermBySlug(req.params.slug);
+    if (!term) {
+      return res.status(404).json({ error: 'Wiki pojem nenalezen.' });
+    }
+    res.json(term);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/wiki/:id', async (req, res) => {
+  try {
+    const term = await CmsService.getWikiTermById(req.params.id);
+    if (!term) {
+      return res.status(404).json({ error: 'Wiki pojem nenalezen.' });
+    }
+    res.json(term);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/wiki', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const term = await CmsService.createWikiTerm(req.body, req.user);
+    res.json(term);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/wiki/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const term = await CmsService.updateWikiTerm(req.params.id, req.body, req.user);
+    res.json(term);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/wiki/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteWikiTerm(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- LEGAL GUIDES / PRÁVNÍ PRŮVODCI CMS ROUTES ---
+app.get('/api/cms/legal-guides', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const guides = await CmsService.getLegalGuides({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(guides);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/legal-guides/slug/:slug', async (req, res) => {
+  try {
+    const guide = await CmsService.getLegalGuideBySlug(req.params.slug);
+    if (!guide) {
+      return res.status(404).json({ error: 'Právní průvodce nenalezen.' });
+    }
+    res.json(guide);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/legal-guides/:id', async (req, res) => {
+  try {
+    const guide = await CmsService.getLegalGuideById(req.params.id);
+    if (!guide) {
+      return res.status(404).json({ error: 'Právní průvodce nenalezen.' });
+    }
+    res.json(guide);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/legal-guides', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const guide = await CmsService.createLegalGuide(req.body, req.user);
+    res.json(guide);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/legal-guides/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const guide = await CmsService.updateLegalGuide(req.params.id, req.body, req.user);
+    res.json(guide);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/legal-guides/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteLegalGuide(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // PDF Upload Route for Studies (Atomic MinIO Object Store + ClamAV Antivirus Scan)
 app.post('/api/cms/studies/upload-pdf', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   let uploadedObjectKey: string | null = null;

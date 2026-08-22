@@ -1,6 +1,6 @@
 import { prisma, markPrismaUnavailable, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
-import { Page, PageSection, Category, Article, Faq, NavItem, MediaItem, User } from '../types';
+import { Page, PageSection, Category, Article, Faq, NavItem, MediaItem, User, WikiTerm, LegalGuide, LegalGuideChapter } from '../types';
 
 export class CmsService {
   // --- PAGES & SECTIONS ---
@@ -1189,4 +1189,826 @@ export class CmsService {
       dbStore.logAudit('MEDIA_DELETE', 'CMS', `Smazáno médium '${name}'.`, user);
     }
   }
+
+  // --- WIKI / ENCYKLOPEDIE ---
+  static async getWikiTerms(filter?: { status?: string; category?: string; search?: string; letter?: string }): Promise<WikiTerm[]> {
+    if (isPrismaAvailable()) {
+      try {
+        const where: any = {};
+        if (filter?.status) where.status = filter.status;
+        if (filter?.category && filter.category !== 'all') where.category = filter.category;
+        if (filter?.letter && filter.letter !== 'all') where.firstLetter = filter.letter.toUpperCase();
+        if (filter?.search) {
+          where.OR = [
+            { term: { contains: filter.search, mode: 'insensitive' } },
+            { definition: { contains: filter.search, mode: 'insensitive' } },
+            { citation: { contains: filter.search, mode: 'insensitive' } },
+          ];
+        }
+
+        const terms = await (prisma as any).wikiTerm.findMany({
+          where,
+          orderBy: [{ term: 'asc' }],
+        });
+
+        return terms.map((t: any) => ({
+          id: t.id,
+          slug: t.slug,
+          term: t.term,
+          firstLetter: t.firstLetter,
+          category: t.category,
+          categoryLabel: t.categoryLabel,
+          citation: t.citation || undefined,
+          definition: t.definition,
+          practicalTips: Array.isArray(t.practicalTips) ? t.practicalTips : [],
+          relatedTerms: Array.isArray(t.relatedTerms) ? t.relatedTerms : [],
+          order: t.order,
+          status: t.status,
+          seoTitle: t.seoTitle || undefined,
+          seoDescription: t.seoDescription || undefined,
+          sources: Array.isArray(t.sources) ? t.sources : [],
+          createdBy: t.createdBy || undefined,
+          updatedBy: t.updatedBy || undefined,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        }));
+      } catch (err) {
+        console.warn('Prisma getWikiTerms error, falling back:', err);
+      }
+    }
+
+    let result = [...dbStore.wikiTerms];
+    if (filter?.status) {
+      result = result.filter((t) => t.status === filter.status);
+    }
+    if (filter?.category && filter.category !== 'all') {
+      result = result.filter((t) => t.category === filter.category);
+    }
+    if (filter?.letter && filter.letter !== 'all') {
+      result = result.filter((t) => t.firstLetter.toUpperCase() === filter.letter!.toUpperCase());
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.term.toLowerCase().includes(q) ||
+          t.definition.toLowerCase().includes(q) ||
+          (t.citation && t.citation.toLowerCase().includes(q))
+      );
+    }
+
+    return result.sort((a, b) => a.term.localeCompare(b.term, 'cs'));
+  }
+
+  static async getWikiTermBySlug(slug: string): Promise<WikiTerm | null> {
+    if (isPrismaAvailable()) {
+      try {
+        const t = await (prisma as any).wikiTerm.findUnique({
+          where: { slug },
+        });
+        if (!t) return null;
+        return {
+          id: t.id,
+          slug: t.slug,
+          term: t.term,
+          firstLetter: t.firstLetter,
+          category: t.category,
+          categoryLabel: t.categoryLabel,
+          citation: t.citation || undefined,
+          definition: t.definition,
+          practicalTips: Array.isArray(t.practicalTips) ? t.practicalTips : [],
+          relatedTerms: Array.isArray(t.relatedTerms) ? t.relatedTerms : [],
+          order: t.order,
+          status: t.status,
+          seoTitle: t.seoTitle || undefined,
+          seoDescription: t.seoDescription || undefined,
+          sources: Array.isArray(t.sources) ? t.sources : [],
+          createdBy: t.createdBy || undefined,
+          updatedBy: t.updatedBy || undefined,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma getWikiTermBySlug error, falling back:', err);
+      }
+    }
+
+    return dbStore.wikiTerms.find((t) => t.slug === slug) || null;
+  }
+
+  static async getWikiTermById(id: string): Promise<WikiTerm | null> {
+    if (isPrismaAvailable()) {
+      try {
+        const t = await (prisma as any).wikiTerm.findUnique({
+          where: { id },
+        });
+        if (!t) return null;
+        return {
+          id: t.id,
+          slug: t.slug,
+          term: t.term,
+          firstLetter: t.firstLetter,
+          category: t.category,
+          categoryLabel: t.categoryLabel,
+          citation: t.citation || undefined,
+          definition: t.definition,
+          practicalTips: Array.isArray(t.practicalTips) ? t.practicalTips : [],
+          relatedTerms: Array.isArray(t.relatedTerms) ? t.relatedTerms : [],
+          order: t.order,
+          status: t.status,
+          seoTitle: t.seoTitle || undefined,
+          seoDescription: t.seoDescription || undefined,
+          sources: Array.isArray(t.sources) ? t.sources : [],
+          createdBy: t.createdBy || undefined,
+          updatedBy: t.updatedBy || undefined,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma getWikiTermById error, falling back:', err);
+      }
+    }
+
+    return dbStore.wikiTerms.find((t) => t.id === id) || null;
+  }
+
+  static async createWikiTerm(data: Partial<WikiTerm>, user?: User | null): Promise<WikiTerm> {
+    const slug = data.slug || data.term?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `wiki-${Date.now()}`;
+    const firstLetter = (data.firstLetter || data.term?.trim().charAt(0) || 'A').toUpperCase();
+
+    if (isPrismaAvailable()) {
+      try {
+        const created = await (prisma as any).wikiTerm.create({
+          data: {
+            slug,
+            term: data.term || 'Nový pojem',
+            firstLetter,
+            category: data.category || 'pravo',
+            categoryLabel: data.categoryLabel || 'Právní pojmy',
+            citation: data.citation || null,
+            definition: data.definition || '',
+            practicalTips: data.practicalTips || [],
+            relatedTerms: data.relatedTerms || [],
+            order: data.order || 0,
+            status: data.status || 'PUBLISHED',
+            seoTitle: data.seoTitle || null,
+            seoDescription: data.seoDescription || null,
+            sources: data.sources || [],
+            createdBy: user?.email || 'admin',
+            updatedBy: user?.email || 'admin',
+          },
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            userId: user?.id,
+            userEmail: user?.email,
+            action: 'WIKI_CREATE',
+            module: 'CMS_WIKI',
+            details: `Vytvořen nový wiki pojem '${created.term}' (slug: ${created.slug}).`,
+          },
+        });
+
+        return {
+          id: created.id,
+          slug: created.slug,
+          term: created.term,
+          firstLetter: created.firstLetter,
+          category: created.category,
+          categoryLabel: created.categoryLabel,
+          citation: created.citation || undefined,
+          definition: created.definition,
+          practicalTips: created.practicalTips || [],
+          relatedTerms: created.relatedTerms || [],
+          order: created.order,
+          status: created.status,
+          seoTitle: created.seoTitle || undefined,
+          seoDescription: created.seoDescription || undefined,
+          sources: created.sources || [],
+          createdBy: created.createdBy || undefined,
+          updatedBy: created.updatedBy || undefined,
+          createdAt: created.createdAt.toISOString(),
+          updatedAt: created.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma createWikiTerm error, falling back:', err);
+      }
+    }
+
+    const newTerm: WikiTerm = {
+      id: 'wiki-' + Date.now(),
+      slug,
+      term: data.term || 'Nový pojem',
+      firstLetter,
+      category: data.category || 'pravo',
+      categoryLabel: data.categoryLabel || 'Právní pojmy',
+      citation: data.citation || undefined,
+      definition: data.definition || '',
+      practicalTips: data.practicalTips || [],
+      relatedTerms: data.relatedTerms || [],
+      order: data.order || 0,
+      status: data.status || 'PUBLISHED',
+      seoTitle: data.seoTitle || undefined,
+      seoDescription: data.seoDescription || undefined,
+      sources: data.sources || [],
+      createdBy: user?.email || 'admin',
+      updatedBy: user?.email || 'admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    dbStore.wikiTerms.push(newTerm);
+    dbStore.logAudit('WIKI_CREATE', 'CMS_WIKI', `Vytvořen nový wiki pojem '${newTerm.term}'.`, user);
+    return newTerm;
+  }
+
+  static async updateWikiTerm(id: string, data: Partial<WikiTerm>, user?: User | null): Promise<WikiTerm> {
+    if (isPrismaAvailable()) {
+      try {
+        const updatePayload: any = {
+          updatedBy: user?.email || 'admin',
+        };
+        if (data.term !== undefined) {
+          updatePayload.term = data.term;
+          if (!data.firstLetter && data.term.trim()) {
+            updatePayload.firstLetter = data.term.trim().charAt(0).toUpperCase();
+          }
+        }
+        if (data.slug !== undefined) updatePayload.slug = data.slug;
+        if (data.firstLetter !== undefined) updatePayload.firstLetter = data.firstLetter.toUpperCase();
+        if (data.category !== undefined) updatePayload.category = data.category;
+        if (data.categoryLabel !== undefined) updatePayload.categoryLabel = data.categoryLabel;
+        if (data.citation !== undefined) updatePayload.citation = data.citation;
+        if (data.definition !== undefined) updatePayload.definition = data.definition;
+        if (data.practicalTips !== undefined) updatePayload.practicalTips = data.practicalTips;
+        if (data.relatedTerms !== undefined) updatePayload.relatedTerms = data.relatedTerms;
+        if (data.order !== undefined) updatePayload.order = data.order;
+        if (data.status !== undefined) updatePayload.status = data.status;
+        if (data.seoTitle !== undefined) updatePayload.seoTitle = data.seoTitle;
+        if (data.seoDescription !== undefined) updatePayload.seoDescription = data.seoDescription;
+        if (data.sources !== undefined) updatePayload.sources = data.sources;
+
+        const updated = await (prisma as any).wikiTerm.update({
+          where: { id },
+          data: updatePayload,
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            userId: user?.id,
+            userEmail: user?.email,
+            action: 'WIKI_UPDATE',
+            module: 'CMS_WIKI',
+            details: `Upraven wiki pojem '${updated.term}' (${id}).`,
+          },
+        });
+
+        return {
+          id: updated.id,
+          slug: updated.slug,
+          term: updated.term,
+          firstLetter: updated.firstLetter,
+          category: updated.category,
+          categoryLabel: updated.categoryLabel,
+          citation: updated.citation || undefined,
+          definition: updated.definition,
+          practicalTips: updated.practicalTips || [],
+          relatedTerms: updated.relatedTerms || [],
+          order: updated.order,
+          status: updated.status,
+          seoTitle: updated.seoTitle || undefined,
+          seoDescription: updated.seoDescription || undefined,
+          sources: updated.sources || [],
+          createdBy: updated.createdBy || undefined,
+          updatedBy: updated.updatedBy || undefined,
+          createdAt: updated.createdAt.toISOString(),
+          updatedAt: updated.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma updateWikiTerm error, falling back:', err);
+      }
+    }
+
+    const idx = dbStore.wikiTerms.findIndex((t) => t.id === id);
+    if (idx === -1) {
+      throw new Error(`Wiki pojem s ID ${id} nebyl nalezen.`);
+    }
+
+    const current = dbStore.wikiTerms[idx];
+    const updatedTerm: WikiTerm = {
+      ...current,
+      ...data,
+      firstLetter: data.firstLetter ? data.firstLetter.toUpperCase() : (data.term ? data.term.trim().charAt(0).toUpperCase() : current.firstLetter),
+      updatedBy: user?.email || 'admin',
+      updatedAt: new Date().toISOString(),
+    };
+
+    dbStore.wikiTerms[idx] = updatedTerm;
+    dbStore.logAudit('WIKI_UPDATE', 'CMS_WIKI', `Upraven wiki pojem '${updatedTerm.term}'.`, user);
+    return updatedTerm;
+  }
+
+  static async deleteWikiTerm(id: string, user?: User | null): Promise<void> {
+    if (isPrismaAvailable()) {
+      try {
+        const item = await (prisma as any).wikiTerm.findUnique({ where: { id } });
+        if (item) {
+          await (prisma as any).wikiTerm.delete({ where: { id } });
+          await prisma.auditLog.create({
+            data: {
+              userId: user?.id,
+              userEmail: user?.email,
+              action: 'WIKI_DELETE',
+              module: 'CMS_WIKI',
+              details: `Smazán wiki pojem '${item.term}' (${id}).`,
+            },
+          });
+        }
+        return;
+      } catch (err) {
+        console.warn('Prisma deleteWikiTerm error, falling back:', err);
+      }
+    }
+
+    const idx = dbStore.wikiTerms.findIndex((t) => t.id === id);
+    if (idx !== -1) {
+      const term = dbStore.wikiTerms[idx].term;
+      dbStore.wikiTerms.splice(idx, 1);
+      dbStore.logAudit('WIKI_DELETE', 'CMS_WIKI', `Smazán wiki pojem '${term}'.`, user);
+    }
+  }
+
+  // --- LEGAL GUIDES / PRÁVNÍ PRŮVODCI ---
+  static async getLegalGuides(filter?: { status?: string; category?: string; search?: string }): Promise<LegalGuide[]> {
+    if (isPrismaAvailable()) {
+      try {
+        const where: any = {};
+        if (filter?.status) where.status = filter.status;
+        if (filter?.category && filter.category !== 'all') where.category = filter.category;
+        if (filter?.search) {
+          where.OR = [
+            { title: { contains: filter.search, mode: 'insensitive' } },
+            { subtitle: { contains: filter.search, mode: 'insensitive' } },
+            { excerpt: { contains: filter.search, mode: 'insensitive' } },
+          ];
+        }
+
+        const guides = await (prisma as any).legalGuide.findMany({
+          where,
+          include: {
+            chapters: {
+              orderBy: { order: 'asc' },
+            },
+          },
+          orderBy: [{ order: 'asc' }, { title: 'asc' }],
+        });
+
+        return guides.map((g: any) => ({
+          id: g.id,
+          slug: g.slug,
+          title: g.title,
+          subtitle: g.subtitle || undefined,
+          excerpt: g.excerpt,
+          category: g.category,
+          categoryLabel: g.categoryLabel,
+          order: g.order,
+          status: g.status,
+          badgeText: g.badgeText || undefined,
+          badgeBg: g.badgeBg || undefined,
+          disclaimer: g.disclaimer || undefined,
+          sources: Array.isArray(g.sources) ? g.sources : [],
+          chapters: (g.chapters || []).map((ch: any) => ({
+            id: ch.id,
+            title: ch.title,
+            content: ch.content,
+            order: ch.order,
+            icon: ch.icon || undefined,
+            type: ch.type || 'info',
+            checklistItems: Array.isArray(ch.checklistItems) ? ch.checklistItems : [],
+            faqItems: Array.isArray(ch.faqItems) ? ch.faqItems : [],
+          })),
+          checklist: Array.isArray(g.checklist) ? g.checklist : [],
+          faqs: Array.isArray(g.faqs) ? g.faqs : [],
+          seoTitle: g.seoTitle || undefined,
+          seoDescription: g.seoDescription || undefined,
+          createdBy: g.createdBy || undefined,
+          updatedBy: g.updatedBy || undefined,
+          createdAt: g.createdAt.toISOString(),
+          updatedAt: g.updatedAt.toISOString(),
+        }));
+      } catch (err) {
+        console.warn('Prisma getLegalGuides error, falling back:', err);
+      }
+    }
+
+    let result = [...dbStore.legalGuides];
+    if (filter?.status) {
+      result = result.filter((g) => g.status === filter.status);
+    }
+    if (filter?.category && filter.category !== 'all') {
+      result = result.filter((g) => g.category === filter.category);
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      result = result.filter(
+        (g) =>
+          g.title.toLowerCase().includes(q) ||
+          (g.subtitle && g.subtitle.toLowerCase().includes(q)) ||
+          g.excerpt.toLowerCase().includes(q)
+      );
+    }
+
+    return result.sort((a, b) => a.order - b.order);
+  }
+
+  static async getLegalGuideBySlug(slug: string): Promise<LegalGuide | null> {
+    if (isPrismaAvailable()) {
+      try {
+        const g = await (prisma as any).legalGuide.findUnique({
+          where: { slug },
+          include: {
+            chapters: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        });
+        if (!g) return null;
+        return {
+          id: g.id,
+          slug: g.slug,
+          title: g.title,
+          subtitle: g.subtitle || undefined,
+          excerpt: g.excerpt,
+          category: g.category,
+          categoryLabel: g.categoryLabel,
+          order: g.order,
+          status: g.status,
+          badgeText: g.badgeText || undefined,
+          badgeBg: g.badgeBg || undefined,
+          disclaimer: g.disclaimer || undefined,
+          sources: Array.isArray(g.sources) ? g.sources : [],
+          chapters: (g.chapters || []).map((ch: any) => ({
+            id: ch.id,
+            title: ch.title,
+            content: ch.content,
+            order: ch.order,
+            icon: ch.icon || undefined,
+            type: ch.type || 'info',
+            checklistItems: Array.isArray(ch.checklistItems) ? ch.checklistItems : [],
+            faqItems: Array.isArray(ch.faqItems) ? ch.faqItems : [],
+          })),
+          checklist: Array.isArray(g.checklist) ? g.checklist : [],
+          faqs: Array.isArray(g.faqs) ? g.faqs : [],
+          seoTitle: g.seoTitle || undefined,
+          seoDescription: g.seoDescription || undefined,
+          createdBy: g.createdBy || undefined,
+          updatedBy: g.updatedBy || undefined,
+          createdAt: g.createdAt.toISOString(),
+          updatedAt: g.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma getLegalGuideBySlug error, falling back:', err);
+      }
+    }
+
+    return dbStore.legalGuides.find((g) => g.slug === slug) || null;
+  }
+
+  static async getLegalGuideById(id: string): Promise<LegalGuide | null> {
+    if (isPrismaAvailable()) {
+      try {
+        const g = await (prisma as any).legalGuide.findUnique({
+          where: { id },
+          include: {
+            chapters: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        });
+        if (!g) return null;
+        return {
+          id: g.id,
+          slug: g.slug,
+          title: g.title,
+          subtitle: g.subtitle || undefined,
+          excerpt: g.excerpt,
+          category: g.category,
+          categoryLabel: g.categoryLabel,
+          order: g.order,
+          status: g.status,
+          badgeText: g.badgeText || undefined,
+          badgeBg: g.badgeBg || undefined,
+          disclaimer: g.disclaimer || undefined,
+          sources: Array.isArray(g.sources) ? g.sources : [],
+          chapters: (g.chapters || []).map((ch: any) => ({
+            id: ch.id,
+            title: ch.title,
+            content: ch.content,
+            order: ch.order,
+            icon: ch.icon || undefined,
+            type: ch.type || 'info',
+            checklistItems: Array.isArray(ch.checklistItems) ? ch.checklistItems : [],
+            faqItems: Array.isArray(ch.faqItems) ? ch.faqItems : [],
+          })),
+          checklist: Array.isArray(g.checklist) ? g.checklist : [],
+          faqs: Array.isArray(g.faqs) ? g.faqs : [],
+          seoTitle: g.seoTitle || undefined,
+          seoDescription: g.seoDescription || undefined,
+          createdBy: g.createdBy || undefined,
+          updatedBy: g.updatedBy || undefined,
+          createdAt: g.createdAt.toISOString(),
+          updatedAt: g.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma getLegalGuideById error, falling back:', err);
+      }
+    }
+
+    return dbStore.legalGuides.find((g) => g.id === id) || null;
+  }
+
+  static async createLegalGuide(data: Partial<LegalGuide>, user?: User | null): Promise<LegalGuide> {
+    const slug = data.slug || data.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `guide-${Date.now()}`;
+
+    if (isPrismaAvailable()) {
+      try {
+        const created = await (prisma as any).legalGuide.create({
+          data: {
+            slug,
+            title: data.title || 'Nový právní průvodce',
+            subtitle: data.subtitle || null,
+            excerpt: data.excerpt || '',
+            category: data.category || 'ospod',
+            categoryLabel: data.categoryLabel || 'OSPOD & Sociální šetření',
+            order: data.order || 0,
+            status: data.status || 'PUBLISHED',
+            badgeText: data.badgeText || null,
+            badgeBg: data.badgeBg || null,
+            disclaimer: data.disclaimer || null,
+            sources: data.sources || [],
+            checklist: data.checklist || [],
+            faqs: data.faqs || [],
+            seoTitle: data.seoTitle || null,
+            seoDescription: data.seoDescription || null,
+            createdBy: user?.email || 'admin',
+            updatedBy: user?.email || 'admin',
+            chapters: {
+              create: (data.chapters || []).map((ch, idx) => ({
+                title: ch.title,
+                content: ch.content,
+                order: ch.order ?? idx + 1,
+                icon: ch.icon || null,
+                type: ch.type || 'info',
+                checklistItems: ch.checklistItems || [],
+                faqItems: ch.faqItems || [],
+              })),
+            },
+          },
+          include: {
+            chapters: true,
+          },
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            userId: user?.id,
+            userEmail: user?.email,
+            action: 'GUIDE_CREATE',
+            module: 'CMS_GUIDES',
+            details: `Vytvořen nový právní průvodce '${created.title}' (slug: ${created.slug}).`,
+          },
+        });
+
+        return {
+          id: created.id,
+          slug: created.slug,
+          title: created.title,
+          subtitle: created.subtitle || undefined,
+          excerpt: created.excerpt,
+          category: created.category,
+          categoryLabel: created.categoryLabel,
+          order: created.order,
+          status: created.status,
+          badgeText: created.badgeText || undefined,
+          badgeBg: created.badgeBg || undefined,
+          disclaimer: created.disclaimer || undefined,
+          sources: created.sources || [],
+          chapters: (created.chapters || []).map((ch: any) => ({
+            id: ch.id,
+            title: ch.title,
+            content: ch.content,
+            order: ch.order,
+            icon: ch.icon || undefined,
+            type: ch.type || 'info',
+            checklistItems: ch.checklistItems || [],
+            faqItems: ch.faqItems || [],
+          })),
+          checklist: created.checklist || [],
+          faqs: created.faqs || [],
+          seoTitle: created.seoTitle || undefined,
+          seoDescription: created.seoDescription || undefined,
+          createdBy: created.createdBy || undefined,
+          updatedBy: created.updatedBy || undefined,
+          createdAt: created.createdAt.toISOString(),
+          updatedAt: created.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma createLegalGuide error, falling back:', err);
+      }
+    }
+
+    const newGuide: LegalGuide = {
+      id: 'guide-' + Date.now(),
+      slug,
+      title: data.title || 'Nový právní průvodce',
+      subtitle: data.subtitle || undefined,
+      excerpt: data.excerpt || '',
+      category: data.category || 'ospod',
+      categoryLabel: data.categoryLabel || 'OSPOD & Sociální šetření',
+      order: data.order || 0,
+      status: data.status || 'PUBLISHED',
+      badgeText: data.badgeText || undefined,
+      badgeBg: data.badgeBg || undefined,
+      disclaimer: data.disclaimer || undefined,
+      sources: data.sources || [],
+      chapters: (data.chapters || []).map((ch, idx) => ({
+        id: ch.id || `ch-${Date.now()}-${idx}`,
+        title: ch.title,
+        content: ch.content,
+        order: ch.order ?? idx + 1,
+        icon: ch.icon,
+        type: ch.type || 'info',
+        checklistItems: ch.checklistItems || [],
+        faqItems: ch.faqItems || [],
+      })),
+      checklist: data.checklist || [],
+      faqs: data.faqs || [],
+      seoTitle: data.seoTitle || undefined,
+      seoDescription: data.seoDescription || undefined,
+      createdBy: user?.email || 'admin',
+      updatedBy: user?.email || 'admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    dbStore.legalGuides.push(newGuide);
+    dbStore.logAudit('GUIDE_CREATE', 'CMS_GUIDES', `Vytvořen nový právní průvodce '${newGuide.title}'.`, user);
+    return newGuide;
+  }
+
+  static async updateLegalGuide(id: string, data: Partial<LegalGuide>, user?: User | null): Promise<LegalGuide> {
+    if (isPrismaAvailable()) {
+      try {
+        const updatePayload: any = {
+          updatedBy: user?.email || 'admin',
+        };
+        if (data.title !== undefined) updatePayload.title = data.title;
+        if (data.slug !== undefined) updatePayload.slug = data.slug;
+        if (data.subtitle !== undefined) updatePayload.subtitle = data.subtitle;
+        if (data.excerpt !== undefined) updatePayload.excerpt = data.excerpt;
+        if (data.category !== undefined) updatePayload.category = data.category;
+        if (data.categoryLabel !== undefined) updatePayload.categoryLabel = data.categoryLabel;
+        if (data.order !== undefined) updatePayload.order = data.order;
+        if (data.status !== undefined) updatePayload.status = data.status;
+        if (data.badgeText !== undefined) updatePayload.badgeText = data.badgeText;
+        if (data.badgeBg !== undefined) updatePayload.badgeBg = data.badgeBg;
+        if (data.disclaimer !== undefined) updatePayload.disclaimer = data.disclaimer;
+        if (data.sources !== undefined) updatePayload.sources = data.sources;
+        if (data.checklist !== undefined) updatePayload.checklist = data.checklist;
+        if (data.faqs !== undefined) updatePayload.faqs = data.faqs;
+        if (data.seoTitle !== undefined) updatePayload.seoTitle = data.seoTitle;
+        if (data.seoDescription !== undefined) updatePayload.seoDescription = data.seoDescription;
+
+        if (data.chapters) {
+          // Replace chapters
+          await (prisma as any).legalGuideChapter.deleteMany({ where: { guideId: id } });
+          updatePayload.chapters = {
+            create: data.chapters.map((ch, idx) => ({
+              title: ch.title,
+              content: ch.content,
+              order: ch.order ?? idx + 1,
+              icon: ch.icon || null,
+              type: ch.type || 'info',
+              checklistItems: ch.checklistItems || [],
+              faqItems: ch.faqItems || [],
+            })),
+          };
+        }
+
+        const updated = await (prisma as any).legalGuide.update({
+          where: { id },
+          data: updatePayload,
+          include: {
+            chapters: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            userId: user?.id,
+            userEmail: user?.email,
+            action: 'GUIDE_UPDATE',
+            module: 'CMS_GUIDES',
+            details: `Upraven právní průvodce '${updated.title}' (${id}).`,
+          },
+        });
+
+        return {
+          id: updated.id,
+          slug: updated.slug,
+          title: updated.title,
+          subtitle: updated.subtitle || undefined,
+          excerpt: updated.excerpt,
+          category: updated.category,
+          categoryLabel: updated.categoryLabel,
+          order: updated.order,
+          status: updated.status,
+          badgeText: updated.badgeText || undefined,
+          badgeBg: updated.badgeBg || undefined,
+          disclaimer: updated.disclaimer || undefined,
+          sources: updated.sources || [],
+          chapters: (updated.chapters || []).map((ch: any) => ({
+            id: ch.id,
+            title: ch.title,
+            content: ch.content,
+            order: ch.order,
+            icon: ch.icon || undefined,
+            type: ch.type || 'info',
+            checklistItems: ch.checklistItems || [],
+            faqItems: ch.faqItems || [],
+          })),
+          checklist: updated.checklist || [],
+          faqs: updated.faqs || [],
+          seoTitle: updated.seoTitle || undefined,
+          seoDescription: updated.seoDescription || undefined,
+          createdBy: updated.createdBy || undefined,
+          updatedBy: updated.updatedBy || undefined,
+          createdAt: updated.createdAt.toISOString(),
+          updatedAt: updated.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        console.warn('Prisma updateLegalGuide error, falling back:', err);
+      }
+    }
+
+    const idx = dbStore.legalGuides.findIndex((g) => g.id === id);
+    if (idx === -1) {
+      throw new Error(`Průvodce s ID ${id} nebyl nalezen.`);
+    }
+
+    const current = dbStore.legalGuides[idx];
+    const updatedGuide: LegalGuide = {
+      ...current,
+      ...data,
+      chapters: data.chapters ? data.chapters.map((ch, cidx) => ({
+        id: ch.id || `ch-${Date.now()}-${cidx}`,
+        title: ch.title,
+        content: ch.content,
+        order: ch.order ?? cidx + 1,
+        icon: ch.icon,
+        type: ch.type || 'info',
+        checklistItems: ch.checklistItems || [],
+        faqItems: ch.faqItems || [],
+      })) : current.chapters,
+      updatedBy: user?.email || 'admin',
+      updatedAt: new Date().toISOString(),
+    };
+
+    dbStore.legalGuides[idx] = updatedGuide;
+    dbStore.logAudit('GUIDE_UPDATE', 'CMS_GUIDES', `Upraven právní průvodce '${updatedGuide.title}'.`, user);
+    return updatedGuide;
+  }
+
+  static async deleteLegalGuide(id: string, user?: User | null): Promise<void> {
+    if (isPrismaAvailable()) {
+      try {
+        const item = await (prisma as any).legalGuide.findUnique({ where: { id } });
+        if (item) {
+          await (prisma as any).legalGuide.delete({ where: { id } });
+          await prisma.auditLog.create({
+            data: {
+              userId: user?.id,
+              userEmail: user?.email,
+              action: 'GUIDE_DELETE',
+              module: 'CMS_GUIDES',
+              details: `Smazán právní průvodce '${item.title}' (${id}).`,
+            },
+          });
+        }
+        return;
+      } catch (err) {
+        console.warn('Prisma deleteLegalGuide error, falling back:', err);
+      }
+    }
+
+    const idx = dbStore.legalGuides.findIndex((g) => g.id === id);
+    if (idx !== -1) {
+      const title = dbStore.legalGuides[idx].title;
+      dbStore.legalGuides.splice(idx, 1);
+      dbStore.logAudit('GUIDE_DELETE', 'CMS_GUIDES', `Smazán právní průvodce '${title}'.`, user);
+    }
+  }
 }
+

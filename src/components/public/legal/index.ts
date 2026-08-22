@@ -11,3 +11,4 @@ export * from './AppealsGuideView';
 export * from './InternationalDisputesGuideView';
 export * from './HealthcareGuideView';
 export * from './SchoolsGuideView';
+export * from './LegalGuideDynamicView';

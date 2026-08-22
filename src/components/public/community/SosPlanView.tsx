@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SeoHead } from '../SeoHead';
 import { ShieldAlert, Phone, ArrowLeft, AlertTriangle, HeartPulse, Scale, Info, CheckCircle2, Square, CheckSquare, Printer, Clock } from 'lucide-react';
 
 interface SosPlanViewProps {
@@ -93,6 +94,11 @@ export const SosPlanView: React.FC<SosPlanViewProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
+      <SeoHead
+        title="Krizový SOS plán pro otce • První kroky a kontakty"
+        description="Akutní krizový průvodce pro otce: ověřené nonstop linky pomoci, krizové intervence a kontrolní seznam prvních 48 hodin v opatrovnické krizi."
+        canonicalPath="/sos-plan"
+      />
       {/* Hlavní hlavička */}
       <div className="bg-slate-900 text-white pt-20 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">

@@ -1010,7 +1010,62 @@ export interface Subjekt {
   pracovnici?: Pracovnik[];
 }
 
+export type WikiCategory = 'pravo' | 'ospod' | 'soud' | 'finance' | 'psychologie' | 'ostatni';
 
+export interface WikiTerm {
+  id: string;
+  slug: string;
+  term: string;
+  firstLetter: string;
+  category: string;
+  categoryLabel: string;
+  citation?: string;
+  definition: string;
+  practicalTips: string[];
+  relatedTerms?: string[];
+  order?: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  sources?: string[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
+export interface LegalGuideChapter {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  icon?: string;
+  type?: 'info' | 'warning' | 'success' | 'checklist' | 'steps' | 'faq' | string;
+  checklistItems?: { id: string; label: string }[];
+  faqItems?: { question: string; answer: string }[];
+}
 
-
+export interface LegalGuide {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  excerpt: string;
+  category: string;
+  categoryLabel: string;
+  order: number;
+  status: StudyStatus;
+  badgeText?: string;
+  badgeBg?: string;
+  disclaimer?: string;
+  sources: string[];
+  chapters: LegalGuideChapter[];
+  checklist?: { id: string; label: string }[];
+  faqs?: { question: string; answer: string }[];
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}

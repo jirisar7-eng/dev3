@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { SubjektyMap } from './SubjektyMap';
+import { SeoHead } from './SeoHead';
 import {
   Scale,
   Users,
@@ -393,6 +394,11 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <SeoHead
+        title="Registr & Hodnocení opatrovnických subjektů"
+        description="Transparentní registr soudců, orgánů OSPOD, znalců a rodinných advokátů. Ověřené zkušenosti rodičů s podporou střídavé péče a dodržováním práv dítěte."
+        canonicalPath="/registr-subjektu"
+      />
       {/* Header Banner */}
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />

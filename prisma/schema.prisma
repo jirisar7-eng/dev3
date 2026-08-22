@@ -1884,3 +1884,77 @@ model NewsItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model WikiTerm {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  term           String
+  firstLetter    String   @default("A")
+  category       String   @default("pravo")
+  categoryLabel  String   @default("Právní pojmy")
+  citation       String?
+  definition     String   @db.Text
+  practicalTips  String[] @default([])
+  relatedTerms   String[] @default([])
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED")
+  seoTitle       String?
+  seoDescription String?
+  sources        String[] @default([])
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([firstLetter])
+  @@index([status])
+}
+
+model LegalGuide {
+  id             String              @id @default(uuid())
+  slug           String              @unique
+  title          String
+  subtitle       String?
+  excerpt        String              @db.Text
+  category       String              @default("ospod")
+  categoryLabel  String              @default("OSPOD & Sociální šetření")
+  order          Int                 @default(0)
+  status         String              @default("PUBLISHED")
+  badgeText      String?
+  badgeBg        String?
+  disclaimer     String?             @db.Text
+  sources        String[]            @default([])
+  checklist      Json?               @default("[]")
+  faqs           Json?               @default("[]")
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  chapters       LegalGuideChapter[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model LegalGuideChapter {
+  id             String     @id @default(uuid())
+  guideId        String
+  guide          LegalGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  title          String
+  content        String     @db.Text
+  order          Int        @default(0)
+  icon           String?
+  type           String?    @default("info")
+  checklistItems Json?      @default("[]")
+  faqItems       Json?      @default("[]")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([guideId])
+}
+

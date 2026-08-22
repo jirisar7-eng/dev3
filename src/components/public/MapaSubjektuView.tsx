@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
 import { SubjektyMap } from './SubjektyMap';
+import { SeoHead } from './SeoHead';
 import {
   MapPin,
   Search,
@@ -287,6 +288,11 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <SeoHead
+        title="Mapa opatrovnických subjektů ČR"
+        description="Interaktivní geografická mapa opatrovnických soudů, OSPOD, soudních znalců, advokátů a krizových poraden po celé ČR."
+        canonicalPath="/mapa-subjektu"
+      />
       {/* HEADER SECTION */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

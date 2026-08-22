@@ -1,40 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import {
-  BookMarked,
-  Search,
-  Filter,
-  Copy,
-  Check,
-  ChevronRight,
-  Sparkles,
-  Tag,
-  ExternalLink,
-  ShieldCheck,
-  Scale,
-  RefreshCw
-} from 'lucide-react';
-import { SeoHead } from '../SeoHead';
-import { WikiTerm } from '../../../types';
+import { WikiTerm } from '../types';
 
-interface WikiViewProps {
-  onNavigate?: (path: string) => void;
-}
-
-interface TermItem {
-  id: string;
-  term: string;
-  firstLetter: string;
-  category: 'pravo' | 'ospod' | 'soud' | 'finance';
-  categoryLabel: string;
-  citation?: string;
-  definition: string;
-  practicalTips: string[];
-  relatedTerms?: string[];
-}
-
-const WIKI_TERMS: TermItem[] = [
+export const DEFAULT_WIKI_TERMS: WikiTerm[] = [
   {
     id: 'asistovane-predavani',
+    slug: 'asistovane-predavani',
     term: 'Asistované předávání',
     firstLetter: 'A',
     category: 'soud',
@@ -45,10 +14,18 @@ const WIKI_TERMS: TermItem[] = [
       'Využívá se tam, kde jsou předávání provázena vysoce konfliktním chováním rodičů.',
       'Můžete jej navrhnout sami, nebo ho nařídí soud předběžným opatřením.'
     ],
-    relatedTerms: ['Asistovaný styk', 'Předběžné opatření']
+    relatedTerms: ['Asistovaný styk', 'Předběžné opatření'],
+    order: 1,
+    status: 'PUBLISHED',
+    seoTitle: 'Asistované předávání dítěte • Výklad pojmu a postup',
+    seoDescription: 'Co je asistované předávání nezletilého dítěte podle § 908 o.z., kdy se nařizuje a jak probíhá bezpečné předání.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Metodika MPSV ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'asistovany-styk',
+    slug: 'asistovany-styk',
     term: 'Asistovaný styk (Setkávání s dohledem)',
     firstLetter: 'A',
     category: 'soud',
@@ -59,10 +36,18 @@ const WIKI_TERMS: TermItem[] = [
       'Slouží k obnovení narušeného kontaktu po dlouhé odluce nebo při traumatech.',
       'Je to dočasné opatření s cílem přejít k běžnému neřízenému styku.'
     ],
-    relatedTerms: ['Asistované předávání', 'OSPOD']
+    relatedTerms: ['Asistované předávání', 'OSPOD'],
+    order: 2,
+    status: 'PUBLISHED',
+    seoTitle: 'Asistovaný styk s dohledem • Opatrovnická praxe',
+    seoDescription: 'Výklad pojmu asistovaný styk podle § 891 odst. 2 občanského zákoníku a jeho uplatnění v opatrovnických řízeních.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'aktivni-otcovstvi',
+    slug: 'aktivni-otcovstvi',
     term: 'Aktivní otcovství po rozchodu',
     firstLetter: 'A',
     category: 'ospod',
@@ -72,10 +57,18 @@ const WIKI_TERMS: TermItem[] = [
       'Prokazujte aktivní otcovství doložením e-mailové komunikace se školou, přihláškami na kroužky a lékařskými zprávami.',
       'Nezaměřujte se u soudu pouze na volnočasové aktivity.'
     ],
-    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost']
+    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost'],
+    order: 3,
+    status: 'PUBLISHED',
+    seoTitle: 'Aktivní otcovství po rozchodu • Práva a zapojení otce',
+    seoDescription: 'Jak prokazovat aktivní otcovství a každodenní péči o dítě v opatrovnickém řízení a před OSPOD.',
+    sources: ['Psychologie rodičovství', 'Judikatura Ústavního soudu ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'biff',
+    slug: 'biff',
     term: 'BIFF Komunikace',
     firstLetter: 'B',
     category: 'ospod',
@@ -85,10 +78,18 @@ const WIKI_TERMS: TermItem[] = [
       'Eliminuje emoce, obvinění a dlouhé slohové práce.',
       'Služba pro bezpečný výkaz pro opatrovnický soud.'
     ],
-    relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'OSPOD']
+    relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'OSPOD'],
+    order: 4,
+    status: 'PUBLISHED',
+    seoTitle: 'BIFF komunikace s konfliktním rodičem • Návod a příklady',
+    seoDescription: 'Metodika BIFF komunikace (Brief, Informative, Friendly, Firm) pro jednání s vysoce konfliktním partnerem.',
+    sources: ['High Conflict Institute (Bill Eddy)'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'bezplatny-advokat',
+    slug: 'bezplatny-advokat',
     term: 'Bezplatný advokát (Určení ČAK)',
     firstLetter: 'B',
     category: 'pravo',
@@ -99,10 +100,18 @@ const WIKI_TERMS: TermItem[] = [
       'Formulář žádosti je k dispozici na webu cak.cz.',
       'Je třeba přiložit čestné prohlášení o příjmech a dvě písemná odmítnutí od advokátů.'
     ],
-    relatedTerms: ['Životní minimum', 'Soudní řízení']
+    relatedTerms: ['Životní minimum', 'Soudní řízení'],
+    order: 5,
+    status: 'PUBLISHED',
+    seoTitle: 'Bezplatný advokát a právní pomoc • Žádost ČAK',
+    seoDescription: 'Jak získat bezplatného advokáta přes Českou advokátní komoru podle § 18a zákona o advokacii.',
+    sources: ['Zákon č. 85/1996 Sb., o advokacii', 'Česká advokátní komora'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'cochemska-praxe',
+    slug: 'cochemska-praxe',
     term: 'Cochemská praxe (Cochemský model)',
     firstLetter: 'C',
     category: 'soud',
@@ -112,10 +121,18 @@ const WIKI_TERMS: TermItem[] = [
       'Jednání probíhá do několika týdnů od podání návrhu.',
       'Rodičovská dohoda má přednost před rozhodnutím autority.'
     ],
-    relatedTerms: ['Kolizní opatrovník', 'Soudní smír']
+    relatedTerms: ['Kolizní opatrovník', 'Soudní smír'],
+    order: 6,
+    status: 'PUBLISHED',
+    seoTitle: 'Cochemská praxe v ČR • Rychlá dohoda rodičů',
+    seoDescription: 'Principy Cochemského modelu v opatrovnickém soudnictví a podpora rodičovské dohody.',
+    sources: ['Cochemský model v ČR', 'Ministerstvo spravedlnosti ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'cochemsky-smir',
+    slug: 'cochemsky-smir',
     term: 'Cochemský smír',
     firstLetter: 'C',
     category: 'soud',
@@ -125,10 +142,18 @@ const WIKI_TERMS: TermItem[] = [
       'Cochemský smír eliminuje potřebu psychologických znaleckých posudků.',
       'Zajišťuje vysokou míru dodržování dohody v budoucnu.'
     ],
-    relatedTerms: ['Cochemská praxe', 'Soudní smír']
+    relatedTerms: ['Cochemská praxe', 'Soudní smír'],
+    order: 7,
+    status: 'PUBLISHED',
+    seoTitle: 'Cochemský smír • Schválená rodičovská dohoda',
+    seoDescription: 'Jak probíhá uzavření Cochemského smíru a jaké má právní účinky.',
+    sources: ['Cochemská praxe', 'Občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'dolozka-pravni-moci',
+    slug: 'dolozka-pravni-moci',
     term: 'Doložka právní moci',
     firstLetter: 'D',
     category: 'soud',
@@ -139,10 +164,18 @@ const WIKI_TERMS: TermItem[] = [
       'Bez doložky právní moci nelze vymáhat plnění exekučně.',
       'Vyžádejte si vyznačení doložky na kanceláři soudu po uplynutí odvolací lhůty (15 dní).'
     ],
-    relatedTerms: ['Vykonatelnost', 'Petit']
+    relatedTerms: ['Vykonatelnost', 'Petit'],
+    order: 8,
+    status: 'PUBLISHED',
+    seoTitle: 'Doložka právní moci rozsudku • Jak ji získat',
+    seoDescription: 'Co znamená doložka právní moci, kdy nabývá rozsudek právní moci a postup vyznačení u soudu.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'dohoda-o-vyzivnem',
+    slug: 'dohoda-o-vyzivnem',
     term: 'Dohoda o výživném',
     firstLetter: 'D',
     category: 'finance',
@@ -153,10 +186,18 @@ const WIKI_TERMS: TermItem[] = [
       'Dohoda musí být vždy v zájmu dítěte a odpovídat možnostem obou rodičů.',
       'Soud zkoumá, zda výše výživného není diskriminační.'
     ],
-    relatedTerms: ['Životní minimum', 'Soudní smír']
+    relatedTerms: ['Životní minimum', 'Soudní smír'],
+    order: 9,
+    status: 'PUBLISHED',
+    seoTitle: 'Dohoda o výživném • Vzor a podmínky schválení soudem',
+    seoDescription: 'Jak sepsat dohodu o výživném na nezletilé dítě a postup schválení opatrovnickým soudem.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Doporučující tabulka MS ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'exekuce-styku',
+    slug: 'exekuce-styku',
     term: 'Exekuce styku (Výkon rozhodnutí)',
     firstLetter: 'E',
     category: 'soud',
@@ -167,10 +208,18 @@ const WIKI_TERMS: TermItem[] = [
       'Soud nejprve ukládá výzvu a pokutu do 50 000 Kč.',
       'Při přetrvávajícím maření může soud přistoupit k odnětí dítěte nebo změně péče.'
     ],
-    relatedTerms: ['Předběžné opatření', 'Doložka právní moci']
+    relatedTerms: ['Předběžné opatření', 'Doložka právní moci'],
+    order: 10,
+    status: 'PUBLISHED',
+    seoTitle: 'Výkon rozhodnutí a exekuce styku • Maření styku',
+    seoDescription: 'Postup soudu při maření styku s dítětem podle § 500 z.ř.s., ukládání pokut a vymáhání péče.',
+    sources: ['Zákon č. 292/2013 Sb., o zvláštních řízeních soudních'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'informacni-povinnost',
+    slug: 'informacni-povinnost',
     term: 'Informační povinnost rodičů',
     firstLetter: 'I',
     category: 'pravo',
@@ -181,10 +230,18 @@ const WIKI_TERMS: TermItem[] = [
       'Záměrné zatajování informací o škole nebo zdraví dítěte je porušením rodičovské odpovědnosti.',
       'Komunikujte tyto informace písemně (např. e-mailem nebo přes sdílenou aplikaci).'
     ],
-    relatedTerms: ['Rodičovská odpovědnost', 'Společná odpovědnost rodičů']
+    relatedTerms: ['Rodičovská odpovědnost', 'Společná odpovědnost rodičů'],
+    order: 11,
+    status: 'PUBLISHED',
+    seoTitle: 'Informační povinnost rodičů dle § 890 o.z.',
+    seoDescription: 'Rozsah vzájemné informační povinnosti rodičů o zdraví, škole a vývoji dítěte.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'kolizni-opatrovnik',
+    slug: 'kolizni-opatrovnik',
     term: 'Kolizní opatrovník',
     firstLetter: 'K',
     category: 'ospod',
@@ -195,10 +252,18 @@ const WIKI_TERMS: TermItem[] = [
       'Kolizní opatrovník má zastupovat nezávisle zájem dítěte, nikoliv zájem matky či otce.',
       'Máte právo předkládat opatrovníkovi své návrhy a důkazy.'
     ],
-    relatedTerms: ['OSPOD', 'Předběžné opatření']
+    relatedTerms: ['OSPOD', 'Předběžné opatření'],
+    order: 12,
+    status: 'PUBLISHED',
+    seoTitle: 'Kolizní opatrovník dítěte • Role a pravomoci',
+    seoDescription: 'Co je kolizní opatrovník, proč ho soud jmenuje a jak s ním efektivně komunikovat.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Zákon č. 359/1999 Sb.'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'kolizni-opatrovnik-extended',
+    slug: 'kolizni-opatrovnik-extended',
     term: 'Kolizní opatrovník (Pravomoci)',
     firstLetter: 'K',
     category: 'ospod',
@@ -209,10 +274,18 @@ const WIKI_TERMS: TermItem[] = [
       'Opatrovník je samostatným účastníkem řízení s právem podávat odvolání.',
       'Můžete nahlížet do jeho spisu vedeného o dítěti.'
     ],
-    relatedTerms: ['Kolizní opatrovník', 'Nestrannost OSPOD']
+    relatedTerms: ['Kolizní opatrovník', 'Nestrannost OSPOD'],
+    order: 13,
+    status: 'PUBLISHED',
+    seoTitle: 'Pravomoci kolizního opatrovníka dle § 469 z.ř.s.',
+    seoDescription: 'Procesní postavení OSPOD jako kolizního opatrovníka a práva rodičů.',
+    sources: ['Zákon č. 292/2013 Sb., o zvláštních řízeních soudních'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'nahliceni-do-spisu',
+    slug: 'nahliceni-do-spisu',
     term: 'Nahlížení do soudního spisu',
     firstLetter: 'N',
     category: 'soud',
@@ -223,10 +296,18 @@ const WIKI_TERMS: TermItem[] = [
       'Před každým soudním jednáním doporučujeme nahlédnout do spisu na infocentru soudu, zda protistrana či OSPOD nezaslali nová vyjádření.',
       'S sebou si vezměte mobilní telefon a veškeré nově vložené listy si vyfoťte.'
     ],
-    relatedTerms: ['Doložka právní moci', 'Soudní řízení']
+    relatedTerms: ['Doložka právní moci', 'Soudní řízení'],
+    order: 14,
+    status: 'PUBLISHED',
+    seoTitle: 'Nahlížení do soudního spisu dle § 44 o.s.ř.',
+    seoDescription: 'Jak požádat o nahlédnutí do spisu, fotografování podkladů a kontrola vyjádření protistrany.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'nestrannost-ospod',
+    slug: 'nestrannost-ospod',
     term: 'Nestrannost OSPOD',
     firstLetter: 'N',
     category: 'ospod',
@@ -236,10 +317,18 @@ const WIKI_TERMS: TermItem[] = [
       'Pokud se setkáte s nerovným přístupem (např. pracovník mluví pouze s matkou), písemně na to upozorněte vedoucího odboru.',
       'Požadujte, aby byla do spisu zaznamenána všechna vaše vyjádření.'
     ],
-    relatedTerms: ['Podjatost sociálního pracovníka', 'OSPOD']
+    relatedTerms: ['Podjatost sociálního pracovníka', 'OSPOD'],
+    order: 15,
+    status: 'PUBLISHED',
+    seoTitle: 'Nestrannost OSPOD a rovný přístup k rodičům',
+    seoDescription: 'Právní záruky nestrannosti sociálních pracovníků a obrana proti podjatosti.',
+    sources: ['Zákon č. 359/1999 Sb.', 'Správní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'ospod',
+    slug: 'ospod',
     term: 'OSPOD (Orgán sociálně-právní ochrany dětí)',
     firstLetter: 'O',
     category: 'ospod',
@@ -250,10 +339,18 @@ const WIKI_TERMS: TermItem[] = [
       'Máte právo nahlížet do spisu Om vedeného u OSPODu (§ 38 správního řádu).',
       'Vystupujte vždy věcně, klidně a bez emocí.'
     ],
-    relatedTerms: ['Kolizní opatrovník', 'BIFF Komunikace']
+    relatedTerms: ['Kolizní opatrovník', 'BIFF Komunikace'],
+    order: 16,
+    status: 'PUBLISHED',
+    seoTitle: 'Co je OSPOD a jak probíhá sociální šetření',
+    seoDescription: 'Komplexní přehled o činnosti OSPOD, sociálním šetření a právech rodičů.',
+    sources: ['Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'odvolani-proti-rozsudku',
+    slug: 'odvolani-proti-rozsudku',
     term: 'Odvolání proti rozsudku',
     firstLetter: 'O',
     category: 'soud',
@@ -264,10 +361,18 @@ const WIKI_TERMS: TermItem[] = [
       'Lhůta pro podání odvolání je 15 dnů od doručení písemného vyhotovení rozsudku.',
       'Podává se u soudu, který rozsudek vydal.'
     ],
-    relatedTerms: ['Soudní řízení', 'Doložka právní moci']
+    relatedTerms: ['Soudní řízení', 'Doložka právní moci'],
+    order: 17,
+    status: 'PUBLISHED',
+    seoTitle: 'Odvolání v opatrovnickém řízení • Lhůty a vzor',
+    seoDescription: 'Jak podat odvolání proti rozsudku o péči nebo výživném, 15denní lhůta a náležitosti.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'pas',
+    slug: 'pas',
     term: 'PAS (Syndrom zavrženého rodiče)',
     firstLetter: 'P',
     category: 'ospod',
@@ -277,10 +382,18 @@ const WIKI_TERMS: TermItem[] = [
       'Důležité je včasné podání návrhu na soud k zamezení odcizení.',
       'Vyžaduje odborný psychologický posudek a krizovou terapii.'
     ],
-    relatedTerms: ['BIFF Komunikace', 'Programování dítěte']
+    relatedTerms: ['BIFF Komunikace', 'Programování dítěte'],
+    order: 18,
+    status: 'PUBLISHED',
+    seoTitle: 'Syndrom zavrženého rodiče (PAS) • Rozpoznání a řešení',
+    seoDescription: 'Příznaky manipulace dítěte, syndrom zavržení a soudní obrana proti odcizení.',
+    sources: ['MUDr. Richard Gardner', 'Klinická psychologie'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'programovani-ditete',
+    slug: 'programovani-ditete',
     term: 'Programování dítěte',
     firstLetter: 'P',
     category: 'ospod',
@@ -290,10 +403,18 @@ const WIKI_TERMS: TermItem[] = [
       'Dokumentujte projevy programování (např. naučené fráze dítěte, odmítání bez reálného důvodu).',
       'Požádejte soud o nařízení rodinné terapie nebo krizové intervence.'
     ],
-    relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'BIFF Komunikace']
+    relatedTerms: ['PAS (Syndrom zavrženého rodiče)', 'BIFF Komunikace'],
+    order: 19,
+    status: 'PUBLISHED',
+    seoTitle: 'Programování a manipulace dítěte rodičem',
+    seoDescription: 'Jak prokázat systematické ovlivňování a programování dítěte u soudu.',
+    sources: ['Dětská psychologie', 'Opatrovnická judikatura'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'podjatost-pracovnika',
+    slug: 'podjatost-pracovnika',
     term: 'Podjatost sociálního pracovníka',
     firstLetter: 'P',
     category: 'ospod',
@@ -304,10 +425,18 @@ const WIKI_TERMS: TermItem[] = [
       'Názorový nesouhlas s doporučením OSPOD není sám o sobě důvodem pro podjatost.',
       'Důvodem je osobní nebo příbuzenský vztah pracovníka s druhým rodičem, případně prokazatelné přátelství či nepřátelství.'
     ],
-    relatedTerms: ['Nestrannost OSPOD', 'OSPOD']
+    relatedTerms: ['Nestrannost OSPOD', 'OSPOD'],
+    order: 20,
+    status: 'PUBLISHED',
+    seoTitle: 'Námitka podjatosti pracovníka OSPOD dle § 14 správního řádu',
+    seoDescription: 'Důvody a postup podání námitky podjatosti vůči sociálnímu pracovníkovi.',
+    sources: ['Zákon č. 500/2004 Sb., správní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'predbezna-vykonatelnost',
+    slug: 'predbezna-vykonatelnost',
     term: 'Předběžná vykonatelnost rozsudku',
     firstLetter: 'P',
     category: 'soud',
@@ -318,10 +447,18 @@ const WIKI_TERMS: TermItem[] = [
       'Odvolání proti rozsudku o péči o dítě nemá odkladný účinek.',
       'Pravidla v něm určená musíte dodržovat ihned po doručení písemného vyhotovení.'
     ],
-    relatedTerms: ['Doložka právní moci', 'Odvolání proti rozsudku']
+    relatedTerms: ['Doložka právní moci', 'Odvolání proti rozsudku'],
+    order: 21,
+    status: 'PUBLISHED',
+    seoTitle: 'Předběžná vykonatelnost v rodinných věcech (§ 162 o.s.ř.)',
+    seoDescription: 'Proč rozsudky o péči a výživném platí ihned po doručení bez odkladného účinku.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'petit',
+    slug: 'petit',
     term: 'Petit (Soudní návrh)',
     firstLetter: 'P',
     category: 'pravo',
@@ -329,13 +466,21 @@ const WIKI_TERMS: TermItem[] = [
     citation: '§ 79 o.s.ř.',
     definition: 'Závěrečná a zcela zásadní část soudního návrhu, ve které žalobce/navrhovatel přesně formuluje, jaké rozhodnutí má soud vynést.',
     practicalTips: [
-      'Petit must be naprosto přesný, určitý a vykonatelný (dny, hodiny, místo předání).',
+      'Petit musí být naprosto přesný, určitý a vykonatelný (dny, hodiny, místo předání).',
       'Soud je petitem v opatrovnickém řízení vázán z hlediska vykonatelnosti.'
     ],
-    relatedTerms: ['Předběžné opatření', 'Doložka právní moci']
+    relatedTerms: ['Předběžné opatření', 'Doložka právní moci'],
+    order: 22,
+    status: 'PUBLISHED',
+    seoTitle: 'Co je soudní petit a jak ho správně formulovat',
+    seoDescription: 'Správná formulace petitu návrhu na úpravu péče a styku pro plnou vykonatelnost.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'predbezne-opatreni',
+    slug: 'predbezne-opatreni',
     term: 'Předběžné opatření (§ 452 z.ř.s.)',
     firstLetter: 'P',
     category: 'pravo',
@@ -346,10 +491,18 @@ const WIKI_TERMS: TermItem[] = [
       'Slouží k okamžitému obnovení zamezeného styku s dítětem.',
       'Rozhodnutí je vykonatelné okamžikem doručení.'
     ],
-    relatedTerms: ['Exekuce styku', 'Petit']
+    relatedTerms: ['Exekuce styku', 'Petit'],
+    order: 23,
+    status: 'PUBLISHED',
+    seoTitle: 'Předběžné opatření na úpravu styku (§ 452 z.ř.s.)',
+    seoDescription: 'Rychlý zásah soudu při zamezení kontaktu s dítětem a podmínky nařízení.',
+    sources: ['Zákon č. 292/2013 Sb., o zvláštních řízeních soudních'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'rodinna-mediace',
+    slug: 'rodinna-mediace',
     term: 'Rodinná mediace',
     firstLetter: 'M',
     category: 'pravo',
@@ -360,10 +513,18 @@ const WIKI_TERMS: TermItem[] = [
       'Soud může nařídit první setkání s mediátorem v rozsahu 3 hodin.',
       'Dohoda dosažená v mediaci může být následně schválena soudem jako rozsudek.'
     ],
-    relatedTerms: ['Soudní smír', 'Cochemská praxe']
+    relatedTerms: ['Soudní smír', 'Cochemská praxe'],
+    order: 24,
+    status: 'PUBLISHED',
+    seoTitle: 'Rodinná mediace • Mimosoudní dohoda rodičů',
+    seoDescription: 'Jak probíhá rodinná mediace a jak pomáhá vyřešit péči o dítě smírnou cestou.',
+    sources: ['Zákon č. 202/2012 Sb., o mediaci'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'rodicovska-odpovednost',
+    slug: 'rodicovska-odpovednost',
     term: 'Rodičovská odpovědnost',
     firstLetter: 'R',
     category: 'pravo',
@@ -374,10 +535,18 @@ const WIKI_TERMS: TermItem[] = [
       'Rodičovská odpovědnost náleží oběma rodičům stejně, ledaže ji soud omezil nebo jí rodiče zbavil.',
       'Rozchodem rodičů odpovědnost nezaniká ani se nemění.'
     ],
-    relatedTerms: ['Společná odpovědnost rodičů', 'Informační povinnost rodičů']
+    relatedTerms: ['Společná odpovědnost rodičů', 'Informační povinnost rodičů'],
+    order: 25,
+    status: 'PUBLISHED',
+    seoTitle: 'Rodičovská odpovědnost dle § 858 občanského zákoníku',
+    seoDescription: 'Co vše zahrnuje rodičovská odpovědnost a proč zůstává oběma rodičům i po rozchodu.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'status-quo',
+    slug: 'status-quo',
     term: 'Status Quo',
     firstLetter: 'S',
     category: 'pravo',
@@ -386,10 +555,18 @@ const WIKI_TERMS: TermItem[] = [
     practicalTips: [
       'Svévolná změna status quo jedním rodičem (únos dítěte, přestěhování) má být soudem okamžitě korigována předběžným opatřením.'
     ],
-    relatedTerms: ['Předběžné opatření', 'OSPOD']
+    relatedTerms: ['Předběžné opatření', 'OSPOD'],
+    order: 26,
+    status: 'PUBLISHED',
+    seoTitle: 'Status quo v opatrovnickém řízení',
+    seoDescription: 'Ochrana faktického stavu péče a obrana proti jednostranným změnám druhého rodiče.',
+    sources: ['Judikatura Ústavního soudu ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'socialni-setreni',
+    slug: 'socialni-setreni',
     term: 'Sociální šetření OSPOD',
     firstLetter: 'S',
     category: 'ospod',
@@ -400,10 +577,18 @@ const WIKI_TERMS: TermItem[] = [
       'Pracovník posuzuje, zda má dítě vlastní postel, klidné místo na učení, dostatek jídla a bezpečné prostředí.',
       'Buďte připraveni, vystupujte klidně a ukažte připravené zázemí pro dítě.'
     ],
-    relatedTerms: ['OSPOD', 'Nestrannost OSPOD']
+    relatedTerms: ['OSPOD', 'Nestrannost OSPOD'],
+    order: 27,
+    status: 'PUBLISHED',
+    seoTitle: 'Sociální šetření OSPOD v domácnosti • Jak se připravit',
+    seoDescription: 'Co kontroluje sociální pracovník při návštěvě domácnosti a na co si dát pozor.',
+    sources: ['Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'stridava-pece',
+    slug: 'stridava-pece',
     term: 'Střídavá péče (Shared Residency)',
     firstLetter: 'S',
     category: 'pravo',
@@ -414,10 +599,18 @@ const WIKI_TERMS: TermItem[] = [
       'Ústavní soud ČR judikoval, že střídavá péče je prioritní volbou, pokud jsou oba rodiče způsobilí a mají o péči zájem.',
       'Soudy zkoumají komunikaci rodičů a blízkost bydliště / školských zařízení.'
     ],
-    relatedTerms: ['Společná péče obou rodičů', 'Rodičovská odpovědnost']
+    relatedTerms: ['Společná péče obou rodičů', 'Rodičovská odpovědnost'],
+    order: 28,
+    status: 'PUBLISHED',
+    seoTitle: 'Střídavá péče a rovnoměrný rozsah péče po novele 2026',
+    seoDescription: 'Právní rámec střídavé péče, judikatura Ústavního soudu a změny od roku 2026.',
+    sources: ['Zákon č. 89/2012 Sb.', 'Nález Ústavního soudu sp. zn. I. ÚS 2482/13'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'spolecna-odpovednost',
+    slug: 'spolecna-odpovednost',
     term: 'Společná odpovědnost rodičů',
     firstLetter: 'S',
     category: 'pravo',
@@ -428,10 +621,18 @@ const WIKI_TERMS: TermItem[] = [
       'Tento princip brání tomu, aby jeden z rodičů po rozpadu vztahu svévolně rozhodoval o dítěti bez vědomí druhého.',
       'Je základem pro střídavou a společnou péči.'
     ],
-    relatedTerms: ['Rodičovská odpovědnost', 'Informační povinnost rodičů']
+    relatedTerms: ['Rodičovská odpovědnost', 'Informační povinnost rodičů'],
+    order: 29,
+    status: 'PUBLISHED',
+    seoTitle: 'Společná odpovědnost rodičů (čl. 18 Úmluvy o právech dítěte)',
+    seoDescription: 'Mezinárodní garance rovné odpovědnosti matky i otce za výchovu dítěte.',
+    sources: ['Úmluva o právech dítěte (sdělení FMZV č. 104/1991 Sb.)'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'spolecna-pece',
+    slug: 'spolecna-pece',
     term: 'Společná péče obou rodičů',
     firstLetter: 'S',
     category: 'pravo',
@@ -442,10 +643,18 @@ const WIKI_TERMS: TermItem[] = [
       'Tato forma je vhodná, pokud rodiče i po rozchodu žijí v těsné blízkosti (nebo ve společném domě) a jsou schopni se na všem dohodnout bez pevných rozsudků.',
       'Je nejméně formalizovaná.'
     ],
-    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost']
+    relatedTerms: ['Střídavá péče', 'Rodičovská odpovědnost'],
+    order: 30,
+    status: 'PUBLISHED',
+    seoTitle: 'Společná péče rodičů po rozchodu • Podmínky',
+    seoDescription: 'Kdy je vhodná společná péče obou rodičů bez stanovení pevných intervalů.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'soudni-smir',
+    slug: 'soudni-smir',
     term: 'Soudní smír',
     firstLetter: 'S',
     category: 'soud',
@@ -456,10 +665,18 @@ const WIKI_TERMS: TermItem[] = [
       'Soud se má vždy pokusit o smírné vyřešení sporu.',
       'Smír šetří čas, náklady a minimalizuje psychické trauma dětí.'
     ],
-    relatedTerms: ['Cochemský smír', 'Rodinná mediace']
+    relatedTerms: ['Cochemský smír', 'Rodinná mediace'],
+    order: 31,
+    status: 'PUBLISHED',
+    seoTitle: 'Soudní smír v opatrovnickém řízení (§ 99 o.s.ř.)',
+    seoDescription: 'Účinky schváleného soudního smíru a jeho výhody oproti autoritativnímu rozsudku.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'vyjadreni-ditete',
+    slug: 'vyjadreni-ditete',
     term: 'Vyjádření názoru dítěte',
     firstLetter: 'V',
     category: 'soud',
@@ -470,10 +687,18 @@ const WIKI_TERMS: TermItem[] = [
       'U dětí starších 12 let se předpokládá, že jsou schopné svůj názor formulovat samy.',
       'Názor dítěte může soud zjišťovat přímo u výslechu bez přítomnosti rodičů, nebo prostřednictvím OSPODu.'
     ],
-    relatedTerms: ['Zájem dítěte (Best Interests of the Child)', 'Kolizní opatrovník']
+    relatedTerms: ['Zájem dítěte (Best Interests of the Child)', 'Kolizní opatrovník'],
+    order: 32,
+    status: 'PUBLISHED',
+    seoTitle: 'Vyjádření a zjišťování názoru dítěte u soudu (§ 867 o.z.)',
+    seoDescription: 'Jak soud vyslýchá nezletilé dítě a jak posuzuje manipulaci ze strany jednoho z rodičů.',
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Úmluva o právech dítěte'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'vymahani-rozhodnuti',
+    slug: 'vymahani-rozhodnuti',
     term: 'Vymáhání soudního rozhodnutí',
     firstLetter: 'V',
     category: 'soud',
@@ -484,10 +709,18 @@ const WIKI_TERMS: TermItem[] = [
       'Při každém maření styku podejte písemný návrh na výkon rozhodnutí k opatrovnickému soudu.',
       'Dokumentujte každé neúspěšné předání.'
     ],
-    relatedTerms: ['Exekuce styku', 'Předběžné opatření']
+    relatedTerms: ['Exekuce styku', 'Předběžné opatření'],
+    order: 33,
+    status: 'PUBLISHED',
+    seoTitle: 'Vymáhání rozsudku o styku a péči • Pokuty za maření',
+    seoDescription: 'Jak postupovat při neplnění rozsudku o péči a jak podat návrh na výkon rozhodnutí.',
+    sources: ['Zákon č. 292/2013 Sb., o zvláštních řízeních soudních'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'zajem-ditete',
+    slug: 'zajem-ditete',
     term: 'Zájem dítěte (Best Interests of the Child)',
     firstLetter: 'Z',
     category: 'pravo',
@@ -498,10 +731,18 @@ const WIKI_TERMS: TermItem[] = [
       'Argumentace u soudu musí být vždy postavena na tom, proč je váš návrh v zájmu dítěte, nikoli ve vašem osobním zájmu.',
       'Pojem zájem dítěte nesmí být zneužíván k svévolnému vylučování otce z výchovy.'
     ],
-    relatedTerms: ['Vyjádření názoru dítěte', 'Rodičovská odpovědnost']
+    relatedTerms: ['Vyjádření názoru dítěte', 'Rodičovská odpovědnost'],
+    order: 34,
+    status: 'PUBLISHED',
+    seoTitle: 'Nejlepší zájem dítěte (čl. 3 Úmluvy o právech dítěte)',
+    seoDescription: 'Co reálně znamená nejlepší zájem dítěte a jak na něm postavit argumentaci u soudu.',
+    sources: ['Úmluva o právech dítěte', 'Judikatura Ústavního soudu ČR'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'znalecky-posudek',
+    slug: 'znalecky-posudek',
     term: 'Znalecký posudek',
     firstLetter: 'Z',
     category: 'soud',
@@ -512,10 +753,18 @@ const WIKI_TERMS: TermItem[] = [
       'Máte právo klást znalci otázky u soudního jednání.',
       'Výhrady k posudku je nutné podat písemně v zákonné lhůtě.'
     ],
-    relatedTerms: ['Cochemská praxe', 'PAS (Syndrom zavrženého rodiče)']
+    relatedTerms: ['Cochemská praxe', 'PAS (Syndrom zavrženého rodiče)'],
+    order: 35,
+    status: 'PUBLISHED',
+    seoTitle: 'Znalecký posudek v rodinném právu • Průběh a námitky',
+    seoDescription: 'Jak probíhá psychologické znalecké zkoumání rodičů a dětí a jak podat námitky proti posudku.',
+    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád', 'Zákon č. 254/2019 Sb., o znalcích'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   },
   {
     id: 'zivotni-minimum',
+    slug: 'zivotni-minimum',
     term: 'Životní minimum',
     firstLetter: 'Z',
     category: 'finance',
@@ -526,248 +775,13 @@ const WIKI_TERMS: TermItem[] = [
       'Bezplatný advokát od ČAK se určuje, pokud příjem rodiny nepřesahuje 3násobek životního minima.',
       'Aktuální výši životního minima najdete na stránkách MPSV ČR.'
     ],
-    relatedTerms: ['Bezplatný advokát (Určení ČAK)', 'Dohoda o výživném']
-  }
+    relatedTerms: ['Bezplatný advokát (Určení ČAK)', 'Dohoda o výživném'],
+    order: 36,
+    status: 'PUBLISHED',
+    seoTitle: 'Životní minimum a výpočet výživného v ČR',
+    seoDescription: 'Výše životního minima a jeho vliv na výpočet nezabavitelných částek, výživného a právní pomoci.',
+    sources: ['Zákon č. 110/2006 Sb., o životním a existenčním minimu'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
+  },
 ];
-
-const ALPHABET = ['Vše', 'A', 'B', 'C', 'D', 'E', 'I', 'K', 'M', 'N', 'O', 'P', 'R', 'S', 'V', 'Z'];
-
-export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
-  const [terms, setTerms] = useState<TermItem[]>(WIKI_TERMS);
-  const [loading, setLoading] = useState(false);
-  const [selectedLetter, setSelectedLetter] = useState<string>('Vše');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchWikiTerms();
-  }, []);
-
-  const fetchWikiTerms = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/cms/wiki');
-      if (res.ok) {
-        const data: WikiTerm[] = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: TermItem[] = data.map((item) => {
-            const firstLetter = item.firstLetter || (item.term.trim().charAt(0).toUpperCase());
-            const cat = (item.category as any) || 'pravo';
-            return {
-              id: item.id,
-              term: item.term,
-              firstLetter,
-              category: cat,
-              categoryLabel: item.categoryLabel || (cat === 'soud' ? 'Soudní řízení' : cat === 'ospod' ? 'OSPOD & Postupy' : cat === 'finance' ? 'Finance & Výživné' : 'Právní pojmy'),
-              citation: item.citation,
-              definition: item.definition,
-              practicalTips: item.practicalTips || [],
-              relatedTerms: item.relatedTerms || []
-            };
-          });
-          setTerms(mapped);
-        }
-      }
-    } catch (err) {
-      console.warn('Používám výchozí Wiki data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const dynamicAlphabet = ['Vše', ...Array.from(new Set(terms.map((t) => t.firstLetter.toUpperCase()))).sort()];
-
-  const filteredTerms = terms.filter((t) => {
-    const matchesLetter = selectedLetter === 'Vše' || t.firstLetter.toUpperCase() === selectedLetter.toUpperCase();
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
-    const matchesQuery =
-      searchQuery.trim() === '' ||
-      t.term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.definition.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.citation && t.citation.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesLetter && matchesCategory && matchesQuery;
-  });
-
-  const handleCopyTerm = (term: TermItem) => {
-    const textToCopy = `${term.term} ${term.citation ? `(${term.citation})` : ''}: ${term.definition}`;
-    navigator.clipboard.writeText(textToCopy);
-    setCopiedId(term.id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <SeoHead
-        title="Opatrovnická Právní Wiki & Slovník Pojmů • Táta má právo"
-        description="Prohledatelný abecední a tematický slovník opatrovnických pojmů: OSPOD, BIFF komunikace, Předběžné opatření, Status Quo, Znalecký posudek, Exekuce styku."
-        canonicalPath="/wiki"
-      />
-
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-900/50 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-wider border border-indigo-400/30 mb-3">
-              <BookMarked className="w-3.5 h-3.5 text-indigo-400" /> Právní Wiki & Slovník
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Slovník Opatrovnických Pojmů
-            </h1>
-            <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-              Přezkoumané výklady právních institutů, postupů OSPOD, Cochemské praxe a psychologických termínů se zákonnými citacemi a praktickými tipy.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Category Filter */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Vyhledat pojem (např. OSPOD, BIFF, § 452)..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                selectedCategory === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Všechny kategorie
-            </button>
-            <button
-              onClick={() => setSelectedCategory('pravo')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                selectedCategory === 'pravo' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Právní pojmy
-            </button>
-            <button
-              onClick={() => setSelectedCategory('ospod')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                selectedCategory === 'ospod' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              OSPOD & Psychologie
-            </button>
-            <button
-              onClick={() => setSelectedCategory('soud')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                selectedCategory === 'soud' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Soudní řízení
-            </button>
-            <button
-              onClick={() => setSelectedCategory('finance')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                selectedCategory === 'finance' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Finance & Výživné
-            </button>
-          </div>
-        </div>
-
-        {/* Alphabet Bar */}
-        <div className="pt-3 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 mr-2 shrink-0">Abeceda:</span>
-          {dynamicAlphabet.map((letter) => (
-            <button
-              key={letter}
-              onClick={() => setSelectedLetter(letter)}
-              className={`px-3 py-1 rounded-lg text-xs font-extrabold shrink-0 transition-all cursor-pointer ${
-                selectedLetter === letter
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Terms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredTerms.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="px-3 py-1 bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider rounded-full border border-slate-200">
-                  {item.categoryLabel}
-                </span>
-                {item.citation && (
-                  <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100">
-                    {item.citation}
-                  </span>
-                )}
-              </div>
-
-              <h3 className="text-lg font-black text-slate-900 leading-tight">
-                {item.term}
-              </h3>
-
-              <p className="text-xs text-slate-700 leading-relaxed font-normal">
-                {item.definition}
-              </p>
-
-              {/* Practical Tips */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-                <strong className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
-                  💡 Praktické doporučení:
-                </strong>
-                <ul className="space-y-1">
-                  {item.practicalTips.map((tip, idx) => (
-                    <li key={idx} className="text-xs text-slate-700 flex items-start gap-1.5">
-                      <span className="text-indigo-600 font-bold">•</span>
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
-                <span>Heslo v kódexu</span>
-              </div>
-
-              <button
-                onClick={() => handleCopyTerm(item)}
-                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                {copiedId === item.id ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">Zkopírováno</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Kopírovat pojem</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};

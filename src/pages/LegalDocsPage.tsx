@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { legalDocumentsContent } from '../data/legalDocuments';
 import { ComplianceDoc } from '../types';
+import { SeoHead } from '../components/public/SeoHead';
 
 interface LegalDocsPageProps {
   onNavigate: (path: string) => void;
@@ -213,6 +214,11 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
 
   return (
     <div className="py-12 bg-slate-50 min-h-screen font-sans">
+      <SeoHead
+        title="Právní dokumenty & Compliance centrum"
+        description="Oficiální podmínky užívání, zásady ochrany osobních údajů (GDPR), dobrovolnický kodex a právní výhrady projektu Táta má právo."
+        canonicalPath="/pravni-dokumenty"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Header Section */}
