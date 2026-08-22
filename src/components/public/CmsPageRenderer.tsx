@@ -102,6 +102,19 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   }
 
   if (error || !page) {
+    if (slug === 'home' || slug === 'domu') {
+      const defaultPuck = normalizePuckData(DEFAULT_HOMEPAGE_PUCK_DATA);
+      return (
+        <div className="min-h-screen bg-slate-50/50 pb-20">
+          <SeoHead
+            title="Táta má právo • Pro nejlepší zájem dítěte"
+            description="Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE."
+            canonicalPath="/"
+          />
+          <PageRender data={defaultPuck} />
+        </div>
+      );
+    }
     if (fallbackComponent) {
       return <>{fallbackComponent}</>;
     }
