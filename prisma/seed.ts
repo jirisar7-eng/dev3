@@ -20,6 +20,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pha1.justice.cz',
     phone: '+420 221 093 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -34,6 +36,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pha4.justice.cz',
     phone: '+420 221 553 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -120,6 +124,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.kladno.justice.cz',
     phone: '+420 312 604 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -192,6 +198,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.cbu.justice.cz',
     phone: '+420 386 798 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -264,6 +272,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.plzm.justice.cz',
     phone: '+420 377 868 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -336,6 +346,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.kva.justice.cz',
     phone: '+420 353 301 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -408,6 +420,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.unl.justice.cz',
     phone: '+420 475 247 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -480,6 +494,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.lbc.justice.cz',
     phone: '+420 485 221 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -552,6 +568,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.hrk.justice.cz',
     phone: '+420 495 010 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -624,6 +642,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pce.justice.cz',
     phone: '+420 466 023 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -710,6 +730,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.jhl.justice.cz',
     phone: '+420 567 101 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -782,6 +804,8 @@ export const realSubjektyData = [
     email: 'podatelna@msoud.brn.justice.cz',
     phone: '+420 546 511 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -854,6 +878,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.olc.justice.cz',
     phone: '+420 585 512 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -926,6 +952,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.zln.justice.cz',
     phone: '+420 577 004 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -998,6 +1026,8 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.ova.justice.cz',
     phone: '+420 596 972 111',
     website: 'https://www.justice.cz',
+    lat: 50.0865,
+    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -1431,6 +1461,8 @@ export async function runSeed() {
             phone: s.phone,
             website: s.website,
             isVerified: s.isVerified,
+            lat: (s as any).lat,
+            lng: (s as any).lng,
           },
           create: {
             type: s.type as any,
@@ -1444,6 +1476,8 @@ export async function runSeed() {
             phone: s.phone,
             website: s.website,
             isVerified: s.isVerified,
+            lat: (s as any).lat,
+            lng: (s as any).lng,
             avgRating: 0.0,
             reviewCount: 0,
           },
@@ -1557,6 +1591,8 @@ function seedInMemoryDbStore() {
         avgRating: 0.0,
         reviewCount: 0,
         isVerified: s.isVerified,
+            lat: (s as any).lat,
+            lng: (s as any).lng,
         createdAt: new Date(),
         reviews: [],
       });

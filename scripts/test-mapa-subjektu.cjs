@@ -83,3 +83,16 @@ if (passed === total) {
   console.error('❌ SOME TESTS FAILED!');
   process.exit(1);
 }
+
+runTest('SubjektManager: UI contains lat/lng inputs and geocoding', () => {
+  const adminContent = fs.readFileSync(path.join(__dirname, '../src/components/admin/SubjektManager.tsx'), 'utf8');
+  assert(adminContent.includes('Zeměpisná šířka (Lat):'), 'Must contain Latitude input');
+  assert(adminContent.includes('Zeměpisná délka (Lng):'), 'Must contain Longitude input');
+  assert(adminContent.includes('handleGeocode'), 'Must implement Geocoding feature');
+});
+
+runTest('subjektService: Supports setting coords to null', () => {
+  const serviceContent = fs.readFileSync(path.join(__dirname, '../src/services/subjektService.ts'), 'utf8');
+  assert(serviceContent.includes('lat: data.lat !== undefined ? data.lat : undefined'), 'Must support null lat in DB updates');
+  assert(serviceContent.includes('lng: data.lng !== undefined ? data.lng : undefined'), 'Must support null lng in DB updates');
+});

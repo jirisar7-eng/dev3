@@ -68,6 +68,8 @@ export const SubjektManager: React.FC = () => {
     phone: '',
     website: '',
     isVerified: true,
+    lat: "" as string | number,
+    lng: "" as string | number,
   });
 
   const [saving, setSaving] = useState<boolean>(false);
@@ -122,6 +124,8 @@ export const SubjektManager: React.FC = () => {
       phone: '',
       website: '',
       isVerified: true,
+    lat: "" as string | number,
+    lng: "" as string | number,
     });
     setShowModal(true);
   };
@@ -145,6 +149,8 @@ export const SubjektManager: React.FC = () => {
       phone: item.phone || '',
       website: item.website || '',
       isVerified: item.isVerified,
+      lat: typeof item.lat === "number" ? item.lat : "",
+      lng: typeof item.lng === "number" ? item.lng : "",
     });
     setShowModal(true);
   };
@@ -194,25 +200,75 @@ export const SubjektManager: React.FC = () => {
         ? (aresResult.suggestedType as EntityType)
         : prev.type,
       isVerified: true,
+    lat: "" as string | number,
+    lng: "" as string | number,
     }));
     setAresApplied(true);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  
+  const [geocodeLoading, setGeocodeLoading] = useState<boolean>(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+
+  const handleGeocode = async () => {
+    const addressQuery = `${form.address ? form.address + ',' : ''} ${form.city}`.trim();
+    if (!addressQuery || addressQuery === ',') {
+      setGeocodeError('Zadejte město a nejlépe i adresu pro vyhledání.');
+      return;
+    }
+    setGeocodeLoading(true);
+    setGeocodeError(null);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setForm(prev => ({ ...prev, lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }));
+        setGeocodeError(null);
+      } else {
+        setGeocodeError('Poloha nebyla nalezena. Zadejte souřadnice ručně.');
+      }
+    } catch (err) {
+      setGeocodeError('Chyba při komunikaci s geocoding službou.');
+    } finally {
+      setGeocodeLoading(false);
+    }
+  };
+
+const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+    let finalLat = typeof form.lat === 'number' ? form.lat : parseFloat(form.lat as string);
+    let finalLng = typeof form.lng === 'number' ? form.lng : parseFloat(form.lng as string);
+    
+    if (!isNaN(finalLat) && (finalLat < -90 || finalLat > 90)) {
+       alert("Zeměpisná šířka (Latitude) musí být mezi -90 a 90.");
+       setSaving(false);
+       return;
+    }
+    if (!isNaN(finalLng) && (finalLng < -180 || finalLng > 180)) {
+       alert("Zeměpisná délka (Longitude) musí být mezi -180 a 180.");
+       setSaving(false);
+       return;
+    }
+
+    const payload = {
+       ...form,
+       lat: !isNaN(finalLat) ? finalLat : null,
+       lng: !isNaN(finalLng) ? finalLng : null,
+    };
+
       if (editingSubjekt) {
         await fetch(`/api/subjekty/${editingSubjekt.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       } else {
         await fetch('/api/subjekty', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       }
       setShowModal(false);
@@ -563,6 +619,43 @@ export const SubjektManager: React.FC = () => {
                   onChange={(e) => setForm({ ...form, position: e.target.value })}
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
                 />
+
+              </div>
+
+              <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-800 flex items-center gap-2"><MapPin className="w-4 h-4 text-indigo-600"/> GPS Souřadnice</label>
+                  <button type="button" onClick={handleGeocode} disabled={geocodeLoading} className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-md hover:bg-indigo-700 disabled:opacity-50">
+                    {geocodeLoading ? 'Hledám...' : 'Získat z adresy'}
+                  </button>
+                </div>
+                {geocodeError && <div className="text-xs text-rose-600 font-semibold">{geocodeError}</div>}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">Zeměpisná šířka (Lat):</label>
+                    <input
+                      type="number" step="any" min="-90" max="90"
+                      value={form.lat}
+                      onChange={(e) => setForm({ ...form, lat: e.target.value })}
+                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs"
+                      placeholder="např. 50.088"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">Zeměpisná délka (Lng):</label>
+                    <input
+                      type="number" step="any" min="-180" max="180"
+                      value={form.lng}
+                      onChange={(e) => setForm({ ...form, lng: e.target.value })}
+                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs"
+                      placeholder="např. 14.42"
+                    />
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  Pokud souřadnice smažete nebo necháte prázdné, subjekt se na mapě nezobrazí.
+                </div>
+
               </div>
 
               <div>
