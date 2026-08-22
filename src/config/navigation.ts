@@ -10,6 +10,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'sub-1-3', labelKey: 'Právní poradna', url: '/pravni-poradna', order: 13, target: '_self', isExternal: false, parentId: 'cat-1' },
   { id: 'sub-1-4', labelKey: 'Fórum', url: '/forum', order: 14, target: '_self', isExternal: false, parentId: 'cat-1' },
   { id: 'sub-1-5', labelKey: 'Registr subjektů', url: '/registr-subjektu', order: 15, target: '_self', isExternal: false, parentId: 'cat-1' },
+  { id: 'sub-1-6', labelKey: 'Mapa subjektů', url: '/mapa-subjektu', order: 16, target: '_self', isExternal: false, parentId: 'cat-1' },
 
   // Category 2: ⚖️ Právo & Opatrovnictví
   { id: 'cat-2', labelKey: '⚖️ Právo & Opatrovnictví', url: '/agenda', order: 20, target: '_self', isExternal: false },

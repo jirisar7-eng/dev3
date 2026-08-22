@@ -97,7 +97,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/subjekty - Create new Subjekt (Requires ADMIN or MODERATOR)
 router.post('/', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
-    const { type, name, titleBefore, position, institution, city, region, address, email, phone, website, isVerified } = req.body;
+    const { type, name, titleBefore, position, institution, city, region, address, email, phone, website, isVerified, lat, lng } = req.body;
 
     if (!type || !name || !city || !region) {
       return res.status(400).json({ error: 'Chybí povinné údaje (typ, název, město, kraj)' });
@@ -116,6 +116,8 @@ router.post('/', requireAuth as any, requireRole('MODERATOR') as any, async (req
       phone,
       website,
       isVerified,
+      lat: typeof lat === 'number' ? lat : (lat ? parseFloat(lat) : undefined),
+      lng: typeof lng === 'number' ? lng : (lng ? parseFloat(lng) : undefined),
     });
 
     return res.status(201).json(created);

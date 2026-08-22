@@ -569,7 +569,11 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 <p className="text-sm font-medium">Načítám registr subjektů...</p>
               </div>
             ) : viewMode === "MAP" ? (
-              <SubjektyMap subjekty={filteredSubjekty} />
+              <SubjektyMap
+                subjekty={filteredSubjekty}
+                selectedSubjektId={selectedSubjekt?.id}
+                onSelectSubjekt={(subj) => setSelectedSubjekt(subj)}
+              />
             ) : filteredSubjekty.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
                 <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
@@ -726,9 +730,38 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
             {/* Contact Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 bg-white border border-slate-200 rounded-2xl p-4">
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span>{selectedSubjekt.address || `${selectedSubjekt.city}, ${selectedSubjekt.region}`}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                  <span>{selectedSubjekt.address || `${selectedSubjekt.city}, ${selectedSubjekt.region}`}</span>
+                </div>
+                {typeof selectedSubjekt.lat === 'number' &&
+                typeof selectedSubjekt.lng === 'number' &&
+                !isNaN(selectedSubjekt.lat) &&
+                !isNaN(selectedSubjekt.lng) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubjekt(null);
+                      if (onNavigate) {
+                        onNavigate(`/mapa-subjektu?subject=${selectedSubjekt.id}`);
+                      } else {
+                        window.history.pushState({}, '', `/mapa-subjektu?subject=${selectedSubjekt.id}`);
+                        window.dispatchEvent(new Event('popstate'));
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors ml-6.5 mt-0.5 cursor-pointer group text-left"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                    <span className="underline decoration-indigo-300 hover:decoration-indigo-600">
+                      Zobrazit na mapě
+                    </span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-slate-400 italic ml-6.5 mt-0.5">
+                    Poloha tohoto subjektu zatím není dostupná.
+                  </span>
+                )}
               </div>
               {selectedSubjekt.phone && (
                 <div className="flex items-center gap-2.5">
