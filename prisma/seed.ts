@@ -20,8 +20,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pha1.justice.cz',
     phone: '+420 221 093 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -36,8 +34,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pha4.justice.cz',
     phone: '+420 221 553 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -124,8 +120,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.kladno.justice.cz',
     phone: '+420 312 604 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -198,9 +192,9 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.cbu.justice.cz',
     phone: '+420 386 798 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
+    lat: 48.9747,
+    lng: 14.4749,
   },
   {
     type: 'OSPOD',
@@ -229,6 +223,8 @@ export const realSubjektyData = [
     phone: '+420 387 222 333',
     website: 'https://www.cb-psychologie.cz',
     isVerified: true,
+    lat: 48.9745,
+    lng: 14.4745,
   },
   {
     type: 'ADVOKAT',
@@ -243,6 +239,8 @@ export const realSubjektyData = [
     phone: '+420 387 311 444',
     website: 'https://www.ak-cb.cz',
     isVerified: true,
+    lat: 48.9743,
+    lng: 14.4743,
   },
   {
     type: 'PORADNA_CHARITA',
@@ -272,8 +270,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.plzm.justice.cz',
     phone: '+420 377 868 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -346,8 +342,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.kva.justice.cz',
     phone: '+420 353 301 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -420,8 +414,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.unl.justice.cz',
     phone: '+420 475 247 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -494,8 +486,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.lbc.justice.cz',
     phone: '+420 485 221 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -568,8 +558,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.hrk.justice.cz',
     phone: '+420 495 010 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -642,8 +630,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.pce.justice.cz',
     phone: '+420 466 023 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -730,8 +716,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.jhl.justice.cz',
     phone: '+420 567 101 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -804,8 +788,6 @@ export const realSubjektyData = [
     email: 'podatelna@msoud.brn.justice.cz',
     phone: '+420 546 511 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -878,8 +860,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.olc.justice.cz',
     phone: '+420 585 512 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -952,8 +932,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.zln.justice.cz',
     phone: '+420 577 004 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {
@@ -1026,8 +1004,6 @@ export const realSubjektyData = [
     email: 'podatelna@osoud.ova.justice.cz',
     phone: '+420 596 972 111',
     website: 'https://www.justice.cz',
-    lat: 50.0865,
-    lng: 14.4239,
     isVerified: true,
   },
   {

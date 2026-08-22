@@ -92,7 +92,13 @@ export const Header: React.FC<HeaderProps> = ({
       fetch('/api/cms/nav').then((res) => (res.ok ? res.json() : [])).catch(() => []),
       fetch('/api/custom-modules?all=false').then((res) => (res.ok ? res.json() : [])).catch(() => []),
     ]).then(([navData, customMods]: [NavItem[], any[]]) => {
-      let baseNav = Array.isArray(navData) && navData.length > 0 ? [...navData] : [...FALLBACK_NAV_ITEMS];
+      let baseNav = [...FALLBACK_NAV_ITEMS];
+      if (Array.isArray(navData) && navData.length > 0) {
+        const dbUrls = new Set(navData.map(n => n.url));
+        const dbIds = new Set(navData.map(n => n.id));
+        const missingRequired = FALLBACK_NAV_ITEMS.filter(n => !dbUrls.has(n.url) && !dbIds.has(n.id));
+        baseNav = [...navData, ...missingRequired];
+      }
 
       if (Array.isArray(customMods) && customMods.length > 0) {
         const menuMods = customMods.filter((m) => m.isActive && m.showInMenu);
