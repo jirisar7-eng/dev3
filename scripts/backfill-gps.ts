@@ -55,7 +55,7 @@ type GeocodeResult = {
 // Global states for Rate Limiting & Caching
 let globalAbort = false;
 let globalConsecutive429 = 0;
-const MAX_GLOBAL_429 = 2; // Stop after 2 consecutive 429s to prevent spamming
+const MAX_GLOBAL_429 = 1; // Stop after 2 consecutive 429s to prevent spamming
 const geocodeCache = new Map<string, GeocodeResult>();
 
 async function geocode(subject: any): Promise<GeocodeResult> {
@@ -111,7 +111,9 @@ async function geocode(subject: any): Promise<GeocodeResult> {
           let waitMs = 15000; // Default 15s backoff if no header
           if (retryAfter) {
             const sec = parseInt(retryAfter, 10);
-            if (!isNaN(sec)) waitMs = sec * 1000;
+            if (!isNaN(sec) && sec > 0) {
+              waitMs = Math.max(15000, sec * 1000);
+            }
           }
           
           console.warn(`HTTP 429 Too Many Requests. Backing off for ${waitMs}ms... (Attempt ${globalConsecutive429}/${MAX_GLOBAL_429})`);

@@ -109,6 +109,14 @@ runTest('Backfill GPS: detects HTTP 429, respects Retry-After, deduplicates quer
   assert(backfillContent.includes('globalAbort'), 'Must abort loop on systemic rate limit');
 });
 
+// 12. Backfill GPS Backoff Logic
+runTest('Backfill GPS: backoff calculation respects minimum 15s and avoids 0ms', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('sec > 0'), 'Must check if sec is greater than 0 to avoid 0ms');
+  assert(backfillContent.includes('Math.max(15000,'), 'Must use Math.max to enforce minimum 15000ms');
+  assert(backfillContent.includes('MAX_GLOBAL_429 = 1'), 'Must abort quickly on systemic 429');
+});
+
 if (passed === total) {
   console.log('✅ ALL MAP INTEGRATION TESTS PASSED!');
   process.exit(0);

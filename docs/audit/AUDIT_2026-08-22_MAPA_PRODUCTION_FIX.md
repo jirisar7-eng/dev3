@@ -68,3 +68,15 @@ Všechny subjekty, u nichž lze adresu lokalizovat, nyní mohou mít zadané a z
   - **Zpracování hlavičky `Retry-After`:** Pokud je hlavička nalezena, skript vyčká adekvátní dobu, případně se spolehne na bezpečný 15sekundový backoff.
   - **Graceful Termination (Ochrana celku):** Kód nyní hlídá počet globálně navázaných 429 pádů (`MAX_GLOBAL_429 = 2`). Pokud skript prokazatelně narazí na tvrdý rate limit ze strany poskytovatele opakovaně, označí stav za `RATE_LIMITED` a kompletně zruší hlavní iterativní smyčku s okamžitým opuštěním skriptu (`process.exit(2)`). Minimalizuje se tím riziko systémového IP banu na straně aplikace.
 - **Commit SHA:** b09f72a
+
+## Dodatečná oprava (2026-08-22): Oprava chybné logiky "Backing off for 0ms" při HTTP 429
+- **Diagnostika:**
+  - PROD3 dry-run kontejner ukázal, že oprava vzešlá z commitu \`945b803\` sice spolehlivě ochránila systém před úplným zacyklením a po dvou marných pokusech proces správně ukončila s návratovým kódem 2 (bez změny DB a datových ztrát), avšak mezitím chybou výpočtu provedla druhý dotaz ihned bez čekání (\`Backing off for 0ms\`).
+  - To bylo způsobeno chybnou validací hlavičky \`Retry-After\`, která mohla vracet \`0\` nebo chyběla, a program selhal ve vynucení minimálního intervalu. 
+  - Výsledky abortu z \`945b803\`: \`EXIT_CODE=2\`, vše ostatní (\`ADD/CORRECT/SKIP/UNCHANGED/ERROR/SUSPICIOUS\`) = \`0\`.
+- **Oprava:**
+  - Kód pro výpočet backoffu byl přepsán s použitím konstrukce \`Math.max(15000, sec * 1000)\`.
+  - Pokud server vrací platné \`Retry-After\`, které se vyhodnotí na \`> 0\` sekundy, počká skript vyšší z obou hodnot (minimálně 15 sekund).
+  - Pokud server vrátí neplatnou hlavičku, prázdnou hlavičku, nebo hlavičku rovnou \`0\`, skript vždy počká pevných \`15000\` ms (15 sekund).
+  - \`MAX_GLOBAL_429\` byl snížen na \`1\` z opatrnosti – po dvou prokazatelných a tvrdých ban-type zamítnutích ze strany API se backfill ihned preventivně ukončí s chybou.
+- **Commit SHA:** 3650641
