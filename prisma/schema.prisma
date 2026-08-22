@@ -1958,3 +1958,101 @@ model LegalGuideChapter {
   @@index([guideId])
 }
 
+// ------------------------------------------------------
+// MULTIMEDIA & EDUCATION (PHASE B CMS)
+// ------------------------------------------------------
+
+model AcademyVideo {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  title          String
+  category       String   @default("rozhovory") // 'rozhovory', 'navody', 'webinare'
+  categoryLabel  String   @default("Rozhovory s odborníky")
+  duration       String   @default("20 min")
+  speaker        String
+  speakerRole    String
+  thumbnailUrl   String
+  videoEmbedUrl  String
+  sourceType     String   @default("youtube") // 'youtube', 'vimeo', 'mp4', 'other'
+  description    String   @db.Text
+  summaryNotes   String[] @default([])
+  attachments    Json?    @default("[]")
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model Quiz {
+  id                   String         @id @default(uuid())
+  slug                 String         @unique
+  title                String
+  category             String         @default("Právní povědomí")
+  badge                String         @default("10 Otázek")
+  icon                 String         @default("ShieldCheck")
+  description          String         @db.Text
+  recommendedStudyPath String         @default("/studia")
+  difficulty           String         @default("MEDIUM") // 'EASY', 'MEDIUM', 'HARD'
+  order                Int            @default(0)
+  status               String         @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle             String?
+  seoDescription       String?
+  createdBy            String?
+  updatedBy            String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  questions            QuizQuestion[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model QuizQuestion {
+  id                 String   @id @default(uuid())
+  quizId             String
+  quiz               Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionText       String   @db.Text
+  options            String[] @default([])
+  correctAnswerIndex Int      @default(0)
+  explanation        String   @db.Text
+  order              Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([quizId])
+}
+
+model MementoCase {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  title          String
+  icon           String   @default("Flame")
+  category       String   @default("obecne")
+  error          String   @db.Text
+  consequence    String   @db.Text
+  correctAction  String   @db.Text
+  exampleBad     String   @db.Text
+  exampleGood    String   @db.Text
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+

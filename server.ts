@@ -3715,6 +3715,214 @@ app.delete('/api/cms/legal-guides/:id', requireAuth as any, requireRole('ADMIN')
   }
 });
 
+// ------------------------------------------------------
+// VIDEOTÉKA / ACADEMY VIDEOS (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/videos', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getVideos({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/videos/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getVideoBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Video nenalezeno' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/videos/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getVideoById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Video nenalezeno' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/videos', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createVideo(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/videos/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateVideo(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/videos/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteVideo(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ------------------------------------------------------
+// KVÍZY A TESTY / QUIZZES (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/quizzes', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getQuizzes({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/quizzes/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getQuizBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Kvíz nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/quizzes/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getQuizById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Kvíz nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/quizzes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createQuiz(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/quizzes/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateQuiz(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/quizzes/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteQuiz(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ------------------------------------------------------
+// PROCESNÍ CHYBY / MEMENTO (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/memento', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getMementoCases({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/memento/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getMementoCaseBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Memento případ nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/memento/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getMementoCaseById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Memento případ nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/memento', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createMementoCase(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/memento/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateMementoCase(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/memento/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteMementoCase(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
 // PDF Upload Route for Studies (Atomic MinIO Object Store + ClamAV Antivirus Scan)
 app.post('/api/cms/studies/upload-pdf', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   let uploadedObjectKey: string | null = null;

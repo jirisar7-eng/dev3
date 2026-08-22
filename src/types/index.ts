@@ -1069,3 +1069,91 @@ export interface LegalGuide {
   createdAt: string;
   updatedAt: string;
 }
+
+// ------------------------------------------------------
+// PHASE B: MULTIMEDIA & EDUCATION (CMS)
+// ------------------------------------------------------
+
+export interface VideoAttachment {
+  name: string;
+  size: string;
+  url?: string;
+}
+
+export interface AcademyVideo {
+  id: string;
+  slug: string;
+  title: string;
+  category: 'rozhovory' | 'navody' | 'webinare' | string;
+  categoryLabel: string;
+  duration: string;
+  speaker: string;
+  speakerRole: string;
+  thumbnailUrl: string;
+  videoEmbedUrl: string;
+  sourceType?: 'youtube' | 'vimeo' | 'mp4' | 'other' | string;
+  description: string;
+  summaryNotes: string[];
+  attachments?: VideoAttachment[];
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  quizId?: string;
+  questionText: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+  order?: number;
+}
+
+export interface Quiz {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  badge: string;
+  icon: string;
+  description: string;
+  recommendedStudyPath: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | string;
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  questions: QuizQuestion[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MementoCase {
+  id: string;
+  slug: string;
+  title: string;
+  icon: string;
+  category?: string;
+  error: string;
+  consequence: string;
+  correctAction: string;
+  exampleBad: string;
+  exampleGood: string;
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

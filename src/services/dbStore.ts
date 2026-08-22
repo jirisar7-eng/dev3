@@ -3,6 +3,9 @@ import { NAVIGATION_ITEMS } from '../config/navigation';
 import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 import { DEFAULT_WIKI_TERMS } from '../data/wikiSeed';
 import { DEFAULT_LEGAL_GUIDES } from '../data/legalGuidesSeed';
+import { DEFAULT_ACADEMY_VIDEOS } from '../data/videosSeed';
+import { DEFAULT_QUIZZES } from '../data/quizzesSeed';
+import { DEFAULT_MEMENTO_CASES } from '../data/mementoSeed';
 import {
   User,
   TextItem,
@@ -48,6 +51,9 @@ import {
   CareArrangement,
   WikiTerm,
   LegalGuide,
+  AcademyVideo,
+  Quiz,
+  MementoCase,
 } from '../types';
 
 // Initial Seed Data for "Táta má právo"
@@ -2948,6 +2954,9 @@ class MemoryStore {
 
   wikiTerms: WikiTerm[] = [...DEFAULT_WIKI_TERMS];
   legalGuides: LegalGuide[] = [...DEFAULT_LEGAL_GUIDES];
+  academyVideos: AcademyVideo[] = [...DEFAULT_ACADEMY_VIDEOS];
+  quizzes: Quiz[] = [...DEFAULT_QUIZZES];
+  mementoCases: MementoCase[] = [...DEFAULT_MEMENTO_CASES];
 
   // Helper methods
   logAudit(action: string, module: string, details: string, user?: User | null) {
