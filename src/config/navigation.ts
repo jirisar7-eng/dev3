@@ -9,8 +9,9 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'sub-1-2', labelKey: 'Krizový rozcestník', url: '/krizova-pomoc', order: 12, target: '_self', isExternal: false, parentId: 'cat-1' },
   { id: 'sub-1-3', labelKey: 'Právní poradna', url: '/pravni-poradna', order: 13, target: '_self', isExternal: false, parentId: 'cat-1' },
   { id: 'sub-1-4', labelKey: 'Fórum', url: '/forum', order: 14, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-5', labelKey: 'Registr subjektů', url: '/registr-subjektu', order: 15, target: '_self', isExternal: false, parentId: 'cat-1' },
-  { id: 'sub-1-6', labelKey: 'Mapa subjektů', url: '/mapa-subjektu', order: 16, target: '_self', isExternal: false, parentId: 'cat-1' },
+  { id: 'sub-1-5', labelKey: 'Memento otců', url: '/memento', order: 15, target: '_self', isExternal: false, parentId: 'cat-1' },
+  { id: 'sub-1-6', labelKey: 'Registr subjektů', url: '/registr-subjektu', order: 16, target: '_self', isExternal: false, parentId: 'cat-1' },
+  { id: 'sub-1-7', labelKey: 'Mapa subjektů', url: '/mapa-subjektu', order: 17, target: '_self', isExternal: false, parentId: 'cat-1' },
 
   // Category 2: ⚖️ Právo & Opatrovnictví
   { id: 'cat-2', labelKey: '⚖️ Právo & Opatrovnictví', url: '/agenda', order: 20, target: '_self', isExternal: false },
@@ -20,11 +21,14 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'sub-2-4', labelKey: 'Vzory dokumentů', url: '/dokumenty', order: 24, target: '_self', isExternal: false, parentId: 'cat-2' },
   { id: 'sub-2-5', labelKey: 'Články', url: '/clanky', order: 25, target: '_self', isExternal: false, parentId: 'cat-2' },
   { id: 'sub-2-6', labelKey: 'Zákony / e-Legislativa', url: '/state-laws', order: 26, target: '_self', isExternal: false, parentId: 'cat-2' },
+  { id: 'sub-2-7', labelKey: 'Průvodce OSPOD', url: '/ospod', order: 27, target: '_self', isExternal: false, parentId: 'cat-2' },
+  { id: 'sub-2-8', labelKey: 'Průvodce soudním řízením', url: '/soud', order: 28, target: '_self', isExternal: false, parentId: 'cat-2' },
 
   // Category 3: 👨‍👧 Péče & Spolurodičovství
   { id: 'cat-3', labelKey: '👨‍👧 Péče & Spolurodičovství', url: '/pece', order: 30, target: '_self', isExternal: false },
   { id: 'sub-3-1', labelKey: 'Péče o dítě (Care Hub)', url: '/pece', order: 31, target: '_self', isExternal: false, parentId: 'cat-3' },
   { id: 'sub-3-2', labelKey: 'CoParent Hub', url: '/portal/coparent', order: 32, target: '_self', isExternal: false, parentId: 'cat-3' },
+  { id: 'sub-3-3', labelKey: 'Kalkulačka výživného', url: '/kalkulacka-vyzivneho', order: 33, target: '_self', isExternal: false, parentId: 'cat-3' },
 
   // Category 4: 💼 Můj případ & Dokumenty
   { id: 'cat-4', labelKey: '💼 Můj případ & Dokumenty', url: '/muj-pripad', order: 40, target: '_self', isExternal: false },
@@ -35,8 +39,10 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   // Category 5: 🤖 AI Nástroje
   { id: 'cat-5', labelKey: '🤖 AI Nástroje', url: '/ai-asistent', order: 50, target: '_self', isExternal: false },
   { id: 'sub-5-1', labelKey: 'AI Právní Asistent', url: '/ai-asistent', order: 51, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-2', labelKey: 'Generátor formulářů', url: '/ai-formulare', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
-  { id: 'sub-5-3', labelKey: 'Simulátor', url: '/ai-simulator', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-2', labelKey: 'AI Průvodce řízením', url: '/ai-pruvodce', order: 52, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-3', labelKey: 'Generátor formulářů', url: '/ai-formulare', order: 53, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-4', labelKey: 'Simulátor', url: '/ai-simulator', order: 54, target: '_self', isExternal: false, parentId: 'cat-5' },
+  { id: 'sub-5-5', labelKey: 'AI Strojový Index', url: '/ai-context', order: 55, target: '_self', isExternal: false, parentId: 'cat-5' },
 
   // Category 6: 🎓 Akademie & Vzdělávání
   { id: 'cat-6', labelKey: '🎓 Akademie & Vzdělávání', url: '/studia', order: 60, target: '_self', isExternal: false },
@@ -62,6 +68,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'sub-8-4', labelKey: 'Hledáme dobrovolníky', url: '/dobrovolnici', order: 85, target: '_self', isExternal: false, parentId: 'cat-8' },
   { id: 'sub-8-5', labelKey: 'Kodex dobrovolníka', url: '/kodex-dobrovolnika', order: 86, target: '_self', isExternal: false, parentId: 'cat-8' },
   { id: 'sub-8-6', labelKey: 'Sponzoři & Partneři', url: '/partneri', order: 87, target: '_self', isExternal: false, parentId: 'cat-8' },
+  { id: 'sub-8-7', labelKey: 'Mapa stránek', url: '/sitemap', order: 88, target: '_self', isExternal: false, parentId: 'cat-8' },
 
   // Category 9: 👤 Můj účet
   { id: 'cat-9', labelKey: '👤 Můj účet', url: '/portal/profil', order: 90, target: '_self', isExternal: false },
