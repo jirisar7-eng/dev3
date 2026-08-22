@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Parse arguments
+const isApply = process.argv.includes('--apply');
+const isDryRun = process.argv.includes('--dry-run') || !isApply;
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
@@ -15,77 +21,187 @@ const pool = new pg.Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-async function geocodeAddress(address: string, city: string): Promise<{ lat: number, lng: number } | null> {
-  const query = `${address ? address + ',' : ''} ${city}`.trim();
-  if (!query || query === ',') return null;
+const SUSPICIOUS_COORDS = [
+  { lat: 50.0865, lng: 14.4239 } // Known duplicate Praha coords for courts in PROD
+];
+
+function isSuspicious(lat: number | null, lng: number | null, city: string): boolean {
+  if (lat === null || lng === null) return false;
+  if (!city) return false;
   
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
-      headers: {
-        'User-Agent': 'TataMaPravo/1.0 (backfill-script)'
+  // Check known fake coordinates
+  for (const bad of SUSPICIOUS_COORDS) {
+    if (Math.abs(bad.lat - lat) < 0.0001 && Math.abs(bad.lng - lng) < 0.0001) {
+      if (!city.toLowerCase().includes('praha') && !city.toLowerCase().includes('prague')) {
+        return true; // Marked as Prague but city is not Prague
       }
-    });
-    
-    const data = await res.json();
-    if (data && data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
-      };
     }
-  } catch (error) {
-    console.error(`Error geocoding ${query}:`, error);
   }
+  return false;
+}
+
+// Normalize strings for comparison (remove diacritics, lowercase)
+function normalizeStr(str: string): string {
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+async function geocode(subject: any): Promise<{lat: number, lng: number, source: string} | null> {
+  const city = subject.city || '';
+  const address = subject.address || '';
+  const name = subject.name || '';
+  
+  // Query strategies ordered by precision
+  const queries = [
+    `${name}, ${address}, ${city}, Czech Republic`.replace(/,\s*,/g, ','),
+    `${address}, ${city}, Czech Republic`.replace(/,\s*,/g, ','),
+    `${city}, Czech Republic`
+  ];
+
+  for (const q of queries) {
+    if (!q || q.trim().length < 5 || q.startsWith(',')) continue;
+    
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q.trim())}&addressdetails=1&limit=3`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'TataMaPravo/1.1 (backfill-script)' }
+      });
+      const data = await res.json();
+      
+      if (data && data.length > 0) {
+        // Validate result
+        for (const item of data) {
+          const resCity = item.address?.city || item.address?.town || item.address?.village || item.address?.county || item.address?.state || '';
+          const resDisplay = item.display_name || '';
+          
+          const expectedCityNorm = normalizeStr(city);
+          
+          // Must match city
+          if (
+            expectedCityNorm && 
+            (normalizeStr(resCity).includes(expectedCityNorm) || 
+             normalizeStr(resDisplay).includes(expectedCityNorm))
+          ) {
+            return {
+              lat: parseFloat(item.lat),
+              lng: parseFloat(item.lon),
+              source: `Nominatim: ${q}`
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`Geocoding error for ${name}:`, err);
+    }
+    
+    // Delay 1s to respect Nominatim limits
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  
   return null;
 }
 
-async function runBackfill() {
-  console.log('--- STARTING GPS BACKFILL ---');
-  let processed = 0;
-  let updated = 0;
+async function run() {
+  console.log(`Starting GPS Backfill in ${isApply ? 'APPLY' : 'DRY-RUN'} mode...`);
+  
+  const subjects = await prisma.subjekt.findMany();
+  
+  let total = subjects.length;
+  let missingGps = 0;
+  let hasGps = 0;
+  let suspiciousCount = 0;
+  let candidateCount = 0;
+  
+  let added = 0;
+  let corrected = 0;
   let skipped = 0;
-
-  try {
-    const subjekty = await prisma.subjekt.findMany({
-      where: {
-        OR: [
-          { lat: null },
-          { lng: null }
-        ]
+  let unchanged = 0;
+  
+  const reportLines = [
+    '| ID | Subjekt | Město | Staré GPS | Nové GPS | Zdroj | Validace | Akce |',
+    '|---|---|---|---|---|---|---|---|'
+  ];
+  
+  for (const s of subjects) {
+    let oldGpsStr = 'NULL';
+    const isMissing = s.lat === null || s.lng === null;
+    let isSusp = false;
+    
+    if (isMissing) {
+      missingGps++;
+    } else {
+      hasGps++;
+      oldGpsStr = `${s.lat}, ${s.lng}`;
+      if (isSuspicious(s.lat, s.lng, s.city || '')) {
+        isSusp = true;
+        suspiciousCount++;
       }
-    });
-    console.log(`Found ${subjekty.length} subjekts missing GPS coordinates.`);
-
-    for (const s of subjekty) {
-      processed++;
-      console.log(`Processing [${processed}/${subjekty.length}]: ${s.name}`);
-      const coords = await geocodeAddress(s.address || '', s.city);
-      if (coords) {
-        await prisma.subjekt.update({
-          where: { id: s.id },
-          data: {
-            lat: coords.lat,
-            lng: coords.lng
-          }
-        });
-        console.log(`  -> Updated with lat: ${coords.lat}, lng: ${coords.lng}`);
-        updated++;
-      } else {
-        console.log(`  -> Geocoding failed or returned no results.`);
-        skipped++;
-      }
-      // Wait 1s to respect Nominatim API limits
-      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    console.log(`--- BACKFILL COMPLETE ---`);
-    console.log(`Processed: ${processed}, Updated: ${updated}, Skipped: ${skipped}`);
-  } catch (error) {
-    console.error('Backfill error:', error);
-  } finally {
-    await prisma.$disconnect();
-    await pool.end();
+    if (isMissing || isSusp) {
+      candidateCount++;
+      console.log(`Processing: ${s.name} (${s.city}) - Suspicious: ${isSusp}`);
+      const newCoords = await geocode(s);
+      
+      if (newCoords) {
+        // Ensure lat/lng are in valid bounds before applying
+        if (newCoords.lat < -90 || newCoords.lat > 90 || newCoords.lng < -180 || newCoords.lng > 180) {
+          skipped++;
+          reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | ${newCoords.lat}, ${newCoords.lng} | ${newCoords.source} | FAIL (Out of bounds) | SKIP |`);
+          continue;
+        }
+        
+        const action = isMissing ? 'ADD' : 'CORRECT';
+        if (isApply) {
+          await prisma.subjekt.update({
+            where: { id: s.id },
+            data: { lat: newCoords.lat, lng: newCoords.lng }
+          });
+        }
+        if (isMissing) added++; else corrected++;
+        
+        reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | ${newCoords.lat}, ${newCoords.lng} | ${newCoords.source} | PASS (Město souhlasí) | ${action} |`);
+      } else {
+        skipped++;
+        reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | NULL | Nelze bezpečně ověřit | FAIL | SKIP |`);
+      }
+    } else {
+      unchanged++;
+    }
   }
+  
+  const report = `# Auditní zpráva: GPS Backfill
+
+**Datum:** ${new Date().toISOString()}
+**Režim:** ${isApply ? 'APPLY (Zápis)' : 'DRY-RUN (Pouze test)'}
+
+## Souhrn databáze
+- Celkem subjektů: ${total}
+- S GPS před během: ${hasGps}
+- Bez GPS před během: ${missingGps}
+- Podezřelých GPS: ${suspiciousCount}
+- Kandidátů na opravu (Bez GPS + Podezřelé): ${candidateCount}
+
+## Výsledky
+- Úspěšně nalezeno a ${isApply ? 'zapsáno' : 'navrženo'} (ADD): ${added}
+- Úspěšně opraveno a ${isApply ? 'přepsáno' : 'navrženo'} (CORRECT): ${corrected}
+- Odmítnuto/neověřeno (SKIP): ${skipped}
+- Beze změny (UNCHANGED): ${unchanged}
+
+## Detailní protokol
+${reportLines.join('\n')}
+`;
+
+  fs.mkdirSync(path.join(process.cwd(), 'docs/audit'), { recursive: true });
+  fs.writeFileSync(path.join(process.cwd(), 'docs/audit/AUDIT_2026-08-22_GPS_BACKFILL.md'), report, 'utf8');
+  
+  console.log(`Done! Report saved to docs/audit/AUDIT_2026-08-22_GPS_BACKFILL.md`);
+  console.log(`ADD: ${added}, CORRECT: ${corrected}, SKIP: ${skipped}, UNCHANGED: ${unchanged}`);
+  
+  await prisma.$disconnect();
+  await pool.end();
 }
 
-runBackfill();
+run().catch(err => {
+  console.error("Fatal error:", err);
+  process.exit(1);
+});

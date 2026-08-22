@@ -72,6 +72,22 @@ runTest('Header: properly merges NAVIGATION_ITEMS with API navigation without ov
 console.log(`\n========================================`);
 console.log(`Summary: ${passed} / ${total} tests passed.`);
 
+
+// 9. Backfill GPS script logic
+runTest('Backfill GPS: detects dry-run and apply modes, validates city, skips invalid', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('--dry-run'), 'Must support --dry-run flag');
+  assert(backfillContent.includes('--apply'), 'Must support --apply flag');
+  assert(backfillContent.includes('SUSPICIOUS_COORDS'), 'Must detect duplicate/suspicious coordinates');
+  assert(backfillContent.includes('isSuspicious'), 'Must have logic to flag suspicious existing GPS');
+  assert(backfillContent.includes('expectedCityNorm'), 'Must validate Nominatim result against expected city');
+  assert(backfillContent.includes('SKIP'), 'Must skip subjects if coords cannot be safely validated');
+  assert(backfillContent.includes('AUDIT_2026-08-22_GPS_BACKFILL.md'), 'Must generate audit report');
+});
+
+console.log(`\n========================================`);
+console.log(`Summary: ${passed} / ${total} tests passed.`);
+
 if (passed === total) {
   console.log('✅ ALL MAP INTEGRATION TESTS PASSED!');
   process.exit(0);
