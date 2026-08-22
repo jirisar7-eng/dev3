@@ -45,7 +45,14 @@ function normalizeStr(str: string): string {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-async function geocode(subject: any): Promise<{lat: number, lng: number, source: string} | null> {
+type GeocodeResult = {
+  status: 'SUCCESS' | 'NOT_FOUND' | 'ERROR';
+  lat?: number;
+  lng?: number;
+  source?: string;
+};
+
+async function geocode(subject: any): Promise<GeocodeResult> {
   const city = subject.city || '';
   const address = subject.address || '';
   const name = subject.name || '';
@@ -57,47 +64,79 @@ async function geocode(subject: any): Promise<{lat: number, lng: number, source:
     `${city}, Czech Republic`
   ];
 
+  const MAX_RETRIES = 2;
+  let encounteredError = false;
+
   for (const q of queries) {
     if (!q || q.trim().length < 5 || q.startsWith(',')) continue;
     
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q.trim())}&addressdetails=1&limit=3`;
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'TataMaPravo/1.1 (backfill-script)' }
-      });
-      const data = await res.json();
-      
-      if (data && data.length > 0) {
-        // Validate result
-        for (const item of data) {
-          const resCity = item.address?.city || item.address?.town || item.address?.village || item.address?.county || item.address?.state || '';
-          const resDisplay = item.display_name || '';
-          
-          const expectedCityNorm = normalizeStr(city);
-          
-          // Must match city
-          if (
-            expectedCityNorm && 
-            (normalizeStr(resCity).includes(expectedCityNorm) || 
-             normalizeStr(resDisplay).includes(expectedCityNorm))
-          ) {
-            return {
-              lat: parseFloat(item.lat),
-              lng: parseFloat(item.lon),
-              source: `Nominatim: ${q}`
-            };
+    let attempt = 0;
+    while (attempt <= MAX_RETRIES) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q.trim())}&addressdetails=1&limit=3`;
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'TataMaPravo/1.1 (backfill-script)' }
+        });
+        
+        if (!res.ok) {
+          console.error(`HTTP error ${res.status} on attempt ${attempt + 1} for query: ${q}`);
+          encounteredError = true;
+          attempt++;
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+          continue;
+        }
+
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          console.error(`Invalid Content-Type: ${contentType} on attempt ${attempt + 1}. Expected JSON (Got XML/HTML?). Query: ${q}`);
+          encounteredError = true;
+          attempt++;
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+          continue;
+        }
+
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          // Validate result
+          for (const item of data) {
+            const resCity = item.address?.city || item.address?.town || item.address?.village || item.address?.county || item.address?.state || '';
+            const resDisplay = item.display_name || '';
+            
+            const expectedCityNorm = normalizeStr(city);
+            
+            // Must match city
+            if (
+              expectedCityNorm && 
+              (normalizeStr(resCity).includes(expectedCityNorm) || 
+               normalizeStr(resDisplay).includes(expectedCityNorm))
+            ) {
+              return {
+                status: 'SUCCESS',
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon),
+                source: `Nominatim: ${q}`
+              };
+            }
           }
         }
+        
+        // If we reach here, we successfully got JSON but no valid result matched our criteria.
+        // Break out of the retry loop for this query and move to the next fallback query.
+        break;
+      } catch (err) {
+        console.error(`Geocoding error for ${name} on attempt ${attempt + 1}:`, err);
+        encounteredError = true;
+        attempt++;
+        await new Promise(r => setTimeout(r, 2000 * attempt));
       }
-    } catch (err) {
-      console.error(`Geocoding error for ${name}:`, err);
     }
     
-    // Delay 1s to respect Nominatim limits
+    // Delay 1s before trying the next query strategy to respect Nominatim limits
     await new Promise(r => setTimeout(r, 1000));
   }
   
-  return null;
+  return { status: encounteredError ? 'ERROR' : 'NOT_FOUND' };
 }
 
 async function run() {
@@ -115,6 +154,7 @@ async function run() {
   let corrected = 0;
   let skipped = 0;
   let unchanged = 0;
+  let errors = 0;
   
   const reportLines = [
     '| ID | Subjekt | Město | Staré GPS | Nové GPS | Zdroj | Validace | Akce |',
@@ -142,7 +182,7 @@ async function run() {
       console.log(`Processing: ${s.name} (${s.city}) - Suspicious: ${isSusp}`);
       const newCoords = await geocode(s);
       
-      if (newCoords) {
+      if (newCoords.status === 'SUCCESS' && newCoords.lat !== undefined && newCoords.lng !== undefined) {
         // Ensure lat/lng are in valid bounds before applying
         if (newCoords.lat < -90 || newCoords.lat > 90 || newCoords.lng < -180 || newCoords.lng > 180) {
           skipped++;
@@ -160,9 +200,12 @@ async function run() {
         if (isMissing) added++; else corrected++;
         
         reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | ${newCoords.lat}, ${newCoords.lng} | ${newCoords.source} | PASS (Město souhlasí) | ${action} |`);
+      } else if (newCoords.status === 'ERROR') {
+        errors++;
+        reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | NULL | Nelze ověřit / API Chyba | FAIL | ERROR |`);
       } else {
         skipped++;
-        reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | NULL | Nelze bezpečně ověřit | FAIL | SKIP |`);
+        reportLines.push(`| ${s.id.substring(0,8)} | ${s.name} | ${s.city} | ${oldGpsStr} | NULL | Nenalezeno přesné shody | FAIL | SKIP |`);
       }
     } else {
       unchanged++;
@@ -185,6 +228,7 @@ async function run() {
 - Úspěšně nalezeno a ${isApply ? 'zapsáno' : 'navrženo'} (ADD): ${added}
 - Úspěšně opraveno a ${isApply ? 'přepsáno' : 'navrženo'} (CORRECT): ${corrected}
 - Odmítnuto/neověřeno (SKIP): ${skipped}
+- Selhání/chyba API (ERROR): ${errors}
 - Beze změny (UNCHANGED): ${unchanged}
 
 ## Detailní protokol
@@ -195,7 +239,7 @@ ${reportLines.join('\n')}
   fs.writeFileSync(path.join(process.cwd(), 'docs/audit/AUDIT_2026-08-22_GPS_BACKFILL.md'), report, 'utf8');
   
   console.log(`Done! Report saved to docs/audit/AUDIT_2026-08-22_GPS_BACKFILL.md`);
-  console.log(`ADD: ${added}, CORRECT: ${corrected}, SKIP: ${skipped}, UNCHANGED: ${unchanged}`);
+  console.log(`ADD: ${added}, CORRECT: ${corrected}, SKIP: ${skipped}, UNCHANGED: ${unchanged}, ERROR: ${errors}, SUSPICIOUS: ${suspiciousCount}`);
   
   await prisma.$disconnect();
   await pool.end();

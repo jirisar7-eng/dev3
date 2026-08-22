@@ -40,3 +40,18 @@ Všechny subjekty, u nichž lze adresu lokalizovat, nyní mohou mít zadané a z
 - **Problém:** Skript `scripts/backfill-gps.ts` selhával v produkčním prostředí s chybou `PrismaClientInitializationError: PrismaClient was instantiated without any options. A driver adapter is required...`
 - **Root Cause:** Projekt využívá verzi Prisma vyžadující `@prisma/adapter-pg` pro Node.js ovladače (např. kvůli kompatibilitě v edge/serverless prostředí nebo specifické architektuře projektu, viz `src/db/prisma.ts`). Samotné zavolání `new PrismaClient()` v samostatném skriptu bez konfigurace adaptéru proto selhalo.
 - **Oprava:** Skript byl upraven tak, aby explicitně vyžadoval `DATABASE_URL` z prostředí a správně inicializoval `pg.Pool` s adaptérem `PrismaPg`, stejným způsobem, jakým je to řešeno ve vrstvě aplikace (`src/db/prisma.ts`). Bylo také doplněno správné uzavření poolu `await pool.end()` po skončení operace, aby skript nezůstal viset. Skript v případě absence `DATABASE_URL` z bezpečnostních důvodů (fallback mitigace) ihned s chybou skončí.
+
+## Dodatečná oprava (2026-08-22): Oprava chyb Geocoderu z DRY-RUN testu
+- **Diagnostika:**
+  - PROD3 připojení funguje, `PostgreSQL` databáze je dostupná přes `postgres_prod3:5432`.
+  - Příkaz `npx tsx scripts/backfill-gps.ts --dry-run` byl v produkčním kontejneru úspěšně spuštěn.
+  - Ochranný mechanismus zafungoval správně – databáze **nebyla** změněna.
+  - V důsledku velkého zatížení nebo anomálie služby Nominatim obdržel skript neočekávanou odpověď (XML/HTML) namísto validního JSON.
+  - Z toho důvodu skript selhal při parsování (`Unexpected token '<', "<?xml vers"... is not valid JSON`).
+  - Běh byl manuálně zastaven kvůli velkým opakováním shodných chyb, režim `--apply` nebyl záměrně vůbec spuštěn, žádná data nebyla narušena.
+- **Oprava:**
+  - `backfill-gps.ts` rozšířen o robustní kontrolu formátu odpovědi.
+  - Nyní se explicitně ověřuje HTTP kód (`res.ok`) a typ obsahu (`content-type` musí obsahovat `application/json`).
+  - Při XML nebo neznámé odpovědi skript chybu chytí a danou adresu klasifikuje jako bezpečný status `ERROR` (přeskočeno), aniž by neošetřeně padal.
+  - Byl nastaven pevný limit maximálních pokusů o geokódování (`MAX_RETRIES`), který zamezuje nekonečnému opakování z důvodu selhávající služby na konkrétním endpointu.
+- **Commit SHA:** ce85d7d

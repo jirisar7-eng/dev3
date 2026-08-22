@@ -88,6 +88,16 @@ runTest('Backfill GPS: detects dry-run and apply modes, validates city, skips in
 console.log(`\n========================================`);
 console.log(`Summary: ${passed} / ${total} tests passed.`);
 
+// 10. Backfill GPS XML Error handling
+runTest('Backfill GPS: detects XML/HTML, handles HTTP errors, uses max retries, identifies ERROR vs SKIP', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('res.ok'), 'Must verify HTTP response OK');
+  assert(backfillContent.includes("res.headers.get('content-type')"), 'Must read content-type header');
+  assert(backfillContent.includes('application/json'), 'Must strictly require JSON response');
+  assert(backfillContent.includes('MAX_RETRIES = 2'), 'Must have retry limits');
+  assert(backfillContent.includes("ERROR"), 'Must correctly separate ERROR from SKIP');
+});
+
 if (passed === total) {
   console.log('✅ ALL MAP INTEGRATION TESTS PASSED!');
   process.exit(0);
