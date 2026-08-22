@@ -203,6 +203,176 @@ app.use('/api/custom-modules', customModuleRoutes);
 app.use('/api/subjekty', subjektRoutes);
 app.use('/api/cases', caseRoutes);
 app.use('/api/coparent', coparentRoutes);
+
+// --- INCIDENTS & HANDOVER LOGS ENDPOINTS ---
+app.get('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const category = req.query.category as string | undefined;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const whereClause: any = { userId };
+      if (category) whereClause.category = category;
+      const incidents = await incidentDelegate.findMany({
+        where: whereClause,
+        orderBy: { date: 'desc' }
+      });
+      return res.json({ success: true, data: incidents });
+    }
+
+    res.json({ success: true, data: [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při načítání incidentů.' });
+  }
+});
+
+app.post('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { title, description, date, category } = req.body;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const created = await incidentDelegate.create({
+        data: {
+          userId,
+          title: title || 'Předání dítěte',
+          description: description || '',
+          date: date ? new Date(date) : new Date(),
+          category: category || 'handover',
+        }
+      });
+      return res.status(201).json({ success: true, data: created });
+    }
+
+    res.status(201).json({ success: true, data: { id: `inc_${Date.now()}`, userId, title, description, category, date: new Date() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při vytváření záznamu.' });
+  }
+});
+
+app.delete('/api/incidents/:id', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const existing = await incidentDelegate.findFirst({
+        where: { id, userId }
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Záznam nebyl nalezen nebo k němu nemáte přístup.' });
+      }
+      await incidentDelegate.delete({ where: { id } });
+      return res.json({ success: true });
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při mazání záznamu.' });
+  }
+});
+
+// --- CASE FILES (OSOBNÍ SPIS) ENDPOINTS ---
+app.get('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const category = req.query.category as string | undefined;
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const whereClause: any = { userId };
+      if (category) whereClause.category = category;
+      const files = await caseFileDelegate.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' }
+      });
+      return res.json({ success: true, data: files });
+    }
+
+    res.json({ success: true, data: [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při načítání spisu.' });
+  }
+});
+
+app.post('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { title, category, content, fileUrl } = req.body;
+
+    if (!title || (!content && !fileUrl)) {
+      return res.status(400).json({ error: 'Chybí název nebo obsah spisu.' });
+    }
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const created = await caseFileDelegate.create({
+        data: {
+          userId,
+          title,
+          category: category || 'agreement',
+          content: content || '',
+          fileUrl: fileUrl || null
+        }
+      });
+      return res.status(201).json({ success: true, data: created });
+    }
+
+    res.status(201).json({ success: true, data: { id: `cf_${Date.now()}`, userId, title, category, content, createdAt: new Date() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při uložení do spisu.' });
+  }
+});
+
+app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const existing = await caseFileDelegate.findFirst({
+        where: { id, userId }
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Záznam nebyl nalezen nebo k němu nemáte přístup.' });
+      }
+      await caseFileDelegate.delete({ where: { id } });
+      return res.json({ success: true });
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při mazání ze spisu.' });
+  }
+});
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);
