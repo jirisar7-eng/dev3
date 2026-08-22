@@ -998,6 +998,13 @@ export interface Subjekt {
   avgRating: number;
   reviewCount: number;
   isVerified: boolean;
+  status?: 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED' | 'ARCHIVED';
+  createdById?: string | null;
+  verifiedById?: string | null;
+  verifiedAt?: string | Date | null;
+  rejectedById?: string | null;
+  rejectedAt?: string | Date | null;
+  rejectionReason?: string | null;
   createdAt?: string | Date;
   reviews?: Review[];
   pracovnici?: Pracovnik[];
