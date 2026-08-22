@@ -56,7 +56,7 @@ import {
   MementoCase,
 } from '../types';
 import ospodDataset from '../data/ospodDataset.json';
-import { nonOspodSubjekty } from '../data/nonOspodSubjekty';
+import { nonOspodSubjekty } from '../data/nonOspodSubjekty'; // Contains Alena Malá
 
 const defaultNonOspodSubjekty: Subjekt[] = nonOspodSubjekty.map((s, idx) => ({
   id: `subj-nonospod-${idx + 1}`,
