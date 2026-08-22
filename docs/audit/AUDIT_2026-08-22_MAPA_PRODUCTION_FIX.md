@@ -35,3 +35,8 @@
 
 ## Výsledný stav
 Všechny subjekty, u nichž lze adresu lokalizovat, nyní mohou mít zadané a zpracované souřadnice, které se správně přenesou z PostgreSQL (přes Prisma) na mapu na frontendu. Administrace i uživatelské rozhraní správně reflektuje přítomnost i absenci GPS lokace.
+
+## Dodatečná oprava (2026-08-22): Oprava inicializace Prisma klienta v Backfill skriptu
+- **Problém:** Skript `scripts/backfill-gps.ts` selhával v produkčním prostředí s chybou `PrismaClientInitializationError: PrismaClient was instantiated without any options. A driver adapter is required...`
+- **Root Cause:** Projekt využívá verzi Prisma vyžadující `@prisma/adapter-pg` pro Node.js ovladače (např. kvůli kompatibilitě v edge/serverless prostředí nebo specifické architektuře projektu, viz `src/db/prisma.ts`). Samotné zavolání `new PrismaClient()` v samostatném skriptu bez konfigurace adaptéru proto selhalo.
+- **Oprava:** Skript byl upraven tak, aby explicitně vyžadoval `DATABASE_URL` z prostředí a správně inicializoval `pg.Pool` s adaptérem `PrismaPg`, stejným způsobem, jakým je to řešeno ve vrstvě aplikace (`src/db/prisma.ts`). Bylo také doplněno správné uzavření poolu `await pool.end()` po skončení operace, aby skript nezůstal viset. Skript v případě absence `DATABASE_URL` z bezpečnostních důvodů (fallback mitigace) ihned s chybou skončí.
