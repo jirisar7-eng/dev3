@@ -55,3 +55,16 @@ Všechny subjekty, u nichž lze adresu lokalizovat, nyní mohou mít zadané a z
   - Při XML nebo neznámé odpovědi skript chybu chytí a danou adresu klasifikuje jako bezpečný status `ERROR` (přeskočeno), aniž by neošetřeně padal.
   - Byl nastaven pevný limit maximálních pokusů o geokódování (`MAX_RETRIES`), který zamezuje nekonečnému opakování z důvodu selhávající služby na konkrétním endpointu.
 - **Commit SHA:** ce85d7d
+
+## Dodatečná oprava (2026-08-22): Ochrana proti systémovému HTTP 429 Rate Limitingu Nominatim
+- **Diagnostika:**
+  - Oprava detekce XML byla úspěšně nasazena do testovacího dry-runu v kontejneru PROD3.
+  - Sice se vyřešilo padání na chybných parserech (`XML/HTML`), ale ihned po startu nového dry-runu narazil systém na `HTTP 429 Too Many Requests`.
+  - Stávající kód obsahoval rychlý retry mechanismus, čímž vznikalo opakované agresivní dotazování do služby Nominatim i přes rate limity.
+  - Skript běžel celou dobu izolovaně, `--apply` modifikátor nebyl spuštěn. Databáze nebyla nijak zasažena ani změněna.
+- **Oprava:**
+  - Implemenováno striktní dodržování rate-limitů Nominatim serveru pro geokódování (`HTTP 429`).
+  - **Deduplikace/Cache:** Skript nyní agreguje totožné adresy do in-memory `geocodeCache`, a filtruje duplicitní query před odesláním requestu na server (výrazně snižuje počet payloadů zbytečně opakujících se v kontextu stejných městských sond).
+  - **Zpracování hlavičky `Retry-After`:** Pokud je hlavička nalezena, skript vyčká adekvátní dobu, případně se spolehne na bezpečný 15sekundový backoff.
+  - **Graceful Termination (Ochrana celku):** Kód nyní hlídá počet globálně navázaných 429 pádů (`MAX_GLOBAL_429 = 2`). Pokud skript prokazatelně narazí na tvrdý rate limit ze strany poskytovatele opakovaně, označí stav za `RATE_LIMITED` a kompletně zruší hlavní iterativní smyčku s okamžitým opuštěním skriptu (`process.exit(2)`). Minimalizuje se tím riziko systémového IP banu na straně aplikace.
+- **Commit SHA:** b09f72a

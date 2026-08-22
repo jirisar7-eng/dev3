@@ -98,6 +98,17 @@ runTest('Backfill GPS: detects XML/HTML, handles HTTP errors, uses max retries, 
   assert(backfillContent.includes("ERROR"), 'Must correctly separate ERROR from SKIP');
 });
 
+// 11. Backfill GPS 429 Rate Limit handling
+runTest('Backfill GPS: detects HTTP 429, respects Retry-After, deduplicates queries, and aborts securely', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('res.status === 429'), 'Must check for HTTP 429');
+  assert(backfillContent.includes("res.headers.get('retry-after')"), 'Must check Retry-After header');
+  assert(backfillContent.includes('MAX_GLOBAL_429'), 'Must have a safe limit for 429 retries');
+  assert(backfillContent.includes('geocodeCache'), 'Must implement request deduplication/cache');
+  assert(backfillContent.includes("status: 'RATE_LIMITED'"), 'Must correctly flag RATE_LIMITED status');
+  assert(backfillContent.includes('globalAbort'), 'Must abort loop on systemic rate limit');
+});
+
 if (passed === total) {
   console.log('✅ ALL MAP INTEGRATION TESTS PASSED!');
   process.exit(0);
