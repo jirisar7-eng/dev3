@@ -51,6 +51,8 @@
         transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
         opacity: 1;
         visibility: visible;
+        overflow-y: auto;
+        max-height: 100vh;
       }
       #app-preloader.fade-out {
         opacity: 0;
@@ -69,6 +71,19 @@
         border-radius: 20px;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
         border: 1px solid var(--sp-border);
+      }
+      .sp-beta-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #2563eb;
+        background: rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        padding: 0.15rem 0.55rem;
+        border-radius: 9999px;
+        margin-bottom: 0.75rem;
+        display: inline-block;
+        text-transform: uppercase;
       }
       .sp-logo {
         width: 64px;
@@ -139,6 +154,11 @@
         line-height: 1.4;
       }
       @media (prefers-color-scheme: dark) {
+        .sp-beta-badge {
+          color: #60a5fa;
+          background: rgba(96, 165, 250, 0.15);
+          border-color: rgba(96, 165, 250, 0.25);
+        }
         .sp-info-box {
           background: rgba(96, 165, 250, 0.05);
           border-color: rgba(96, 165, 250, 0.1);
@@ -149,6 +169,43 @@
         }
         .sp-info-title {
           color: var(--sp-title);
+        }
+      }
+      @media (max-height: 580px) {
+        #app-preloader {
+          padding: 0.75rem;
+          justify-content: flex-start;
+        }
+        .sp-card {
+          padding: 1.25rem 1.25rem;
+          margin: auto 0;
+        }
+        .sp-beta-badge {
+          margin-bottom: 0.5rem;
+        }
+        .sp-logo {
+          width: 48px;
+          height: 48px;
+          margin-bottom: 0.5rem;
+        }
+        .sp-logo svg {
+          width: 28px;
+          height: 28px;
+        }
+        .sp-title {
+          font-size: 1.25rem;
+        }
+        .sp-subtitle {
+          font-size: 0.825rem;
+          margin-bottom: 0.75rem;
+        }
+        .sp-info-box {
+          min-height: 72px;
+          margin-bottom: 0.75rem;
+          padding: 0.5rem 0.75rem;
+        }
+        .sp-status-wrapper {
+          padding: 0.4rem 1rem;
         }
       }
       .sp-status-wrapper {
@@ -226,6 +283,7 @@
   <body>
     <div id="app-preloader" role="status" aria-live="polite" aria-label="Načítání aplikace Táta má právo">
       <div class="sp-card">
+        <span class="sp-beta-badge">BETA 1.0</span>
         <div class="sp-logo">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
