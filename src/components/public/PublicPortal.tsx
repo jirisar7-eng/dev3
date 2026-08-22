@@ -40,6 +40,7 @@ import {
   SupportView
 } from './community';
 import { RegistrSubjektu } from './RegistrSubjektu';
+import { MapaSubjektuView } from './MapaSubjektuView';
 import {
   AiAssistantView,
   AiGuideView,
@@ -338,9 +339,12 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
     return <AlimonyCalculatorPage onNavigate={onNavigate} />;
   }
 
-  // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty, /registr-subjektu)
+  // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty, /registr-subjektu, /mapa-subjektu)
   if (slug === 'registr-subjektu' || slug === 'subjekty' || slug === 'hodnoceni-subjektu' || slug === 'hodnoceni') {
     return <RegistrSubjektu onNavigate={onNavigate} />;
+  }
+  if (slug === 'mapa-subjektu' || slug === 'mapa' || slug === 'subjekty-mapa' || slug === 'map') {
+    return <MapaSubjektuView currentPath={currentPath} onNavigate={onNavigate} />;
   }
   if (slug === 'ospod' || slug === 'socialni-setreni') {
     return <OspodGuideView onNavigate={onNavigate} />;

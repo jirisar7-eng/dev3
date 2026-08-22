@@ -285,6 +285,8 @@ export class SubjektService {
     phone?: string;
     website?: string;
     isVerified?: boolean;
+    lat?: number;
+    lng?: number;
   }) {
     try {
       const created = await prisma.subjekt.create({
@@ -300,6 +302,8 @@ export class SubjektService {
           email: data.email || null,
           phone: data.phone || null,
           website: data.website || null,
+          lat: typeof data.lat === 'number' ? data.lat : null,
+          lng: typeof data.lng === 'number' ? data.lng : null,
           isVerified: data.isVerified ?? true,
         },
       });
@@ -319,6 +323,8 @@ export class SubjektService {
         email: data.email || null,
         phone: data.phone || null,
         website: data.website || null,
+        lat: typeof data.lat === 'number' ? data.lat : undefined,
+        lng: typeof data.lng === 'number' ? data.lng : undefined,
         avgRating: 0.0,
         reviewCount: 0,
         isVerified: data.isVerified ?? true,
@@ -349,6 +355,8 @@ export class SubjektService {
           email: data.email,
           phone: data.phone,
           website: data.website,
+          lat: typeof data.lat === 'number' ? data.lat : undefined,
+          lng: typeof data.lng === 'number' ? data.lng : undefined,
           isVerified: data.isVerified,
         },
       });
