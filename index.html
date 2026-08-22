@@ -100,7 +100,7 @@
         font-weight: 400;
       }
       .sp-info-box {
-        min-height: 72px; /* Prevent layout shift */
+        min-height: 84px; /* Prevent layout shift */
         margin: 0 0 1.5rem 0;
         padding: 0.75rem 1rem;
         background: rgba(37, 99, 235, 0.04);
@@ -110,11 +110,23 @@
         box-sizing: border-box;
         transition: opacity 0.3s ease;
       }
+      .sp-info-category {
+        font-size: 0.675rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #1e3a8a;
+        background: rgba(37, 99, 235, 0.1);
+        padding: 0.15rem 0.55rem;
+        border-radius: 9999px;
+        display: inline-block;
+        margin-bottom: 0.35rem;
+      }
       .sp-info-title {
-        font-size: 0.85rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        color: var(--sp-brand);
-        margin: 0 0 0.35rem 0;
+        color: var(--sp-title);
+        margin: 0 0 0.25rem 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -131,8 +143,12 @@
           background: rgba(96, 165, 250, 0.05);
           border-color: rgba(96, 165, 250, 0.1);
         }
+        .sp-info-category {
+          color: #60a5fa;
+          background: rgba(96, 165, 250, 0.15);
+        }
         .sp-info-title {
-          color: var(--sp-brand-light);
+          color: var(--sp-title);
         }
       }
       .sp-status-wrapper {
@@ -220,6 +236,7 @@
         <p class="sp-subtitle">Připravujeme obsah portálu</p>
 
         <div id="sp-info-box" class="sp-info-box" style="opacity: 0;">
+          <span id="sp-info-category" class="sp-info-category">PORTÁL</span>
           <h3 id="sp-info-title" class="sp-info-title"></h3>
           <p id="sp-info-desc" class="sp-info-desc"></p>
         </div>
