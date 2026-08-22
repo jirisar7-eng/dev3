@@ -168,11 +168,36 @@ async function runTests() {
   console.log('\n--- TEST GROUP 6: STATE ADMIN HUB ORCHESTRATOR ---');
   {
     const health = await StateAdminHubService.getHealthStatus();
-    assert(health.status === 'HEALTHY' || health.status === 'DEGRADED', 'Health status evaluated');
+    assert(health.status === 'HEALTHY' || health.status === 'DEGRADED' || health.status === 'UNKNOWN', 'Health status evaluated');
     assert(health.connectors.P1_JUSTICE !== undefined, 'P1 Justice status present');
     assert(health.connectors.P2_CSU_NKOD !== undefined, 'P2 ČSÚ status present');
     assert(health.connectors.P3_PUBLIC_REGISTRY !== undefined, 'P3 Public Registry status present');
     assert(health.connectors.P4_E_LEGISLATIVA !== undefined, 'P4 e-Legislativa status present');
+    assert(health.connectors.P1_JUSTICE.name !== '', 'P1 Justice has non-empty descriptive name');
+    assert(health.connectors.P2_CSU_NKOD.provider.includes('Český statistický úřad'), 'P2 ČSÚ has valid provider text');
+  }
+
+  // --- GROUP 7: STATE ADMIN HUB LIVE HEALTH CHECK & ADMIN DIAGNOSTICS ---
+  console.log('\n--- TEST GROUP 7: STATE ADMIN HUB LIVE HEALTH CHECK & ADMIN DIAGNOSTICS ---');
+  {
+    const liveHealth = await StateAdminHubService.performLiveHealthCheck();
+    assert(liveHealth.status === 'HEALTHY' || liveHealth.status === 'DEGRADED', 'Live health check successfully evaluated overall status');
+    assert(typeof liveHealth.lastCheckedAt === 'string', 'Live health check includes ISO timestamp');
+    assert(liveHealth.auditLogsCount > 0, 'Live health check generated audit logs');
+
+    // Verify all 4 connectors have structured status
+    for (const key of ['P1_JUSTICE', 'P2_CSU_NKOD', 'P3_PUBLIC_REGISTRY', 'P4_E_LEGISLATIVA']) {
+      const conn = liveHealth.connectors[key];
+      assert(conn !== undefined, `Connector ${key} is present in live health report`);
+      assert(['HEALTHY', 'DEGRADED', 'UNAVAILABLE', 'UNKNOWN'].includes(conn.status), `Connector ${key} has valid status enum (${conn.status})`);
+      assert(conn.endpoint.startsWith('http'), `Connector ${key} has valid endpoint URI`);
+    }
+
+    // Verify audits retrieval
+    const audits = StateAdminHubService.getAuditLogs();
+    assert(Array.isArray(audits), 'getAuditLogs returns array');
+    assert(audits.length > 0, 'Audit log entries exist after live check');
+    assert(audits[0].id.startsWith('audit-'), 'Audit log entry has valid unique ID format');
   }
 
   console.log('===============================================================');

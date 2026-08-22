@@ -46,7 +46,7 @@ Na základě master auditu kódové báze projektu **Táta má právo (dev3)** b
 | **P1-06** | P1 | AI Asistent, Průvodce & Formuláře | COMPLETE | AI generátor podání a simulátor výslechu | P0-05 | `ai/*`, `aiRoutes.ts`, `AiContextManager.tsx` | N/A | ANO | ANO | ANO | ANO | PASS | 0h | `ALREADY_RESOLVED` |
 | **P1-07** | P1 | Puck Vizuální editor stránek | COMPLETE | Drag & drop tvorba stránek s bloky | P0-05 | `PuckEditorView.tsx`, `AdminPageBuilder.tsx` | `Page`, `PageSection` | ANO | ANO | ANO | ANO | PASS | 0h | `ALREADY_RESOLVED` |
 | **P1-08** | P1 | Správa uživatelských tiketů & Support | COMPLETE | Helpdesk a uživatelská podpora | P0-05 | `UserSupportTicketingView.tsx`, `supportTicketRoutes.ts` | `SupportTicket` | ANO | ANO | ANO | ANO | PASS | 0h | `ALREADY_RESOLVED` |
-| **P1-09** | P1 | State Administration Hub Admin Panel | PARTIAL | Administrátorský panel pro health check a manuální trigger syncu ČSÚ / NKOD / MSp | P0-05 | `StateAdminHubService.ts`, `StateStatisticsView.tsx`, `server.ts` | `StateStatistic` | ANO | ANO | **CHYBÍ** | N/A | PASS | 2h | **OPEN** |
+| **P1-09** | P1 | State Administration Hub Admin Panel | COMPLETE | Administrátorský panel pro health check a manuální trigger syncu ČSÚ / NKOD / MSp | P0-05 | `StateAdminHubService.ts`, `StateAdminManager.tsx`, `AdminDashboard.tsx`, `server.ts` | `StateStatistic` | ANO | ANO | ANO | N/A | PASS | 0h | `ALREADY_RESOLVED` |
 
 ---
 

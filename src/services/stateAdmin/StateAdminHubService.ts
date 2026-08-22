@@ -15,63 +15,159 @@ export class StateAdminHubService {
    * Health Check: Returns status and last audit for all 4 connectors.
    */
   public static async getHealthStatus(): Promise<{
-    status: 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY';
+    status: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN';
     connectors: Record<
       string,
       {
+        id: string;
         name: string;
+        provider: string;
         priority: string;
-        status: 'OK' | 'ERROR' | 'UNCHECKED';
+        status: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN';
         lastHttpStatus?: number;
+        durationMs?: number;
+        lastCheckedAt?: string;
+        lastSuccessAt?: string;
+        errorMessage?: string;
+        recordsCount?: number;
+        endpoint: string;
       }
     >;
     auditLogsCount: number;
+    lastCheckedAt: string;
   }> {
     const audits = StateAdminApiClient.getAuditLogs();
 
-    const getConnectorLastAudit = (source: string) => {
-      return audits.find((a) => a.source === source);
+    const getConnectorAudits = (source: string) => {
+      return audits.filter((a) => a.source === source);
     };
 
-    const p1Audit = getConnectorLastAudit('P1_JUSTICE');
-    const p2Audit = getConnectorLastAudit('P2_CSU_NKOD');
-    const p3Audit = getConnectorLastAudit('P3_PUBLIC_REGISTRY');
-    const p4Audit = getConnectorLastAudit('P4_E_LEGISLATIVA');
+    const buildConnectorHealth = (
+      id: string,
+      name: string,
+      provider: string,
+      priority: string,
+      endpoint: string
+    ) => {
+      const sourceAudits = getConnectorAudits(id);
+      const lastAudit = sourceAudits[0];
+      const lastSuccessAudit = sourceAudits.find((a) => a.success);
 
-    const connectors: Record<string, { name: string; priority: string; status: 'OK' | 'ERROR' | 'UNCHECKED'; lastHttpStatus?: number }> = {
-      P1_JUSTICE: {
-        name: 'Ministerstvo spravedlnosti / OpenData (P1)',
-        priority: 'P1',
-        status: (p1Audit ? (p1Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
-        lastHttpStatus: p1Audit?.httpStatus,
-      },
-      P2_CSU_NKOD: {
-        name: 'ČSÚ / Národní katalog otevřených dat (P2)',
-        priority: 'P2',
-        status: (p2Audit ? (p2Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
-        lastHttpStatus: p2Audit?.httpStatus,
-      },
-      P3_PUBLIC_REGISTRY: {
-        name: 'Veřejné registry / OVM Soudy & OSPOD (P3)',
-        priority: 'P3',
-        status: (p3Audit ? (p3Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
-        lastHttpStatus: p3Audit?.httpStatus,
-      },
-      P4_E_LEGISLATIVA: {
-        name: 'e-Legislativa / Sněmovní tisky (P4)',
-        priority: 'P4',
-        status: (p4Audit ? (p4Audit.success ? 'OK' : 'ERROR') : 'OK') as 'OK' | 'ERROR',
-        lastHttpStatus: p4Audit?.httpStatus,
-      },
+      let status: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN' = 'UNKNOWN';
+
+      if (!lastAudit) {
+        status = 'UNKNOWN';
+      } else if (lastAudit.success && lastAudit.httpStatus === 200) {
+        status = 'HEALTHY';
+      } else if (lastAudit.httpStatus === 501 || (lastAudit.httpStatus === 503 && id === 'P4_E_LEGISLATIVA')) {
+        // 501 Not Implemented upstream or 503 Missing optional key
+        status = 'DEGRADED';
+      } else {
+        status = 'UNAVAILABLE';
+      }
+
+      return {
+        id,
+        name,
+        provider,
+        priority,
+        status,
+        lastHttpStatus: lastAudit?.httpStatus,
+        durationMs: lastAudit?.durationMs,
+        lastCheckedAt: lastAudit?.timestamp ? new Date(lastAudit.timestamp).toISOString() : undefined,
+        lastSuccessAt: lastSuccessAudit?.timestamp ? new Date(lastSuccessAudit.timestamp).toISOString() : undefined,
+        errorMessage: lastAudit?.errorMessage,
+        recordsCount: lastAudit?.recordsCount,
+        endpoint,
+      };
     };
 
-    const hasError = Object.values(connectors).some((c) => c.status === 'ERROR');
+    const connectors: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        provider: string;
+        priority: string;
+        status: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN';
+        lastHttpStatus?: number;
+        durationMs?: number;
+        lastCheckedAt?: string;
+        lastSuccessAt?: string;
+        errorMessage?: string;
+        recordsCount?: number;
+        endpoint: string;
+      }
+    > = {
+      P1_JUSTICE: buildConnectorHealth(
+        'P1_JUSTICE',
+        'Otevřená data a judikatura MSp',
+        'Ministerstvo spravedlnosti ČR',
+        'P1',
+        'https://data.gov.cz/sparql (MSp Datasets)'
+      ),
+      P2_CSU_NKOD: buildConnectorHealth(
+        'P2_CSU_NKOD',
+        'Demografické statistiky a NKOD',
+        'Český statistický úřad & NKOD',
+        'P2',
+        'https://data.gov.cz/sparql (ČSÚ Datasets)'
+      ),
+      P3_PUBLIC_REGISTRY: buildConnectorHealth(
+        'P3_PUBLIC_REGISTRY',
+        'Registr orgánů veřejné moci (OVM)',
+        'Soudy, OSPOD & ARES',
+        'P3',
+        'https://data.gov.cz/sparql (OVM Registry)'
+      ),
+      P4_E_LEGISLATIVA: buildConnectorHealth(
+        'P4_E_LEGISLATIVA',
+        'e-Sbírka & e-Legislativa API',
+        'Ministerstvo vnitra ČR',
+        'P4',
+        'https://api.e-sbirka.gov.cz'
+      ),
+    };
+
+    const statuses = Object.values(connectors).map((c) => c.status);
+    let overallStatus: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN' = 'HEALTHY';
+
+    if (statuses.every((s) => s === 'UNKNOWN')) {
+      overallStatus = 'UNKNOWN';
+    } else if (statuses.some((s) => s === 'UNAVAILABLE')) {
+      overallStatus = 'DEGRADED';
+    } else if (statuses.some((s) => s === 'DEGRADED')) {
+      overallStatus = 'DEGRADED';
+    } else if (statuses.every((s) => s === 'HEALTHY')) {
+      overallStatus = 'HEALTHY';
+    }
 
     return {
-      status: hasError ? 'DEGRADED' : 'HEALTHY',
+      status: overallStatus,
       connectors,
       auditLogsCount: audits.length,
+      lastCheckedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Run Live Diagnostic Health Check across all 4 connectors in parallel.
+   */
+  public static async performLiveHealthCheck(): Promise<{
+    status: 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN';
+    connectors: Record<string, any>;
+    auditLogsCount: number;
+    lastCheckedAt: string;
+  }> {
+    // Run all connector queries with isolated try/catch so one failure never blocks others
+    await Promise.allSettled([
+      JusticeOpenDataConnector.getJudicialCases('Ústavní soud').catch(() => null),
+      CsuNkodConnector.searchNkodDatasets('rodina').catch(() => null),
+      PublicRegistryConnector.getOvmEntities('SOUD').catch(() => null),
+      ELegislativaConnector.getLegislativeBills('89/2012').catch(() => null),
+    ]);
+
+    return this.getHealthStatus();
   }
 
   // P1: Justice / MSp

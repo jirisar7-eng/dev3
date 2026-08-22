@@ -807,6 +807,44 @@ app.get('/api/state-admin/audits', async (req: express.Request, res: express.Res
   }
 });
 
+// Administrative State Admin Hub Endpoints (RBAC: ADMIN)
+app.get('/api/admin/state-admin/health', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const health = await StateAdminHubService.getHealthStatus();
+    res.json({ success: true, ...health });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error getting State Admin Hub health' });
+  }
+});
+
+app.post('/api/admin/state-admin/health-check', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const health = await StateAdminHubService.performLiveHealthCheck();
+    
+    // Record administrative action in cryptographic AuditLog
+    await AuditService.recordLog(
+      'STATE_ADMIN_HEALTH_CHECK_TRIGGERED',
+      'STATE_ADMIN_HUB',
+      JSON.stringify({ status: health.status, auditLogsCount: health.auditLogsCount, timestamp: health.lastCheckedAt }),
+      req.user,
+      req.ip
+    );
+
+    res.json({ success: true, ...health });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error performing live State Admin Hub health check' });
+  }
+});
+
+app.get('/api/admin/state-admin/audits', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const audits = StateAdminHubService.getAuditLogs();
+    res.json({ success: true, count: audits.length, audits });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching State Admin Hub audit logs' });
+  }
+});
+
 
 // 1. AUTH & RBAC
 app.post('/api/auth/login', authRateLimiter as any, async (req: AuthenticatedRequest, res) => {
