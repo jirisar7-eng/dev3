@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 import { SubjektyMap } from './SubjektyMap';
+import { SeoHead } from './SeoHead';
 import {
   Scale,
   Users,
@@ -86,6 +88,7 @@ const ENTITY_CONFIG: Record<EntityType, { label: string; icon: React.FC<{ classN
 
 export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> = ({ onNavigate }) => {
   const [subjekty, setSubjekty] = useState<Subjekt[]>([]);
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [activeType, setActiveType] = useState<string>('ALL');
   const [selectedRegion, setSelectedRegion] = useState<string>('Všechny kraje');
@@ -138,6 +141,8 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     email: '',
     phone: '',
     website: '',
+    lat: undefined as number | undefined,
+    lng: undefined as number | undefined,
   });
 
   // Review Form
@@ -172,6 +177,9 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
   });
 
   const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
+  const [geocodeLoading, setGeocodeLoading] = useState(false);
+  const [geocodeWarning, setGeocodeWarning] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<Subjekt | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleAddPracovnik = async (e: React.FormEvent) => {
@@ -230,9 +238,54 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     e.preventDefault();
     if (!newSubjektForm.name || !newSubjektForm.city || !newSubjektForm.region) return;
 
+    if (!newSubjektForm.lat && !geocodeWarning) {
+      // Step 1: Geocode
+      setGeocodeLoading(true);
+      try {
+        const geoRes = await fetch('/api/subjekty/geocode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: newSubjektForm.address, city: newSubjektForm.city })
+        });
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          // Check if city matches
+          if (newSubjektForm.city && geoData.name && !geoData.name.toLowerCase().includes(newSubjektForm.city.toLowerCase())) {
+            setGeocodeWarning(`⚠️ Výsledek geokódování neodpovídá zadanému městu (${geoData.name}). Prosím, potvrďte polohu nebo ji upravte.`);
+            setNewSubjektForm({ ...newSubjektForm, lat: geoData.lat, lng: geoData.lng });
+            setGeocodeLoading(false);
+            return;
+          }
+          setNewSubjektForm({ ...newSubjektForm, lat: geoData.lat, lng: geoData.lng });
+        } else {
+          setGeocodeWarning('⚠️ Lokace nenalezena. Můžete návrh odeslat bez GPS.');
+          setGeocodeLoading(false);
+          return;
+        }
+      } catch (err) {
+        setGeocodeWarning('⚠️ Chyba geokódování. Můžete návrh odeslat bez GPS.');
+        setGeocodeLoading(false);
+        return;
+      }
+      setGeocodeLoading(false);
+    }
+    
+    // Step 2: Check Duplicates
+    if (!duplicateWarning) {
+      const isDuplicate = subjekty.find(s => 
+        s.name.toLowerCase() === newSubjektForm.name.toLowerCase() && 
+        s.city.toLowerCase() === newSubjektForm.city.toLowerCase()
+      );
+      if (isDuplicate) {
+        setDuplicateWarning(isDuplicate);
+        return;
+      }
+    }
+
+    // Step 3: Submit
     setFormSubmitting(true);
     try {
-      const res = await fetch('/api/subjekty', {
+      const res = await fetch('/api/subjekty/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSubjektForm),
@@ -240,24 +293,16 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       if (res.ok) {
         setShowAddSubjektModal(false);
         setNewSubjektForm({
-          type: 'SOUD',
-          name: '',
-          titleBefore: '',
-          position: '',
-          institution: '',
-          city: '',
-          region: 'Pardubický kraj',
-          address: '',
-          email: '',
-          phone: '',
-          website: '',
+          type: 'SOUD', name: '', titleBefore: '', position: '', institution: '', city: '', region: 'Pardubický kraj', address: '', email: '', phone: '', website: '', lat: undefined, lng: undefined
         });
-        setSuccessMessage('Subjekt byl úspěšně zaevidován v registru!');
-        setTimeout(() => setSuccessMessage(null), 4000);
+        setGeocodeWarning(null);
+        setDuplicateWarning(null);
+        setSuccessMessage('Děkujeme. Návrh subjektu byl odeslán ke kontrole administrátorovi.');
+        setTimeout(() => setSuccessMessage(null), 5000);
         fetchSubjekty();
       }
     } catch (err) {
-      console.error('Error creating subjekt:', err);
+      console.error(err);
     } finally {
       setFormSubmitting(false);
     }
@@ -349,6 +394,11 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <SeoHead
+        title="Registr & Hodnocení opatrovnických subjektů"
+        description="Transparentní registr soudců, orgánů OSPOD, znalců a rodinných advokátů. Ověřené zkušenosti rodičů s podporou střídavé péče a dodržováním práv dítěte."
+        canonicalPath="/registr-subjektu"
+      />
       {/* Header Banner */}
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1103,6 +1153,25 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
             </div>
 
             <form onSubmit={handleCreateSubjekt} className="space-y-4 text-xs">
+
+              {geocodeWarning && (
+                <div className="bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-200 text-xs flex flex-col gap-2">
+                  <span>{geocodeWarning}</span>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setGeocodeWarning(null)} className="px-3 py-1 bg-white rounded border border-amber-300 font-bold hover:bg-amber-100">Pokračovat a odeslat</button>
+                  </div>
+                </div>
+              )}
+              {duplicateWarning && (
+                <div className="bg-red-50 text-red-800 p-3 rounded-xl border border-red-200 text-xs flex flex-col gap-2">
+                  <span>⚠️ Podobný subjekt (<strong>{duplicateWarning.name}</strong>) již v registru existuje.</span>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => { setDuplicateWarning(null); setShowAddSubjektModal(false); window.open('/mapa-subjektu?id=' + duplicateWarning.id, '_blank'); }} className="px-3 py-1 bg-white rounded border border-red-300 font-bold hover:bg-red-100">Zkontrolovat existující</button>
+                    <button type="button" onClick={() => setDuplicateWarning(null)} className="px-3 py-1 bg-white rounded border border-red-300 font-bold hover:bg-red-100">Přesto odeslat návrh</button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label className="font-bold text-slate-800 block">Typ subjektu:</label>
                 <select

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Study } from '../../types';
+import { SeoHead } from './SeoHead';
 import {
   BookOpen,
   Search,
@@ -55,6 +56,11 @@ export const StudyLibraryPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      <SeoHead
+        title="Katalog vědeckých studií & Výzkum"
+        description="Recenzované vědecké studie z oblasti vývojové psychologie, střídavé péče, přespávání kojenců a citové vazby pro soudní řízení."
+        canonicalPath="/studie"
+      />
       {/* Hero Banner */}
       <div className="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-8 sm:p-12 rounded-3xl shadow-xl overflow-hidden border border-slate-800">
         <div className="absolute right-0 top-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />

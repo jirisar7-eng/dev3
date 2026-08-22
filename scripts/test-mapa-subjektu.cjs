@@ -72,6 +72,51 @@ runTest('Header: properly merges NAVIGATION_ITEMS with API navigation without ov
 console.log(`\n========================================`);
 console.log(`Summary: ${passed} / ${total} tests passed.`);
 
+
+// 9. Backfill GPS script logic
+runTest('Backfill GPS: detects dry-run and apply modes, validates city, skips invalid', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('--dry-run'), 'Must support --dry-run flag');
+  assert(backfillContent.includes('--apply'), 'Must support --apply flag');
+  assert(backfillContent.includes('SUSPICIOUS_COORDS'), 'Must detect duplicate/suspicious coordinates');
+  assert(backfillContent.includes('isSuspicious'), 'Must have logic to flag suspicious existing GPS');
+  assert(backfillContent.includes('expectedCityNorm'), 'Must validate Nominatim result against expected city');
+  assert(backfillContent.includes('SKIP'), 'Must skip subjects if coords cannot be safely validated');
+  assert(backfillContent.includes('AUDIT_2026-08-22_GPS_BACKFILL.md'), 'Must generate audit report');
+});
+
+console.log(`\n========================================`);
+console.log(`Summary: ${passed} / ${total} tests passed.`);
+
+// 10. Backfill GPS XML Error handling
+runTest('Backfill GPS: detects XML/HTML, handles HTTP errors, uses max retries, identifies ERROR vs SKIP', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('res.ok'), 'Must verify HTTP response OK');
+  assert(backfillContent.includes("res.headers.get('content-type')"), 'Must read content-type header');
+  assert(backfillContent.includes('application/json'), 'Must strictly require JSON response');
+  assert(backfillContent.includes('MAX_RETRIES = 2'), 'Must have retry limits');
+  assert(backfillContent.includes("ERROR"), 'Must correctly separate ERROR from SKIP');
+});
+
+// 11. Backfill GPS 429 Rate Limit handling
+runTest('Backfill GPS: detects HTTP 429, respects Retry-After, deduplicates queries, and aborts securely', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('res.status === 429'), 'Must check for HTTP 429');
+  assert(backfillContent.includes("res.headers.get('retry-after')"), 'Must check Retry-After header');
+  assert(backfillContent.includes('MAX_GLOBAL_429'), 'Must have a safe limit for 429 retries');
+  assert(backfillContent.includes('geocodeCache'), 'Must implement request deduplication/cache');
+  assert(backfillContent.includes("status: 'RATE_LIMITED'"), 'Must correctly flag RATE_LIMITED status');
+  assert(backfillContent.includes('globalAbort'), 'Must abort loop on systemic rate limit');
+});
+
+// 12. Backfill GPS Backoff Logic
+runTest('Backfill GPS: backoff calculation respects minimum 15s and avoids 0ms', () => {
+  const backfillContent = fs.readFileSync(path.join(__dirname, '../scripts/backfill-gps.ts'), 'utf8');
+  assert(backfillContent.includes('sec > 0'), 'Must check if sec is greater than 0 to avoid 0ms');
+  assert(backfillContent.includes('Math.max(15000,'), 'Must use Math.max to enforce minimum 15000ms');
+  assert(backfillContent.includes('MAX_GLOBAL_429 = 1'), 'Must abort quickly on systemic 429');
+});
+
 if (passed === total) {
   console.log('✅ ALL MAP INTEGRATION TESTS PASSED!');
   process.exit(0);

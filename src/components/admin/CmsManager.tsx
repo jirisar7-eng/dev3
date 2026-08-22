@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Page, PageSection, Article, Category, Faq, NavItem, MediaItem } from '../../types';
 import { MarkdownEditor } from '../MarkdownEditor';
 import { StudyManager } from './StudyManager';
+import { WikiManager } from './WikiManager';
+import { LegalGuideManager } from './LegalGuideManager';
+import { VideoManager } from './VideoManager';
+import { QuizManager } from './QuizManager';
+import { MementoManager } from './MementoManager';
 import {
   FileText,
   BookOpen,
@@ -25,11 +30,26 @@ import {
   Save,
   X,
   BookMarked,
+  Video,
+  Award,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const CmsManager: React.FC = () => {
   const [activeSubtab, setActiveSubtab] = useState<
-    'dashboard' | 'pages' | 'articles' | 'categories' | 'faqs' | 'nav' | 'media' | 'studies'
+    | 'dashboard'
+    | 'pages'
+    | 'articles'
+    | 'categories'
+    | 'faqs'
+    | 'nav'
+    | 'media'
+    | 'studies'
+    | 'wiki'
+    | 'legal-guides'
+    | 'videos'
+    | 'quizzes'
+    | 'memento'
   >('dashboard');
 
   const [pages, setPages] = useState<Page[]>([]);
@@ -344,13 +364,64 @@ export const CmsManager: React.FC = () => {
             Média ({mediaItems.length})
           </button>
           <button
+            onClick={() => setActiveSubtab('wiki')}
+            id="cms-subtab-wiki"
+            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+              activeSubtab === 'wiki' ? 'bg-indigo-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Encyklopedie & Wiki
+          </button>
+          <button
+            onClick={() => setActiveSubtab('legal-guides')}
+            id="cms-subtab-legal-guides"
+            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+              activeSubtab === 'legal-guides' ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Právní průvodci
+          </button>
+          <button
             onClick={() => setActiveSubtab('studies')}
+            id="cms-subtab-studies"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
               activeSubtab === 'studies' ? 'bg-blue-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <BookMarked className="w-3.5 h-3.5" />
             Knihovna studií
+          </button>
+          <button
+            onClick={() => setActiveSubtab('videos')}
+            id="cms-subtab-videos"
+            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+              activeSubtab === 'videos' ? 'bg-rose-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+            }`}
+          >
+            <Video className="w-3.5 h-3.5" />
+            Videotéka
+          </button>
+          <button
+            onClick={() => setActiveSubtab('quizzes')}
+            id="cms-subtab-quizzes"
+            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+              activeSubtab === 'quizzes' ? 'bg-emerald-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5" />
+            Kvízy
+          </button>
+          <button
+            onClick={() => setActiveSubtab('memento')}
+            id="cms-subtab-memento"
+            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+              activeSubtab === 'memento' ? 'bg-amber-500 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Procesní chyby
           </button>
         </div>
       </div>
@@ -1240,6 +1311,16 @@ export const CmsManager: React.FC = () => {
       )}
       {/* 8. STUDIES SUBTAB */}
       {activeSubtab === 'studies' && <StudyManager />}
+      {/* 9. WIKI SUBTAB */}
+      {activeSubtab === 'wiki' && <WikiManager />}
+      {/* 10. LEGAL GUIDES SUBTAB */}
+      {activeSubtab === 'legal-guides' && <LegalGuideManager />}
+      {/* 11. VIDEOS SUBTAB */}
+      {activeSubtab === 'videos' && <VideoManager />}
+      {/* 12. QUIZZES SUBTAB */}
+      {activeSubtab === 'quizzes' && <QuizManager />}
+      {/* 13. MEMENTO SUBTAB */}
+      {activeSubtab === 'memento' && <MementoManager />}
     </div>
   );
 };

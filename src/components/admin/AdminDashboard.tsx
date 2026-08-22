@@ -46,8 +46,9 @@ import { VpsManagement } from './VpsManagement';
 import { TestRunnerCard } from './TestRunnerCard';
 import { QADashboard } from './qa/QADashboard';
 import { AiContextManager } from './AiContextManager';
-import { Code, Building2, Terminal, FlaskConical, Cpu, Scale } from 'lucide-react';
+import { Code, Building2, Terminal, FlaskConical, Cpu, Scale, Landmark } from 'lucide-react';
 import { EsbirkaAdminPanel } from './EsbirkaAdminPanel';
+import { StateAdminManager } from './StateAdminManager';
 
 type AdminTab =
   | 'overview'
@@ -59,6 +60,7 @@ type AdminTab =
   | 'modules'
   | 'custom-modules'
   | 'esbirka'
+  | 'state-admin'
   | 'subjekty'
   | 'schvalovani-kontaktu'
   | 'cms'
@@ -318,6 +320,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
             </span>
             <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
               MV ČR
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('state-admin')}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'state-admin' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Landmark className="w-4 h-4 text-blue-500" />
+              <span>Státní data & API Hub</span>
+            </span>
+            <span className="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              ČSÚ/MSp
             </span>
           </button>
 
@@ -657,6 +674,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
           {activeTab === 'esbirka' && <EsbirkaAdminPanel />}
+          {activeTab === 'state-admin' && <StateAdminManager />}
           {activeTab === 'subjekty' && <SubjektManager />}
           {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
           {activeTab === 'cms' && <CmsManager />}

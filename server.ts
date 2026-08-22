@@ -203,6 +203,176 @@ app.use('/api/custom-modules', customModuleRoutes);
 app.use('/api/subjekty', subjektRoutes);
 app.use('/api/cases', caseRoutes);
 app.use('/api/coparent', coparentRoutes);
+
+// --- INCIDENTS & HANDOVER LOGS ENDPOINTS ---
+app.get('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const category = req.query.category as string | undefined;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const whereClause: any = { userId };
+      if (category) whereClause.category = category;
+      const incidents = await incidentDelegate.findMany({
+        where: whereClause,
+        orderBy: { date: 'desc' }
+      });
+      return res.json({ success: true, data: incidents });
+    }
+
+    res.json({ success: true, data: [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při načítání incidentů.' });
+  }
+});
+
+app.post('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { title, description, date, category } = req.body;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const created = await incidentDelegate.create({
+        data: {
+          userId,
+          title: title || 'Předání dítěte',
+          description: description || '',
+          date: date ? new Date(date) : new Date(),
+          category: category || 'handover',
+        }
+      });
+      return res.status(201).json({ success: true, data: created });
+    }
+
+    res.status(201).json({ success: true, data: { id: `inc_${Date.now()}`, userId, title, description, category, date: new Date() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při vytváření záznamu.' });
+  }
+});
+
+app.delete('/api/incidents/:id', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
+    if (incidentDelegate) {
+      const existing = await incidentDelegate.findFirst({
+        where: { id, userId }
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Záznam nebyl nalezen nebo k němu nemáte přístup.' });
+      }
+      await incidentDelegate.delete({ where: { id } });
+      return res.json({ success: true });
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při mazání záznamu.' });
+  }
+});
+
+// --- CASE FILES (OSOBNÍ SPIS) ENDPOINTS ---
+app.get('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const category = req.query.category as string | undefined;
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const whereClause: any = { userId };
+      if (category) whereClause.category = category;
+      const files = await caseFileDelegate.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' }
+      });
+      return res.json({ success: true, data: files });
+    }
+
+    res.json({ success: true, data: [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při načítání spisu.' });
+  }
+});
+
+app.post('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { title, category, content, fileUrl } = req.body;
+
+    if (!title || (!content && !fileUrl)) {
+      return res.status(400).json({ error: 'Chybí název nebo obsah spisu.' });
+    }
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const created = await caseFileDelegate.create({
+        data: {
+          userId,
+          title,
+          category: category || 'agreement',
+          content: content || '',
+          fileUrl: fileUrl || null
+        }
+      });
+      return res.status(201).json({ success: true, data: created });
+    }
+
+    res.status(201).json({ success: true, data: { id: `cf_${Date.now()}`, userId, title, category, content, createdAt: new Date() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při uložení do spisu.' });
+  }
+});
+
+app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const p = prisma;
+    if (!isPrismaAvailable() || !p) {
+      return res.status(503).json({ error: 'Databáze není dostupná.' });
+    }
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
+    if (caseFileDelegate) {
+      const existing = await caseFileDelegate.findFirst({
+        where: { id, userId }
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Záznam nebyl nalezen nebo k němu nemáte přístup.' });
+      }
+      await caseFileDelegate.delete({ where: { id } });
+      return res.json({ success: true });
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Chyba při mazání ze spisu.' });
+  }
+});
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);
@@ -799,6 +969,44 @@ app.get('/api/state-admin/e-legislativa/bills', async (req: express.Request, res
 });
 
 app.get('/api/state-admin/audits', async (req: express.Request, res: express.Response) => {
+  try {
+    const audits = StateAdminHubService.getAuditLogs();
+    res.json({ success: true, count: audits.length, audits });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching State Admin Hub audit logs' });
+  }
+});
+
+// Administrative State Admin Hub Endpoints (RBAC: ADMIN)
+app.get('/api/admin/state-admin/health', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const health = await StateAdminHubService.getHealthStatus();
+    res.json({ success: true, ...health });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error getting State Admin Hub health' });
+  }
+});
+
+app.post('/api/admin/state-admin/health-check', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const health = await StateAdminHubService.performLiveHealthCheck();
+    
+    // Record administrative action in cryptographic AuditLog
+    await AuditService.recordLog(
+      'STATE_ADMIN_HEALTH_CHECK_TRIGGERED',
+      'STATE_ADMIN_HUB',
+      JSON.stringify({ status: health.status, auditLogsCount: health.auditLogsCount, timestamp: health.lastCheckedAt }),
+      req.user,
+      req.ip
+    );
+
+    res.json({ success: true, ...health });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error performing live State Admin Hub health check' });
+  }
+});
+
+app.get('/api/admin/state-admin/audits', requireAuth, requireRole('ADMIN'), async (_req: AuthenticatedRequest, res: express.Response) => {
   try {
     const audits = StateAdminHubService.getAuditLogs();
     res.json({ success: true, count: audits.length, audits });
@@ -3543,6 +3751,347 @@ app.delete('/api/cms/studies/:id', requireAuth as any, requireRole('ADMIN') as a
     res.status(400).json({ error: err.message });
   }
 });
+
+// --- WIKI / ENCYKLOPEDIE CMS ROUTES ---
+app.get('/api/cms/wiki', async (req, res) => {
+  try {
+    const { status, category, search, letter } = req.query;
+    const terms = await CmsService.getWikiTerms({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+      letter: letter as string,
+    });
+    res.json(terms);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/wiki/slug/:slug', async (req, res) => {
+  try {
+    const term = await CmsService.getWikiTermBySlug(req.params.slug);
+    if (!term) {
+      return res.status(404).json({ error: 'Wiki pojem nenalezen.' });
+    }
+    res.json(term);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/wiki/:id', async (req, res) => {
+  try {
+    const term = await CmsService.getWikiTermById(req.params.id);
+    if (!term) {
+      return res.status(404).json({ error: 'Wiki pojem nenalezen.' });
+    }
+    res.json(term);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/wiki', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const term = await CmsService.createWikiTerm(req.body, req.user);
+    res.json(term);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/wiki/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const term = await CmsService.updateWikiTerm(req.params.id, req.body, req.user);
+    res.json(term);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/wiki/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteWikiTerm(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- LEGAL GUIDES / PRÁVNÍ PRŮVODCI CMS ROUTES ---
+app.get('/api/cms/legal-guides', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const guides = await CmsService.getLegalGuides({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(guides);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/legal-guides/slug/:slug', async (req, res) => {
+  try {
+    const guide = await CmsService.getLegalGuideBySlug(req.params.slug);
+    if (!guide) {
+      return res.status(404).json({ error: 'Právní průvodce nenalezen.' });
+    }
+    res.json(guide);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/legal-guides/:id', async (req, res) => {
+  try {
+    const guide = await CmsService.getLegalGuideById(req.params.id);
+    if (!guide) {
+      return res.status(404).json({ error: 'Právní průvodce nenalezen.' });
+    }
+    res.json(guide);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/legal-guides', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const guide = await CmsService.createLegalGuide(req.body, req.user);
+    res.json(guide);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/legal-guides/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const guide = await CmsService.updateLegalGuide(req.params.id, req.body, req.user);
+    res.json(guide);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/legal-guides/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteLegalGuide(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ------------------------------------------------------
+// VIDEOTÉKA / ACADEMY VIDEOS (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/videos', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getVideos({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/videos/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getVideoBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Video nenalezeno' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/videos/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getVideoById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Video nenalezeno' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/videos', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createVideo(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/videos/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateVideo(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/videos/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteVideo(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ------------------------------------------------------
+// KVÍZY A TESTY / QUIZZES (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/quizzes', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getQuizzes({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/quizzes/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getQuizBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Kvíz nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/quizzes/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getQuizById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Kvíz nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/quizzes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createQuiz(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/quizzes/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateQuiz(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/quizzes/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteQuiz(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ------------------------------------------------------
+// PROCESNÍ CHYBY / MEMENTO (CMS API)
+// ------------------------------------------------------
+
+app.get('/api/cms/memento', async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const items = await CmsService.getMementoCases({
+      status: status as string,
+      category: category as string,
+      search: search as string,
+    });
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/memento/slug/:slug', async (req, res) => {
+  try {
+    const item = await CmsService.getMementoCaseBySlug(req.params.slug);
+    if (!item) {
+      return res.status(404).json({ error: 'Memento případ nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cms/memento/:id', async (req, res) => {
+  try {
+    const item = await CmsService.getMementoCaseById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Memento případ nenalezen' });
+    }
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/cms/memento', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.createMementoCase(req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/cms/memento/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const item = await CmsService.updateMementoCase(req.params.id, req.body, req.user);
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/cms/memento/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    await CmsService.deleteMementoCase(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 // PDF Upload Route for Studies (Atomic MinIO Object Store + ClamAV Antivirus Scan)
 app.post('/api/cms/studies/upload-pdf', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {

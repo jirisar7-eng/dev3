@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BookMarked,
   Search,
@@ -10,9 +10,11 @@ import {
   Tag,
   ExternalLink,
   ShieldCheck,
-  Scale
+  Scale,
+  RefreshCw
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
+import { WikiTerm } from '../../../types';
 
 interface WikiViewProps {
   onNavigate?: (path: string) => void;
@@ -531,18 +533,59 @@ const WIKI_TERMS: TermItem[] = [
 const ALPHABET = ['Vše', 'A', 'B', 'C', 'D', 'E', 'I', 'K', 'M', 'N', 'O', 'P', 'R', 'S', 'V', 'Z'];
 
 export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
+  const [terms, setTerms] = useState<TermItem[]>(WIKI_TERMS);
+  const [loading, setLoading] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<string>('Vše');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filteredTerms = WIKI_TERMS.filter((t) => {
-    const matchesLetter = selectedLetter === 'Vše' || t.firstLetter === selectedLetter;
+  useEffect(() => {
+    fetchWikiTerms();
+  }, []);
+
+  const fetchWikiTerms = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/cms/wiki');
+      if (res.ok) {
+        const data: WikiTerm[] = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: TermItem[] = data.map((item) => {
+            const firstLetter = item.firstLetter || (item.term.trim().charAt(0).toUpperCase());
+            const cat = (item.category as any) || 'pravo';
+            return {
+              id: item.id,
+              term: item.term,
+              firstLetter,
+              category: cat,
+              categoryLabel: item.categoryLabel || (cat === 'soud' ? 'Soudní řízení' : cat === 'ospod' ? 'OSPOD & Postupy' : cat === 'finance' ? 'Finance & Výživné' : 'Právní pojmy'),
+              citation: item.citation,
+              definition: item.definition,
+              practicalTips: item.practicalTips || [],
+              relatedTerms: item.relatedTerms || []
+            };
+          });
+          setTerms(mapped);
+        }
+      }
+    } catch (err) {
+      console.warn('Používám výchozí Wiki data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const dynamicAlphabet = ['Vše', ...Array.from(new Set(terms.map((t) => t.firstLetter.toUpperCase()))).sort()];
+
+  const filteredTerms = terms.filter((t) => {
+    const matchesLetter = selectedLetter === 'Vše' || t.firstLetter.toUpperCase() === selectedLetter.toUpperCase();
     const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
     const matchesQuery =
       searchQuery.trim() === '' ||
       t.term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.definition.toLowerCase().includes(searchQuery.toLowerCase());
+      t.definition.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.citation && t.citation.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesLetter && matchesCategory && matchesQuery;
   });
 
@@ -640,7 +683,7 @@ export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
         {/* Alphabet Bar */}
         <div className="pt-3 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1">
           <span className="text-[10px] font-black uppercase text-slate-400 mr-2 shrink-0">Abeceda:</span>
-          {ALPHABET.map((letter) => (
+          {dynamicAlphabet.map((letter) => (
             <button
               key={letter}
               onClick={() => setSelectedLetter(letter)}

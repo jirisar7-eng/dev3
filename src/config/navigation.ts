@@ -43,8 +43,8 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'sub-6-1', labelKey: 'Kurzy', url: '/studia', order: 61, target: '_self', isExternal: false, parentId: 'cat-6' },
   { id: 'sub-6-2', labelKey: 'Videotéka', url: '/videoteka', order: 62, target: '_self', isExternal: false, parentId: 'cat-6' },
   { id: 'sub-6-3', labelKey: 'Kvízy', url: '/kvizy', order: 63, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-4', labelKey: 'Wiki', url: '/wiki', order: 64, target: '_self', isExternal: false, parentId: 'cat-6' },
-  { id: 'sub-6-5', labelKey: 'Studie & Metodiky', url: '/studie', order: 65, target: '_self', isExternal: false, parentId: 'cat-6' },
+  { id: 'sub-6-4', labelKey: 'Encyklopedie & Wiki', url: '/wiki', order: 64, target: '_self', isExternal: false, parentId: 'cat-6' },
+  { id: 'sub-6-5', labelKey: 'Katalog studií', url: '/studie', order: 65, target: '_self', isExternal: false, parentId: 'cat-6' },
   { id: 'sub-6-6', labelKey: 'Statistiky', url: '/state-statistics', order: 66, target: '_self', isExternal: false, parentId: 'cat-6' },
   { id: 'sub-6-7', labelKey: 'Uživatelský manuál', url: '/user-manual', order: 67, target: '_self', isExternal: false, parentId: 'cat-6' },
 

@@ -998,12 +998,162 @@ export interface Subjekt {
   avgRating: number;
   reviewCount: number;
   isVerified: boolean;
+  status?: 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED' | 'ARCHIVED';
+  createdById?: string | null;
+  verifiedById?: string | null;
+  verifiedAt?: string | Date | null;
+  rejectedById?: string | null;
+  rejectedAt?: string | Date | null;
+  rejectionReason?: string | null;
   createdAt?: string | Date;
   reviews?: Review[];
   pracovnici?: Pracovnik[];
 }
 
+export type WikiCategory = 'pravo' | 'ospod' | 'soud' | 'finance' | 'psychologie' | 'ostatni';
 
+export interface WikiTerm {
+  id: string;
+  slug: string;
+  term: string;
+  firstLetter: string;
+  category: string;
+  categoryLabel: string;
+  citation?: string;
+  definition: string;
+  practicalTips: string[];
+  relatedTerms?: string[];
+  order?: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  sources?: string[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
+export interface LegalGuideChapter {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  icon?: string;
+  type?: 'info' | 'warning' | 'success' | 'checklist' | 'steps' | 'faq' | string;
+  checklistItems?: { id: string; label: string }[];
+  faqItems?: { question: string; answer: string }[];
+}
 
+export interface LegalGuide {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  excerpt: string;
+  category: string;
+  categoryLabel: string;
+  order: number;
+  status: StudyStatus;
+  badgeText?: string;
+  badgeBg?: string;
+  disclaimer?: string;
+  sources: string[];
+  chapters: LegalGuideChapter[];
+  checklist?: { id: string; label: string }[];
+  faqs?: { question: string; answer: string }[];
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ------------------------------------------------------
+// PHASE B: MULTIMEDIA & EDUCATION (CMS)
+// ------------------------------------------------------
+
+export interface VideoAttachment {
+  name: string;
+  size: string;
+  url?: string;
+}
+
+export interface AcademyVideo {
+  id: string;
+  slug: string;
+  title: string;
+  category: 'rozhovory' | 'navody' | 'webinare' | string;
+  categoryLabel: string;
+  duration: string;
+  speaker: string;
+  speakerRole: string;
+  thumbnailUrl: string;
+  videoEmbedUrl: string;
+  sourceType?: 'youtube' | 'vimeo' | 'mp4' | 'other' | string;
+  description: string;
+  summaryNotes: string[];
+  attachments?: VideoAttachment[];
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  quizId?: string;
+  questionText: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+  order?: number;
+}
+
+export interface Quiz {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  badge: string;
+  icon: string;
+  description: string;
+  recommendedStudyPath: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | string;
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  questions: QuizQuestion[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MementoCase {
+  id: string;
+  slug: string;
+  title: string;
+  icon: string;
+  category?: string;
+  error: string;
+  consequence: string;
+  correctAction: string;
+  exampleBad: string;
+  exampleGood: string;
+  order: number;
+  status: StudyStatus;
+  seoTitle?: string;
+  seoDescription?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 

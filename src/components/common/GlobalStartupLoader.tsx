@@ -82,43 +82,86 @@ class StartupErrorBoundary extends Component<Props, State> {
   }
 }
 
-const LOADING_INFOS = [
-  { icon: '⚖️', title: 'Právní poradna', desc: 'Získejte přehled o možnostech a právních otázkách, které mohou souviset s péčí o dítě.' },
-  { icon: '📚', title: 'Judikatura', desc: 'Přístup k důležitým rozhodnutím soudů a nálezům Ústavního soudu na jednom místě.' },
-  { icon: '👨‍👧', title: 'CoParent Hub', desc: 'Nástroj pro zjednodušení komunikace a sdílení informací s druhým rodičem.' },
-  { icon: '📁', title: 'Můj případ', desc: 'Bezpečné úložiště pro vaši složku, dokumenty a termíny stání.' },
-  { icon: '🤖', title: 'AI Právní Asistent', desc: 'Pomůže vám s návrhy, analýzou dokumentů a odpoví na právní dotazy.' },
-  { icon: '🧮', title: 'Simulátor', desc: 'Spočítejte si pravděpodobnost úspěchu a predikci výživného.' },
-  { icon: '🎓', title: 'Akademie', desc: 'Vzdělávejte se v oblasti práva, rodičovství a komunikace.' },
-  { icon: '🎥', title: 'Videotéka', desc: 'Rozhovory s odborníky, záznamy webinářů a edukační materiály.' },
-  { icon: '📰', title: 'Novinky', desc: 'Zůstaňte v obraze díky pravidelným aktualitám z rodinného práva.' },
-  { icon: '👨‍👧‍👦', title: 'Příběhy otců', desc: 'Inspirujte se zkušenostmi ostatních, kteří si prošli podobnou cestou.' },
-  { icon: '🆘', title: 'SOS plán', desc: 'Krok za krokem, jak postupovat v akutní krizi nebo při bránění ve styku.' },
-  { icon: '📊', title: 'Statistiky', desc: 'Data o opatrovnických sporech, střídavé péči a rozhodování soudů.' },
-  { icon: '🔐', title: 'Bezpečnost účtu', desc: 'Vaše data jsou šifrována a chráněna podle nejvyšších standardů.' },
-  { icon: '❤️', title: 'Proč jsme vznikli', desc: 'Pomáháme otcům zůstat aktivní součástí života jejich dětí.' },
-  { icon: '🧭', title: 'Mapa portálu', desc: 'Rychlá navigace ke všem důležitým nástrojům a službám.' },
-  { icon: '💬', title: 'Komunita', desc: 'Prostor pro sdílení, podporu a diskuzi s ostatními členy.' },
-  { icon: '📋', title: 'Generátor formulářů', desc: 'Vytvořte si podání k soudu rychle, správně a bez zbytečných chyb.' },
-  { icon: '📑', title: 'Vzory dokumentů', desc: 'Ověřené šablony smluv, návrhů a dohod připravené k použití.' },
-  { icon: '📖', title: 'Wiki', desc: 'Slovník pojmů a komplexní průvodce opatrovnickým řízením.' },
-  { icon: '🏛️', title: 'O projektu', desc: 'Táta má právo je nezisková iniciativa za rovná práva obou rodičů.' }
+export interface LoadingInfoItem {
+  category: 'PORTÁL' | 'PRAKTICKÉ TIPY' | 'VZDĚLÁVÁNÍ' | 'PODPORA';
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+const LOADING_INFOS: LoadingInfoItem[] = [
+  // PORTÁL
+  { category: 'PORTÁL', icon: '⚖️', title: 'Právní poradna', desc: 'Přehled o zákonných možnostech, opatrovnických postupech a judikatuře.' },
+  { category: 'PORTÁL', icon: '📁', title: 'Osobní spis', desc: 'Bezpečné úložiště pro vaši rodinnou dokumentaci, časovou osu a podklady.' },
+  { category: 'PORTÁL', icon: '📚', title: 'Judikatura', desc: 'Banka rozhodnutí Ústavního a Nejvyššího soudu týkající se péče o děti.' },
+  { category: 'PORTÁL', icon: '👨‍👧', title: 'CoParent Hub', desc: 'Strukturovaná a věcná komunikace i sdílený kalendář s druhým rodičem.' },
+  { category: 'PORTÁL', icon: '🎓', title: 'Akademie', desc: 'Edukační videa, odborné kurzy a průvodce zaměřené na psychologii a právo.' },
+  { category: 'PORTÁL', icon: '🆘', title: 'Krizová pomoc & SOS', desc: 'Postup krok za krokem při náhlém bránění ve styku nebo rodinné krizi.' },
+  { category: 'PORTÁL', icon: '📋', title: 'Generátor podání', desc: 'Vytvořte si věcně správný návrh k soudu nebo vyjádření bez procesních chyb.' },
+  { category: 'PORTÁL', icon: '🤖', title: 'AI Právní Asistent', desc: 'Analýza dokumentů, vyhledání paragrafů a rychlá příprava podkladů.' },
+  { category: 'PORTÁL', icon: '🧮', title: 'Kalkulačka výživného', desc: 'Orientační výpočet doporučeného výživného dle metodiky MS ČR.' },
+  { category: 'PORTÁL', icon: '🗺️', title: 'Mapa subjektů', desc: 'Přehledný adresář soudů, OSPOD, poraden a krizových center v ČR.' },
+  { category: 'PORTÁL', icon: '❓', title: 'Právní kvízy', desc: 'Otestujte si své znalosti opatrovnického práva a připravte se na jednání.' },
+  { category: 'PORTÁL', icon: '⚠️', title: 'Procesní memento', desc: 'Přehled nejčastějších chybných kroků před soudem a OSPOD a jak jim předejít.' },
+
+  // PRAKTICKÉ TIPY
+  { category: 'PRAKTICKÉ TIPY', icon: '📝', title: 'Uchovávejte komunikaci', desc: 'Písemnou komunikaci s druhým rodičem si ukládejte přehledně a chronologicky.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '⏱️', title: 'Veďte chronologii událostí', desc: 'Zaznamenávejte si přesné termíny předávání dětí, zpoždění i zmařené styky.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '🧘', title: 'Komunikujte věcně', desc: 'Zachovávejte klid a používejte BIFF pravidlo (stručnost, věcnost, zdvořilost).' },
+  { category: 'PRAKTICKÉ TIPY', icon: '📂', title: 'Mějte systém v dokumentech', desc: 'Rodný list dětí, rozsudky a zprávy OSPOD ukládejte systematicky na jedno místo.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '👶', title: 'Soustřeďte se na potřeby dítěte', desc: 'Při jednání i rozhodování stavte na první místo stabilitu a zájem vašeho dítěte.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '🏛️', title: 'Příprava na OSPOD', desc: 'Na jednání s orgánem ochrany dětí přicházejte vždy připraveni s konkrétními návrhy.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '✍️', title: 'Připravte si otazníky předem', desc: 'Před soudním jednáním si sepište klíčové argumenty, fakta a otázky.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '🤝', title: 'Upřednostňujte dohodu', desc: 'Rodičovská dohoda schválená soudem je nejlepším základem pro budoucnost dětí.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '📞', title: 'Pravidelný kontakt s dětmi', desc: 'Udržujte spojení i na dálku prostřednictvím krátkých a pozitivních zpráv.' },
+  { category: 'PRAKTICKÉ TIPY', icon: '🛡️', title: 'Chraňte děti před konflikty', desc: 'Vyhýbejte se řešení sporných témat v přítomnosti dětí – šetřete jejich pohodu.' },
+
+  // VZDĚLÁVÁNÍ
+  { category: 'VZDĚLÁVÁNÍ', icon: '🏛️', title: 'Co je OSPOD', desc: 'Orgán sociálně-právní ochrany dětí vystupuje v soudním řízení jako opatrovník dítěte.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '⚖️', title: 'Opatrovnické řízení', desc: 'Soudní proces, ve kterém se rozhoduje o péči, výživném a styku rodičů s dítětem.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '👨‍👩‍👧', title: 'Rodičovská odpovědnost', desc: 'Práva a povinnosti rodičů při péči o dítě, jeho výchově, zastupování a správě jmění.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '🔄', title: 'Střídavá péče', desc: 'Forma péče, při které se oba rodiče rovnocenně podílejí na osobní výchově dítěte.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '🕊️', title: 'Rodičovská mediace', desc: 'Dobrovolný proces mimosoudního řešení sporů za pomoci nezávislého odborníka.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '📜', title: 'Soudní judikatura', desc: 'Sjednocující rozhodnutí vyšších soudů nastavující standardy rozhodování o péči.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '💡', title: 'Péče jednoho rodiče', desc: 'Forma péče s určeným rozsahem styku druhého rodiče a stanoveným výživným.' },
+  { category: 'VZDĚLÁVÁNÍ', icon: '🛡️', title: 'Právní moc rozsudku', desc: 'Okamžik, kdy je rozhodnutí soudu konečné a závazné po uplynutí lhůty pro odvolání.' },
+
+  // PODPORA
+  { category: 'PODPORA', icon: '🤝', title: 'Nejste na to sami', desc: 'Tisíce otců procházejí podobnou zkušeností a společně hledají spravedlivou cestu.' },
+  { category: 'PODPORA', icon: '🎯', title: 'Trpělivost a systém', desc: 'Systematickým přístupem a klidnou vytrvalostí dosáhnete nejlepších výsledků.' },
+  { category: 'PODPORA', icon: '💚', title: 'Aktivní otcovství', desc: 'Vaše přítomnost a péče má pro vývoj a štěstí vašeho dítěte nenahraditelnou hodnotu.' },
+  { category: 'PODPORA', icon: '☀️', title: 'Každý krok se počítá', desc: 'I malé pokroky v komunikaci a dohodě posouvají rodinnou situaci k lepšímu.' },
+  { category: 'PODPORA', icon: '🛡️', title: 'Důležité podklady na jednom místě', desc: 'Udržujte si klid v mysli díky přehledně uspořádanému Osobnímu spisu.' },
+  { category: 'PODPORA', icon: '🧭', title: 'Rozvaha nad emocemi', desc: 'V krizových chvílích se nenechte strhnout emocemi – soustřeďte se na fakta.' },
+  { category: 'PODPORA', icon: '👨‍👦', title: 'Bezpečná náruč pro dítě', desc: 'Dítě potřebuje cítit jistotu a lásku obou rodičů bez ohledu na probíhající spory.' },
+  { category: 'PODPORA', icon: '🌟', title: 'Budoucnost vašich dětí', desc: 'Vaše dnešní zralé a uvážlivé jednání vytváří stabilní prostředí pro vaše děti.' },
 ];
 
+let lastSelectedInfoIndex = -1;
+
 function setRandomLoadingInfo() {
+  const infoCategory = document.getElementById('sp-info-category');
   const infoTitle = document.getElementById('sp-info-title');
   const infoDesc = document.getElementById('sp-info-desc');
   const box = document.getElementById('sp-info-box');
   
   if (infoTitle && infoDesc && box) {
-    const randomInfo = LOADING_INFOS[Math.floor(Math.random() * LOADING_INFOS.length)];
-    // Add subtle fade out/in effect
+    let nextIndex = Math.floor(Math.random() * LOADING_INFOS.length);
+    if (LOADING_INFOS.length > 1 && nextIndex === lastSelectedInfoIndex) {
+      nextIndex = (nextIndex + 1) % LOADING_INFOS.length;
+    }
+    lastSelectedInfoIndex = nextIndex;
+
+    const randomInfo = LOADING_INFOS[nextIndex];
     box.style.opacity = '0';
     setTimeout(() => {
+      if (infoCategory) {
+        infoCategory.textContent = randomInfo.category;
+      }
       infoTitle.textContent = `${randomInfo.icon} ${randomInfo.title}`;
       infoDesc.textContent = randomInfo.desc;
       box.style.opacity = '1';
-    }, 300); // Wait for fade out transition (0.3s) defined in CSS
+    }, 250);
   }
 }
 

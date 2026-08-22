@@ -40,3 +40,43 @@ Všechny subjekty, u nichž lze adresu lokalizovat, nyní mohou mít zadané a z
 - **Problém:** Skript `scripts/backfill-gps.ts` selhával v produkčním prostředí s chybou `PrismaClientInitializationError: PrismaClient was instantiated without any options. A driver adapter is required...`
 - **Root Cause:** Projekt využívá verzi Prisma vyžadující `@prisma/adapter-pg` pro Node.js ovladače (např. kvůli kompatibilitě v edge/serverless prostředí nebo specifické architektuře projektu, viz `src/db/prisma.ts`). Samotné zavolání `new PrismaClient()` v samostatném skriptu bez konfigurace adaptéru proto selhalo.
 - **Oprava:** Skript byl upraven tak, aby explicitně vyžadoval `DATABASE_URL` z prostředí a správně inicializoval `pg.Pool` s adaptérem `PrismaPg`, stejným způsobem, jakým je to řešeno ve vrstvě aplikace (`src/db/prisma.ts`). Bylo také doplněno správné uzavření poolu `await pool.end()` po skončení operace, aby skript nezůstal viset. Skript v případě absence `DATABASE_URL` z bezpečnostních důvodů (fallback mitigace) ihned s chybou skončí.
+
+## Dodatečná oprava (2026-08-22): Oprava chyb Geocoderu z DRY-RUN testu
+- **Diagnostika:**
+  - PROD3 připojení funguje, `PostgreSQL` databáze je dostupná přes `postgres_prod3:5432`.
+  - Příkaz `npx tsx scripts/backfill-gps.ts --dry-run` byl v produkčním kontejneru úspěšně spuštěn.
+  - Ochranný mechanismus zafungoval správně – databáze **nebyla** změněna.
+  - V důsledku velkého zatížení nebo anomálie služby Nominatim obdržel skript neočekávanou odpověď (XML/HTML) namísto validního JSON.
+  - Z toho důvodu skript selhal při parsování (`Unexpected token '<', "<?xml vers"... is not valid JSON`).
+  - Běh byl manuálně zastaven kvůli velkým opakováním shodných chyb, režim `--apply` nebyl záměrně vůbec spuštěn, žádná data nebyla narušena.
+- **Oprava:**
+  - `backfill-gps.ts` rozšířen o robustní kontrolu formátu odpovědi.
+  - Nyní se explicitně ověřuje HTTP kód (`res.ok`) a typ obsahu (`content-type` musí obsahovat `application/json`).
+  - Při XML nebo neznámé odpovědi skript chybu chytí a danou adresu klasifikuje jako bezpečný status `ERROR` (přeskočeno), aniž by neošetřeně padal.
+  - Byl nastaven pevný limit maximálních pokusů o geokódování (`MAX_RETRIES`), který zamezuje nekonečnému opakování z důvodu selhávající služby na konkrétním endpointu.
+- **Commit SHA:** ce85d7d
+
+## Dodatečná oprava (2026-08-22): Ochrana proti systémovému HTTP 429 Rate Limitingu Nominatim
+- **Diagnostika:**
+  - Oprava detekce XML byla úspěšně nasazena do testovacího dry-runu v kontejneru PROD3.
+  - Sice se vyřešilo padání na chybných parserech (`XML/HTML`), ale ihned po startu nového dry-runu narazil systém na `HTTP 429 Too Many Requests`.
+  - Stávající kód obsahoval rychlý retry mechanismus, čímž vznikalo opakované agresivní dotazování do služby Nominatim i přes rate limity.
+  - Skript běžel celou dobu izolovaně, `--apply` modifikátor nebyl spuštěn. Databáze nebyla nijak zasažena ani změněna.
+- **Oprava:**
+  - Implemenováno striktní dodržování rate-limitů Nominatim serveru pro geokódování (`HTTP 429`).
+  - **Deduplikace/Cache:** Skript nyní agreguje totožné adresy do in-memory `geocodeCache`, a filtruje duplicitní query před odesláním requestu na server (výrazně snižuje počet payloadů zbytečně opakujících se v kontextu stejných městských sond).
+  - **Zpracování hlavičky `Retry-After`:** Pokud je hlavička nalezena, skript vyčká adekvátní dobu, případně se spolehne na bezpečný 15sekundový backoff.
+  - **Graceful Termination (Ochrana celku):** Kód nyní hlídá počet globálně navázaných 429 pádů (`MAX_GLOBAL_429 = 2`). Pokud skript prokazatelně narazí na tvrdý rate limit ze strany poskytovatele opakovaně, označí stav za `RATE_LIMITED` a kompletně zruší hlavní iterativní smyčku s okamžitým opuštěním skriptu (`process.exit(2)`). Minimalizuje se tím riziko systémového IP banu na straně aplikace.
+- **Commit SHA:** b09f72a
+
+## Dodatečná oprava (2026-08-22): Oprava chybné logiky "Backing off for 0ms" při HTTP 429
+- **Diagnostika:**
+  - PROD3 dry-run kontejner ukázal, že oprava vzešlá z commitu \`945b803\` sice spolehlivě ochránila systém před úplným zacyklením a po dvou marných pokusech proces správně ukončila s návratovým kódem 2 (bez změny DB a datových ztrát), avšak mezitím chybou výpočtu provedla druhý dotaz ihned bez čekání (\`Backing off for 0ms\`).
+  - To bylo způsobeno chybnou validací hlavičky \`Retry-After\`, která mohla vracet \`0\` nebo chyběla, a program selhal ve vynucení minimálního intervalu. 
+  - Výsledky abortu z \`945b803\`: \`EXIT_CODE=2\`, vše ostatní (\`ADD/CORRECT/SKIP/UNCHANGED/ERROR/SUSPICIOUS\`) = \`0\`.
+- **Oprava:**
+  - Kód pro výpočet backoffu byl přepsán s použitím konstrukce \`Math.max(15000, sec * 1000)\`.
+  - Pokud server vrací platné \`Retry-After\`, které se vyhodnotí na \`> 0\` sekundy, počká skript vyšší z obou hodnot (minimálně 15 sekund).
+  - Pokud server vrátí neplatnou hlavičku, prázdnou hlavičku, nebo hlavičku rovnou \`0\`, skript vždy počká pevných \`15000\` ms (15 sekund).
+  - \`MAX_GLOBAL_429\` byl snížen na \`1\` z opatrnosti – po dvou prokazatelných a tvrdých ban-type zamítnutích ze strany API se backfill ihned preventivně ukončí s chybou.
+- **Commit SHA:** 3650641

@@ -78,6 +78,9 @@ model User {
   coparentMessages         CoParentMessage[]
   coparentRequests         CoParentRequest[]
   passkeys                 Passkey[]
+  createdSubjekts          Subjekt[]                 @relation("SubjektCreatedBy")
+  verifiedSubjekts         Subjekt[]                 @relation("SubjektVerifiedBy")
+  rejectedSubjekts         Subjekt[]                 @relation("SubjektRejectedBy")
 
   @@index([email])
 }
@@ -979,27 +982,43 @@ enum EntityType {
   PORADNA_CHARITA
 }
 
+enum SubjektStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
 model Subjekt {
-  id          String      @id @default(uuid())
-  type        EntityType
-  name        String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
-  titleBefore String? // Např. "PhDr.", "JUDr."
-  position    String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
-  institution String? // Název pracoviště / Úřadu / Kanceláře
-  city        String
-  lat         Float?
-  lng         Float? // Např. "Pardubice", "Přelouč"
-  region      String // Např. "Pardubický kraj"
-  address     String?
-  email       String?     @unique
-  phone       String?
-  website     String?
-  avgRating   Float       @default(0.0)
-  reviewCount Int         @default(0)
-  isVerified  Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  reviews     Review[]
-  pracovnici  Pracovnik[]
+  id              String        @id @default(uuid())
+  type            EntityType
+  name            String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore     String? // Např. "PhDr.", "JUDr."
+  position        String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution     String? // Název pracoviště / Úřadu / Kanceláře
+  city            String
+  lat             Float?
+  lng             Float? // Např. "Pardubice", "Přelouč"
+  region          String // Např. "Pardubický kraj"
+  address         String?
+  email           String?       @unique
+  phone           String?
+  website         String?
+  avgRating       Float         @default(0.0)
+  reviewCount     Int           @default(0)
+  isVerified      Boolean       @default(true)
+  status          SubjektStatus @default(VERIFIED)
+  createdById     String?
+  createdBy       User?         @relation("SubjektCreatedBy", fields: [createdById], references: [id])
+  verifiedById    String?
+  verifiedBy      User?         @relation("SubjektVerifiedBy", fields: [verifiedById], references: [id])
+  verifiedAt      DateTime?
+  rejectedById    String?
+  rejectedBy      User?         @relation("SubjektRejectedBy", fields: [rejectedById], references: [id])
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  reviews         Review[]
+  pracovnici      Pracovnik[]
 }
 
 model Pracovnik {
@@ -1865,3 +1884,175 @@ model NewsItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model WikiTerm {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  term           String
+  firstLetter    String   @default("A")
+  category       String   @default("pravo")
+  categoryLabel  String   @default("Právní pojmy")
+  citation       String?
+  definition     String   @db.Text
+  practicalTips  String[] @default([])
+  relatedTerms   String[] @default([])
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED")
+  seoTitle       String?
+  seoDescription String?
+  sources        String[] @default([])
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([firstLetter])
+  @@index([status])
+}
+
+model LegalGuide {
+  id             String              @id @default(uuid())
+  slug           String              @unique
+  title          String
+  subtitle       String?
+  excerpt        String              @db.Text
+  category       String              @default("ospod")
+  categoryLabel  String              @default("OSPOD & Sociální šetření")
+  order          Int                 @default(0)
+  status         String              @default("PUBLISHED")
+  badgeText      String?
+  badgeBg        String?
+  disclaimer     String?             @db.Text
+  sources        String[]            @default([])
+  checklist      Json?               @default("[]")
+  faqs           Json?               @default("[]")
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  chapters       LegalGuideChapter[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model LegalGuideChapter {
+  id             String     @id @default(uuid())
+  guideId        String
+  guide          LegalGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  title          String
+  content        String     @db.Text
+  order          Int        @default(0)
+  icon           String?
+  type           String?    @default("info")
+  checklistItems Json?      @default("[]")
+  faqItems       Json?      @default("[]")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([guideId])
+}
+
+// ------------------------------------------------------
+// MULTIMEDIA & EDUCATION (PHASE B CMS)
+// ------------------------------------------------------
+
+model AcademyVideo {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  title          String
+  category       String   @default("rozhovory") // 'rozhovory', 'navody', 'webinare'
+  categoryLabel  String   @default("Rozhovory s odborníky")
+  duration       String   @default("20 min")
+  speaker        String
+  speakerRole    String
+  thumbnailUrl   String
+  videoEmbedUrl  String
+  sourceType     String   @default("youtube") // 'youtube', 'vimeo', 'mp4', 'other'
+  description    String   @db.Text
+  summaryNotes   String[] @default([])
+  attachments    Json?    @default("[]")
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model Quiz {
+  id                   String         @id @default(uuid())
+  slug                 String         @unique
+  title                String
+  category             String         @default("Právní povědomí")
+  badge                String         @default("10 Otázek")
+  icon                 String         @default("ShieldCheck")
+  description          String         @db.Text
+  recommendedStudyPath String         @default("/studia")
+  difficulty           String         @default("MEDIUM") // 'EASY', 'MEDIUM', 'HARD'
+  order                Int            @default(0)
+  status               String         @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle             String?
+  seoDescription       String?
+  createdBy            String?
+  updatedBy            String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  questions            QuizQuestion[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+
+model QuizQuestion {
+  id                 String   @id @default(uuid())
+  quizId             String
+  quiz               Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionText       String   @db.Text
+  options            String[] @default([])
+  correctAnswerIndex Int      @default(0)
+  explanation        String   @db.Text
+  order              Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([quizId])
+}
+
+model MementoCase {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  title          String
+  icon           String   @default("Flame")
+  category       String   @default("obecne")
+  error          String   @db.Text
+  consequence    String   @db.Text
+  correctAction  String   @db.Text
+  exampleBad     String   @db.Text
+  exampleGood    String   @db.Text
+  order          Int      @default(0)
+  status         String   @default("PUBLISHED") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  seoTitle       String?
+  seoDescription String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([status])
+}
+

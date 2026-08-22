@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { UserSubmissionsTab } from './UserSubmissionsTab';
 import {
   User as UserIcon,
   Mail,
@@ -46,7 +47,7 @@ const getAuthHeaders = (extraHeaders: Record<string, string> = {}) => {
 export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfileUpdated }) => {
   const { loginWithGoogle, loginWithMicrosoft, registerPasskey } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'security' | 'passkeys' | 'social' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'security' | 'passkeys' | 'social' | 'notifications' | 'submissions'>('profile');
 
   // --- Profile Form State ---
   const [name, setName] = useState(user.name || '');
@@ -1096,6 +1097,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
       )}
 
       {/* --- TAB 6: NOTIFIKACE & UPOZORNĚNÍ --- */}
+
+      {activeTab === 'submissions' && (
+        <UserSubmissionsTab />
+      )}
       {activeTab === 'notifications' && (
         <div className="space-y-6">
           <div className="space-y-1 pb-4 border-b border-slate-100">

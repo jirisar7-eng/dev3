@@ -58,6 +58,7 @@ import {
   InternationalDisputesGuideView,
   HealthcareGuideView,
   SchoolsGuideView,
+  LegalGuideDynamicView,
   AgendaView,
   RightsView,
   CaseLawView,
@@ -346,38 +347,43 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   if (slug === 'mapa-subjektu' || slug === 'mapa' || slug === 'subjekty-mapa' || slug === 'map') {
     return <MapaSubjektuView currentPath={currentPath} onNavigate={onNavigate} />;
   }
+  // 3a. Legal Guides & Dynamic Guide Routes
+  if (slug.startsWith('pruvodce/') || slug.startsWith('pruvodci/')) {
+    const guideSlug = slug.replace(/^pruvodce\//, '').replace(/^pruvodci\//, '');
+    return <LegalGuideDynamicView slug={guideSlug} onNavigate={onNavigate} />;
+  }
   if (slug === 'ospod' || slug === 'socialni-setreni') {
-    return <OspodGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="ospod" fallbackComponent={<OspodGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
   if (slug === 'spis' || slug === 'nahlizeni-do-spisu' || slug === 'case-file') {
-    return <CaseFileGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="spis" fallbackComponent={<CaseFileGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
   if (slug === 'soud' || slug === 'soudni-rizeni' || slug === 'soudni-pruvodce' || slug === 'court') {
-    return <CourtGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="soud" fallbackComponent={<CourtGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'vykon-rozhodnuti' || slug === 'mareni-styku') {
-    return <EnforcementGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="vykon-rozhodnuti" fallbackComponent={<EnforcementGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'znalecke-posudky' || slug === 'znalci') {
-    return <ExpertReportsGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="znalecke-posudky" fallbackComponent={<ExpertReportsGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'odvolani' || slug === 'opravne-prostredky' || slug === 'dovolani' || slug === 'ustavni-stiznost') {
-    return <AppealsGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="odvolani" fallbackComponent={<AppealsGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'mezinarodni-spory' || slug === 'umpod' || slug === 'unos-ditete') {
-    return <InternationalDisputesGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="mezinarodni-spory" fallbackComponent={<InternationalDisputesGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'zdravotni-pece' || slug === 'zdravotni-dokumentace' || slug === 'ocr') {
-    return <HealthcareGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="zdravotni-pece" fallbackComponent={<HealthcareGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'skola' || slug === 'skolka' || slug === 'skolni-informace' || slug === 'zmena-skoly') {
-    return <SchoolsGuideView onNavigate={onNavigate} />;
+    return <LegalGuideDynamicView slug="skola" fallbackComponent={<SchoolsGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'agenda' || slug === 'opatrovnicka-agenda') {
