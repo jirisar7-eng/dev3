@@ -50,6 +50,7 @@ export const SubjektManager: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedRegion, setSelectedRegion] = useState<string>('Všechny kraje');
+  const [statusFilter, setStatusFilter] = useState<string>('PENDING_VERIFICATION');
 
   // Edit / Add modal
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -280,6 +281,41 @@ const handleSave = async (e: React.FormEvent) => {
     }
   };
 
+  
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await fetch(`/api/subjekty/${id}/approve`, { method: 'PUT' });
+      if (res.ok) {
+        fetchSubjekty();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Chyba při schvalování');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Zadejte důvod zamítnutí:');
+    if (!reason) return;
+    try {
+      const res = await fetch(`/api/subjekty/${id}/reject`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rejectionReason: reason })
+      });
+      if (res.ok) {
+        fetchSubjekty();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Chyba při zamítání');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Opravdu chcete smazat tento subjekt včetně všech jeho recenzí?')) return;
     try {
@@ -328,6 +364,18 @@ const handleSave = async (e: React.FormEvent) => {
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
+
+        
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="p-2 border border-slate-200 rounded-xl"
+        >
+          <option value="ALL">Všechny stavy</option>
+          <option value="PENDING_VERIFICATION">Ke schválení (čekající)</option>
+          <option value="VERIFIED">Schválené</option>
+          <option value="REJECTED">Zamítnuté</option>
+        </select>
 
         <select
           value={selectedType}

@@ -8,9 +8,17 @@ export class SubjektService {
   /**
    * Get filtered subjekty with optional type, region, or search term
    */
-  async getSubjekty(params?: { type?: string; region?: string; kraj?: string; city?: string; search?: string; minRating?: number }) {
+  async getSubjekty(params?: { type?: string; region?: string; kraj?: string; city?: string; search?: string; minRating?: number; status?: string; createdById?: string }) {
     try {
-      const whereClause: any = {};
+                  const whereClause: any = {};
+      if (params?.status && params.status !== 'ALL') {
+        whereClause.status = params.status;
+      } else if (!params?.createdById && params?.status !== 'ALL') {
+        whereClause.status = 'VERIFIED';
+      }
+      if (params?.createdById) {
+        whereClause.createdById = params.createdById;
+      }
 
       if (params?.type && params.type !== 'ALL') {
         whereClause.type = params.type as EntityType;
@@ -59,6 +67,14 @@ export class SubjektService {
     } catch (error) {
       console.warn('Prisma getSubjekty error, fallback to dbStore:', error);
       let list = [...dbStore.subjekty];
+            if (params?.status && params.status !== 'ALL') {
+        list = list.filter(s => (s as any).status === params.status);
+      } else if (!params?.createdById && params?.status !== 'ALL') {
+        list = list.filter(s => !(s as any).status || (s as any).status === 'VERIFIED');
+      }
+      if (params?.createdById) {
+        list = list.filter(s => (s as any).createdById === params.createdById);
+      }
 
       if (params?.type && params.type !== 'ALL') {
         list = list.filter((s) => s.type === params.type);
@@ -272,7 +288,7 @@ export class SubjektService {
   /**
    * Create new Subjekt (Admin or user suggestion)
    */
-  async createSubjekt(data: {
+    async createSubjekt(data: {
     type: EntityType | string;
     name: string;
     titleBefore?: string;
@@ -287,6 +303,8 @@ export class SubjektService {
     isVerified?: boolean;
     lat?: number;
     lng?: number;
+    status?: string;
+    createdById?: string;
   }) {
     try {
       const created = await prisma.subjekt.create({
@@ -339,7 +357,7 @@ export class SubjektService {
   /**
    * Update Subjekt
    */
-  async updateSubjekt(id: string, data: Partial<Subjekt>) {
+  async updateSubjekt(id: string, data: any) {
     try {
       const updated = await prisma.subjekt.update({
         where: { id },
@@ -358,6 +376,12 @@ export class SubjektService {
           lat: data.lat !== undefined ? data.lat : undefined,
           lng: data.lng !== undefined ? data.lng : undefined,
           isVerified: data.isVerified,
+          status: data.status as any,
+          verifiedById: data.verifiedById,
+          verifiedAt: data.verifiedAt,
+          rejectedById: data.rejectedById,
+          rejectedAt: data.rejectedAt,
+          rejectionReason: data.rejectionReason,
         },
       });
       return updated;

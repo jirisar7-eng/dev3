@@ -78,6 +78,9 @@ model User {
   coparentMessages         CoParentMessage[]
   coparentRequests         CoParentRequest[]
   passkeys                 Passkey[]
+  createdSubjekts          Subjekt[]                 @relation("SubjektCreatedBy")
+  verifiedSubjekts         Subjekt[]                 @relation("SubjektVerifiedBy")
+  rejectedSubjekts         Subjekt[]                 @relation("SubjektRejectedBy")
 
   @@index([email])
 }
@@ -979,27 +982,43 @@ enum EntityType {
   PORADNA_CHARITA
 }
 
+enum SubjektStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
 model Subjekt {
-  id          String      @id @default(uuid())
-  type        EntityType
-  name        String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
-  titleBefore String? // Např. "PhDr.", "JUDr."
-  position    String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
-  institution String? // Název pracoviště / Úřadu / Kanceláře
-  city        String
-  lat         Float?
-  lng         Float? // Např. "Pardubice", "Přelouč"
-  region      String // Např. "Pardubický kraj"
-  address     String?
-  email       String?     @unique
-  phone       String?
-  website     String?
-  avgRating   Float       @default(0.0)
-  reviewCount Int         @default(0)
-  isVerified  Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  reviews     Review[]
-  pracovnici  Pracovnik[]
+  id              String        @id @default(uuid())
+  type            EntityType
+  name            String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore     String? // Např. "PhDr.", "JUDr."
+  position        String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution     String? // Název pracoviště / Úřadu / Kanceláře
+  city            String
+  lat             Float?
+  lng             Float? // Např. "Pardubice", "Přelouč"
+  region          String // Např. "Pardubický kraj"
+  address         String?
+  email           String?       @unique
+  phone           String?
+  website         String?
+  avgRating       Float         @default(0.0)
+  reviewCount     Int           @default(0)
+  isVerified      Boolean       @default(true)
+  status          SubjektStatus @default(VERIFIED)
+  createdById     String?
+  createdBy       User?         @relation("SubjektCreatedBy", fields: [createdById], references: [id])
+  verifiedById    String?
+  verifiedBy      User?         @relation("SubjektVerifiedBy", fields: [verifiedById], references: [id])
+  verifiedAt      DateTime?
+  rejectedById    String?
+  rejectedBy      User?         @relation("SubjektRejectedBy", fields: [rejectedById], references: [id])
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  reviews         Review[]
+  pracovnici      Pracovnik[]
 }
 
 model Pracovnik {
