@@ -440,5 +440,72 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     seoDescription: 'Právní obrana při neoprávněném odvezení dítěte do zahraničí, návratové řízení a asistence ÚMPOD.',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-08-22T00:00:00.000Z',
+  },
+  {
+    id: 'guide-subjekty',
+    slug: 'subjekty',
+    title: 'Kdo je kdo v opatrovnickém řízení',
+    subtitle: 'Přehled klíčových odborníků, institucí a jejich rolí při rozhodování o dětech.',
+    excerpt: 'Srozumitelný průvodce pro rodiče, který objasňuje pravomoci a úkoly soudů, OSPODu, znalců, advokátů a poraden s přímým odkazem na náš Registr subjektů.',
+    category: 'pravo',
+    categoryLabel: 'Opatrovnictví & Právo',
+    order: 10,
+    status: 'PUBLISHED',
+    badgeText: 'Odborný přehled',
+    badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    disclaimer: 'Tento přehled slouží výhradně k orientaci v opatrovnické soustavě ČR a nenahrazuje individuální právní zastoupení či odbornou psychologickou pomoc.',
+    sources: [
+      'Zákon č. 89/2012 Sb., občanský zákoník',
+      'Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí',
+      'Zákon č. 254/2019 Sb., o znalcích, znaleckých kancelářích a znaleckých ústavech',
+      'Zákon č. 85/1996 Sb., o advokacii'
+    ],
+    chapters: [
+      {
+        id: 'subj-ch-1',
+        title: '1. Opatrovnické soudy – Rozhodovací autorita',
+        content: 'Opatrovnické soudy (okresní, obvodní či městské soudy) jsou jedinou autoritou, která může pravomocně rozhodnout o péči, výživném a styku rodičů s nezletilým dítětem. Soud rozhoduje vždy na základě shromážděných důkazů a jeho prvořadým kritériem je **nejlepší zájem dítěte** (§ 866 o.z.). Soudce nehledá vítěze sporu, ale stabilní uspořádání pro budoucnost dítěte. Kompletní seznam a kontakty na všech 109 soudů v ČR naleznete v našem [Registru soudů](/registr-subjektu?type=SOUD).',
+        order: 1,
+        type: 'info'
+      },
+      {
+        id: 'subj-ch-2',
+        title: '2. OSPOD – Kolizní opatrovník a ochránce práv dítěte',
+        content: 'Orgán sociálně-právní ochrany dětí (OSPOD) je soudem jmenován jako **kolizní opatrovník** dítěte, protože dítě jako nezletilé nemůže v řízení samo právně jednat. Sociální pracovník OSPODu provádí sociální šetření v domácnostech obou rodičů, mluví s dítětem (zjišťuje jeho názor úměrně věku) a vypracovává pro soud doporučující zprávu. OSPOD není obhájcem matky ani otce, jeho úkolem je nestranně chránit blaho nezletilého. Pro vyhledání příslušného pracoviště využijte náš [Registr OSPOD](/registr-subjektu?type=OSPOD).',
+        order: 2,
+        type: 'steps'
+      },
+      {
+        id: 'subj-ch-3',
+        title: '3. Soudní znalci – Odborné posouzení rodinných vazeb',
+        content: 'Soudní znalci z oboru psychologie a psychiatrie jsou jmenováni soudem v případech, kdy mezi rodiči panuje hluboký konflikt, hrozí odcizení dítěte (syndrom zavrženého rodiče) nebo je třeba odborně posoudit výchovné kompetence. Znalec provádí vyšetření obou rodičů i dítěte a zkoumá jejich vzájemnou interakci. Výstupem je znalecký posudek, který pro soud představuje významný (nikoli však jediný závazný) důkaz. Seznam licencovaných znalců naleznete v sekci [Registr soudních znalců](/registr-subjektu?type=ZNALEC).',
+        order: 3,
+        type: 'warning'
+      },
+      {
+        id: 'subj-ch-4',
+        title: '4. Rodinní advokáti – Právní zastoupení a vyjednávání',
+        content: 'Advokát specializovaný na rodinné právo zastupuje zájmy rodiče v řízení. Dobrý opatrovnický advokát se vyznačuje tím, že neeskaluje konflikt, ale usiluje o smírné vyřešení a uzavření rodičovské dohody, která je pro dítě vždy nejméně zatěžující. Pomáhá správně formulovat soudní návrhy a vyvarovat se procesních chyb. Kontakty na ověřené odborníky naleznete v kategorii [Registr rodinných advokátů](/registr-subjektu?type=ADVOKAT).',
+        order: 4,
+        type: 'info'
+      },
+      {
+        id: 'subj-ch-5',
+        title: '5. Poradny, mediátoři a rodinná centra – Mimosoudní podpora',
+        content: 'Mediátoři a rodinné poradny hrají klíčovou roli v mimosoudním řešení sporů. Mediace je dobrovolný proces, kde nezávislý odborník (mediátor) pomáhá rodičům nalézt společné řešení a uzavřít dohodu o péči a výživném bez vleklých soudních bitev. Rodinná centra a psychologické poradny pak nabízejí doprovázení, terapii pro děti i rodiče a kurzy zdravé spolurodičovské komunikace. Kontakty na tato centra najdete pod položkou [Registr poraden a mediátorů](/registr-subjektu?type=PORADNA_CHARITA).',
+        order: 5,
+        type: 'checklist'
+      }
+    ],
+    checklist: [
+      { id: 'subj-c1', label: 'Ujasnit si roli každého subjektu před zahájením jednání' },
+      { id: 'subj-c2', label: 'Komunikovat se všemi subjekty (soud, OSPOD, znalci) slušně, věcně a bez emocí' },
+      { id: 'subj-c3', label: 'Upřednostnit mimosoudní dohodu a mediaci před soudním rozhodnutím' },
+      { id: 'subj-c4', label: 'Vždy stavět nejlepší zájem a psychickou pohodu dítěte na první místo' }
+    ],
+    seoTitle: 'Kdo je kdo v opatrovnickém řízení • Přehled institucí a odborníků',
+    seoDescription: 'Kompletní přehled rolí soudů, OSPODu, soudních znalců, advokátů a rodinných poraden v opatrovnickém řízení v České republice.',
+    createdAt: '2026-08-22T00:00:00.000Z',
+    updatedAt: '2026-08-22T00:00:00.000Z',
   }
 ];

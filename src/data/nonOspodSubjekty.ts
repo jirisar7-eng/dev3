@@ -1,34 +1,7 @@
 import { Subjekt } from '../types';
+import { soudyDataset } from './soudyDataset';
 
-export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
-  {
-    "type": "SOUD",
-    "name": "Obvodní soud pro Prahu 1",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Obvodní soud",
-    "city": "Praha",
-    "region": "Hlavní město Praha",
-    "address": "Ovocný trh 587/14, 110 00 Praha 1",
-    "email": "podatelna@osoud.pha1.justice.cz",
-    "phone": "+420 221 093 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Obvodní soud pro Prahu 4",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Obvodní soud",
-    "city": "Praha",
-    "region": "Hlavní město Praha",
-    "address": "28. pluku 1533/29b, 100 83 Praha 10",
-    "email": "podatelna@osoud.pha4.justice.cz",
-    "phone": "+420 221 553 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
+const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
   {
     "type": "ZNALEC",
     "name": "Marie Svobodová",
@@ -86,20 +59,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud v Kladně",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Kladno",
-    "region": "Středočeský kraj",
-    "address": "Cyrila Boudy 2954, 272 59 Kladno",
-    "email": "podatelna@osoud.kladno.justice.cz",
-    "phone": "+420 312 604 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Jana Veselá",
     "titleBefore": "PhDr.",
@@ -142,22 +101,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud v Českých Budějovicích",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "České Budějovice",
-    "region": "Jihočeský kraj",
-    "address": "Lidická tř. 132/20, 370 01 České Budějovice",
-    "email": "podatelna@osoud.cbu.justice.cz",
-    "phone": "+420 386 798 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true,
-    "lat": 48.9747,
-    "lng": 14.4749
-  },
-  {
     "type": "ZNALEC",
     "name": "Alena Malá",
     "titleBefore": "PhDr.",
@@ -169,9 +112,7 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "mala.znalec@cb-psychologie.cz",
     "phone": "+420 387 222 333",
     "website": "https://www.cb-psychologie.cz",
-    "isVerified": true,
-    "lat": 48.9745,
-    "lng": 14.4745
+    "isVerified": true
   },
   {
     "type": "ADVOKAT",
@@ -185,9 +126,7 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "petr.havlicek@ak-cb.cz",
     "phone": "+420 387 311 444",
     "website": "https://www.ak-cb.cz",
-    "isVerified": true,
-    "lat": 48.9743,
-    "lng": 14.4743
+    "isVerified": true
   },
   {
     "type": "PORADNA_CHARITA",
@@ -201,20 +140,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "krizovecentrum@krizovecentrumcb.cz",
     "phone": "+420 387 313 013",
     "website": "https://www.krizovecentrumcb.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud Plzeň-město",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Plzeň",
-    "region": "Plzeňský kraj",
-    "address": "Nádražní 587/21, 306 17 Plzeň",
-    "email": "podatelna@osoud.plzm.justice.cz",
-    "phone": "+420 377 868 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -260,20 +185,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud v Karlových Varech",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Karlovy Vary",
-    "region": "Karlovarský kraj",
-    "address": "Moskevská 1009/17, 360 01 Karlovy Vary",
-    "email": "podatelna@osoud.kva.justice.cz",
-    "phone": "+420 353 301 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Zuzana Nováková",
     "titleBefore": "PhDr.",
@@ -313,20 +224,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "info@karlovyvary.charita.cz",
     "phone": "+420 353 311 222",
     "website": "https://www.karlovyvary.charita.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud v Ústí nad Labem",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "Ústí nad Labem",
-    "region": "Ústecký kraj",
-    "address": "Kramoly 641/31, 400 01 Ústí nad Labem",
-    "email": "podatelna@osoud.unl.justice.cz",
-    "phone": "+420 475 247 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -372,20 +269,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud v Liberci",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Liberec",
-    "region": "Liberecký kraj",
-    "address": "U Soudu 540/3, 460 01 Liberec",
-    "email": "podatelna@osoud.lbc.justice.cz",
-    "phone": "+420 485 221 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Věra Horáková",
     "titleBefore": "PhDr.",
@@ -425,20 +308,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "cisp@liberec-pomoc.cz",
     "phone": "+420 485 456 789",
     "website": "https://www.liberec-pomoc.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud v Hradci Králové",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "Hradec Králové",
-    "region": "Královéhradecký kraj",
-    "address": "Ignáta Herrmanna 227, 501 28 Hradec Králové",
-    "email": "podatelna@osoud.hrk.justice.cz",
-    "phone": "+420 495 010 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -484,20 +353,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud v Pardubicích",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Pardubice",
-    "region": "Pardubický kraj",
-    "address": "Na Tříslovisšti 2034, 530 02 Pardubice",
-    "email": "podatelna@osoud.pce.justice.cz",
-    "phone": "+420 466 023 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Jaroslav Beneš",
     "titleBefore": "PhDr.",
@@ -537,20 +392,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "krizovecentrum@skpcentrum.cz",
     "phone": "+420 466 303 123",
     "website": "https://www.skpcentrum.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud v Jihlavě",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "Jihlava",
-    "region": "Kraj Vysočina",
-    "address": "Husova 1639/47, 586 01 Jihlava",
-    "email": "podatelna@osoud.jhl.justice.cz",
-    "phone": "+420 567 101 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -596,20 +437,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Městský soud v Brně",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Městský soud",
-    "city": "Brno",
-    "region": "Jihomoravský kraj",
-    "address": "Polní 994/9, 608 01 Brno",
-    "email": "podatelna@msoud.brn.justice.cz",
-    "phone": "+420 546 511 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Petr Říčan",
     "titleBefore": "prof. PhDr.",
@@ -649,20 +476,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "crsp@crsp.cz",
     "phone": "+420 542 211 860",
     "website": "https://www.crsp.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud v Olomouci",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "Olomouc",
-    "region": "Olomoucký kraj",
-    "address": "Tř. Svobody 685/16, 771 16 Olomouc",
-    "email": "podatelna@osoud.olc.justice.cz",
-    "phone": "+420 585 512 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -708,20 +521,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "isVerified": true
   },
   {
-    "type": "SOUD",
-    "name": "Okresní soud ve Zlíně",
-    "titleBefore": null,
-    "position": "Opatrovnický úsek",
-    "institution": "Okresní soud",
-    "city": "Zlín",
-    "region": "Zlínský kraj",
-    "address": "Dlouhá 100, 760 01 Zlín",
-    "email": "podatelna@osoud.zln.justice.cz",
-    "phone": "+420 577 004 111",
-    "website": "https://www.justice.cz",
-    "isVerified": true
-  },
-  {
     "type": "ZNALEC",
     "name": "Martina Vlková",
     "titleBefore": "PhDr.",
@@ -761,20 +560,6 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "email": "poradna@poradnazlin.cz",
     "phone": "+420 577 433 222",
     "website": "https://www.poradnazlin.cz",
-    "isVerified": true
-  },
-  {
-    "type": "SOUD",
-    "name": "Okresní soud v Ostravě",
-    "titleBefore": null,
-    "position": "Opatrovnické oddělení",
-    "institution": "Okresní soud",
-    "city": "Ostrava",
-    "region": "Moravskoslezský kraj",
-    "address": "U Soudu 6187/4, 708 00 Ostrava-Poruba",
-    "email": "podatelna@osoud.ova.justice.cz",
-    "phone": "+420 596 972 111",
-    "website": "https://www.justice.cz",
     "isVerified": true
   },
   {
@@ -833,4 +618,9 @@ export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>
     "website": "https://www.poradna-ostrava.cz",
     "isVerified": true
   }
+];
+
+export const nonOspodSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
+  ...soudyDataset,
+  ...otherSubjekty
 ];

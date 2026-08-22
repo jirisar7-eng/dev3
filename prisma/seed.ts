@@ -5,6 +5,7 @@ import { prisma, isPrismaAvailable } from '../src/db/prisma';
 import { dbStore } from '../src/services/dbStore';
 import { ensureSuperAdminAccount } from '../src/services/seedService';
 import { runHelpNewsSeed } from "./seed-help-news";
+import { runWikiGuidesSeed } from "./seed-wiki-guides";
 import { importOspody, syncDbStoreWithOspodDataset } from '../src/scripts/importOspody';
 import fs from 'fs';
 import path from 'path';
@@ -365,6 +366,7 @@ export async function runSeed() {
           update: {
             type: s.type as any,
             name: s.name,
+            titleBefore: s.titleBefore || null,
             position: s.position,
             institution: s.institution,
             city: s.city,
@@ -375,10 +377,12 @@ export async function runSeed() {
             isVerified: s.isVerified,
             lat: (s as any).lat,
             lng: (s as any).lng,
+            status: 'VERIFIED',
           },
           create: {
             type: s.type as any,
             name: s.name,
+            titleBefore: s.titleBefore || null,
             position: s.position,
             institution: s.institution,
             city: s.city,
@@ -392,6 +396,7 @@ export async function runSeed() {
             lng: (s as any).lng,
             avgRating: 0.0,
             reviewCount: 0,
+            status: 'VERIFIED',
           },
         });
       }
@@ -401,6 +406,7 @@ export async function runSeed() {
       await importOspody();
 
       await runHelpNewsSeed();
+      await runWikiGuidesSeed();
       console.log('[Prisma Seed] Úspěšně naseedován výchozí CMS i Registr Subjektů v PostgreSQL!');
     } else {
       console.log('[Prisma Seed] Databáze není připojena, plním in-memory dbStore.');
@@ -456,6 +462,7 @@ function seedInMemoryDbStore() {
         id: 'subj-' + Math.random().toString(36).substring(2, 9),
         type: s.type as any,
         name: s.name,
+        titleBefore: s.titleBefore || null,
         position: s.position,
         institution: s.institution,
         city: s.city,
