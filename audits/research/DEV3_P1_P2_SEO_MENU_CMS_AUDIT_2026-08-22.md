@@ -104,6 +104,14 @@ Na základě předchozího systémového auditu (`docs/audit/DEV3_CONTENT_CMS_IN
 
 ---
 
-## 5. Závěr & Stav
+## 5. Závěr, Git Synchronizace & Stav
 
-Všechny požadavky z auditního zadání (P1 SEO metadata, P1 Katalog studií v menu, P2 CMS správa Encyklopedie a Právních průvodců) byly úspěšně naimplementovány, otestovány a integrovány do projektu Táta má právo (dev3).
+- **Větev:** `feature/subject-registry-moderation`
+- **Git Commit SHA:** `4a72ffd34042ae2f52fb36e854700514cef58fbc` (`4a72ffd`)
+- **Remote Push:** `PASS` (synchronizováno do `origin/feature/subject-registry-moderation`)
+- **HEAD == Origin:** `ANO` (ověřeno `git rev-parse`)
+- **Working Tree:** `Čistý (Clean)`
+- **Testy celkem:** `PASS` (všech 14 integračních a bezpečnostních testů v test runneru + typecheck + build)
+
+Všechny požadavky z auditního zadání (P1 SEO metadata, P1 Katalog studií v menu, P2 CMS správa Encyklopedie a Právních průvodců) byly úspěšně naimplementovány, otestovány, integrovány a synchronizovány do GitHub repozitáře projektu Táta má právo (dev3).
+
