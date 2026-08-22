@@ -1,6 +1,19 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
-const prisma = new PrismaClient();
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  console.error('CRITICAL ERROR: DATABASE_URL is not defined in the environment.');
+  process.exit(1);
+}
+
+const pool = new pg.Pool({
+  connectionString: dbUrl,
+  connectionTimeoutMillis: 5000,
+});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function geocodeAddress(address: string, city: string): Promise<{ lat: number, lng: number } | null> {
   const query = `${address ? address + ',' : ''} ${city}`.trim();
@@ -71,6 +84,7 @@ async function runBackfill() {
     console.error('Backfill error:', error);
   } finally {
     await prisma.$disconnect();
+    await pool.end();
   }
 }
 
