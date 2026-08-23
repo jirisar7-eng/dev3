@@ -66,7 +66,7 @@ export class ClientCaseService {
       },
       orderBy: { updatedAt: 'desc' },
     });
-    if (found && found.length > 0) return found;
+    return found || [];
   }
 
   /**
