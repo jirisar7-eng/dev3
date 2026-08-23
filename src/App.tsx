@@ -27,6 +27,7 @@ function MainApp() {
   const getViewFromPath = (path: string): AppView => {
     if (path === '/login') return 'login';
     if (path === '/registrace' || path === '/register') return 'register';
+    if (path === '/logout') return 'public';
     if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/pece') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
     if (path.startsWith('/administrace') || path.startsWith('/admin')) return 'admin';
     return 'public';
@@ -37,6 +38,9 @@ function MainApp() {
   const [activeComplianceDoc, setActiveComplianceDoc] = useState<string | null>(null);
 
   useEffect(() => {
+    if (window.location.pathname === '/logout') {
+      window.location.href = '/';
+    }
     const handlePopState = () => {
       const path = window.location.pathname;
       setCurrentPath(path);

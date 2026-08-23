@@ -72,6 +72,8 @@ import {
   WikiView
 } from './academy';
 import { SeoHead } from './SeoHead';
+import { MajetekView, PsychologieView, KalendarView } from '../placeholderViews';
+
 import { useText } from '../../context/TextContext';
 import { Send, CheckCircle2, MessageSquare, Phone, Mail, MapPin } from 'lucide-react';
 
@@ -163,7 +165,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
 
   // 1. Homepage Route
-  if (cleanPath === '/' || slug === 'home' || slug === 'domu') {
+  if (cleanPath === '/' || slug === 'home' || slug === 'domu' || slug === 'verejny-portal') {
     const fallbackComponent = (
       <div className="space-y-4">
         <SeoHead
@@ -499,6 +501,16 @@ if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
   }
 
   // 3f. About Project Routes (/o-nas, /kontakt, /sponzori, /partneri)
+  if (slug === 'majetek' || slug === 'financni-vyporadani') {
+    return <MajetekView />;
+  }
+  if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
+    return <PsychologieView />;
+  }
+  if (slug === 'kalendar' || slug === 'lhutnik') {
+    return <KalendarView />;
+  }
+
   if (slug === 'o-nas' || slug === 'o-projektu') {
     const isPuckEnabled =
       typeof window !== 'undefined' &&

@@ -1020,19 +1020,35 @@ export class CmsService {
   static async updateNavItems(items: NavItem[], user?: User | null): Promise<NavItem[]> {
     if (isPrismaAvailable()) {
       try {
-        await prisma.navigationItem.deleteMany({});
+        // Safe UPSERT preserving IDs
         for (const item of items) {
-          await prisma.navigationItem.create({
-            data: {
+          await prisma.navigationItem.upsert({
+            where: { id: item.id },
+            update: {
               labelKey: item.labelKey,
               url: item.url,
               order: item.order,
               target: item.target || '_self',
               isExternal: item.isExternal || false,
-              parentId: item.parentId,
+              parentId: item.parentId || null,
             },
+            create: {
+              id: item.id,
+              labelKey: item.labelKey,
+              url: item.url,
+              order: item.order,
+              target: item.target || '_self',
+              isExternal: item.isExternal || false,
+              parentId: item.parentId || null,
+            }
           });
         }
+        
+        // Remove items not in the list
+        const keepIds = items.map(i => i.id);
+        await prisma.navigationItem.deleteMany({
+          where: { id: { notIn: keepIds } }
+        });
 
         await prisma.auditLog.create({
           data: {
@@ -1043,13 +1059,11 @@ export class CmsService {
             details: 'Aktualizována struktura hlavního menu.',
           },
         });
-
         return this.getNavItems();
       } catch (err) {
         console.warn('Prisma updateNavItems error, falling back:', err);
       }
     }
-
     dbStore.navItems = [...items];
     dbStore.logAudit('NAV_UPDATE', 'CMS', 'Aktualizována struktura hlavního menu.', user);
     return dbStore.navItems;

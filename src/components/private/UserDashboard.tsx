@@ -56,7 +56,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
   }
 
   // 1. Vyhrazená stránka VÝHRADNĚ pro správu účtu (Můj profil) -> /portal/profil
-  const isProfileRoute = currentPath.includes('/portal/profil') || currentPath.includes('/portal/nastaveni');
+  const isProfileRoute = currentPath.includes('/portal/profil') || currentPath.includes('/portal/nastaveni') || currentPath.includes('/portal/zabezpeceni');
   if (isProfileRoute) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

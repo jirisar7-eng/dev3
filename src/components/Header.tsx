@@ -132,6 +132,18 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const handleNavClick = (url: string) => {
+    if (url === '/logout') {
+      logout();
+      if (onNavigate) {
+        onNavigate('/');
+      } else {
+        window.location.href = '/';
+      }
+      return;
+    }
+    if (url === '/verejny-portal') {
+      url = '/';
+    }
     setCurrentView('public');
     setMobileMenuOpen(false);
     if (onNavigate) {
