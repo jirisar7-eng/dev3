@@ -2,6 +2,7 @@ import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { AuditService } from './auditService';
 import { CarePlanService } from './care/carePlanService';
+import { CareOccurrenceEngine } from './care/careOccurrenceEngine';
 
 const getPrismaClient = () => prisma;
 import {
@@ -1522,56 +1523,24 @@ export class ClientCaseService {
       const now = new Date();
       const startDateIso = now.toISOString().split('T')[0];
       const isEvenOdd = extractedData.scheduleType === 'EVEN_ODD_WEEKS';
-      const handoverTime = extractedData.handoverTime || extractedData.handoverStartTime || '16:00';
+      const handoverTime = extractedData.handoverTime || extractedData.handoverStartTime || '08:45';
       const handoverLocation = extractedData.handoverLocation || 'Předávací místo dle rozsudku';
 
-      const getWeekNumber = (d: Date) => {
-        const date = new Date(d.getTime());
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
-        const week1 = new Date(date.getFullYear(), 0, 4);
-        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-      };
-      const dayNamesCZ = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
+      // Parse structured care rules using CareOccurrenceEngine
+      const structuredRules = CareOccurrenceEngine.parseJudgmentToCareRules(extractedData);
 
-      const generatedDays: any[] = [];
-      for (let i = 0; i < 28; i++) {
-        const curDate = new Date(now);
-        curDate.setDate(now.getDate() + i);
-        const dayOfWeek = curDate.getDay();
-        const dayName = dayNamesCZ[dayOfWeek];
-        const weekNum = getWeekNumber(curDate);
-        const isEven = weekNum % 2 === 0;
-
-        let assignedParent: 'PARENT_A' | 'PARENT_B' = 'PARENT_A';
-        if (isEvenOdd) {
-          let isParentADay = false;
-          if (isEven && extractedData.evenWeek?.days && Array.isArray(extractedData.evenWeek.days)) {
-            isParentADay = extractedData.evenWeek.days.some((d: string) => d.toLowerCase() === dayName);
-          } else if (!isEven && extractedData.oddWeek?.days && Array.isArray(extractedData.oddWeek.days)) {
-            isParentADay = extractedData.oddWeek.days.some((d: string) => d.toLowerCase() === dayName);
-          }
-          assignedParent = isParentADay ? 'PARENT_A' : 'PARENT_B';
-        } else {
-          assignedParent = Math.floor(i / 7) % 2 === 0 ? 'PARENT_A' : 'PARENT_B';
-        }
-
-        const prevParent = i > 0 ? generatedDays[i - 1].assignedParent : assignedParent;
-        const isHandover = i > 0 && assignedParent !== prevParent;
-
-        generatedDays.push({
-          date: curDate,
-          dayOfWeek,
-          assignedParent,
-          isOvernight: true,
-          overnightParent: assignedParent,
-          isHandover,
-          handoverTime: isHandover ? handoverTime : undefined,
-          travelDistanceKm: isHandover ? 5 : 0,
-          travelDurationMin: isHandover ? 15 : 0,
-          isHoliday: false
-        });
-      }
+      // Generate CareDay grid and concrete CalendarOccurrences (with Europe/Prague ISO week compliance)
+      const engineResult = CareOccurrenceEngine.generateOccurrencesAndDays({
+        caseId,
+        startDate: now,
+        daysCount: 28,
+        rules: structuredRules,
+        children: child ? [{ id: child.id, name: `${child.firstName} ${child.lastName}`.trim() }] : [],
+        defaultLocation: handoverLocation,
+        defaultHandoverTime: handoverTime,
+        parentAName: 'Otec',
+        parentBName: 'Matka'
+      });
 
       const holidayRulesCreate = extractedData.holidaysRule ? [{
         name: 'Pravidla pro prázdniny a svátky (Rozsudek)',
@@ -1606,7 +1575,7 @@ export class ClientCaseService {
             create: holidayRulesCreate
           } : undefined,
           days: {
-            create: generatedDays.map(d => ({
+            create: engineResult.days.map(d => ({
               date: d.date,
               dayOfWeek: d.dayOfWeek,
               assignedParent: d.assignedParent,
@@ -1644,7 +1613,7 @@ export class ClientCaseService {
         parentAAddress: handoverLocation,
         defaultHandoverTime: handoverTime,
         notes: `Extrahováno z rozsudku. Čas předání: ${handoverTime}, Místo: ${handoverLocation}. Výživné: ${alimonyAmt} Kč.`,
-        days: carePlan?.days || generatedDays,
+        days: carePlan?.days || engineResult.days,
         children: child ? [{ childId: child.id }] : []
       };
 
@@ -1656,27 +1625,47 @@ export class ClientCaseService {
         }
       });
 
-      const handoverDays = (carePlan?.days || []).filter((d: any) => d.isHandover);
-      for (const hd of handoverDays) {
-        const parentLabel = hd.assignedParent === 'PARENT_A' ? 'Otec' : 'Matka';
-        const eventDate = new Date(hd.date);
-        const [h, m] = (hd.handoverTime || handoverTime || '16:00').split(':');
-        eventDate.setHours(parseInt(h || '16', 10), parseInt(m || '0', 10), 0, 0);
+      // Insert both interval occurrences and handovers into Case Calendar
+      if (engineResult.occurrences.length > 0) {
+        for (const occ of engineResult.occurrences) {
+          await tx.caseEvent.create({
+            data: {
+              caseId,
+              createdBy: requestingUser.id,
+              title: occ.title,
+              description: occ.description,
+              category: occ.category,
+              sourceType: 'CARE_PLAN',
+              carePlanId: carePlan?.id || 'care-plan-id',
+              eventDate: occ.eventDate,
+              endDate: occ.endDate,
+              location: occ.location || handoverLocation
+            }
+          });
+        }
+      } else {
+        const handoverDays = (carePlan?.days || []).filter((d: any) => d.isHandover);
+        for (const hd of handoverDays) {
+          const parentLabel = hd.assignedParent === 'PARENT_A' ? 'Otec' : 'Matka';
+          const eventDate = new Date(hd.date);
+          const [h, m] = (hd.handoverTime || handoverTime || '16:00').split(':');
+          eventDate.setHours(parseInt(h || '16', 10), parseInt(m || '0', 10), 0, 0);
 
-        await tx.caseEvent.create({
-          data: {
-            caseId,
-            createdBy: requestingUser.id,
-            title: `Předání dítěte do péče (${parentLabel})`,
-            description: `Pravidelné předání dítěte dle rozsudku. Místo: ${handoverLocation}. Čas: ${hd.handoverTime || handoverTime}.`,
-            category: 'CHILD_HANDOVER',
-            sourceType: 'CARE_PLAN',
-            carePlanId: carePlan?.id || 'care-plan-id',
-            careDayId: hd.id,
-            eventDate,
-            location: handoverLocation
-          }
-        });
+          await tx.caseEvent.create({
+            data: {
+              caseId,
+              createdBy: requestingUser.id,
+              title: `Předání dítěte do péče (${parentLabel})`,
+              description: `Pravidelné předání dítěte dle rozsudku. Místo: ${handoverLocation}. Čas: ${hd.handoverTime || handoverTime}.`,
+              category: 'CHILD_HANDOVER',
+              sourceType: 'CARE_PLAN',
+              carePlanId: carePlan?.id || 'care-plan-id',
+              careDayId: hd.id,
+              eventDate,
+              location: handoverLocation
+            }
+          });
+        }
       }
 
       // f) Synchronize with CoParent Hub (CoParentSpace, Child, Handover, Expense, Agreement, Event)
@@ -1766,9 +1755,9 @@ export class ClientCaseService {
         if (isEvenOdd && (extractedData.evenWeek?.days || extractedData.oddWeek?.days)) {
           for (let i = 0; i < 60; i++) {
             const curDate = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-            const weekNum = getWeekNumber(curDate);
-            const isEven = weekNum % 2 === 0;
-            const dayName = dayNamesCZ[curDate.getDay()];
+            const weekInfo = CareOccurrenceEngine.getIsoWeekInfo(curDate);
+            const isEven = weekInfo.isEven;
+            const dayName = CareOccurrenceEngine.CZECH_DAY_NAMES[curDate.getDay()];
 
             let shouldHaveCare = false;
             if (isEven && extractedData.evenWeek?.days && Array.isArray(extractedData.evenWeek.days)) {
