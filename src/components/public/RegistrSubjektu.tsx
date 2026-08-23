@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { SubjektyMap } from './SubjektyMap';
+import { ENTITY_CONFIG } from '../../config/entityConfig';
 import { SeoHead } from './SeoHead';
 import {
   Scale,
@@ -48,43 +49,6 @@ const CZECH_REGIONS = [
   'Moravskoslezský kraj',
 ];
 
-const ENTITY_CONFIG: Record<EntityType, { label: string; icon: React.FC<{ className?: string }>; badgeBg: string; badgeText: string; desc: string }> = {
-  SOUD: {
-    label: 'Opatrovnické soudy',
-    icon: Scale,
-    badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
-    badgeText: 'Soud',
-    desc: 'Okresní, obvodní a krajské soudy rozhodující o péči a výživném',
-  },
-  OSPOD: {
-    label: 'Orgány OSPOD',
-    icon: Users,
-    badgeBg: 'bg-blue-100 text-blue-900 border-blue-200',
-    badgeText: 'OSPOD',
-    desc: 'Oddělení sociálně-právní ochrany dětí vykonávající kolizní opatrovnictví',
-  },
-  ZNALEC: {
-    label: 'Soudní znalci & Psychologové',
-    icon: Award,
-    badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-    badgeText: 'Znalec',
-    desc: 'Certifikovaní znalci pro dětskou a klinickou psychologii a psychiatrii',
-  },
-  ADVOKAT: {
-    label: 'Advokáti pro rodinné právo',
-    icon: Briefcase,
-    badgeBg: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-    badgeText: 'Advokát',
-    desc: 'Advokáti se specializací na střídavou péči, mediaci a úpravu poměrů',
-  },
-  PORADNA_CHARITA: {
-    label: 'Poradny & Mediátoři',
-    icon: HeartHandshake,
-    badgeBg: 'bg-purple-100 text-purple-900 border-purple-200',
-    badgeText: 'Poradna / Mediace',
-    desc: 'Manželské a rodinné poradny, krizové centrum a akreditovaní mediátoři',
-  },
-};
 
 export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> = ({ onNavigate }) => {
   const [subjekty, setSubjekty] = useState<Subjekt[]>([]);
@@ -490,7 +454,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <Building2 className="w-4 h-4 text-indigo-400" />
+          <MapPin className="w-4 h-4 text-indigo-400" />
           <span>Všechny subjekty</span>
         </button>
 

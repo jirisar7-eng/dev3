@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Subjekt, EntityType } from '../../types/index';
+import { ENTITY_CONFIG } from '../../config/entityConfig';
 import { MapPin, Phone, Globe, ShieldCheck, Star, ArrowRight, ExternalLink } from 'lucide-react';
 
 // Fix for default marker icon in leaflet with react
@@ -21,32 +22,19 @@ interface SubjektyMapProps {
   height?: string;
 }
 
-const getEntityPinColor = (type: EntityType | string): string => {
-  switch (type) {
-    case 'SOUD':
-      return '#4338ca'; // Indigo
-    case 'OSPOD':
-      return '#b91c1c'; // Red
-    case 'ZNALEC':
-      return '#7c3aed'; // Purple
-    case 'ADVOKAT':
-      return '#0284c7'; // Sky
-    case 'PORADNA_CHARITA':
-      return '#059669'; // Emerald
-    default:
-      return '#334155'; // Slate
-  }
-};
 
-const createCustomPinIcon = (type: EntityType | string, isSelected: boolean) => {
-  const color = getEntityPinColor(type);
+const createCustomPinIcon = (type: EntityType | string, isSelected: boolean, name?: string) => {
+  const config = (type in ENTITY_CONFIG) ? ENTITY_CONFIG[type as EntityType] : null;
+  const color = config ? config.pinColorHex : '#334155';
   const size = isSelected ? 42 : 32;
   const strokeColor = isSelected ? '#fbbf24' : '#ffffff';
+  const svgPath = config ? config.svgPath : '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>';
+  const ariaLabel = name ? `${config ? config.badgeText : type} - ${name}` : (config ? config.badgeText : type);
 
   return L.divIcon({
     className: 'custom-subjekt-marker-pin',
     html: `
-      <div style="position: relative; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: relative; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;" aria-label="${ariaLabel}" title="${ariaLabel}">
         ${isSelected ? `<span style="position: absolute; inset: -8px; border-radius: 9999px; background-color: ${color}; opacity: 0.35; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>` : ''}
         <div style="
           width: ${size}px;
@@ -63,8 +51,7 @@ const createCustomPinIcon = (type: EntityType | string, isSelected: boolean) => 
           transition: transform 0.2s ease-in-out;
         ">
           <svg xmlns="http://www.w3.org/2000/svg" width="${isSelected ? '20' : '15'}" height="${isSelected ? '20' : '15'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-            <circle cx="12" cy="10" r="3"/>
+            ${svgPath}
           </svg>
         </div>
       </div>
@@ -111,8 +98,8 @@ const SubjektMarker: React.FC<{
   }, [isSelected]);
 
   const customIcon = useMemo(
-    () => createCustomPinIcon(subjekt.type, isSelected),
-    [subjekt.type, isSelected]
+    () => createCustomPinIcon(subjekt.type, isSelected, subjekt.name),
+    [subjekt.type, isSelected, subjekt.name]
   );
 
   return (
@@ -132,13 +119,13 @@ const SubjektMarker: React.FC<{
           <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-slate-100">
             <span
               style={{
-                backgroundColor: `${getEntityPinColor(subjekt.type)}15`,
-                color: getEntityPinColor(subjekt.type),
-                borderColor: `${getEntityPinColor(subjekt.type)}30`,
+                backgroundColor: `${(subjekt.type in ENTITY_CONFIG ? ENTITY_CONFIG[subjekt.type as EntityType].pinColorHex : "#334155")}15`,
+                color: (subjekt.type in ENTITY_CONFIG ? ENTITY_CONFIG[subjekt.type as EntityType].pinColorHex : "#334155"),
+                borderColor: `${(subjekt.type in ENTITY_CONFIG ? ENTITY_CONFIG[subjekt.type as EntityType].pinColorHex : "#334155")}30`,
               }}
               className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border"
             >
-              {formatEntityType(subjekt.type)}
+              {(subjekt.type in ENTITY_CONFIG ? ENTITY_CONFIG[subjekt.type as EntityType].badgeText : String(subjekt.type))}
             </span>
             <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -303,19 +290,3 @@ export const SubjektyMap: React.FC<SubjektyMapProps> = ({
   );
 };
 
-export function formatEntityType(type: EntityType | string): string {
-  switch (type) {
-    case 'SOUD':
-      return 'Soud';
-    case 'OSPOD':
-      return 'OSPOD';
-    case 'ZNALEC':
-      return 'Soudní znalec';
-    case 'ADVOKAT':
-      return 'Advokát';
-    case 'PORADNA_CHARITA':
-      return 'Poradna / Charita';
-    default:
-      return String(type);
-  }
-}

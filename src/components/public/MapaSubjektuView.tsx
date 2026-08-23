@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Subjekt, EntityType, Review } from '../../types';
 import { SubjektyMap } from './SubjektyMap';
+import { ENTITY_CONFIG } from '../../config/entityConfig';
 import { SeoHead } from './SeoHead';
 import {
   MapPin,
@@ -48,58 +49,7 @@ const CZECH_REGIONS = [
   'Moravskoslezský kraj',
 ];
 
-const ENTITY_CONFIG: Record<
-  EntityType,
-  {
-    label: string;
-    icon: React.FC<{ className?: string }>;
-    badgeBg: string;
-    badgeText: string;
-    pinColor: string;
-    desc: string;
-  }
-> = {
-  SOUD: {
-    label: 'Opatrovnické soudy',
-    icon: Scale,
-    badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
-    badgeText: 'Soud',
-    pinColor: 'bg-indigo-600',
-    desc: 'Okresní, obvodní a krajské soudy',
-  },
-  OSPOD: {
-    label: 'Orgány OSPOD',
-    icon: Users,
-    badgeBg: 'bg-blue-100 text-blue-900 border-blue-200',
-    badgeText: 'OSPOD',
-    pinColor: 'bg-red-600',
-    desc: 'Oddělení sociálně-právní ochrany dětí',
-  },
-  ZNALEC: {
-    label: 'Soudní znalci & Psychologové',
-    icon: Award,
-    badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-    badgeText: 'Znalec',
-    pinColor: 'bg-purple-600',
-    desc: 'Certifikovaní znalci pro dětskou psychologii',
-  },
-  ADVOKAT: {
-    label: 'Advokáti pro rodinné právo',
-    icon: Briefcase,
-    badgeBg: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-    badgeText: 'Advokát',
-    pinColor: 'bg-sky-600',
-    desc: 'Advokáti se specializací na střídavou péči',
-  },
-  PORADNA_CHARITA: {
-    label: 'Poradny & Mediátoři',
-    icon: HeartHandshake,
-    badgeBg: 'bg-purple-100 text-purple-900 border-purple-200',
-    badgeText: 'Poradna / Mediace',
-    pinColor: 'bg-emerald-600',
-    desc: 'Manželské a rodinné poradny a mediátoři',
-  },
-};
+
 
 interface MapaSubjektuViewProps {
   currentPath?: string;
@@ -371,7 +321,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-2xl text-xs transition-colors cursor-pointer"
               >
-                <Building2 className="w-4 h-4 text-slate-500" />
+                <MapPin className="w-4 h-4 text-slate-500" />
                 <span>Tabulkový seznam</span>
               </button>
             </div>
