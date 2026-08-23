@@ -1,5 +1,6 @@
 import { AiService } from './AiService';
 import { ClamAvService } from './clamAvService';
+import { DeterministicJudgmentParser } from './deterministicJudgmentParser';
 import mammoth from 'mammoth';
 
 export type JudgmentErrorCode =
@@ -7,12 +8,17 @@ export type JudgmentErrorCode =
   | 'FILE_TOO_LARGE'
   | 'TEXT_EXTRACTION_FAILED'
   | 'EMPTY_DOCUMENT'
+  | 'OCR_REQUIRED'
   | 'OCR_FAILED'
   | 'AI_TIMEOUT'
   | 'AI_RATE_LIMIT'
   | 'AI_AUTH_ERROR'
   | 'AI_PROVIDER_ERROR'
+  | 'AI_PROVIDER_UNAVAILABLE'
   | 'AI_INVALID_RESPONSE'
+  | 'AI_PAYLOAD_TOO_LARGE'
+  | 'LOCAL_EXTRACTION_FAILED'
+  | 'JUDGMENT_VALIDATION_FAILED'
   | 'VALIDATION_FAILED'
   | 'INTERNAL_ERROR';
 
@@ -34,6 +40,7 @@ export interface FieldMeta {
   value: any;
   confidence: number;
   status: 'VERIFIED' | 'NEEDS_REVIEW' | 'NOT_FOUND';
+  source?: 'LOCAL_PDF' | 'AI' | 'OCR' | 'USER_CONFIRMED';
   sourceText?: string | null;
 }
 
@@ -70,6 +77,9 @@ export interface JudgmentExtractedData {
   alimonyDebtDueDate?: string | null;
   informationDuty?: string | null;
   otherDuties: string | null;
+  aiEnrichmentFailed?: boolean;
+  aiDiagnosticCode?: string | null;
+  userNotice?: string | null;
   metadata?: {
     totalFound: number;
     needsReviewCount: number;
@@ -257,7 +267,119 @@ export class JudgmentParserService {
       }
     }
 
-    return await this.parseWithText(documentContent, sourceDocumentId, extractionMethod);
+    // 3. RUN DETERMINISTIC LOCAL PARSER FIRST (SOLID BASELINE)
+    const localResult = DeterministicJudgmentParser.parseText(documentContent, sourceDocumentId, extractionMethod);
+
+    // Tag provenance for local extraction
+    if (localResult.metadata?.fields) {
+      for (const k of Object.keys(localResult.metadata.fields)) {
+        if (localResult.metadata.fields[k].status !== 'NOT_FOUND') {
+          localResult.metadata.fields[k].source = 'LOCAL_PDF';
+        }
+      }
+    }
+
+    // 4. CHECK IF AI PROVIDERS ARE CONFIGURED
+    const hasAiKeys = Boolean(
+      process.env.GEMINI_API_KEY ||
+      process.env.GEMINI_API_KEY_2 ||
+      process.env.XAI_API_KEY ||
+      process.env.GROK_API_KEY ||
+      process.env.GROQ_API_KEY
+    );
+
+    if (!hasAiKeys) {
+      console.log('[JudgmentParserService] No AI API keys configured. Using deterministic local parser result directly.');
+      return {
+        ...localResult,
+        aiEnrichmentFailed: false,
+        userNotice: 'Dokument byl úspěšně zpracován lokálním deterministickým parserem.'
+      };
+    }
+
+    // 5. ATTEMPT OPTIONAL AI ENRICHMENT WITH GRACEFUL FAIL-SAFE
+    try {
+      console.log('[JudgmentParserService] Attempting AI enrichment layer on extracted judgment text...');
+      const aiResult = await this.parseWithText(documentContent, sourceDocumentId, extractionMethod);
+
+      // Merge AI enriched details with Local baseline
+      const merged = this.mergeLocalAndAiData(localResult, aiResult);
+      return {
+        ...merged,
+        aiEnrichmentFailed: false
+      };
+    } catch (aiErr: any) {
+      const errCode = aiErr?.code || (
+        aiErr?.message?.includes('TIMEOUT') ? 'AI_TIMEOUT' :
+        aiErr?.message?.includes('RATE_LIMIT') ? 'AI_RATE_LIMIT' :
+        aiErr?.message?.includes('AUTH') ? 'AI_AUTH_ERROR' : 'AI_PROVIDER_ERROR'
+      );
+
+      console.warn(`[JudgmentParserService] AI enrichment failed (${errCode}: ${aiErr?.message}). Falling back safely to deterministic local extraction result.`);
+
+      return {
+        ...localResult,
+        aiEnrichmentFailed: true,
+        aiDiagnosticCode: errCode,
+        userNotice: 'Externí AI analýza není momentálně dostupná. Dokument byl přečten lokálním parserem. Některé údaje nemusí být automaticky rozpoznány. Zkontrolujte údaje před importem.'
+      };
+    }
+  }
+
+  /**
+   * Intelligently merges deterministic locally extracted facts with AI-enriched summaries
+   */
+  private static mergeLocalAndAiData(local: JudgmentExtractedData, ai: JudgmentExtractedData): JudgmentExtractedData {
+    const fields: Record<string, FieldMeta> = { ...local.metadata?.fields };
+
+    // Where AI has high confidence and valid value, enrich complex textual rules
+    const merged: JudgmentExtractedData = {
+      ...local,
+      court: local.court || ai.court,
+      caseNumber: local.caseNumber || ai.caseNumber,
+      judgmentDate: local.judgmentDate || ai.judgmentDate,
+      effectiveDate: local.effectiveDate || ai.effectiveDate,
+      participants: (local.participants && local.participants.length > 0) ? local.participants : ai.participants,
+      childName: local.childName || ai.childName,
+      childBirthDate: local.childBirthDate || ai.childBirthDate,
+      custodyType: local.custodyType || ai.custodyType,
+      scheduleType: local.scheduleType || ai.scheduleType,
+      evenWeek: local.evenWeek || ai.evenWeek,
+      oddWeek: local.oddWeek || ai.oddWeek,
+      handoverDay: local.handoverDay || ai.handoverDay,
+      handoverTime: local.handoverTime || ai.handoverTime,
+      handoverStartTime: local.handoverStartTime || ai.handoverStartTime,
+      handoverEndTime: local.handoverEndTime || ai.handoverEndTime,
+      handoverLocation: local.handoverLocation || ai.handoverLocation,
+      holidaysRule: ai.holidaysRule || local.holidaysRule,
+      christmasRule: ai.christmasRule || local.christmasRule,
+      easterRule: ai.easterRule || local.easterRule,
+      summerRule: ai.summerRule || local.summerRule,
+      alimonyAmount: local.alimonyAmount !== null ? local.alimonyAmount : ai.alimonyAmount,
+      alimonyDueDate: local.alimonyDueDate !== null ? local.alimonyDueDate : ai.alimonyDueDate,
+      alimonyPaymentMethod: local.alimonyPaymentMethod || ai.alimonyPaymentMethod,
+      alimonyRecipient: local.alimonyRecipient || ai.alimonyRecipient,
+      alimonyDebtAmount: local.alimonyDebtAmount !== null ? local.alimonyDebtAmount : ai.alimonyDebtAmount,
+      alimonyDebtPeriod: local.alimonyDebtPeriod || ai.alimonyDebtPeriod,
+      alimonyDebtDueDate: local.alimonyDebtDueDate || ai.alimonyDebtDueDate,
+      informationDuty: ai.informationDuty || local.informationDuty,
+      otherDuties: ai.otherDuties || local.otherDuties,
+      metadata: local.metadata
+    };
+
+    if (ai.metadata?.fields) {
+      for (const [k, v] of Object.entries(ai.metadata.fields)) {
+        if (v.status !== 'NOT_FOUND' && (!fields[k] || fields[k].status === 'NOT_FOUND')) {
+          fields[k] = { ...v, source: 'AI' };
+        }
+      }
+    }
+
+    if (merged.metadata) {
+      merged.metadata.fields = fields;
+    }
+
+    return merged;
   }
 
   private static getPrompt(): string {
@@ -378,6 +500,7 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
         value: val,
         confidence,
         status,
+        source: 'AI',
         sourceText: item.sourceText || null
       };
     });
@@ -441,16 +564,16 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
 
       const errMsg = err?.message || '';
       if (errMsg.includes('AI_TIMEOUT')) {
-        throw new JudgmentParserError('AI_TIMEOUT', 'Analýza dokumentu trvala příliš dlouho. Zkuste dokument analyzovat znovu, případně použijte kratší výtah.');
+        throw new JudgmentParserError('AI_TIMEOUT', 'Analýza dokumentu trvala příliš dlouho.', errMsg);
       }
       if (errMsg.includes('AI_RATE_LIMIT')) {
-        throw new JudgmentParserError('AI_RATE_LIMIT', 'Překročen limit požadavků na AI analýzu. Zkuste to prosím za okamžik.');
+        throw new JudgmentParserError('AI_RATE_LIMIT', 'Překročen limit požadavků na AI analýzu.', errMsg);
       }
       if (errMsg.includes('AI_AUTH_ERROR')) {
-        throw new JudgmentParserError('AI_AUTH_ERROR', 'AI služba není správně nakonfigurována (chybí platný API klíč).');
+        throw new JudgmentParserError('AI_AUTH_ERROR', 'AI služba není správně nakonfigurována (chybí platný API klíč).', errMsg);
       }
       if (errMsg.includes('AI_PROVIDER_ERROR')) {
-        throw new JudgmentParserError('AI_PROVIDER_ERROR', 'AI analýza rozsudku selhala u všech dostupných poskytovatelů. Zkuste to prosím znovu.');
+        throw new JudgmentParserError('AI_PROVIDER_ERROR', 'AI analýza rozsudku selhala u všech dostupných poskytovatelů.', errMsg);
       }
 
       throw new JudgmentParserError('AI_PROVIDER_ERROR', `AI analýza rozsudku selhala: ${errMsg || 'Služba AI není dostupná'}`);
@@ -464,7 +587,7 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
 
     if (!primaryKey && !secondaryKey) {
       throw new JudgmentParserError(
-        'OCR_FAILED',
+        'OCR_REQUIRED',
         "Pro analýzu naskenovaných dokumentů a obrázků (OCR) je vyžadován platný GEMINI_API_KEY. Pokud máte textové PDF, zkontrolujte, zda obsahuje vrstvu s textem, nebo vložte text ručně."
       );
     }
@@ -506,7 +629,15 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
 
         if (response.text) {
           console.log('[JudgmentParserService] Vision OCR succeeded with Primary GEMINI_API_KEY.');
-          return this.parseResponse(response.text, sourceDocumentId, 'AI_VISION');
+          const parsed = this.parseResponse(response.text, sourceDocumentId, 'AI_VISION');
+          if (parsed.metadata?.fields) {
+            for (const k of Object.keys(parsed.metadata.fields)) {
+              if (parsed.metadata.fields[k].status !== 'NOT_FOUND') {
+                parsed.metadata.fields[k].source = 'OCR';
+              }
+            }
+          }
+          return parsed;
         }
       } catch (primaryErr: any) {
         console.warn('[JudgmentParserService] Primary GEMINI_API_KEY vision OCR failed:', primaryErr?.message);
@@ -536,7 +667,15 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
 
         if (response2.text) {
           console.log('[JudgmentParserService] Vision OCR succeeded with Secondary GEMINI_API_KEY_2.');
-          return this.parseResponse(response2.text, sourceDocumentId, 'AI_VISION');
+          const parsed = this.parseResponse(response2.text, sourceDocumentId, 'AI_VISION');
+          if (parsed.metadata?.fields) {
+            for (const k of Object.keys(parsed.metadata.fields)) {
+              if (parsed.metadata.fields[k].status !== 'NOT_FOUND') {
+                parsed.metadata.fields[k].source = 'OCR';
+              }
+            }
+          }
+          return parsed;
         }
       } catch (secErr: any) {
         console.warn('[JudgmentParserService] Secondary GEMINI_API_KEY_2 vision OCR failed:', secErr?.message);

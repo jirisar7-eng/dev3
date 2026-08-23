@@ -1124,6 +1124,69 @@ export class ClientCaseService {
   // ----------------------------------------------------
   // JUDGMENT IMPORT & CASE SYNC (PHASE 2 - ATOMIC TRANSACTION)
   // ----------------------------------------------------
+  public static validateExtractedJudgmentData(extractedData: any): void {
+    if (!extractedData || typeof extractedData !== 'object') {
+      throw new Error("Neplatná data rozsudku: Chybí objekt s daty.");
+    }
+
+    // 1. Validate child name if present
+    if (extractedData.childName) {
+      const name = typeof extractedData.childName === 'string' ? extractedData.childName.trim() : (extractedData.childName?.value || '').trim();
+      if (name && name.length < 2) {
+        throw new Error("Jméno dítěte musí mít alespoň 2 znaky.");
+      }
+    }
+
+    // 2. Validate child birth date if present
+    if (extractedData.childBirthDate) {
+      const bdStr = typeof extractedData.childBirthDate === 'string' ? extractedData.childBirthDate : extractedData.childBirthDate?.value;
+      if (bdStr) {
+        const bd = new Date(bdStr);
+        if (isNaN(bd.getTime())) {
+          throw new Error("Datum narození dítěte není v platném formátu.");
+        }
+        if (bd > new Date()) {
+          throw new Error("Datum narození dítěte nemůže být v budoucnosti.");
+        }
+        if (bd.getFullYear() < 1900) {
+          throw new Error("Datum narození dítěte je neplatné.");
+        }
+      }
+    }
+
+    // 3. Validate times if present
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (extractedData.handoverTime && typeof extractedData.handoverTime === 'string' && !timeRegex.test(extractedData.handoverTime)) {
+      throw new Error("Čas předání není v platném formátu HH:MM.");
+    }
+    if (extractedData.handoverStartTime && typeof extractedData.handoverStartTime === 'string' && !timeRegex.test(extractedData.handoverStartTime)) {
+      throw new Error("Čas začátku předání není v platném formátu HH:MM.");
+    }
+    if (extractedData.handoverEndTime && typeof extractedData.handoverEndTime === 'string' && !timeRegex.test(extractedData.handoverEndTime)) {
+      throw new Error("Čas konce předání není v platném formátu HH:MM.");
+    }
+
+    // 4. Validate alimony amounts
+    if (extractedData.alimonyAmount !== null && extractedData.alimonyAmount !== undefined) {
+      const amount = Number(extractedData.alimonyAmount);
+      if (isNaN(amount) || amount < 0) {
+        throw new Error("Výše výživného musí být kladné číslo nebo 0.");
+      }
+    }
+    if (extractedData.alimonyDebtAmount !== null && extractedData.alimonyDebtAmount !== undefined) {
+      const debt = Number(extractedData.alimonyDebtAmount);
+      if (isNaN(debt) || debt < 0) {
+        throw new Error("Výše dluhu na výživném musí být kladné číslo nebo 0.");
+      }
+    }
+    if (extractedData.alimonyDueDate !== null && extractedData.alimonyDueDate !== undefined) {
+      const due = Number(extractedData.alimonyDueDate);
+      if (isNaN(due) || due < 1 || due > 31) {
+        throw new Error("Den splatnosti výživného musí být mezi 1. a 31. dnem v měsíci.");
+      }
+    }
+  }
+
   public static async applyJudgmentToCase(caseId: string, requestingUser: User, extractedData: any, forceApply = false) {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error("Databáze není dostupná.");
@@ -1134,6 +1197,9 @@ export class ClientCaseService {
     if (!extractedData) {
       throw new Error("Chybí extractedData.");
     }
+
+    // Validate extracted judgment data (strict validation gate)
+    this.validateExtractedJudgmentData(extractedData);
 
     // Check existing case & active care plans for conflict detection
     const existingCase = await prisma.case.findUnique({

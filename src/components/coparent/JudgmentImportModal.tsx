@@ -241,12 +241,22 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
         ) : (
           /* REVIEW MODAL */
           <form onSubmit={handleApply} className="space-y-4">
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div className="text-xs text-emerald-900 font-medium">
-                AI úspěšně extrahovala údaje. Zkontrolujte a případně upravte hodnoty před vytvořením kalendáře péče.
+            {extractedData.aiEnrichmentFailed ? (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900">
+                  <span className="font-bold block">Lokální deterministické zpracování:</span>
+                  <span>{extractedData.userNotice || 'Externí AI analýza nebyla dostupná. Dokument byl přečten lokálním deterministickým parserem. Zkontrolujte prosím extrahované údaje před vytvořením kalendáře péče.'}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="text-xs text-emerald-900 font-medium">
+                  {extractedData.userNotice || 'Dokument byl úspěšně analyzován. Zkontrolujte a případně upravte hodnoty před vytvořením kalendáře péče.'}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
