@@ -1,10 +1,10 @@
 # AUDIT REPORT: END-TO-END VERIFIKACE CENTRÁLNÍ INTEGRACE ROZSUDKU
 
-**Datum a čas:** 2026-08-23 17:05 CET  
-**Úkol:** End-to-End kompletní verifikace zpracování soudního rozsudku z PDF/textu až do osobního spisu „Můj případ“, CoParent Hubu, profilu dítěte, plánu péče, kalendáře, důkazů a finančních závazků.  
-**Pracovní větev:** `feature/central-judgment-case-integration`  
-**Výsledek verifikace:** **PASS**  
-**Garant:** Senior Software Architect, Lead DevSecOps & QA Auditor  
+**Datum a čas:** 2026-08-23 17:05 CET
+**Úkol:** End-to-End kompletní verifikace zpracování soudního rozsudku z PDF/textu až do osobního spisu „Můj případ“, CoParent Hubu, profilu dítěte, plánu péče, kalendáře, důkazů a finančních závazků.
+**Pracovní větev:** `feature/central-judgment-case-integration`
+**Výsledek verifikace:** **PASS**
+**Garant:** Senior Software Architect, Lead DevSecOps & QA Auditor
 
 ---
 
@@ -80,5 +80,5 @@ git push origin main
 
 ## 5. ZÁVĚREČNÝ VERDIKT
 
-**VÝSLEDEK AUDITU:** **PASS**  
+**VÝSLEDEK AUDITU:** **PASS**
 Aplikace je plně připravena k nasazení. Integrace rozsudků splňuje nejvyšší nároky na bezpečnost, datovou integritu i právní auditovatelnost.

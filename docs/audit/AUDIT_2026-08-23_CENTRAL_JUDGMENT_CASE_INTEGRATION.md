@@ -1,9 +1,9 @@
 # AUDIT REPORT: CENTRÁLNÍ INTEGRACE ROZSUDKU DO „MŮJ PŘÍPAD“ A STRUKTUROVANÁ DATABÁZOVÁ REPREZENTACE
 
-**Datum a čas:** 2026-08-23 17:00 CET  
-**Úkol:** Centrální integrace soudních rozsudků do osobního spisu („Můj případ“), profily dětí, kalendář, finance a CoParent Hub s větou po větě databázovým mapováním.  
-**Pracovní větev:** `feature/central-judgment-case-integration`  
-**Garant:** Senior Software Architect & DevSecOps Engineer  
+**Datum a čas:** 2026-08-23 17:00 CET
+**Úkol:** Centrální integrace soudních rozsudků do osobního spisu („Můj případ“), profily dětí, kalendář, finance a CoParent Hub s větou po větě databázovým mapováním.
+**Pracovní větev:** `feature/central-judgment-case-integration`
+**Garant:** Senior Software Architect & DevSecOps Engineer
 
 ---
 
