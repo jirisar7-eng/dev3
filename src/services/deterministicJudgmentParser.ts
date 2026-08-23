@@ -1,4 +1,4 @@
-import { JudgmentExtractedData, FieldMeta } from './judgmentParserService';
+import { JudgmentExtractedData, FieldMeta, JudgmentSentenceData } from './judgmentParserService';
 
 export interface ParseMatch<T> {
   value: T;
@@ -7,6 +7,79 @@ export interface ParseMatch<T> {
 }
 
 export class DeterministicJudgmentParser {
+  /**
+   * Sentence-level segmenter and classifier for legal judgment texts
+   */
+  public static extractSentences(text: string): JudgmentSentenceData[] {
+    if (!text || !text.trim()) return [];
+
+    const lines = text.replace(/\r\n/g, '\n').split('\n');
+    const sentences: JudgmentSentenceData[] = [];
+    let sentenceIndex = 1;
+    let paragraphNumber = 1;
+    let pageNumber = 1;
+    let currentSection: 'HEADER' | 'VYROK' | 'ODUVODNENI' | 'POUCENI' | 'PARTICIPANTS' = 'HEADER';
+
+    let currentParagraphText = '';
+
+    const processParagraph = (paraText: string) => {
+      if (!paraText.trim()) return;
+
+      const trimmedPara = paraText.trim();
+
+      // Check section transitions
+      if (/\b(?:ODŮVODNĚNÍ|Odůvodnění|O d ů v o d n ě n í)\b/i.test(trimmedPara)) {
+        currentSection = 'ODUVODNENI';
+      } else if (/\b(?:POUČENÍ|Poučení|P o u č e n í)\b/i.test(trimmedPara)) {
+        currentSection = 'POUCENI';
+      } else if (/\b(?:ÚČASTNÍCI|Účastníci|za účasti|ve věci péče|matka:|otec:)\b/i.test(trimmedPara) && currentSection === 'HEADER') {
+        currentSection = 'PARTICIPANTS';
+      } else if (/\b(?:ROZSUDEK|USNESENÍ|PŘEDBĚŽNÉ OPATŘENÍ|rozhodl takto:|soud schvaluje tuto dohodu:|svěřuje se|I\.|A\.)\b/i.test(trimmedPara) && (currentSection === 'HEADER' || currentSection === 'PARTICIPANTS')) {
+        currentSection = 'VYROK';
+      }
+
+      // Sentence splitting regex for Czech text
+      const rawSentences = trimmedPara.match(/[^.!?\n]+[.!?]+(?:\s+|$)|[^.!?\n]+(?:\s+|$)/g) || [trimmedPara];
+
+      for (const rawSentence of rawSentences) {
+        const cleanSentence = rawSentence.trim().replace(/\s+/g, ' ');
+        if (cleanSentence.length > 0) {
+          sentences.push({
+            sentenceIndex: sentenceIndex++,
+            pageNumber,
+            paragraphNumber,
+            section: currentSection,
+            text: cleanSentence,
+            confidence: 1.0,
+            source: 'LOCAL_PDF'
+          });
+        }
+      }
+      paragraphNumber++;
+    };
+
+    for (const line of lines) {
+      const pageMarkerMatch = line.match(/(?:---|Strana|Page)\s*(\d+)/i);
+      if (pageMarkerMatch && pageMarkerMatch[1]) {
+        pageNumber = parseInt(pageMarkerMatch[1], 10) || pageNumber;
+      }
+
+      if (line.trim() === '') {
+        if (currentParagraphText) {
+          processParagraph(currentParagraphText);
+          currentParagraphText = '';
+        }
+      } else {
+        currentParagraphText += (currentParagraphText ? ' ' : '') + line.trim();
+      }
+    }
+
+    if (currentParagraphText) {
+      processParagraph(currentParagraphText);
+    }
+
+    return sentences;
+  }
   /**
    * Normalizes Czech date string (e.g. "15. května 2024", "15. 5. 2024", "15.05.2024") to ISO YYYY-MM-DD
    */
@@ -208,6 +281,8 @@ export class DeterministicJudgmentParser {
     return {
       sourceDocumentId,
       extractionMethod,
+      rawText: raw,
+      sentences: this.extractSentences(raw),
       caseNumber: fields.caseNumber.value,
       court: fields.court.value,
       judgmentDate: fields.judgmentDate.value,

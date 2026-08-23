@@ -3,6 +3,7 @@ import { dbStore } from './dbStore';
 import { AuditService } from './auditService';
 import { CarePlanService } from './care/carePlanService';
 import { CareOccurrenceEngine } from './care/careOccurrenceEngine';
+import { DeterministicJudgmentParser } from './deterministicJudgmentParser';
 
 const getPrismaClient = () => prisma;
 import {
@@ -1399,9 +1400,140 @@ export class ClientCaseService {
         });
       }
 
-      // d) CaseDeadline & CaseTask (Lhůty a úkoly)
+      // d1) CENTRAL JUDGMENT, SENTENCES, LEGAL FACTS & FINANCIAL OBLIGATIONS
+      const courtName = extractedData.court || 'Okresní soud';
+      const judgment = await tx.judgment.create({
+        data: {
+          caseId,
+          documentId: caseDoc.id,
+          courtName,
+          caseNumber: extractedData.caseNumber || null,
+          issueDate: extractedData.judgmentDate ? new Date(extractedData.judgmentDate) : null,
+          effectiveDate: extractedData.effectiveDate ? new Date(extractedData.effectiveDate) : null,
+          status: 'CONFIRMED',
+          sourceFileType: extractedData.extractionMethod === 'MAMMOTH_DOCX' ? 'DOCX' : 'PDF',
+          scanStatus: 'CLEAN',
+          aiEnriched: !extractedData.aiEnrichmentFailed,
+          rawText: extractedData.rawText || null,
+          notes: extractedData.userNotice || 'Extrahováno lokálním deterministickým a AI parserem',
+          createdBy: requestingUser.id
+        }
+      });
+
+      // Sentences
+      const sentenceList = (extractedData.sentences && extractedData.sentences.length > 0)
+        ? extractedData.sentences
+        : DeterministicJudgmentParser.extractSentences(extractedData.rawText || '');
+
+      const sentenceRecords: any[] = [];
+      for (const s of sentenceList) {
+        const createdSentence = await tx.judgmentSentence.create({
+          data: {
+            judgmentId: judgment.id,
+            sentenceIndex: s.sentenceIndex,
+            pageNumber: s.pageNumber || 1,
+            paragraphNumber: s.paragraphNumber || 1,
+            section: s.section || 'VYROK',
+            text: s.text,
+            confidence: s.confidence || 1.0,
+            source: s.source || 'LOCAL_PDF'
+          }
+        });
+        sentenceRecords.push(createdSentence);
+      }
+
+      // Helper to find best sentence match for fact source text
+      const findSentenceForText = (sourceText?: string | null) => {
+        if (!sourceText || sentenceRecords.length === 0) return sentenceRecords[0]?.id || null;
+        const normalizedSrc = sourceText.toLowerCase().trim();
+        const match = sentenceRecords.find(sr => sr.text.toLowerCase().includes(normalizedSrc) || normalizedSrc.includes(sr.text.toLowerCase()));
+        return match ? match.id : (sentenceRecords.find(sr => sr.section === 'VYROK')?.id || sentenceRecords[0]?.id || null);
+      };
+
+      // Create Legal Facts
+      const factsToCreate: Array<{ category: string; key: string; val: any }> = [
+        { category: 'CUSTODY', key: 'CUSTODY_TYPE', val: extractedData.custodyType },
+        { category: 'HANDOVER_SCHEDULE', key: 'SCHEDULE_TYPE', val: extractedData.scheduleType },
+        { category: 'HANDOVER_SCHEDULE', key: 'HANDOVER_DAY', val: extractedData.handoverDay },
+        { category: 'HANDOVER_SCHEDULE', key: 'HANDOVER_TIME', val: extractedData.handoverTime },
+        { category: 'HANDOVER_SCHEDULE', key: 'HANDOVER_LOCATION', val: extractedData.handoverLocation },
+        { category: 'SPECIAL_HOLIDAY_SCHEDULE', key: 'HOLIDAYS_RULE', val: extractedData.holidaysRule },
+        { category: 'SPECIAL_HOLIDAY_SCHEDULE', key: 'CHRISTMAS_RULE', val: extractedData.christmasRule },
+        { category: 'SPECIAL_HOLIDAY_SCHEDULE', key: 'EASTER_RULE', val: extractedData.easterRule },
+        { category: 'SPECIAL_HOLIDAY_SCHEDULE', key: 'SUMMER_RULE', val: extractedData.summerRule },
+        { category: 'CHILD_SUPPORT', key: 'ALIMONY_AMOUNT', val: extractedData.alimonyAmount },
+        { category: 'CHILD_SUPPORT', key: 'ALIMONY_DUE_DATE', val: extractedData.alimonyDueDate },
+        { category: 'CHILD_SUPPORT_ARREARS', key: 'ALIMONY_DEBT_AMOUNT', val: extractedData.alimonyDebtAmount },
+        { category: 'PARENTAL_DUTY', key: 'INFORMATION_DUTY', val: extractedData.informationDuty },
+        { category: 'OTHER', key: 'OTHER_DUTIES', val: extractedData.otherDuties }
+      ];
+
+      for (const fact of factsToCreate) {
+        if (fact.val !== null && fact.val !== undefined && String(fact.val).trim() !== '') {
+          const metaField = extractedData.metadata?.fields?.[fact.key] || {};
+          const sentenceId = findSentenceForText(metaField.sourceText);
+          await tx.judgmentLegalFact.create({
+            data: {
+              caseId,
+              judgmentId: judgment.id,
+              sentenceId,
+              category: fact.category,
+              factKey: fact.key,
+              factValue: typeof fact.val === 'object' ? JSON.stringify(fact.val) : String(fact.val),
+              confidence: metaField.confidence || 0.9,
+              source: metaField.source || 'LOCAL_PDF',
+              verificationStatus: 'VERIFIED',
+              rawSourceText: metaField.sourceText || null
+            }
+          });
+        }
+      }
+
+      // d2) CaseDeadline & CaseTask (Lhůty a úkoly)
       const alimonyAmt = Number(extractedData.alimonyAmount) || 0;
       const alimonyDue = Number(extractedData.alimonyDueDate) || 15;
+      const debtAmt = Number(extractedData.alimonyDebtAmount) || 0;
+
+      // Create Financial Obligations
+      if (alimonyAmt > 0) {
+        const sentenceId = findSentenceForText(extractedData.metadata?.fields?.alimonyAmount?.sourceText);
+        await tx.financialObligation.create({
+          data: {
+            caseId,
+            judgmentId: judgment.id,
+            sentenceId,
+            childId: child?.id || null,
+            type: 'REGULAR_CHILD_SUPPORT',
+            debtorRole: 'OTEC',
+            creditorRole: 'MATKA',
+            monthlyAmount: alimonyAmt,
+            paymentDueDate: alimonyDue,
+            status: 'ACTIVE',
+            source: extractedData.metadata?.fields?.alimonyAmount?.source || 'LOCAL_PDF',
+            notes: `Měsíční výživné dle rozsudku sp. zn. ${extractedData.caseNumber || 'N/A'}`
+          }
+        });
+      }
+
+      if (debtAmt > 0) {
+        const sentenceId = findSentenceForText(extractedData.metadata?.fields?.alimonyDebtAmount?.sourceText);
+        await tx.financialObligation.create({
+          data: {
+            caseId,
+            judgmentId: judgment.id,
+            sentenceId,
+            childId: child?.id || null,
+            type: 'CHILD_SUPPORT_ARREARS',
+            debtorRole: 'OTEC',
+            creditorRole: 'MATKA',
+            totalArrears: debtAmt,
+            arrearsPeriod: extractedData.alimonyDebtPeriod || null,
+            status: 'ACTIVE',
+            source: extractedData.metadata?.fields?.alimonyDebtAmount?.source || 'LOCAL_PDF',
+            notes: `Dlužné výživné dle rozsudku sp. zn. ${extractedData.caseNumber || 'N/A'}`
+          }
+        });
+      }
       if (alimonyAmt > 0) {
         const nextDue = new Date();
         nextDue.setDate(alimonyDue);
@@ -1445,7 +1577,6 @@ export class ClientCaseService {
       }
 
       // Dlužné výživné (pokud bylo uloženo)
-      const debtAmt = Number(extractedData.alimonyDebtAmount) || 0;
       if (debtAmt > 0) {
         const debtPeriod = extractedData.alimonyDebtPeriod ? ` za období ${extractedData.alimonyDebtPeriod}` : '';
         const debtTitle = `Dlužné výživné (${debtAmt} Kč${debtPeriod})`;
@@ -1978,5 +2109,72 @@ export class ClientCaseService {
       },
       case: fullCase,
     };
+  }
+
+  // ----------------------------------------------------
+  // CENTRAL JUDGMENT API
+  // ----------------------------------------------------
+  public static async getJudgmentsByCaseId(caseId: string, requestingUser: User) {
+    await this.authorizeCaseAccess(caseId, requestingUser);
+    const prisma = getPrismaClient();
+
+    if (!prisma) {
+      return [];
+    }
+
+    const judgments = await prisma.judgment.findMany({
+      where: { caseId },
+      include: {
+        document: true,
+        sentences: { orderBy: { sentenceIndex: 'asc' } },
+        facts: { orderBy: { createdAt: 'asc' } },
+        financialObligations: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return judgments;
+  }
+
+  public static async updateLegalFact(
+    caseId: string,
+    factId: string,
+    requestingUser: User,
+    newValue: string,
+    reason: string
+  ) {
+    await this.authorizeCaseAccess(caseId, requestingUser);
+    const prisma = getPrismaClient();
+
+    if (!prisma) throw new Error('Databáze není dostupná.');
+
+    const fact = await prisma.judgmentLegalFact.findUnique({
+      where: { id: factId }
+    });
+
+    if (!fact || fact.caseId !== caseId) {
+      throw new Error('Právní skutočnost nebyla nalezena.');
+    }
+
+    const updatedFact = await prisma.judgmentLegalFact.update({
+      where: { id: factId },
+      data: {
+        factValue: newValue,
+        isOverriddenByUser: true,
+        userOverrideReason: reason || 'Uživatelská úprava faktického stavu po rozsudku',
+        userOverrideDate: new Date(),
+        verificationStatus: 'USER_EDITED',
+        updatedAt: new Date()
+      }
+    });
+
+    await AuditService.recordLog(
+      'LEGAL_FACT_OVERRIDDEN',
+      'ClientCase',
+      `Uživatel upravil právní fakt [${fact.factKey}] z '${fact.factValue}' na '${newValue}'. Důvod: ${reason}`,
+      requestingUser
+    );
+
+    return updatedFact;
   }
 }

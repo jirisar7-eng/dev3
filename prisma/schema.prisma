@@ -1151,6 +1151,9 @@ model Case {
   careArrangements CareArrangement[]
   carePlans        CarePlan[]
   careComparisons  CareSimulationComparison[]
+  judgments            Judgment[]
+  legalFacts           JudgmentLegalFact[]
+  financialObligations FinancialObligation[]
 
   @@index([ownerId])
   @@index([status])
@@ -1188,6 +1191,7 @@ model Child {
   updatedAt    DateTime @updatedAt
 
   carePlans CarePlanChild[]
+  financialObligations FinancialObligation[]
 
   @@index([caseId])
 }
@@ -1295,6 +1299,7 @@ model CaseDocument {
   updatedAt       DateTime @updatedAt
 
   evidence CaseEvidence[]
+  judgments Judgment[]
 
   @@index([caseId])
   @@index([category])
@@ -2092,5 +2097,126 @@ model MementoCase {
 
   @@index([slug])
   @@index([category])
+  @@index([status])
+}
+
+// ------------------------------------------------------
+// JUDGMENT & CENTRAL CASE INTEGRATION (PHASE 2)
+// ------------------------------------------------------
+
+model Judgment {
+  id                 String   @id @default(uuid())
+  caseId             String
+  case               Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  documentId         String?
+  document           CaseDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  courtName          String
+  caseNumber         String?  // sp. zn.
+  judgmentNumber     String?  // č. j.
+  issueDate          DateTime? // datum rozhodnutí
+  promulgationDate   DateTime? // datum vyhlášení
+  effectiveDate      DateTime? // datum právní moci
+  enforceabilityDate DateTime? // vykonatelnost
+  judgeName          String?
+  status             String   @default("CONFIRMED") // DRAFT, CONFIRMED, SUPERSEDED, ARCHIVED
+  sourceFileType     String   @default("PDF") // PDF, DOCX, TXT
+  scanStatus         String   @default("CLEAN")
+  aiEnriched         Boolean  @default(false)
+  extractionQuality  Float    @default(1.0)
+  rawText            String?  @db.Text
+  notes              String?  @db.Text
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  sentences            JudgmentSentence[]
+  facts                JudgmentLegalFact[]
+  financialObligations FinancialObligation[]
+
+  @@index([caseId])
+  @@index([documentId])
+  @@index([caseNumber])
+  @@index([status])
+}
+
+model JudgmentSentence {
+  id              String   @id @default(uuid())
+  judgmentId      String
+  judgment        Judgment @relation(fields: [judgmentId], references: [id], onDelete: Cascade)
+  sentenceIndex   Int      // 1-based order
+  pageNumber      Int?     // 1-based PDF page number
+  paragraphNumber Int?     // paragraph index
+  section         String   @default("VYROK") // HEADER, VYROK, ODUVODNENI, POUCENI, PARTICIPANTS
+  text            String   @db.Text
+  confidence      Float    @default(1.0)
+  source          String   @default("LOCAL_PDF") // LOCAL_PDF, AI, USER
+  createdAt       DateTime @default(now())
+
+  linkedFacts          JudgmentLegalFact[]
+  financialObligations FinancialObligation[]
+
+  @@index([judgmentId])
+  @@index([sentenceIndex])
+  @@index([section])
+}
+
+model JudgmentLegalFact {
+  id                  String            @id @default(uuid())
+  caseId              String
+  case                Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  judgmentId          String
+  judgment            Judgment          @relation(fields: [judgmentId], references: [id], onDelete: Cascade)
+  sentenceId          String?
+  sentence            JudgmentSentence? @relation(fields: [sentenceId], references: [id], onDelete: SetNull)
+  category            String            // CUSTODY, CHILD_SUPPORT, CHILD_SUPPORT_ARREARS, HANDOVER_SCHEDULE, SPECIAL_HOLIDAY_SCHEDULE, PARENTAL_DUTY, INFORMATION_DUTY, LEGAL_COSTS, PROCEDURAL_DEADLINE, OTHER
+  factKey             String            // CUSTODY_TYPE, ALIMONY_AMOUNT, HANDOVER_TIME, CHRISTMAS_RULE, etc.
+  factValue           String            @db.Text
+  confidence          Float             @default(1.0)
+  source              String            @default("LOCAL_PDF") // LOCAL_PDF, AI, USER, SYSTEM
+  verificationStatus  String            @default("VERIFIED") // EXTRACTED, AI_ENRICHED, VERIFIED, USER_EDITED, CONFLICT
+  rawSourceText       String?           @db.Text
+  notes               String?           @db.Text
+  isOverriddenByUser  Boolean           @default(false)
+  userOverrideReason  String?           @db.Text
+  userOverrideDate    DateTime?
+  createdBy           String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([caseId])
+  @@index([judgmentId])
+  @@index([category])
+  @@index([factKey])
+}
+
+model FinancialObligation {
+  id             String            @id @default(uuid())
+  caseId         String
+  case           Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  judgmentId     String?
+  judgment       Judgment?         @relation(fields: [judgmentId], references: [id], onDelete: SetNull)
+  sentenceId     String?
+  sentence       JudgmentSentence? @relation(fields: [sentenceId], references: [id], onDelete: SetNull)
+  childId        String?
+  child          Child?            @relation(fields: [childId], references: [id], onDelete: SetNull)
+  type           String            @default("REGULAR_CHILD_SUPPORT") // REGULAR_CHILD_SUPPORT, CHILD_SUPPORT_ARREARS, EXTRAORDINARY_EXPENSE, COURT_FEE
+  debtorRole     String            @default("OTEC")
+  creditorRole   String            @default("MATKA")
+  monthlyAmount  Float?            @default(0)
+  paymentDueDate Int?              @default(15) // Day of month 1-31
+  bankAccount    String?
+  paymentSymbol  String?           // Variabilní symbol
+  totalArrears   Float?            @default(0)
+  arrearsPeriod  String?
+  arrearsDueDate DateTime?
+  status         String            @default("ACTIVE") // ACTIVE, PAID, DISPUTED, SUPERSEDED
+  source         String            @default("LOCAL_PDF") // LOCAL_PDF, AI, USER
+  notes          String?           @db.Text
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([caseId])
+  @@index([judgmentId])
+  @@index([type])
   @@index([status])
 }
