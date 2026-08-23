@@ -38,4 +38,4 @@
 - Ověření endpointů: `requireAuth` je správně vynucován.
 
 ## 6. Commit SHA
-*(Bude doplněno po provedení komitu)*
+ebb497d37a345c06783e7ed33931601597cce94f
