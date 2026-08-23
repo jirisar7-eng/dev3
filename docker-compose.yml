@@ -1,16 +1,15 @@
 services:
   app:
-    container_name: tatovacesta_app
+    container_name: tatovacesta_app_dev3
     build: .
-    restart: always
     ports:
-      - "3000:3000"
+      - "3003:3000"
     env_file:
       - .env
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD}@postgres_prod3:5432/${POSTGRES_DB:-tatovacesta_prod3}?schema=public}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-tatovacesta}:${POSTGRES_PASSWORD}@postgres_dev3:5432/${POSTGRES_DB:-tatovacesta_dev3}?schema=public}
       - JWT_SECRET=${JWT_SECRET}
       - CLAMAV_HOST=${CLAMAV_HOST:-clamav_scanner}
       - CLAMAV_PORT=${CLAMAV_PORT:-3310}
@@ -21,6 +20,7 @@ services:
       - MAILCOW_API_KEY=${MAILCOW_API_KEY:-}
     extra_hosts:
       - "mail.tatovacesta.cz:${MAILCOW_INTERNAL_IP:-172.22.1.14}"
+    restart: always
     networks:
       - default
       - caddy_net
@@ -31,16 +31,15 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_prod3
-    restart: always
+    container_name: postgres_dev3
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-tatovacesta_prod3}
+      POSTGRES_DB: ${POSTGRES_DB:-tatovacesta_dev3}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_USER: ${POSTGRES_USER:-tatovacesta}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data_prod3:/var/lib/postgresql/data
+      - postgres_data_dev3:/var/lib/postgresql/data
     networks:
       - default
 
@@ -51,13 +50,13 @@ services:
     ports:
       - "3310:3310"
     volumes:
-      - clamav_data_prod3:/var/lib/clamav
+      - clamav_data_dev3:/var/lib/clamav
     networks:
       - default
 
 volumes:
-  postgres_data_prod3:
-  clamav_data_prod3:
+  postgres_data_dev3:
+  clamav_data_dev3:
 
 networks:
   caddy_net:
@@ -66,5 +65,4 @@ networks:
   mailcow_network:
     external: true
     name: mailcow-dockerized_mailcow-network
-
 
