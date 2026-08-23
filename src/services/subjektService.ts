@@ -134,6 +134,20 @@ export class SubjektService {
   }
 
   /**
+   * Get all workers for moderation/administration
+   */
+  async getAllPracovnici() {
+    const list = await prisma.pracovnik.findMany({
+      include: { subjekt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return list.map((p) => ({
+      ...p,
+      subjektName: p.subjekt?.name,
+    }));
+  }
+
+  /**
    * Update worker status (APPROVED / REJECTED)
    */
   async updatePracovnikStatus(id: string, status: 'APPROVED' | 'REJECTED') {

@@ -391,6 +391,15 @@ app.get('/api/pracovnici/pending', requireAuth as any, requireRole('MODERATOR') 
   }
 });
 
+app.get('/api/pracovnici', requireAuth as any, requireRole('MODERATOR') as any, async (_req, res) => {
+  try {
+    const list = await subjektService.getAllPracovnici();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba při načítání pracovníků' });
+  }
+});
+
 app.post('/api/pracovnici', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { subjektId, jmeno, pozice, telefon, email, kancelar, status, createdById } = req.body;
@@ -437,9 +446,30 @@ app.patch('/api/pracovnici/:id/status', requireAuth as any, requireRole('MODERAT
   }
 });
 
-app.delete('/api/pracovnici/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
+app.delete('/api/pracovnici/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req: AuthenticatedRequest, res) => {
   try {
-    await subjektService.deletePracovnik(req.params.id);
+    const { id } = req.params;
+    
+    // Zjistit existenci a údaje pracovníka pro audit
+    const prac = await prisma.pracovnik.findUnique({
+      where: { id },
+      include: { subjekt: true }
+    });
+    
+    if (!prac) {
+      return res.status(404).json({ error: 'Pracovník nebyl nalezen' });
+    }
+
+    await subjektService.deletePracovnik(id);
+    
+    // Audit log
+    dbStore.logAudit(
+      'WORKER_DELETED',
+      'ADMIN',
+      `Odstraněn pracovník ${prac.jmeno} (Subjekt: ${prac.subjekt?.name || 'Neznámý'})`,
+      req.user
+    );
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Chyba při mazání pracovníka' });
