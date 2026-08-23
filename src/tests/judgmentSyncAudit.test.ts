@@ -114,6 +114,17 @@ async function runJudgmentSyncAuditTests() {
     assert(false, `Judgment → Apply execution: ${err.message}`);
   }
 
+  // 2b. Verify Central Judgment, Sentences, Legal Facts, and Financial Obligations
+  try {
+    const judgments = await ClientCaseService.getJudgmentsByCaseId(testCase.id, testUser);
+    assert(judgments.length === 1, 'Central Judgment created in DB');
+    assert(judgments[0].sentences.length > 0, 'Judgment Sentences created with index and section');
+    assert(judgments[0].facts.length > 0, 'Judgment Legal Facts created and linked');
+    assert(judgments[0].financialObligations.length > 0, 'Financial Obligation created for alimony');
+  } catch (err: any) {
+    assert(false, `Central Judgment DB Verification: ${err.message}`);
+  }
+
   // 3. Verify Child Isolation (Child belongs strictly to caseId)
   try {
     const children = await prisma.child.findMany({ where: { caseId: testCase.id } });

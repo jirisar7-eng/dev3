@@ -733,4 +733,30 @@ router.post('/:caseId/apply-judgment', async (req: AuthenticatedRequest, res) =>
   }
 });
 
+// GET /api/cases/:caseId/judgments -> list all judgments for case with sentences and facts
+router.get('/:caseId/judgments', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    const judgments = await ClientCaseService.getJudgmentsByCaseId(caseId, req.user!);
+    res.json({ success: true, judgments });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// PATCH /api/cases/:caseId/facts/:factId -> override legal fact value with user audit reason
+router.patch('/:caseId/facts/:factId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, factId } = req.params;
+    const { newValue, reason } = req.body;
+    if (newValue === undefined || newValue === null) {
+      return res.status(400).json({ error: 'Musíte zadat novou hodnotu (newValue).' });
+    }
+    const updatedFact = await ClientCaseService.updateLegalFact(caseId, factId, req.user!, String(newValue), reason || '');
+    res.json({ success: true, fact: updatedFact });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
 export default router;

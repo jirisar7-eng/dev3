@@ -44,9 +44,21 @@ export interface FieldMeta {
   sourceText?: string | null;
 }
 
+export interface JudgmentSentenceData {
+  sentenceIndex: number;
+  pageNumber?: number;
+  paragraphNumber?: number;
+  section: 'HEADER' | 'VYROK' | 'ODUVODNENI' | 'POUCENI' | 'PARTICIPANTS';
+  text: string;
+  confidence: number;
+  source: 'LOCAL_PDF' | 'AI' | 'USER';
+}
+
 export interface JudgmentExtractedData {
   sourceDocumentId: string;
   extractionMethod: 'AI_TEXT' | 'AI_VISION' | 'MAMMOTH_DOCX' | 'PDF_PARSE';
+  rawText?: string;
+  sentences?: JudgmentSentenceData[];
   caseNumber: string | null;
   court: string | null;
   judgmentDate: string | null;
