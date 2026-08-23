@@ -382,7 +382,7 @@ app.use('/api/admin/qa', qaRoutes);
 app.use(aiContextRoutes);
 
 // Pracovnici community proposal & moderation endpoints
-app.get('/api/pracovnici/pending', async (_req, res) => {
+app.get('/api/pracovnici/pending', requireAuth as any, requireRole('MODERATOR') as any, async (_req, res) => {
   try {
     const list = await subjektService.getPendingPracovnici();
     res.json(list);
@@ -391,12 +391,23 @@ app.get('/api/pracovnici/pending', async (_req, res) => {
   }
 });
 
-app.post('/api/pracovnici', async (req, res) => {
+app.post('/api/pracovnici', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { subjektId, jmeno, pozice, telefon, email, kancelar, status, createdById } = req.body;
     if (!subjektId || !jmeno) {
       return res.status(400).json({ error: 'Chybí subjektId nebo jméno' });
     }
+
+    // Role check: only MODERATOR, ADMIN or SUPER_ADMIN can create approved workers directly.
+    // Regular authenticated users must suggest with status PENDING.
+    const hasModeratorRole = req.user && (
+      req.user.role === 'MODERATOR' || 
+      req.user.role === 'ADMIN' || 
+      req.user.role === 'SUPER_ADMIN'
+    );
+    const finalStatus = hasModeratorRole ? (status || 'APPROVED') : 'PENDING';
+    const finalCreatedById = req.user?.id || createdById;
+
     const created = await subjektService.addPracovnik({
       subjektId,
       jmeno,
@@ -404,8 +415,8 @@ app.post('/api/pracovnici', async (req, res) => {
       telefon,
       email,
       kancelar,
-      status: status || 'PENDING',
-      createdById,
+      status: finalStatus,
+      createdById: finalCreatedById,
     });
     res.status(201).json(created);
   } catch (err) {
@@ -413,7 +424,7 @@ app.post('/api/pracovnici', async (req, res) => {
   }
 });
 
-app.patch('/api/pracovnici/:id/status', async (req, res) => {
+app.patch('/api/pracovnici/:id/status', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
     const { status } = req.body;
     if (!['APPROVED', 'REJECTED'].includes(status)) {
@@ -426,7 +437,7 @@ app.patch('/api/pracovnici/:id/status', async (req, res) => {
   }
 });
 
-app.delete('/api/pracovnici/:id', async (req, res) => {
+app.delete('/api/pracovnici/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
   try {
     await subjektService.deletePracovnik(req.params.id);
     res.json({ success: true });

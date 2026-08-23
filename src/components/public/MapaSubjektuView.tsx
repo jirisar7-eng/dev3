@@ -1208,13 +1208,28 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 >
                   Zrušit
                 </button>
-                <button
-                  type="submit"
-                  disabled={formSubmitting}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {formSubmitting ? 'Ukládám...' : 'Navrhnout pracovníka'}
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    disabled={formSubmitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {formSubmitting ? 'Ukládám...' : 'Navrhnout pracovníka'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Pro přidání pracovníka se musíte nejdříve přihlásit. Chcete přejít na přihlášení?')) {
+                        if (onNavigate) onNavigate('/login');
+                        else window.location.href = '/login';
+                      }
+                    }}
+                    className="px-5 py-2.5 bg-slate-300 text-slate-600 font-bold rounded-2xl cursor-pointer"
+                  >
+                    Přihlásit se
+                  </button>
+                )}
               </div>
             </form>
           </div>

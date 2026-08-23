@@ -1,4 +1,4 @@
-import { legalDocumentsContent } from '../data/legalDocuments';
+import { prisma, isPrismaAvailable } from '../db/prisma';import { legalDocumentsContent } from '../data/legalDocuments';
 import { NAVIGATION_ITEMS } from '../config/navigation';
 import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
 import { DEFAULT_WIKI_TERMS } from '../data/wikiSeed';
@@ -2829,6 +2829,18 @@ class MemoryStore {
       createdAt: new Date().toISOString(),
     };
     this.auditLogs.unshift(newLog);
+    if (isPrismaAvailable()) {
+      prisma.auditLog.create({
+        data: {
+          userId: user?.id || 'system',
+          userEmail: user?.email || 'system@tatovacesta.cz',
+          action,
+          module,
+          details,
+          ipAddress: '127.0.0.1',
+        }
+      }).catch(err => console.warn('Prisma logAudit error:', err));
+    }
   }
 }
 

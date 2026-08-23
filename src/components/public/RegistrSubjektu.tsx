@@ -1455,12 +1455,27 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 >
                   Zrušit
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
-                >
-                  Uložit pracovníka
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
+                  >
+                    Uložit pracovníka
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Pro přidání pracovníka se musíte nejdříve přihlásit. Chcete přejít na přihlášení?')) {
+                        if (onNavigate) onNavigate('/login');
+                        else window.location.href = '/login';
+                      }
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-slate-300 text-slate-600 font-bold cursor-pointer"
+                  >
+                    Přihlásit se
+                  </button>
+                )}
               </div>
             </form>
           </div>

@@ -1,7 +1,6 @@
 import { EntityType } from '@prisma/client';
-import { dbStore } from './dbStore';
 import { Subjekt, Review } from '../types';
-import { prisma, isPrismaAvailable } from '../db/prisma';
+import { prisma } from '../db/prisma';
 import { AresApiClient, AresVerifyResult } from './ares';
 
 export class SubjektService {
@@ -9,162 +8,86 @@ export class SubjektService {
    * Get filtered subjekty with optional type, region, or search term
    */
   async getSubjekty(params?: { type?: string; region?: string; kraj?: string; city?: string; search?: string; minRating?: number; status?: string; createdById?: string }) {
-    if (isPrismaAvailable()) {
-      try {
-        const whereClause: any = {};
-        if (params?.status && params.status !== 'ALL') {
-          whereClause.status = params.status;
-        } else if (!params?.createdById && params?.status !== 'ALL') {
-          whereClause.status = 'VERIFIED';
-        }
-        if (params?.createdById) {
-          whereClause.createdById = params.createdById;
-        }
-
-        if (params?.type && params.type !== 'ALL') {
-          whereClause.type = params.type as EntityType;
-        }
-        const targetRegion = params?.region || params?.kraj;
-        if (targetRegion && targetRegion !== 'Všechny kraje' && targetRegion !== 'ALL') {
-          whereClause.region = { contains: targetRegion.trim(), mode: 'insensitive' };
-        }
-        if (params?.city) {
-          whereClause.city = { contains: params.city, mode: 'insensitive' };
-        }
-        if (params?.minRating) {
-          whereClause.avgRating = { gte: Number(params.minRating) };
-        }
-        if (params?.search) {
-          whereClause.OR = [
-            { name: { contains: params.search, mode: 'insensitive' } },
-            { city: { contains: params.search, mode: 'insensitive' } },
-            { institution: { contains: params.search, mode: 'insensitive' } },
-            { position: { contains: params.search, mode: 'insensitive' } },
-          ];
-        }
-
-        const subjekty = await prisma.subjekt.findMany({
-          where: whereClause,
-          include: {
-            reviews: {
-              where: { status: 'APPROVED', pracovnikId: null },
-              orderBy: { createdAt: 'desc' },
-            },
-            pracovnici: {
-              where: { status: 'APPROVED' },
-              include: {
-                reviews: {
-                  where: { status: 'APPROVED' },
-                  orderBy: { createdAt: 'desc' },
-                },
-              },
-              orderBy: { createdAt: 'desc' },
-            },
-          },
-          orderBy: [{ avgRating: 'desc' }, { reviewCount: 'desc' }, { name: 'asc' }],
-        });
-
-        return subjekty;
-      } catch (error) {
-        console.warn('Prisma getSubjekty error, fallback to dbStore:', error);
-      }
-    }
-
-    let list = [...dbStore.subjekty];
+    const whereClause: any = {};
     if (params?.status && params.status !== 'ALL') {
-      list = list.filter(s => (s as any).status === params.status);
+      whereClause.status = params.status;
     } else if (!params?.createdById && params?.status !== 'ALL') {
-      list = list.filter(s => !(s as any).status || (s as any).status === 'VERIFIED');
+      whereClause.status = 'VERIFIED';
     }
     if (params?.createdById) {
-      list = list.filter(s => (s as any).createdById === params.createdById);
+      whereClause.createdById = params.createdById;
     }
 
     if (params?.type && params.type !== 'ALL') {
-      list = list.filter((s) => s.type === params.type);
+      whereClause.type = params.type as EntityType;
     }
     const targetRegion = params?.region || params?.kraj;
     if (targetRegion && targetRegion !== 'Všechny kraje' && targetRegion !== 'ALL') {
-      const regNorm = targetRegion.trim().toLowerCase();
-      list = list.filter((s) => {
-        const sRegion = (s.region || '').trim().toLowerCase();
-        return sRegion === regNorm || sRegion.includes(regNorm);
-      });
+      whereClause.region = { contains: targetRegion.trim(), mode: 'insensitive' };
     }
     if (params?.city) {
-      list = list.filter((s) => s.city.toLowerCase().includes(params.city!.toLowerCase()));
+      whereClause.city = { contains: params.city, mode: 'insensitive' };
     }
     if (params?.minRating) {
-      list = list.filter((s) => s.avgRating >= Number(params.minRating));
+      whereClause.avgRating = { gte: Number(params.minRating) };
     }
     if (params?.search) {
-      const q = params.search.toLowerCase();
-      list = list.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.city.toLowerCase().includes(q) ||
-          (s.institution && s.institution.toLowerCase().includes(q)) ||
-          (s.position && s.position.toLowerCase().includes(q))
-      );
+      whereClause.OR = [
+        { name: { contains: params.search, mode: 'insensitive' } },
+        { city: { contains: params.search, mode: 'insensitive' } },
+        { institution: { contains: params.search, mode: 'insensitive' } },
+        { position: { contains: params.search, mode: 'insensitive' } },
+      ];
     }
 
-    // Attach reviews and approved pracovnici
-    return list.map((s) => ({
-      ...s,
-      reviews: dbStore.reviews.filter((r) => r.subjektId === s.id && r.status === 'APPROVED' && !r.pracovnikId),
-      pracovnici: ((s as any).pracovnici || [])
-        .filter((p: any) => !p.status || p.status === 'APPROVED')
-        .map((p: any) => ({
-          ...p,
-          reviews: dbStore.reviews.filter((r) => r.pracovnikId === p.id && r.status === 'APPROVED'),
-        })),
-    }));
+    const subjekty = await prisma.subjekt.findMany({
+      where: whereClause,
+      include: {
+        reviews: {
+          where: { status: 'APPROVED', pracovnikId: null },
+          orderBy: { createdAt: 'desc' },
+        },
+        pracovnici: {
+          where: { status: 'APPROVED' },
+          include: {
+            reviews: {
+              where: { status: 'APPROVED' },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: [{ avgRating: 'desc' }, { reviewCount: 'desc' }, { name: 'asc' }],
+    });
+
+    return subjekty;
   }
 
   /**
    * Get single Subjekt detail
    */
   async getSubjektById(id: string) {
-    if (isPrismaAvailable()) {
-      try {
-        const item = await prisma.subjekt.findUnique({
-          where: { id },
+    const item = await prisma.subjekt.findUnique({
+      where: { id },
+      include: {
+        reviews: {
+          where: { status: 'APPROVED', pracovnikId: null },
+          orderBy: { createdAt: 'desc' },
+        },
+        pracovnici: {
+          where: { status: 'APPROVED' },
           include: {
             reviews: {
-              where: { status: 'APPROVED', pracovnikId: null },
-              orderBy: { createdAt: 'desc' },
-            },
-            pracovnici: {
               where: { status: 'APPROVED' },
-              include: {
-                reviews: {
-                  where: { status: 'APPROVED' },
-                  orderBy: { createdAt: 'desc' },
-                },
-              },
               orderBy: { createdAt: 'desc' },
             },
           },
-        });
-        if (item) return item;
-      } catch (error) {
-        console.warn('Prisma getSubjektById error:', error);
-      }
-    }
-
-    const memoryItem = dbStore.subjekty.find((s) => s.id === id);
-    if (!memoryItem) return null;
-
-    return {
-      ...memoryItem,
-      reviews: dbStore.reviews.filter((r) => r.subjektId === id && r.status === 'APPROVED' && !r.pracovnikId),
-      pracovnici: ((memoryItem as any).pracovnici || [])
-        .filter((p: any) => !p.status || p.status === 'APPROVED')
-        .map((p: any) => ({
-          ...p,
-          reviews: dbStore.reviews.filter((r) => r.pracovnikId === p.id && r.status === 'APPROVED'),
-        })),
-    };
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+    return item;
   }
 
   /**
@@ -180,125 +103,52 @@ export class SubjektService {
     status?: string;
     createdById?: string;
   }) {
-    if (isPrismaAvailable()) {
-      try {
-        const created = await prisma.pracovnik.create({
-          data: {
-            subjektId: data.subjektId,
-            jmeno: data.jmeno,
-            pozice: data.pozice || null,
-            telefon: data.telefon || null,
-            email: data.email || null,
-            kancelar: data.kancelar || null,
-            status: data.status || 'APPROVED',
-            createdById: data.createdById || null,
-          },
-        });
-        return created;
-      } catch (error) {
-        console.warn('Prisma addPracovnik error, fallback to memory:', error);
-      }
-    }
-
-    const sub = dbStore.subjekty.find((s) => s.id === data.subjektId);
-    const newPrac = {
-      id: 'prac-' + Date.now(),
-      subjektId: data.subjektId,
-      jmeno: data.jmeno,
-      pozice: data.pozice || null,
-      telefon: data.telefon || null,
-      email: data.email || null,
-      kancelar: data.kancelar || null,
-      status: data.status || 'APPROVED',
-      createdById: data.createdById || null,
-      createdAt: new Date(),
-    };
-    if (sub) {
-      if (!(sub as any).pracovnici) (sub as any).pracovnici = [];
-      (sub as any).pracovnici.unshift(newPrac);
-    }
-    return newPrac;
+    const created = await prisma.pracovnik.create({
+      data: {
+        subjektId: data.subjektId,
+        jmeno: data.jmeno,
+        pozice: data.pozice || null,
+        telefon: data.telefon || null,
+        email: data.email || null,
+        kancelar: data.kancelar || null,
+        status: data.status || 'APPROVED',
+        createdById: data.createdById || null,
+      },
+    });
+    return created;
   }
 
   /**
    * Get all pending workers for moderation
    */
   async getPendingPracovnici() {
-    if (isPrismaAvailable()) {
-      try {
-        const list = await prisma.pracovnik.findMany({
-          where: { status: 'PENDING' },
-          include: { subjekt: true },
-          orderBy: { createdAt: 'desc' },
-        });
-        return list.map((p) => ({
-          ...p,
-          subjektName: p.subjekt?.name,
-        }));
-      } catch (error) {
-        console.warn('Prisma getPendingPracovnici error, fallback:', error);
-      }
-    }
-
-    const pending: any[] = [];
-    for (const s of dbStore.subjekty) {
-      if ((s as any).pracovnici) {
-        for (const p of (s as any).pracovnici) {
-          if (p.status === 'PENDING') {
-            pending.push({ ...p, subjektName: s.name });
-          }
-        }
-      }
-    }
-    return pending;
+    const list = await prisma.pracovnik.findMany({
+      where: { status: 'PENDING' },
+      include: { subjekt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return list.map((p) => ({
+      ...p,
+      subjektName: p.subjekt?.name,
+    }));
   }
 
   /**
    * Update worker status (APPROVED / REJECTED)
    */
   async updatePracovnikStatus(id: string, status: 'APPROVED' | 'REJECTED') {
-    if (isPrismaAvailable()) {
-      try {
-        const updated = await prisma.pracovnik.update({
-          where: { id },
-          data: { status },
-        });
-        return updated;
-      } catch (error) {
-        console.warn('Prisma updatePracovnikStatus error, fallback:', error);
-      }
-    }
-
-    for (const s of dbStore.subjekty) {
-      if ((s as any).pracovnici) {
-        const p = (s as any).pracovnici.find((item: any) => item.id === id);
-        if (p) {
-          p.status = status;
-          return p;
-        }
-      }
-    }
-    throw new Error('Pracovník nenalezen');
+    const updated = await prisma.pracovnik.update({
+      where: { id },
+      data: { status },
+    });
+    return updated;
   }
 
   /**
    * Delete worker
    */
   async deletePracovnik(id: string) {
-    if (isPrismaAvailable()) {
-      try {
-        await prisma.pracovnik.delete({ where: { id } });
-        return { success: true };
-      } catch (error) {
-        console.warn('Prisma deletePracovnik error, fallback:', error);
-      }
-    }
-
-    for (const s of dbStore.subjekty) {
-      if ((s as any).pracovnici) {
-        (s as any).pracovnici = (s as any).pracovnici.filter((item: any) => item.id !== id);
-      }
-    }
+    await prisma.pracovnik.delete({ where: { id } });
     return { success: true };
   }
 
@@ -323,121 +173,66 @@ export class SubjektService {
     status?: string;
     createdById?: string;
   }) {
-    if (isPrismaAvailable()) {
-      try {
-        const created = await prisma.subjekt.create({
-          data: {
-            type: data.type as EntityType,
-            name: data.name,
-            titleBefore: data.titleBefore || null,
-            position: data.position || null,
-            institution: data.institution || null,
-            city: data.city,
-            region: data.region,
-            address: data.address || null,
-            email: data.email || null,
-            phone: data.phone || null,
-            website: data.website || null,
-            lat: typeof data.lat === 'number' ? data.lat : null,
-            lng: typeof data.lng === 'number' ? data.lng : null,
-            isVerified: data.isVerified ?? true,
-            status: data.status ? (data.status as any) : (data.isVerified === false ? 'PENDING_VERIFICATION' : 'VERIFIED'),
-            createdById: data.createdById || null,
-          },
-        });
-        return created;
-      } catch (error) {
-        console.warn('Prisma createSubjekt error, fallback to dbStore:', error);
-      }
-    }
-
-    const newSubjekt: Subjekt = {
-      id: 'subj-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
-      type: data.type as any,
-      name: data.name,
-      titleBefore: data.titleBefore || null,
-      position: data.position || null,
-      institution: data.institution || null,
-      city: data.city,
-      region: data.region,
-      address: data.address || null,
-      email: data.email || null,
-      phone: data.phone || null,
-      website: data.website || null,
-      lat: data.lat !== undefined ? data.lat : undefined,
-      lng: data.lng !== undefined ? data.lng : undefined,
-      avgRating: 0.0,
-      reviewCount: 0,
-      isVerified: data.isVerified ?? true,
-      status: (data.status as any) || (data.isVerified === false ? 'PENDING_VERIFICATION' : 'VERIFIED'),
-      createdById: data.createdById || undefined,
-      createdAt: new Date(),
-      reviews: [],
-    };
-    dbStore.subjekty.unshift(newSubjekt);
-    return newSubjekt;
+    const created = await prisma.subjekt.create({
+      data: {
+        type: data.type as EntityType,
+        name: data.name,
+        titleBefore: data.titleBefore || null,
+        position: data.position || null,
+        institution: data.institution || null,
+        city: data.city,
+        region: data.region,
+        address: data.address || null,
+        email: data.email || null,
+        phone: data.phone || null,
+        website: data.website || null,
+        lat: typeof data.lat === 'number' ? data.lat : null,
+        lng: typeof data.lng === 'number' ? data.lng : null,
+        isVerified: data.isVerified ?? true,
+        status: data.status ? (data.status as any) : (data.isVerified === false ? 'PENDING_VERIFICATION' : 'VERIFIED'),
+        createdById: data.createdById || null,
+      },
+    });
+    return created;
   }
 
   /**
    * Update Subjekt
    */
   async updateSubjekt(id: string, data: any) {
-    if (isPrismaAvailable()) {
-      try {
-        const updated = await prisma.subjekt.update({
-          where: { id },
-          data: {
-            type: data.type ? (data.type as EntityType) : undefined,
-            name: data.name,
-            titleBefore: data.titleBefore,
-            position: data.position,
-            institution: data.institution,
-            city: data.city,
-            region: data.region,
-            address: data.address,
-            email: data.email,
-            phone: data.phone,
-            website: data.website,
-            lat: data.lat !== undefined ? data.lat : undefined,
-            lng: data.lng !== undefined ? data.lng : undefined,
-            isVerified: data.isVerified,
-            status: data.status as any,
-            verifiedById: data.verifiedById,
-            verifiedAt: data.verifiedAt,
-            rejectedById: data.rejectedById,
-            rejectedAt: data.rejectedAt,
-            rejectionReason: data.rejectionReason,
-          },
-        });
-        return updated;
-      } catch (error) {
-        console.warn('Prisma updateSubjekt error, fallback to dbStore:', error);
-      }
-    }
-
-    const idx = dbStore.subjekty.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      dbStore.subjekty[idx] = { ...dbStore.subjekty[idx], ...data };
-      return dbStore.subjekty[idx];
-    }
-    throw new Error('Subjekt nenalezen');
+    const updated = await prisma.subjekt.update({
+      where: { id },
+      data: {
+        type: data.type ? (data.type as EntityType) : undefined,
+        name: data.name,
+        titleBefore: data.titleBefore,
+        position: data.position,
+        institution: data.institution,
+        city: data.city,
+        region: data.region,
+        address: data.address,
+        email: data.email,
+        phone: data.phone,
+        website: data.website,
+        lat: data.lat !== undefined ? data.lat : undefined,
+        lng: data.lng !== undefined ? data.lng : undefined,
+        isVerified: data.isVerified,
+        status: data.status as any,
+        verifiedById: data.verifiedById,
+        verifiedAt: data.verifiedAt,
+        rejectedById: data.rejectedById,
+        rejectedAt: data.rejectedAt,
+        rejectionReason: data.rejectionReason,
+      },
+    });
+    return updated;
   }
 
   /**
    * Delete Subjekt
    */
   async deleteSubjekt(id: string) {
-    if (isPrismaAvailable()) {
-      try {
-        await prisma.subjekt.delete({ where: { id } });
-        return true;
-      } catch (error) {
-        console.warn('Prisma deleteSubjekt error, fallback to dbStore:', error);
-      }
-    }
-
-    dbStore.subjekty = dbStore.subjekty.filter((s) => s.id !== id);
-    dbStore.reviews = dbStore.reviews.filter((r) => r.subjektId !== id);
+    await prisma.subjekt.delete({ where: { id } });
     return true;
   }
 
@@ -459,70 +254,30 @@ export class SubjektService {
     isAnonymous?: boolean;
     status?: 'PENDING' | 'APPROVED';
   }) {
-    if (isPrismaAvailable()) {
-      try {
-        const created = await prisma.review.create({
-          data: {
-            subjektId: data.subjektId,
-            pracovnikId: data.pracovnikId || null,
-            userId: data.userId || null,
-            rating: Number(data.rating),
-            supportSharedCare: Number(data.supportSharedCare || data.rating),
-            professionalism: Number(data.professionalism || data.rating),
-            speedAndDeadlines: Number(data.speedAndDeadlines || data.rating),
-            objektivita: data.objektivita ? Number(data.objektivita) : null,
-            komunikace: data.komunikace ? Number(data.komunikace) : null,
-            rychlost: data.rychlost ? Number(data.rychlost) : null,
-            status: data.status || 'APPROVED',
-            comment: data.comment,
-            isAnonymous: data.isAnonymous ?? true,
-          },
-        });
+    const created = await prisma.review.create({
+      data: {
+        subjektId: data.subjektId,
+        pracovnikId: data.pracovnikId || null,
+        userId: data.userId || null,
+        rating: Number(data.rating),
+        supportSharedCare: Number(data.supportSharedCare || data.rating),
+        professionalism: Number(data.professionalism || data.rating),
+        speedAndDeadlines: Number(data.speedAndDeadlines || data.rating),
+        objektivita: data.objektivita ? Number(data.objektivita) : null,
+        komunikace: data.komunikace ? Number(data.komunikace) : null,
+        rychlost: data.rychlost ? Number(data.rychlost) : null,
+        status: data.status || 'APPROVED',
+        comment: data.comment,
+        isAnonymous: data.isAnonymous ?? true,
+      },
+    });
 
-        // Recalculate average rating for Subjekt only if it is not a worker-specific review
-        if (!data.pracovnikId) {
-          await this.recalculateRating(data.subjektId);
-        }
-
-        return created;
-      } catch (error) {
-        console.warn('Prisma addReview error, fallback to dbStore:', error);
-      }
-    }
-
-    const newReview: Review = {
-      id: 'rev-' + Date.now(),
-      subjektId: data.subjektId,
-      pracovnikId: data.pracovnikId || null,
-      userId: data.userId || null,
-      rating: Number(data.rating),
-      supportSharedCare: Number(data.supportSharedCare || data.rating),
-      professionalism: Number(data.professionalism || data.rating),
-      speedAndDeadlines: Number(data.speedAndDeadlines || data.rating),
-      objektivita: data.objektivita ? Number(data.objektivita) : null,
-      komunikace: data.komunikace ? Number(data.komunikace) : null,
-      rychlost: data.rychlost ? Number(data.rychlost) : null,
-      status: data.status || 'APPROVED',
-      comment: data.comment,
-      isAnonymous: data.isAnonymous ?? true,
-      createdAt: new Date(),
-    };
-    dbStore.reviews.unshift(newReview);
-
-    // Recalculate rating in memory only if it is not a worker-specific review
+    // Recalculate average rating for Subjekt only if it is not a worker-specific review
     if (!data.pracovnikId) {
-      const subj = dbStore.subjekty.find((s) => s.id === data.subjektId);
-      if (subj) {
-        const approvedRev = dbStore.reviews.filter((r) => r.subjektId === data.subjektId && r.status === 'APPROVED' && !r.pracovnikId);
-        subj.reviewCount = approvedRev.length;
-        if (approvedRev.length > 0) {
-          const sum = approvedRev.reduce((acc, curr) => acc + curr.rating, 0);
-          subj.avgRating = Number((sum / approvedRev.length).toFixed(1));
-        }
-      }
+      await this.recalculateRating(data.subjektId);
     }
 
-    return newReview;
+    return created;
   }
 
   /**
