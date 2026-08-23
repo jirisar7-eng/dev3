@@ -752,6 +752,64 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export type AuditCategoryType =
+  | 'SECURITY'
+  | 'REGISTRY'
+  | 'CONTENT'
+  | 'CMS'
+  | 'ARCHITECTURE'
+  | 'DATA'
+  | 'QA'
+  | 'PERFORMANCE'
+  | 'LEGAL'
+  | 'RESEARCH'
+  | 'OTHER';
+
+export type AuditStatusType = 'PASS' | 'WARNING' | 'FAIL' | 'INFO' | 'UNKNOWN';
+
+export interface AuditShareItem {
+  id: string;
+  auditId: string;
+  tokenHash: string;
+  rawToken?: string;
+  shareUrl?: string;
+  accessMode: 'SHARED_LINK' | 'ADMIN_ONLY' | 'PUBLIC' | string;
+  createdBy?: string;
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+  createdAt: string;
+}
+
+export interface AuditDocumentItem {
+  id: string;
+  sourcePath: string;
+  title: string;
+  category: AuditCategoryType | string;
+  status: AuditStatusType | string;
+  summary?: string;
+  auditDate?: string;
+  author?: string;
+  sourceSha?: string;
+  commitSha?: string;
+  branch?: string;
+  sourceUrl?: string;
+  content?: string;
+  discoveredAt: string;
+  lastSyncedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  shares?: AuditShareItem[];
+}
+
+export interface AuditCenterStats {
+  total: number;
+  passCount: number;
+  warningCount: number;
+  failCount: number;
+  unknownCount: number;
+  lastSyncedAt?: string;
+}
+
 export interface Setting {
   id: string;
   key: string;

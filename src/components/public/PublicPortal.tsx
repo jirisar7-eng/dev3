@@ -23,6 +23,7 @@ import { AboutView } from './AboutView';
 import { ContactView } from './ContactView';
 import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
+import { SharedAuditView } from './SharedAuditView';
 import { LegalHubPage } from '../../pages/LegalHubPage';
 import { LegalDocsPage } from '../../pages/LegalDocsPage';
 import { MyCasePage } from '../../pages/MyCasePage';
@@ -90,6 +91,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   const rawPath = currentPath.split('?')[0].split('#')[0];
   const cleanPath = rawPath === '' || rawPath === '/' ? '/' : rawPath;
   const slug = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+
+  if (cleanPath.startsWith('/audit/share/') || cleanPath.startsWith('/audity/share/')) {
+    const shareToken = cleanPath.split('/share/')[1] || '';
+    return <SharedAuditView token={shareToken} onNavigate={onNavigate} />;
+  }
 
   const COMPLIANCE_SLUGS = [
     'podminky-uzivani',

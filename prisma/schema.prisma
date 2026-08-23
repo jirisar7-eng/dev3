@@ -506,6 +506,45 @@ model AuditLog {
   @@index([action])
 }
 
+model AuditDocument {
+  id           String       @id @default(uuid())
+  sourcePath   String       @unique
+  title        String
+  category     String       @default("OTHER")
+  status       String       @default("UNKNOWN")
+  summary      String?      @db.Text
+  auditDate    String?
+  author       String?
+  sourceSha    String?
+  commitSha    String?
+  branch       String?
+  sourceUrl    String?
+  discoveredAt DateTime     @default(now())
+  lastSyncedAt DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  shares       AuditShare[]
+
+  @@index([category])
+  @@index([status])
+}
+
+model AuditShare {
+  id         String        @id @default(uuid())
+  auditId    String
+  audit      AuditDocument @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  tokenHash  String        @unique
+  rawToken   String?
+  accessMode String        @default("SHARED_LINK")
+  createdBy  String?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([auditId])
+  @@index([tokenHash])
+}
+
 // ------------------------------------------------------
 // PRIVATE USER PORTAL ENTITIES
 // ------------------------------------------------------

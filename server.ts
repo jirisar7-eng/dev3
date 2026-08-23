@@ -61,6 +61,7 @@ import adminVpsRoutes from './src/routes/adminVpsRoutes';
 import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
 import aiContextRoutes from './src/routes/aiContextRoutes';
+import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCenterRoutes';
 
 dotenv.config();
 
@@ -374,6 +375,8 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
   }
 });
 app.use('/api/admin/vps', adminVpsRoutes);
+app.use('/api/admin/audits', auditCenterRoutes);
+app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);
 app.use(aiContextRoutes);

@@ -2333,6 +2333,8 @@ class MemoryStore {
   complianceDocs: ComplianceDoc[] = [...defaultComplianceDocs];
   userConsents: UserConsent[] = [];
   auditLogs: AuditLog[] = [...defaultAuditLogs];
+  auditDocuments: any[] = [];
+  auditShares: any[] = [];
   settings: Setting[] = [...defaultSettings];
   userCases: UserCase[] = [...defaultUserCases];
   userChildren: UserChild[] = [...defaultUserChildren];

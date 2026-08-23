@@ -49,6 +49,7 @@ import { AiContextManager } from './AiContextManager';
 import { Code, Building2, Terminal, FlaskConical, Cpu, Scale, Landmark } from 'lucide-react';
 import { EsbirkaAdminPanel } from './EsbirkaAdminPanel';
 import { StateAdminManager } from './StateAdminManager';
+import { AuditCenter } from './AuditCenter';
 
 type AdminTab =
   | 'overview'
@@ -68,6 +69,7 @@ type AdminTab =
   | 'mailcow'
   | 'compliance'
   | 'audit'
+  | 'audits'
   | 'qa'
   | 'ai-context'
   | 'settings'
@@ -94,6 +96,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
     if (path.startsWith('/admin/pages')) return 'pages';
     if (path.startsWith('/admin/dns')) return 'dns';
     if (path.includes('/qa') || path.includes('/administrace/qa')) return 'qa';
+    if (path.includes('/audity') || path.includes('/administrace/audity')) return 'audits';
     return 'overview';
   };
 
@@ -110,6 +113,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
       setActiveTab('dns');
     } else if (path.includes('/qa') || path.includes('/administrace/qa')) {
       setActiveTab('qa');
+    } else if (path.includes('/audity') || path.includes('/administrace/audity')) {
+      setActiveTab('audits');
     }
   }, [currentPath]);
 
@@ -429,6 +434,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           </button>
 
           <button
+            onClick={() => {
+              setActiveTab('audits');
+              if (onNavigate) onNavigate('/administrace/audity');
+              else {
+                window.history.pushState({}, '', '/administrace/audity');
+                window.dispatchEvent(new Event('popstate'));
+              }
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
+              activeTab === 'audits' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-blue-400" />
+              <span>Audit Center</span>
+            </span>
+            <span className="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
+              DEV3
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('qa')}
             className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
               activeTab === 'qa' && !currentPath?.includes('/qa/copilot') ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
@@ -689,6 +716,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'mailcow' && <MailcowManager initialName={mailcowInitName} />}
           {activeTab === 'compliance' && <ComplianceManager />}
           {activeTab === 'audit' && <AuditLogViewer />}
+          {activeTab === 'audits' && <AuditCenter />}
           {activeTab === 'qa' && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'settings' && <SettingsManager />}
