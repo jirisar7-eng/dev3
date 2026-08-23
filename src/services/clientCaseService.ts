@@ -1223,10 +1223,25 @@ export class ClientCaseService {
     this.validateExtractedJudgmentData(extractedData);
 
     // Check existing case & active care plans for conflict detection
-    const existingCase = await prisma.case.findUnique({
-      where: { id: caseId },
-      include: { children: true, carePlans: { where: { status: 'ACTIVE' } } }
-    });
+    let existingCase: any = null;
+    try {
+      existingCase = await prisma.case.findUnique({
+        where: { id: caseId },
+        include: { children: true, carePlans: { where: { status: 'ACTIVE' } } }
+      });
+    } catch {
+      // Fallback below
+    }
+
+    if (!existingCase || existingCase.id !== caseId) {
+      const memC = dbStore.cases.find((c: any) => c.id === caseId);
+      if (memC) {
+        existingCase = {
+          ...memC,
+          carePlans: (memC.carePlans || []).filter((p: any) => p.status === 'ACTIVE')
+        };
+      }
+    }
 
     if (!existingCase) {
       throw new Error("Případ nebyl nalezen.");
@@ -1778,7 +1793,7 @@ export class ClientCaseService {
           title: `Soudní rozsudek (${extractedData.court || 'Soud'} ${extractedData.caseNumber || ''})`,
           description: `Automaticky vygenerovaný plán péče z rozsudku. Režim: ${extractedData.custodyType || 'Střídavá péče'}, Rozvrh: ${extractedData.scheduleType || 'Standardní'}. Předávání: ${handoverLocation} (${handoverTime}).`,
           status: 'ACTIVE',
-          type: extractedData.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+          type: 'CURRENT',
           source: 'JUDGMENT_IMPORT',
           startDate: new Date(startDateIso),
           rotationPattern: extractedData.scheduleType || '7/7',
@@ -1823,7 +1838,7 @@ export class ClientCaseService {
         title: `Soudní rozsudek (${extractedData.court || 'Soud'} ${extractedData.caseNumber || ''})`,
         description: `Automaticky vygenerovaný plán péče z rozsudku. Režim: ${extractedData.custodyType || 'Střídavá péče'}, Rozvrh: ${extractedData.scheduleType || 'Standardní'}. Předávání: ${handoverLocation} (${handoverTime}).`,
         status: 'ACTIVE',
-        type: extractedData.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+        type: 'CURRENT',
         source: 'JUDGMENT_IMPORT',
         startDate: new Date(startDateIso),
         rotationPattern: extractedData.scheduleType || '7/7',
@@ -2085,15 +2100,21 @@ export class ClientCaseService {
       }
       if (txResult.carePlan) {
         if (!memCase.carePlans) memCase.carePlans = [];
+        memCase.carePlans.forEach((p: any) => {
+          if (p.status === 'ACTIVE') p.status = 'DRAFT';
+        });
         memCase.carePlans.push(txResult.carePlan);
       }
       if (!memCase.events) memCase.events = [];
+      memCase.events = memCase.events.filter((e: any) => e.sourceType !== 'CARE_PLAN');
       memCase.events.push({
         id: `evt-${Date.now()}-1`,
         caseId,
         title: `Předání dítěte do péče (${extractedData.custodyType || 'Střídavá'})`,
         eventDate: new Date().toISOString(),
-        category: 'CHILD_HANDOVER'
+        category: 'CHILD_HANDOVER',
+        sourceType: 'CARE_PLAN',
+        carePlanId: txResult.carePlan?.id
       } as any);
     }
 

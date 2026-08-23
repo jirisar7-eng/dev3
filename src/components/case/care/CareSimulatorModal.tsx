@@ -184,7 +184,7 @@ export const CareSimulatorModal: React.FC<CareSimulatorModalProps> = ({
     try {
       await onSavePlan({
         title,
-        type: pattern.includes('WEEKEND') ? 'ASYMMETRIC' : 'ALTERNATING',
+        type: status === 'PROPOSED' ? 'PROPOSED' : 'SIMULATION',
         rotationPattern: pattern,
         startDate: startDate,
         rotationIntervalDays: cycleDays,
