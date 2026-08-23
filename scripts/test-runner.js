@@ -10,7 +10,8 @@ const tests = [
   { cmd: 'npx', args: ['tsx', '--test', 'tests/state-admin-p1-p2.test.js'], name: 'State Administration API Hub (P1 & P2 Connectors)' },
   { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-case-sync.test.ts'], name: 'Judgment AI Extractor -> Case Persistence Integration' },
-  { cmd: 'npx', args: ['tsx', '--test', 'tests/care-occurrence-engine.test.ts'], name: 'Care Occurrence Engine & Calendar Integration' }
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/care-occurrence-engine.test.ts'], name: 'Care Occurrence Engine & Calendar Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-ai-extractor-fallback.test.ts'], name: 'AI Extractor Local PDF Fallback & Deterministic Extraction (20 Tests)' }
 ];
 
 let failed = false;

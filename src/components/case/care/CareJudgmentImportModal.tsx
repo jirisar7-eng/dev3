@@ -273,6 +273,18 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
               <span>ID dokumentu: <strong className="text-slate-700">{extractedData.sourceDocumentId}</strong></span>
             </div>
 
+            {extractedData.aiEnrichmentFailed && (
+              <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Lokální deterministické zpracování (AI fallback aktivován):</p>
+                  <p className="text-amber-800 text-2xs mt-0.5">
+                    {extractedData.userNotice || 'Externí AI analýza nebyla dostupná. Dokument byl přečten lokálním deterministickým parserem. Zkontrolujte prosím extrahované údaje před uložením do spisu.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {/* Spisová značka & soud */}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
