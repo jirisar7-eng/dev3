@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { NavItem } from '../../types';
 import { NAVIGATION_ITEMS } from '../../config/navigation';
@@ -45,6 +45,24 @@ export const Navbar: React.FC<NavbarProps> = ({
     hasRole('LEGAL_EDITOR') ||
     hasRole('CONTENT_MANAGER');
   const isSuperAdmin = hasRole('SUPER_ADMIN') || hasRole('SYSTEM_ADMIN') || hasRole('ADMIN');
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const isHeaderClick = target.closest('nav');
+      const isUserDropdownClick = target.closest('.user-dropdown-container');
+
+      if (menuOpen && !isHeaderClick) {
+        setMenuOpen(false);
+      }
+      
+      if (userDropdownOpen && !isUserDropdownClick) {
+        setUserDropdownOpen(false);
+      }
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [menuOpen, userDropdownOpen]);
 
   const handleNavClick = (url: string) => {
     if (setCurrentView) setCurrentView('public');
@@ -148,7 +166,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* MENU Toggle Button */}
           <button
             type="button"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen(!menuOpen);
+            }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95"
             aria-label="Otevřít hlavní menu"
           >
@@ -211,10 +232,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Auth Controls */}
           {currentUser ? (
-            <div className="relative">
+            <div className="relative user-dropdown-container">
               <button
                 type="button"
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setUserDropdownOpen(!userDropdownOpen);
+                }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-xs cursor-pointer shadow-2xs"
               >
                 <img
@@ -250,7 +274,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>Můj účet & Portál</span>
                   </button>
 
-                  {hasRole('ADMIN') && (
+                  {isAuthorizedAdmin && (
                     <button
                       type="button"
                       onClick={() => {

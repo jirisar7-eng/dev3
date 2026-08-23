@@ -47,13 +47,21 @@ export const Header: React.FC<HeaderProps> = ({
     const handleGlobalClick = (e: MouseEvent) => {
       setOpenDesktopDropdown(null);
       const target = e.target as HTMLElement;
-      if (mobileMenuOpen && !target.closest('header')) {
+      
+      const isHeaderClick = target.closest('header');
+      const isUserDropdownClick = target.closest('.user-dropdown-container');
+
+      if (mobileMenuOpen && !isHeaderClick) {
         setMobileMenuOpen(false);
+      }
+      
+      if (userDropdownOpen && !isUserDropdownClick) {
+        setUserDropdownOpen(false);
       }
     };
     window.addEventListener('click', handleGlobalClick);
     return () => window.removeEventListener('click', handleGlobalClick);
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, userDropdownOpen]);
 
   const isAuthorizedAdmin =
     hasRole('ADMIN') ||
@@ -369,7 +377,10 @@ export const Header: React.FC<HeaderProps> = ({
               
               {/* 1. MENU Button (Priority 1) */}
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMobileMenuOpen(!mobileMenuOpen);
+                }}
                 className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 aria-label="Otevřít hlavním menu"
                 aria-expanded={mobileMenuOpen}
@@ -385,9 +396,12 @@ export const Header: React.FC<HeaderProps> = ({
               {/* 2. MŮJ ÚČET / AVATAR (Priority 2) */}
               {dimensions.containerWidth >= 280 && (
                 currentUser ? (
-                  <div className="relative">
+                  <div className="relative user-dropdown-container">
                     <button
-                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserDropdownOpen(!userDropdownOpen);
+                      }}
                       className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-xs cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
                       aria-label="Uživatelské menu"
                       aria-expanded={userDropdownOpen}
@@ -510,7 +524,10 @@ export const Header: React.FC<HeaderProps> = ({
               {/* ORIGINAL STANDARD/DESKTOP CONTROLS */}
               {/* MENU Button */}
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMobileMenuOpen(!mobileMenuOpen);
+                }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95"
                 aria-label="Otevřít hlavním menu"
               >
@@ -568,9 +585,12 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Auth Controls */}
               {currentUser ? (
-                <div className="relative">
+                <div className="relative user-dropdown-container">
                   <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserDropdownOpen(!userDropdownOpen);
+                    }}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--color-border,#e2e8f0)] bg-white hover:bg-slate-50 transition-colors text-xs cursor-pointer shadow-2xs"
                   >
                     <img
@@ -619,13 +639,13 @@ export const Header: React.FC<HeaderProps> = ({
                         <span>Můj profil (správa účtu)</span>
                       </button>
 
-                      {hasRole('ADMIN') && (
+                      {isAuthorizedAdmin && (
                         <button
                           onClick={() => {
                             setUserDropdownOpen(false);
                             if (onNavigate) onNavigate('/administrace');
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 font-medium text-amber-700"
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 font-medium text-amber-700 cursor-pointer"
                         >
                           <Shield className="w-4 h-4 text-amber-600" />
                           <span>Administrace</span>
