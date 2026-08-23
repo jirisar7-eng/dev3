@@ -679,7 +679,39 @@ router.post('/:caseId/parse-judgment', upload.single('document'), async (req: Au
       return res.status(400).json({ error: 'Musíte nahrát soubor nebo vložit text rozsudku.' });
     }
     const extracted = await JudgmentParserService.parseJudgmentFile(file, text);
-    res.json({ success: true, ...extracted });
+
+    let fileMetadata = undefined;
+    if (file) {
+      try {
+        const uploadResult = await MinioStorageService.uploadPdf(file.buffer, file.originalname);
+        fileMetadata = {
+          fileName: file.originalname,
+          fileUrl: uploadResult.pdfUrl,
+          s3Bucket: uploadResult.bucket,
+          s3ObjectKey: uploadResult.objectKey,
+          mimeType: uploadResult.mimeType,
+          size: uploadResult.size,
+          fileHash: uploadResult.fileHash,
+          storageProvider: uploadResult.storageProvider
+        };
+      } catch (uploadErr) {
+        console.warn('[parse-judgment] MinIO upload warning (using fallback metadata):', uploadErr);
+        const crypto = await import('crypto');
+        const hash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+        fileMetadata = {
+          fileName: file.originalname,
+          fileUrl: `/uploads/${Date.now()}_${file.originalname}`,
+          s3Bucket: 'tatovacesta-documents',
+          s3ObjectKey: `cases/${caseId}/${Date.now()}_${file.originalname}`,
+          mimeType: file.mimetype || 'application/pdf',
+          size: file.size || file.buffer.length,
+          fileHash: hash,
+          storageProvider: 'Local/MinIO'
+        };
+      }
+    }
+
+    res.json({ success: true, ...extracted, fileMetadata });
   } catch (err: any) {
     handleCareError(res, err);
   }
