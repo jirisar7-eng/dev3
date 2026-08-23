@@ -1,0 +1,192 @@
+#!/bin/bash
+
+set -e
+
+PROJECT="/var/www/tatovacesta_dev3"
+
+cd "$PROJECT"
+
+echo "=========================================="
+echo "       DEV3 UPDATE WORKFLOW"
+echo "=========================================="
+
+echo
+echo "=== 1. AKTUÁLNÍ VĚTEV ==="
+
+CURRENT_BRANCH=$(git branch --show-current)
+
+if [ -z "$CURRENT_BRANCH" ]; then
+    echo "CHYBA: Nelze zjistit aktuální větev."
+    exit 1
+fi
+
+echo "Větev: $CURRENT_BRANCH"
+
+echo
+echo "=== 2. GIT STATUS ==="
+
+git status --short
+
+echo
+echo "=== 3. COMMIT VŠECH ZMĚN ==="
+
+if [ -n "$(git status --porcelain)" ]; then
+
+    git add .
+
+    git commit -m "chore: update dev3 $(date '+%Y-%m-%d %H:%M:%S')"
+
+    echo "Změny byly commitnuty."
+
+else
+
+    echo "Žádné nové změny k commitnutí."
+
+fi
+
+echo
+echo "=== 4. PUSH AKTUÁLNÍ VĚTVĚ ==="
+
+git push origin "$CURRENT_BRANCH"
+
+echo
+echo "=== 5. FETCH GITHUB ==="
+
+git fetch origin --prune
+
+echo
+echo "=== 6. PŘECHOD NA MAIN ==="
+
+git switch main
+
+echo
+echo "=== 7. BACKUP MAIN ==="
+
+BACKUP_TAG="backup-before-update-$(date +%Y%m%d-%H%M%S)"
+
+git tag "$BACKUP_TAG"
+
+git push origin "$BACKUP_TAG"
+
+echo "Backup tag:"
+echo "$BACKUP_TAG"
+
+echo
+echo "=== 8. AKTUALIZACE MAIN ==="
+
+git pull --ff-only origin main
+
+echo
+echo "=== 9. KONTROLA LOKÁLNÍCH VĚTVÍ ==="
+
+BRANCHES=$(git for-each-ref \
+    --format="%(refname:short)" \
+    refs/remotes/origin/ \
+    | grep -v "^origin/HEAD$" \
+    | sed 's#^origin/##' \
+    | grep -v "^main$" \
+    || true)
+
+for BRANCH in $BRANCHES; do
+
+    if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+
+        COUNT=$(git rev-list --count main.."origin/$BRANCH")
+
+        if [ "$COUNT" -gt 0 ]; then
+
+            echo
+            echo "------------------------------------------"
+            echo "VĚTEV: $BRANCH"
+            echo "Commity mimo main: $COUNT"
+            echo "------------------------------------------"
+
+            git log --oneline --decorate main.."origin/$BRANCH"
+
+            echo
+            echo "Větev obsahuje změny mimo main."
+            echo "Automatický merge NEPROVEDU bez kontroly."
+            echo
+            echo "Pokud je větev připravena k merge:"
+            echo
+            echo "git merge origin/$BRANCH"
+            echo
+
+        fi
+
+    fi
+
+done
+
+echo
+echo "=== 10. KONTROLA MAIN ==="
+
+git status
+
+echo
+echo "HEAD:"
+git rev-parse main
+
+echo
+echo "ORIGIN/MAIN:"
+git rev-parse origin/main
+
+echo
+echo "=== 11. LINT ==="
+
+npm run lint
+
+echo
+echo "=== 12. BUILD ==="
+
+npm run build
+
+echo
+echo "=== 13. PUSH MAIN ==="
+
+git push origin main
+
+echo
+echo "=== 14. FINÁLNÍ KONTROLA ==="
+
+git fetch origin
+
+LOCAL=$(git rev-parse main)
+REMOTE=$(git rev-parse origin/main)
+
+echo
+echo "LOCAL MAIN : $LOCAL"
+echo "REMOTE MAIN: $REMOTE"
+
+if [ "$LOCAL" != "$REMOTE" ]; then
+
+    echo
+    echo "=========================================="
+    echo " CHYBA: MAIN NENÍ SYNCHRONIZOVANÝ"
+    echo "=========================================="
+
+    exit 1
+
+fi
+
+echo
+echo "=========================================="
+echo "       UPDATE ÚSPĚŠNĚ DOKONČEN"
+echo "=========================================="
+
+echo
+echo "GitHub main je aktuální."
+echo "Build prošel."
+echo "Lint prošel."
+echo
+echo "Commit:"
+echo "$LOCAL"
+echo
+echo "Backup:"
+echo "$BACKUP_TAG"
+echo
+echo "Produkce zatím NEBYLA změněna."
+echo
+echo "Další krok:"
+echo "update-prod3"
+echo
