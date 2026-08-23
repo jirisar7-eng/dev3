@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'url';
 import { getPrismaClient, checkDatabaseReachable } from '../db/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -228,14 +229,24 @@ export async function importOspody(datasetPath?: string) {
   }
 }
 
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && process.argv[1]?.includes('importOspody')) {
+
+const isMainModule = () => {
+  if (typeof process === 'undefined' || !process.argv[1]) return false;
+  try {
+    return fileURLToPath(import.meta.url) === process.argv[1];
+  } catch (e) {
+    return false;
+  }
+};
+
+if (isMainModule() && process.env.NODE_ENV !== 'test') {
   importOspody()
     .then((res) => {
       console.log('OSPOD Import Result:', res);
+      process.exit(0);
     })
     .catch((err) => {
       console.error('OSPOD Import Error:', err);
       process.exit(1);
     });
 }
-
