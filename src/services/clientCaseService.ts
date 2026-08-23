@@ -69,6 +69,19 @@ export class ClientCaseService {
         children: true,
         participants: true,
         careArrangements: true,
+        documents: true,
+        evidence: true,
+        deadlines: true,
+        tasks: true,
+        events: true,
+        notes: true,
+        carePlans: {
+          include: {
+            days: true,
+            holidayRules: true,
+            children: true,
+          }
+        }
       },
       orderBy: { updatedAt: 'desc' },
     });
@@ -111,6 +124,13 @@ export class ClientCaseService {
         },
         communications: { orderBy: { date: 'desc' } },
         careArrangements: { orderBy: { createdAt: 'desc' } },
+        carePlans: {
+          include: {
+            days: true,
+            holidayRules: true,
+            children: true,
+          }
+        }
       },
     });
     if (c) {
@@ -1203,10 +1223,25 @@ export class ClientCaseService {
     this.validateExtractedJudgmentData(extractedData);
 
     // Check existing case & active care plans for conflict detection
-    const existingCase = await prisma.case.findUnique({
-      where: { id: caseId },
-      include: { children: true, carePlans: { where: { status: 'ACTIVE' } } }
-    });
+    let existingCase: any = null;
+    try {
+      existingCase = await prisma.case.findUnique({
+        where: { id: caseId },
+        include: { children: true, carePlans: { where: { status: 'ACTIVE' } } }
+      });
+    } catch {
+      // Fallback below
+    }
+
+    if (!existingCase || existingCase.id !== caseId) {
+      const memC = dbStore.cases.find((c: any) => c.id === caseId);
+      if (memC) {
+        existingCase = {
+          ...memC,
+          carePlans: (memC.carePlans || []).filter((p: any) => p.status === 'ACTIVE')
+        };
+      }
+    }
 
     if (!existingCase) {
       throw new Error("Případ nebyl nalezen.");
@@ -1239,11 +1274,14 @@ export class ClientCaseService {
     // 2. Execute ALL changes in a single atomic PostgreSQL transaction with automatic rollback
     const txResult = await prisma.$transaction(async (tx) => {
       // a) Update Case
+      const caseNumberStr = (typeof extractedData.caseNumber === 'string' ? extractedData.caseNumber : (extractedData.caseNumber as any)?.value) || undefined;
+      const courtStr = (typeof extractedData.court === 'string' ? extractedData.court : (extractedData.court as any)?.value) || undefined;
+
       const updatedCase = await tx.case.update({
         where: { id: caseId },
         data: {
-          caseNumber: extractedData.caseNumber || undefined,
-          court: extractedData.court || undefined,
+          caseNumber: caseNumberStr,
+          court: courtStr,
           currentCareType: extractedData.custodyType || undefined,
           description: extractedData.otherDuties ? `Další povinnosti (Zdroj: JUDGMENT): ${extractedData.otherDuties}` : undefined,
           updatedAt: new Date()
@@ -1253,13 +1291,14 @@ export class ClientCaseService {
       // b) Create or update Child (strictly isolated to caseId)
       let child: any = null;
       if (extractedData.childName) {
-        const rawChildName = typeof extractedData.childName === 'string' ? extractedData.childName : extractedData.childName.value || 'Dítě';
-        const parts = rawChildName.trim().split(' ');
+        const rawChildName = typeof extractedData.childName === 'string' ? extractedData.childName : (extractedData.childName as any)?.value || 'Dítě';
+        const cleanChildName = rawChildName.replace(/\s+(?:se\s+svěřuje|nar\.?|dne|bytem|zastoupený|zastoupená|v\s+péči).*/i, '').trim();
+        const parts = cleanChildName.split(' ');
         const firstName = parts[0] || 'Dítě';
-        const lastName = parts.slice(1).join(' ') || 'Nováková';
-        const birthDateStr = extractedData.childBirthDate ? String(extractedData.childBirthDate) : null;
-
         const existingChildren = await tx.child.findMany({ where: { caseId } });
+        const lastName = parts.slice(1).join(' ') || (existingChildren[0]?.lastName || 'Šár');
+        const birthDateStr = extractedData.childBirthDate ? (typeof extractedData.childBirthDate === 'string' ? extractedData.childBirthDate : (extractedData.childBirthDate as any)?.value) : null;
+
         if (existingChildren && existingChildren.length > 0) {
           child = await tx.child.update({
             where: { id: existingChildren[0].id },
@@ -1446,7 +1485,7 @@ export class ClientCaseService {
       const findSentenceForText = (sourceText?: string | null) => {
         if (!sourceText || sentenceRecords.length === 0) return sentenceRecords[0]?.id || null;
         const normalizedSrc = sourceText.toLowerCase().trim();
-        const match = sentenceRecords.find(sr => sr.text.toLowerCase().includes(normalizedSrc) || normalizedSrc.includes(sr.text.toLowerCase()));
+        const match = sentenceRecords.find(sr => (sr.text || '').toLowerCase().includes(normalizedSrc) || normalizedSrc.includes((sr.text || '').toLowerCase()));
         return match ? match.id : (sentenceRecords.find(sr => sr.section === 'VYROK')?.id || sentenceRecords[0]?.id || null);
       };
 
@@ -1754,7 +1793,7 @@ export class ClientCaseService {
           title: `Soudní rozsudek (${extractedData.court || 'Soud'} ${extractedData.caseNumber || ''})`,
           description: `Automaticky vygenerovaný plán péče z rozsudku. Režim: ${extractedData.custodyType || 'Střídavá péče'}, Rozvrh: ${extractedData.scheduleType || 'Standardní'}. Předávání: ${handoverLocation} (${handoverTime}).`,
           status: 'ACTIVE',
-          type: extractedData.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+          type: 'CURRENT',
           source: 'JUDGMENT_IMPORT',
           startDate: new Date(startDateIso),
           rotationPattern: extractedData.scheduleType || '7/7',
@@ -1799,7 +1838,7 @@ export class ClientCaseService {
         title: `Soudní rozsudek (${extractedData.court || 'Soud'} ${extractedData.caseNumber || ''})`,
         description: `Automaticky vygenerovaný plán péče z rozsudku. Režim: ${extractedData.custodyType || 'Střídavá péče'}, Rozvrh: ${extractedData.scheduleType || 'Standardní'}. Předávání: ${handoverLocation} (${handoverTime}).`,
         status: 'ACTIVE',
-        type: extractedData.custodyType === 'SHARED' ? 'ALTERNATING' : 'ASYMMETRIC',
+        type: 'CURRENT',
         source: 'JUDGMENT_IMPORT',
         startDate: new Date(startDateIso),
         rotationPattern: extractedData.scheduleType || '7/7',
@@ -2061,8 +2100,22 @@ export class ClientCaseService {
       }
       if (txResult.carePlan) {
         if (!memCase.carePlans) memCase.carePlans = [];
+        memCase.carePlans.forEach((p: any) => {
+          if (p.status === 'ACTIVE') p.status = 'DRAFT';
+        });
         memCase.carePlans.push(txResult.carePlan);
       }
+      if (!memCase.events) memCase.events = [];
+      memCase.events = memCase.events.filter((e: any) => e.sourceType !== 'CARE_PLAN');
+      memCase.events.push({
+        id: `evt-${Date.now()}-1`,
+        caseId,
+        title: `Předání dítěte do péče (${extractedData.custodyType || 'Střídavá'})`,
+        eventDate: new Date().toISOString(),
+        category: 'CHILD_HANDOVER',
+        sourceType: 'CARE_PLAN',
+        carePlanId: txResult.carePlan?.id
+      } as any);
     }
 
     // 3. Audit Log

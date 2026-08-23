@@ -2,6 +2,9 @@ import { prisma, isPrismaAvailable } from '../../db/prisma';
 import { AuditService } from '../auditService';
 import {
   CarePlan,
+  CarePlanStatus,
+  CarePlanType,
+  CarePlanSource,
   CareDay,
   CareLocation,
   CareHolidayRule,
@@ -511,9 +514,10 @@ export class CarePlanService {
     }
 
     const title = data.title || 'Nový návrh péče';
-    const status = data.status || 'DRAFT';
-    const type = data.type || 'PROPOSED';
-    const source = data.source || 'MANUAL';
+    const status: CarePlanStatus = (data.status as CarePlanStatus) || 'DRAFT';
+    const source: CarePlanSource = (data.source as CarePlanSource) || 'MANUAL';
+    const rawType = data.type;
+    const type: CarePlanType = (rawType === 'CURRENT' || rawType === 'PROPOSED' || rawType === 'SIMULATION') ? rawType : 'PROPOSED';
     const pattern = data.rotationPattern || '7/7';
     const startDateStr = data.startDate || new Date().toISOString().split('T')[0];
 
@@ -575,14 +579,16 @@ export class CarePlanService {
         });
       }
 
+      const planType: CarePlanType = status === 'ACTIVE' ? 'CURRENT' : (type as CarePlanType);
+
       return await tx.carePlan.create({
         data: {
           caseId,
           title,
           description: data.description,
-          status: status as any,
-          type: type as any,
-          source: source as any,
+          status: status as CarePlanStatus,
+          type: planType,
+          source: source as CarePlanSource,
           startDate: new Date(startDateStr),
           endDate: data.endDate ? new Date(data.endDate) : undefined,
           rotationPattern: pattern,
@@ -756,14 +762,17 @@ export class CarePlanService {
         }
       }
 
+      const sanitizedStatus = data.status && ['DRAFT', 'ACTIVE', 'ARCHIVED', 'PROPOSED'].includes(data.status) ? (data.status as CarePlanStatus) : undefined;
+      const sanitizedType = data.type && ['CURRENT', 'PROPOSED', 'SIMULATION'].includes(data.type) ? (data.type as CarePlanType) : undefined;
+
       // Update plan entity
       await tx.carePlan.update({
         where: { id: planId },
         data: {
           title: data.title,
           description: data.description,
-          status: data.status as any,
-          type: data.type as any,
+          status: sanitizedStatus,
+          type: sanitizedType,
           rotationPattern: data.rotationPattern,
           parentAName: data.parentAName,
           parentBName: data.parentBName,

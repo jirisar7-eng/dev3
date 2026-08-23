@@ -344,38 +344,64 @@ export class JudgmentParserService {
   private static mergeLocalAndAiData(local: JudgmentExtractedData, ai: JudgmentExtractedData): JudgmentExtractedData {
     const fields: Record<string, FieldMeta> = { ...local.metadata?.fields };
 
+    const unwrap = (val: any): any => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'object' && 'value' in val && !('days' in val)) {
+        return unwrap(val.value);
+      }
+      return val;
+    };
+
+    const courtVal = unwrap(local.court) || unwrap(ai.court);
+    const caseNumberVal = unwrap(local.caseNumber) || unwrap(ai.caseNumber);
+    const judgmentDateVal = unwrap(local.judgmentDate) || unwrap(ai.judgmentDate);
+    const effectiveDateVal = unwrap(local.effectiveDate) || unwrap(ai.effectiveDate);
+    const childNameVal = unwrap(local.childName) || unwrap(ai.childName);
+    const childBirthDateVal = unwrap(local.childBirthDate) || unwrap(ai.childBirthDate);
+    const custodyTypeVal = unwrap(local.custodyType) || unwrap(ai.custodyType);
+    const scheduleTypeVal = unwrap(local.scheduleType) || unwrap(ai.scheduleType);
+    const evenWeekVal = unwrap(local.evenWeek) || unwrap(ai.evenWeek);
+    const oddWeekVal = unwrap(local.oddWeek) || unwrap(ai.oddWeek);
+    const handoverDayVal = unwrap(local.handoverDay) || unwrap(ai.handoverDay);
+    const handoverTimeVal = unwrap(local.handoverTime) || unwrap(ai.handoverTime);
+    const handoverStartTimeVal = unwrap(local.handoverStartTime) || unwrap(ai.handoverStartTime);
+    const handoverEndTimeVal = unwrap(local.handoverEndTime) || unwrap(ai.handoverEndTime);
+    const handoverLocationVal = unwrap(local.handoverLocation) || unwrap(ai.handoverLocation);
+    const alimonyAmountVal = unwrap(local.alimonyAmount) !== null ? unwrap(local.alimonyAmount) : unwrap(ai.alimonyAmount);
+    const alimonyDueDateVal = unwrap(local.alimonyDueDate) !== null ? unwrap(local.alimonyDueDate) : unwrap(ai.alimonyDueDate);
+
     // Where AI has high confidence and valid value, enrich complex textual rules
     const merged: JudgmentExtractedData = {
       ...local,
-      court: local.court || ai.court,
-      caseNumber: local.caseNumber || ai.caseNumber,
-      judgmentDate: local.judgmentDate || ai.judgmentDate,
-      effectiveDate: local.effectiveDate || ai.effectiveDate,
-      participants: (local.participants && local.participants.length > 0) ? local.participants : ai.participants,
-      childName: local.childName || ai.childName,
-      childBirthDate: local.childBirthDate || ai.childBirthDate,
-      custodyType: local.custodyType || ai.custodyType,
-      scheduleType: local.scheduleType || ai.scheduleType,
-      evenWeek: local.evenWeek || ai.evenWeek,
-      oddWeek: local.oddWeek || ai.oddWeek,
-      handoverDay: local.handoverDay || ai.handoverDay,
-      handoverTime: local.handoverTime || ai.handoverTime,
-      handoverStartTime: local.handoverStartTime || ai.handoverStartTime,
-      handoverEndTime: local.handoverEndTime || ai.handoverEndTime,
-      handoverLocation: local.handoverLocation || ai.handoverLocation,
-      holidaysRule: ai.holidaysRule || local.holidaysRule,
-      christmasRule: ai.christmasRule || local.christmasRule,
-      easterRule: ai.easterRule || local.easterRule,
-      summerRule: ai.summerRule || local.summerRule,
-      alimonyAmount: local.alimonyAmount !== null ? local.alimonyAmount : ai.alimonyAmount,
-      alimonyDueDate: local.alimonyDueDate !== null ? local.alimonyDueDate : ai.alimonyDueDate,
-      alimonyPaymentMethod: local.alimonyPaymentMethod || ai.alimonyPaymentMethod,
-      alimonyRecipient: local.alimonyRecipient || ai.alimonyRecipient,
-      alimonyDebtAmount: local.alimonyDebtAmount !== null ? local.alimonyDebtAmount : ai.alimonyDebtAmount,
-      alimonyDebtPeriod: local.alimonyDebtPeriod || ai.alimonyDebtPeriod,
-      alimonyDebtDueDate: local.alimonyDebtDueDate || ai.alimonyDebtDueDate,
-      informationDuty: ai.informationDuty || local.informationDuty,
-      otherDuties: ai.otherDuties || local.otherDuties,
+      court: typeof courtVal === 'string' ? courtVal : null,
+      caseNumber: typeof caseNumberVal === 'string' ? caseNumberVal : null,
+      judgmentDate: typeof judgmentDateVal === 'string' ? judgmentDateVal : null,
+      effectiveDate: typeof effectiveDateVal === 'string' ? effectiveDateVal : null,
+      participants: (local.participants && local.participants.length > 0) ? local.participants : (ai.participants || []),
+      childName: typeof childNameVal === 'string' ? childNameVal : null,
+      childBirthDate: typeof childBirthDateVal === 'string' ? childBirthDateVal : null,
+      custodyType: custodyTypeVal || null,
+      scheduleType: scheduleTypeVal || null,
+      evenWeek: evenWeekVal || null,
+      oddWeek: oddWeekVal || null,
+      handoverDay: typeof handoverDayVal === 'string' ? handoverDayVal : null,
+      handoverTime: typeof handoverTimeVal === 'string' ? handoverTimeVal : null,
+      handoverStartTime: typeof handoverStartTimeVal === 'string' ? handoverStartTimeVal : null,
+      handoverEndTime: typeof handoverEndTimeVal === 'string' ? handoverEndTimeVal : null,
+      handoverLocation: typeof handoverLocationVal === 'string' ? handoverLocationVal : null,
+      holidaysRule: unwrap(ai.holidaysRule) || unwrap(local.holidaysRule),
+      christmasRule: unwrap(ai.christmasRule) || unwrap(local.christmasRule),
+      easterRule: unwrap(ai.easterRule) || unwrap(local.easterRule),
+      summerRule: unwrap(ai.summerRule) || unwrap(local.summerRule),
+      alimonyAmount: typeof alimonyAmountVal === 'number' ? alimonyAmountVal : (alimonyAmountVal ? Number(alimonyAmountVal) : null),
+      alimonyDueDate: typeof alimonyDueDateVal === 'number' ? alimonyDueDateVal : (alimonyDueDateVal ? Number(alimonyDueDateVal) : null),
+      alimonyPaymentMethod: unwrap(local.alimonyPaymentMethod) || unwrap(ai.alimonyPaymentMethod),
+      alimonyRecipient: unwrap(local.alimonyRecipient) || unwrap(ai.alimonyRecipient),
+      alimonyDebtAmount: unwrap(local.alimonyDebtAmount) !== null ? unwrap(local.alimonyDebtAmount) : unwrap(ai.alimonyDebtAmount),
+      alimonyDebtPeriod: unwrap(local.alimonyDebtPeriod) || unwrap(ai.alimonyDebtPeriod),
+      alimonyDebtDueDate: unwrap(local.alimonyDebtDueDate) || unwrap(ai.alimonyDebtDueDate),
+      informationDuty: unwrap(ai.informationDuty) || unwrap(local.informationDuty),
+      otherDuties: unwrap(ai.otherDuties) || unwrap(local.otherDuties),
       metadata: local.metadata
     };
 

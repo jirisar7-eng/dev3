@@ -263,9 +263,9 @@ export interface ClientCase {
 // CARE & PARENTING HUB TYPES
 // ------------------------------------------------------
 
-export type CarePlanStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'PROPOSED' | string;
-export type CarePlanType = 'CURRENT' | 'PROPOSED' | 'SIMULATION' | 'ALTERNATING' | 'ASYMMETRIC' | string;
-export type CarePlanSource = 'MANUAL' | 'JUDGMENT_IMPORT' | 'SIMULATION_TEMPLATE' | string;
+export type CarePlanStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'PROPOSED';
+export type CarePlanType = 'CURRENT' | 'PROPOSED' | 'SIMULATION';
+export type CarePlanSource = 'MANUAL' | 'JUDGMENT_IMPORT' | 'SIMULATION_TEMPLATE';
 export type CareLocationType = 'PARENT_A_HOME' | 'PARENT_B_HOME' | 'SCHOOL' | 'KINDERGARTEN' | 'NEUTRAL' | 'CUSTOM' | string;
 export type AssignedParentType = 'PARENT_A' | 'PARENT_B';
 
