@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { Subjekt, EntityType, Review } from '../../types';
 import { SubjektyMap } from './SubjektyMap';
 import { SeoHead } from './SeoHead';
@@ -106,9 +107,11 @@ interface MapaSubjektuViewProps {
 }
 
 export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
+
   currentPath = '',
   onNavigate,
 }) => {
+  const { currentUser } = useAuth();
   const [subjekty, setSubjekty] = useState<Subjekt[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeType, setActiveType] = useState<string>('ALL');
@@ -235,6 +238,19 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewForm),
       });
+
+      if (res.status === 401 || res.status === 403) {
+        if (confirm('Platnost přihlášení vypršela. Chcete se nyní přihlásit?')) {
+          if (onNavigate) onNavigate('/login');
+          else window.location.href = '/login';
+        }
+        return;
+      }
+      if (!res.ok) {
+        setSuccessMessage('Chyba při odesílání hodnocení. Zkuste to prosím znovu.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        return;
+      }
 
       if (res.ok) {
         setShowReviewModal(null);
@@ -1067,13 +1083,32 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 >
                   Zrušit
                 </button>
-                <button
-                  type="submit"
-                  disabled={formSubmitting}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {formSubmitting ? 'Odesílám...' : 'Odeslat hodnocení'}
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    disabled={formSubmitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {formSubmitting ? 'Odesílám...' : 'Odeslat hodnocení'}
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-amber-600 font-semibold text-xs">Pro přidání hodnocení se musíte přihlásit.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onNavigate) {
+                          onNavigate('/login');
+                        } else {
+                          window.location.href = '/login';
+                        }
+                      }}
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all shadow-sm cursor-pointer"
+                    >
+                      Přihlásit se pro přidání hodnocení
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
           </div>

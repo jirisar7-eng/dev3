@@ -320,6 +320,19 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
         body: JSON.stringify(reviewForm),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        if (confirm('Platnost přihlášení vypršela. Chcete se nyní přihlásit?')) {
+          if (onNavigate) onNavigate('/login');
+          else window.location.href = '/login';
+        }
+        return;
+      }
+      if (!res.ok) {
+        setSuccessMessage('Chyba při odesílání hodnocení. Zkuste to prosím znovu.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        return;
+      }
+
       if (res.ok) {
         setShowReviewModal(null);
         setReviewForm({
@@ -364,6 +377,19 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
           pracovnikId: selectedPracovnikForRating.id,
         }),
       });
+
+      if (res.status === 401 || res.status === 403) {
+        if (confirm('Platnost přihlášení vypršela. Chcete se nyní přihlásit?')) {
+          if (onNavigate) onNavigate('/login');
+          else window.location.href = '/login';
+        }
+        return;
+      }
+      if (!res.ok) {
+        setSuccessMessage('Chyba při odesílání hodnocení. Zkuste to prosím znovu.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        return;
+      }
 
       if (res.ok) {
         setShowPracovnikRatingModal(false);
@@ -1121,13 +1147,32 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 >
                   Zrušit
                 </button>
-                <button
-                  type="submit"
-                  disabled={formSubmitting}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-                >
-                  {formSubmitting ? 'Ukládám...' : 'Odeslat hodnocení'}
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    disabled={formSubmitting}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {formSubmitting ? 'Ukládám...' : 'Odeslat hodnocení'}
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-amber-600 font-semibold text-xs">Pro přidání hodnocení se musíte přihlásit.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onNavigate) {
+                          onNavigate('/login');
+                        } else {
+                          window.location.href = '/login';
+                        }
+                      }}
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all shadow-md cursor-pointer"
+                    >
+                      Přihlásit se pro přidání hodnocení
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
           </div>
@@ -1555,13 +1600,32 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 >
                   Zrušit
                 </button>
-                <button
-                  type="submit"
-                  disabled={formSubmitting}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-                >
-                  {formSubmitting ? 'Ukládám...' : 'Odeslat hodnocení'}
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    disabled={formSubmitting}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {formSubmitting ? 'Ukládám...' : 'Odeslat hodnocení'}
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-amber-600 font-semibold text-xs">Pro přidání hodnocení se musíte přihlásit.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onNavigate) {
+                          onNavigate('/login');
+                        } else {
+                          window.location.href = '/login';
+                        }
+                      }}
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all shadow-md cursor-pointer"
+                    >
+                      Přihlásit se pro přidání hodnocení
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
           </div>
