@@ -195,14 +195,25 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
           status: 'PENDING',
         }),
       });
-      if (res.ok) {
-        setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
-        setShowAddPracovnikModal(false);
-        setSuccessMessage('Děkujeme! Návrh byl odeslán ke schválení administrátorovi.');
-        setTimeout(() => setSuccessMessage(null), 5000);
+      if (res.status === 401 || res.status === 403) {
+        if (confirm('Platnost přihlášení vypršela nebo nemáte oprávnění. Chcete se nyní přihlásit?')) {
+          if (onNavigate) onNavigate('/login');
+          else window.location.href = '/login';
+        }
+        return;
       }
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Chyba při odesílání návrhu: ${errorData.error || 'Neznámá chyba'}`);
+        return;
+      }
+      setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
+      setShowAddPracovnikModal(false);
+      setSuccessMessage('Děkujeme! Návrh byl odeslán ke schválení administrátorovi.');
+      setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       console.error('Error adding pracovnik:', err);
+      alert('Došlo k systémové chybě při odesílání návrhu.');
     }
   };
 
@@ -869,7 +880,16 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                   <span>Konkrétní pracovníci / Kontakty ({selectedSubjekt.pracovnici?.length || 0})</span>
                 </h3>
                 <button
-                  onClick={() => setShowAddPracovnikModal(true)}
+                  onClick={() => {
+                    if (!currentUser) {
+                      if (confirm('Pro přidání nebo navržení pracovníka se musíte přihlásit. Chcete přejít na přihlášení?')) {
+                        if (onNavigate) onNavigate('/login');
+                        else window.location.href = '/login';
+                      }
+                      return;
+                    }
+                    setShowAddPracovnikModal(true);
+                  }}
                   className="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border border-indigo-200"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -1455,27 +1475,12 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 >
                   Zrušit
                 </button>
-                {currentUser ? (
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
-                  >
-                    Uložit pracovníka
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm('Pro přidání pracovníka se musíte nejdříve přihlásit. Chcete přejít na přihlášení?')) {
-                        if (onNavigate) onNavigate('/login');
-                        else window.location.href = '/login';
-                      }
-                    }}
-                    className="px-6 py-2.5 rounded-xl bg-slate-300 text-slate-600 font-bold cursor-pointer"
-                  >
-                    Přihlásit se
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all cursor-pointer"
+                >
+                  Uložit pracovníka
+                </button>
               </div>
             </form>
           </div>

@@ -289,14 +289,26 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
         }),
       });
 
-      if (res.ok) {
-        setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
-        setShowAddPracovnikModal(false);
-        setSuccessMessage('Děkujeme! Návrh byl odeslán ke schválení administrátorovi.');
-        setTimeout(() => setSuccessMessage(null), 5000);
+      if (res.status === 401 || res.status === 403) {
+        if (confirm('Platnost přihlášení vypršela nebo nemáte oprávnění. Chcete se nyní přihlásit?')) {
+          if (onNavigate) onNavigate('/login');
+          else window.location.href = '/login';
+        }
+        return;
       }
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Chyba při odesílání návrhu: ${errorData.error || 'Neznámá chyba'}`);
+        return;
+      }
+
+      setPracovnikForm({ jmeno: '', pozice: '', telefon: '', email: '', kancelar: '' });
+      setShowAddPracovnikModal(false);
+      setSuccessMessage('Děkujeme! Návrh byl odeslán ke schválení administrátorovi.');
+      setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       console.error('Error adding pracovnik:', err);
+      alert('Došlo k systémové chybě při odesílání návrhu.');
     } finally {
       setFormSubmitting(false);
     }
@@ -847,7 +859,16 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                   <span>Konkrétní pracovníci / Kontakty ({detailSubjekt.pracovnici?.length || 0})</span>
                 </h3>
                 <button
-                  onClick={() => setShowAddPracovnikModal(true)}
+                  onClick={() => {
+                    if (!currentUser) {
+                      if (confirm('Pro přidání nebo navržení pracovníka se musíte přihlásit. Chcete přejít na přihlášení?')) {
+                        if (onNavigate) onNavigate('/login');
+                        else window.location.href = '/login';
+                      }
+                      return;
+                    }
+                    setShowAddPracovnikModal(true);
+                  }}
                   className="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border border-indigo-200"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -1208,28 +1229,13 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 >
                   Zrušit
                 </button>
-                {currentUser ? (
-                  <button
-                    type="submit"
-                    disabled={formSubmitting}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {formSubmitting ? 'Ukládám...' : 'Navrhnout pracovníka'}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm('Pro přidání pracovníka se musíte nejdříve přihlásit. Chcete přejít na přihlášení?')) {
-                        if (onNavigate) onNavigate('/login');
-                        else window.location.href = '/login';
-                      }
-                    }}
-                    className="px-5 py-2.5 bg-slate-300 text-slate-600 font-bold rounded-2xl cursor-pointer"
-                  >
-                    Přihlásit se
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  disabled={formSubmitting}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {formSubmitting ? 'Ukládám...' : 'Navrhnout pracovníka'}
+                </button>
               </div>
             </form>
           </div>
