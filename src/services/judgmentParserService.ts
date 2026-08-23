@@ -64,6 +64,11 @@ export interface JudgmentExtractedData {
   alimonyAmount: number | null;
   alimonyDueDate: number | null;
   alimonyPaymentMethod: string | null;
+  alimonyRecipient?: string | null;
+  alimonyDebtAmount?: number | null;
+  alimonyDebtPeriod?: string | null;
+  alimonyDebtDueDate?: string | null;
+  informationDuty?: string | null;
   otherDuties: string | null;
   metadata?: {
     totalFound: number;
@@ -292,6 +297,11 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
   "alimonyAmount": { "value": number | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
   "alimonyDueDate": { "value": number | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
   "alimonyPaymentMethod": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyRecipient": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyDebtAmount": { "value": number | null, "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyDebtPeriod": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "alimonyDebtDueDate": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
+  "informationDuty": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" },
   "otherDuties": { "value": "string | null", "confidence": number, "status": "VERIFIED|NEEDS_REVIEW|NOT_FOUND", "sourceText": "string | null" }
 }`;
   }
@@ -326,7 +336,8 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
       'childName', 'childBirthDate', 'custodyType', 'scheduleType',
       'evenWeek', 'oddWeek', 'handoverDay', 'handoverTime', 'handoverStartTime', 'handoverEndTime', 'handoverLocation',
       'holidaysRule', 'christmasRule', 'easterRule', 'summerRule',
-      'alimonyAmount', 'alimonyDueDate', 'alimonyPaymentMethod', 'otherDuties'
+      'alimonyAmount', 'alimonyDueDate', 'alimonyPaymentMethod', 'alimonyRecipient',
+      'alimonyDebtAmount', 'alimonyDebtPeriod', 'alimonyDebtDueDate', 'informationDuty', 'otherDuties'
     ];
 
     keys.forEach((k) => {
@@ -334,7 +345,7 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
       let val = item.value;
 
       // Type normalization
-      if (k === 'alimonyAmount' && val !== null && val !== undefined) {
+      if ((k === 'alimonyAmount' || k === 'alimonyDebtAmount') && val !== null && val !== undefined) {
         let str = String(val).trim().replace(/\s+/g, '').replace(/Kč|CZK/gi, '');
         if (str.includes(',') && !str.includes('.')) {
           str = str.replace(',', '.');
@@ -398,6 +409,11 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
       alimonyAmount: fields.alimonyAmount.value,
       alimonyDueDate: fields.alimonyDueDate.value,
       alimonyPaymentMethod: fields.alimonyPaymentMethod.value,
+      alimonyRecipient: fields.alimonyRecipient?.value || null,
+      alimonyDebtAmount: fields.alimonyDebtAmount?.value || null,
+      alimonyDebtPeriod: fields.alimonyDebtPeriod?.value || null,
+      alimonyDebtDueDate: fields.alimonyDebtDueDate?.value || null,
+      informationDuty: fields.informationDuty?.value || null,
       otherDuties: fields.otherDuties.value,
       metadata: {
         totalFound,

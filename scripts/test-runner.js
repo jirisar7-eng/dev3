@@ -8,7 +8,8 @@ const tests = [
   { cmd: 'node', args: ['--test', 'test/main.test.cjs'], name: 'Static & Security Integrity (PWA, Disclaimers, Auth, RBAC)' },
   { cmd: 'node', args: ['run_security_tests.cjs'], name: 'Security & Audit Integrations' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/state-admin-p1-p2.test.js'], name: 'State Administration API Hub (P1 & P2 Connectors)' },
-  { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' }
+  { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-case-sync.test.ts'], name: 'Judgment AI Extractor -> Case Persistence Integration' }
 ];
 
 let failed = false;

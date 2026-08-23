@@ -184,6 +184,22 @@ const dummyModel = new Proxy({}, {
 
 export const prisma = new Proxy({} as any, {
   get(_target, prop) {
+    if (prop === '$transaction') {
+      const client = getPrismaClient();
+      if (client && typeof (client as any).$transaction === 'function') {
+        return (client as any).$transaction.bind(client);
+      }
+      return async function (fnOrArray: any) {
+        if (typeof fnOrArray === 'function') {
+          return await fnOrArray(prisma);
+        }
+        if (Array.isArray(fnOrArray)) {
+          return await Promise.all(fnOrArray);
+        }
+        return null;
+      };
+    }
+
     const client = getPrismaClient();
     if (!client) {
       if (isFallbackAllowed()) {
