@@ -9,7 +9,7 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL:-postgresql://tatovacesta:secure_password_dev3@postgres_dev3:5432/tatovacesta_dev3?schema=public}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-tatovacesta}:${POSTGRES_PASSWORD}@postgres_dev3:5432/${POSTGRES_DB:-tatovacesta_dev3}?schema=public}
       - JWT_SECRET=${JWT_SECRET}
       - CLAMAV_HOST=${CLAMAV_HOST:-clamav_scanner}
       - CLAMAV_PORT=${CLAMAV_PORT:-3310}
@@ -33,9 +33,9 @@ services:
     image: postgres:16-alpine
     container_name: postgres_dev3
     environment:
-      POSTGRES_DB: tatovacesta_dev3
-      POSTGRES_PASSWORD: secure_password_dev3
-      POSTGRES_USER: tatovacesta
+      POSTGRES_DB: ${POSTGRES_DB:-tatovacesta_dev3}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-tatovacesta}
     ports:
       - "5432:5432"
     volumes:

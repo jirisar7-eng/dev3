@@ -14,6 +14,16 @@ const aiRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Middleware to prevent oversized payloads on public AI endpoints
+const aiPayloadLimiter = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const bodyString = JSON.stringify(req.body || {});
+  // Max ~30,000 characters total per request to prevent token exhaustion
+  if (bodyString.length > 30000) {
+    return res.status(413).json({ error: 'Požadavek je příliš velký. Zkraťte prosím text a zkuste to znovu.' });
+  }
+  next();
+};
+
 router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { rawText, title } = req.body;
@@ -44,7 +54,7 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
 });
 
 // Chat endpoint for AiAssistantView
-router.post('/chat', aiRateLimiter, async (req, res) => {
+router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
     const { messages, systemPrompt, mode } = req.body;
     const historyText = (messages || [])
@@ -67,7 +77,7 @@ Odpověz věcně, srozumitelně a strukturovaně v češtině.`;
 });
 
 // BIFF Message Converter
-router.post('/biff-convert', aiRateLimiter, async (req, res) => {
+router.post('/biff-convert', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
     const { rawMessage } = req.body;
     if (!rawMessage) return res.status(400).json({ error: 'Chybí zpráva k převodu.' });
@@ -103,7 +113,7 @@ Vystup ve formátu JSON:
 });
 
 // Guide Action Plan Generator
-router.post('/guide-plan', aiRateLimiter, async (req, res) => {
+router.post('/guide-plan', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
     const { childAge, conflictStage, ospodStance, primaryGoal } = req.body;
     const prompt = `Jsi stratég opatrovnického práva v ČR. Na základě následujících parametrů vytvoř personalizovaný akční plán na 7-30 dní:
@@ -144,7 +154,7 @@ Vystup ve formátu JSON:
 });
 
 // Document Analysis for AiCaseManagerView
-router.post('/analyze-document', aiRateLimiter, async (req, res) => {
+router.post('/analyze-document', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
     const { documentText, documentType } = req.body;
     if (!documentText) return res.status(400).json({ error: 'Chybí text dokumentu.' });
@@ -190,7 +200,7 @@ Vystup ve formátu JSON:
 });
 
 // Simulator Evaluation
-router.post('/simulator-evaluate', aiRateLimiter, async (req, res) => {
+router.post('/simulator-evaluate', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
     const { scenario, history } = req.body;
     const prompt = `Jsi lektor komunikace a právní taktiky v opatrovnických řízeních.

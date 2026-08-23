@@ -26,6 +26,24 @@ const performRequest = (options, postData) => {
     headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(biffData) }
   };
   
+  
+  console.log('\n[Test] AI payload limit (> 30000 chars)');
+  const largePayload = JSON.stringify({ rawMessage: 'a'.repeat(30001) });
+  const payloadOpts = {
+    hostname: 'localhost',
+    port: 3000,
+    path: '/api/ai/biff-convert',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(largePayload) }
+  };
+  const payloadRes = await performRequest(payloadOpts, largePayload);
+  if (payloadRes.statusCode === 413) {
+    console.log('AI payload limit hit? true PASS');
+  } else {
+    console.error('AI payload limit hit? false FAIL', payloadRes.statusCode);
+    failed = true;
+  }
+
   for(let i=0; i<20; i++) {
     const res = await performRequest(biffOpts, biffData);
     if(res.statusCode === 429) {

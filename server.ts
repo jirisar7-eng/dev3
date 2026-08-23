@@ -95,6 +95,19 @@ process.on('unhandledRejection', (reason: any) => {
 
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.json({ limit: '50mb' }));
+
+// Basic Security Headers (Fallback to external Caddy config)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // HSTS is only safe to enforce over HTTPS or behind a proxy that sets X-Forwarded-Proto
+  if (req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
 app.use(parseAuthToken as any);
 
 // Session Cookie Options Helper - supports custom domain and secure options

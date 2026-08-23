@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { AuditDocumentItem, AuditShareItem, AuditCenterStats, AuditCategoryType, AuditStatusType } from '../types';
@@ -97,7 +97,7 @@ export class AuditCenterService {
     let branch = 'main';
 
     try {
-      const gitLog = execSync(`git log -1 --format="%H|%an|%cd" -- "${relativeFilePath}"`, {
+      const gitLog = execFileSync('git', ['log', '-1', '--format=%H|%an|%cd', '--', relativeFilePath], {
         cwd: ROOT_DIR,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'ignore'],
@@ -109,7 +109,7 @@ export class AuditCenterService {
         author = parts[1] || '';
       }
 
-      branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
         cwd: ROOT_DIR,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'ignore'],

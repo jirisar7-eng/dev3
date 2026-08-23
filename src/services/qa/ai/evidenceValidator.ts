@@ -117,7 +117,7 @@ export class EvidenceValidator {
     if (matchedFile) {
       try {
         const diffOutput = require('child_process')
-          .execSync(`git diff HEAD~1 HEAD -- ${matchedFile}`, { stdio: 'pipe' })
+          .execFileSync('git', ['diff', 'HEAD~1', 'HEAD', '--', matchedFile], { stdio: 'pipe' })
           .toString()
           .trim();
         if (diffOutput) {

@@ -2094,4 +2094,3 @@ model MementoCase {
   @@index([category])
   @@index([status])
 }
-
