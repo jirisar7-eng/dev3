@@ -101,10 +101,8 @@ function checkUserStatusAndMfa(user: User, req: Request, res: Response): boolean
     return false;
   }
 
-  // 2. MFA requirement check for user who has TOTP enabled in database (except during MFA configuration/me/logout routes)
-  const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
-
-  if (user.totpEnabled && !authReq.tokenMfaVerified && !isMfaSetupRoute) {
+  // 2. MFA requirement check for user who has TOTP enabled in database
+  if (user.totpEnabled && !authReq.tokenMfaVerified) {
     res.status(401).json({
       code: 'MFA_REQUIRED',
       error: 'Pro přístup k této sekci je vyžadováno dvoufázové ověření (MFA/2FA). Projděte prosím ověřením.',
@@ -113,6 +111,7 @@ function checkUserStatusAndMfa(user: User, req: Request, res: Response): boolean
   }
 
   // 3. MFA requirement check for administrative roles (except during MFA configuration/me routes)
+  const isMfaSetupRoute = req.path.includes('/2fa/') || req.path.includes('/me') || req.path.includes('/logout') || req.path.includes('/profile');
   if (ROLES_REQUIRING_MFA.includes(user.role) && !user.totpEnabled && !isMfaSetupRoute) {
     res.status(403).json({
       code: 'MFA_REQUIRED',

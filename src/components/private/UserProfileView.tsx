@@ -787,6 +787,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                         }
                         return;
                       }
+                      const data = await res.json();
+                      if (data.token) {
+                        localStorage.setItem('tatovacesta_auth_token', data.token);
+                      }
                       setIs2faEnabled(true);
                       onProfileUpdated({ ...user, totpEnabled: true, totpBackupCodes: backupCodes });
                       setMfaSetupStep(3);
