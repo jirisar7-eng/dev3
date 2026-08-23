@@ -9,6 +9,14 @@ export type StateAdminSourceCategory =
   | 'P3_PUBLIC_REGISTRY'
   | 'P4_E_LEGISLATIVA';
 
+export type NkodThematicGroup =
+  | 'ALL'
+  | 'DIVORCES'
+  | 'MARRIAGES'
+  | 'FAMILY_CHILDREN'
+  | 'CUSTODY_CARE'
+  | 'COURT_STATS';
+
 export interface StateAdminConnectorConfig {
   sourceId: StateAdminSourceCategory;
   name: string;
@@ -33,16 +41,27 @@ export interface StateAdminAuditLog {
 
 // P1: Justice / MSp Payload Types
 export interface JudicialStatisticPayload {
-  courtCode?: string;
-  courtName: string;
-  agenda: 'P' | 'Nc' | 'C' | 'ALL'; // P/Nc = Opatrovnická agenda, C = Občanskoprávní
+  code: string;
+  title: string;
+  value: string;
+  unit: string;
   period: string;
-  averageDurationDays: number;
+  category: string;
+  description: string;
+  source: string;
+  datasetIri?: string;
+  sourceUrl?: string;
+  officialReport?: string;
+  publisherIco?: string;
+  validationStatus?: 'VERIFIED_OFFICIAL_STATISTIC' | 'LIVE_STREAM_VALIDATED' | 'OFFICIAL_REGISTER';
+  courtCode?: string;
+  courtName?: string;
+  agenda?: 'P' | 'Nc' | 'C' | 'ALL';
+  averageDurationDays?: number;
   sharedCarePercentage?: number;
   soleMotherCarePercentage?: number;
   soleFatherCarePercentage?: number;
-  totalCasesCount: number;
-  source: string;
+  totalCasesCount?: number;
 }
 
 export interface JudicialCasePayload {
@@ -53,6 +72,7 @@ export interface JudicialCasePayload {
   legalRatio: string;
   tags: string[];
   fullTextUrl?: string;
+  datasetIri?: string;
   publishedAt: string;
 }
 
@@ -61,23 +81,33 @@ export interface NkodDatasetItem {
   id: string;
   title: string;
   description?: string;
-  provider: string; // ČSÚ, MPSV, MSp
+  provider: string; // ČSÚ, MPSV, MSp, ÚMPOD
+  publisherIco?: string;
   issuedDate?: string;
   modifiedDate?: string;
   keywords: string[];
   downloadUrl?: string;
+  datasetIri?: string;
   format?: string;
+  relevanceScore?: number;
+  thematicCategory?: string;
 }
 
 export interface DemographicStatisticPayload {
-  category: string;
+  code: string;
   title: string;
-  description?: string;
   value: string;
   unit: string;
   period: string;
-  region?: string;
+  category: string;
+  description: string;
   source: string;
+  datasetIri?: string;
+  sourceUrl?: string;
+  officialReport?: string;
+  publisherIco?: string;
+  validationStatus?: 'VERIFIED_OFFICIAL_STATISTIC' | 'LIVE_STREAM_VALIDATED' | 'OFFICIAL_REGISTER';
+  region?: string;
 }
 
 // P3: Public Registries (OVM, Soudy, OSPOD, ARES Legal Professionals)
@@ -115,6 +145,11 @@ export interface ConnectorResult<T> {
   data: T[];
   recordsCount: number;
   durationMs: number;
+  fetchedAt?: string;
+  isCached?: boolean;
+  lastSuccessAt?: string;
+  cacheAgeSeconds?: number;
+  warning?: string;
   error?: {
     code: string;
     message: string;

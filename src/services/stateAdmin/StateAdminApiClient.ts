@@ -5,9 +5,19 @@
 
 import { ConnectorResult, StateAdminAuditLog, StateAdminSourceCategory } from './types.js';
 
+export interface StateAdminCacheEntry<T = any> {
+  source: StateAdminSourceCategory;
+  cacheKey: string;
+  data: T[];
+  recordsCount: number;
+  fetchedAt: string;
+  lastSuccessAt: string;
+}
+
 export class StateAdminApiClient {
   private static auditLogs: StateAdminAuditLog[] = [];
   private static rateLimiterMap: Map<string, number[]> = new Map();
+  private static cacheStore: Map<string, StateAdminCacheEntry> = new Map();
 
   /**
    * SSRF Protection: Verify host URL is safe and public.
@@ -71,13 +81,46 @@ export class StateAdminApiClient {
   }
 
   /**
+   * Server-Side Cache Management for Verified State Admin Data
+   */
+  public static getCache<T = any>(cacheKey: string): StateAdminCacheEntry<T> | null {
+    const entry = this.cacheStore.get(cacheKey);
+    if (!entry) return null;
+    return entry as StateAdminCacheEntry<T>;
+  }
+
+  public static setCache<T = any>(
+    cacheKey: string,
+    source: StateAdminSourceCategory,
+    data: T[]
+  ): void {
+    if (!Array.isArray(data) || data.length === 0) {
+      return; // Never overwrite valid cache with empty or invalid data
+    }
+    const nowIso = new Date().toISOString();
+    this.cacheStore.set(cacheKey, {
+      source,
+      cacheKey,
+      data,
+      recordsCount: data.length,
+      fetchedAt: nowIso,
+      lastSuccessAt: nowIso,
+    });
+  }
+
+  public static clearCache(): void {
+    this.cacheStore.clear();
+  }
+
+  /**
    * Execute secure server-side HTTP GET with timeout, SSRF check, rate limiting, and audit logging.
    */
   public static async executeGet<T>(
     source: StateAdminSourceCategory,
     urlStr: string,
     headers: Record<string, string> = {},
-    timeoutMs: number = 10000
+    timeoutMs: number = 10000,
+    maxRetries: number = 1
   ): Promise<{ status: number; data: any; durationMs: number; error?: string }> {
     const startTime = Date.now();
 
@@ -117,66 +160,81 @@ export class StateAdminApiClient {
       };
     }
 
-    // 4. Execute HTTP Request with AbortController Timeout
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let lastError: any = null;
+    let attempts = 0;
 
-    try {
-      const response = await fetch(urlStr, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
-          Accept: 'application/json, text/plain, */*',
-          ...headers,
-        },
-        signal: controller.signal,
-      });
+    while (attempts <= maxRetries) {
+      attempts++;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-      clearTimeout(timer);
-      const durationMs = Date.now() - startTime;
+      try {
+        const response = await fetch(urlStr, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
+            Accept: 'application/json, text/plain, */*',
+            ...headers,
+          },
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        this.recordAudit(source, urlStr, response.status, durationMs, false, 0, `HTTP ${response.status}`);
+        clearTimeout(timer);
+        const durationMs = Date.now() - startTime;
+
+        if (!response.ok) {
+          if ((response.status === 502 || response.status === 503 || response.status === 504) && attempts <= maxRetries) {
+            await new Promise((r) => setTimeout(r, 200));
+            continue;
+          }
+          this.recordAudit(source, urlStr, response.status, durationMs, false, 0, `HTTP ${response.status}`);
+          return {
+            status: response.status,
+            data: null,
+            durationMs,
+            error: `UPSTREAM_HTTP_ERROR_${response.status}`,
+          };
+        }
+
+        const json = await response.json().catch(() => null);
+        if (!json) {
+          this.recordAudit(source, urlStr, 200, durationMs, false, 0, 'Invalid JSON response payload');
+          return {
+            status: 422,
+            data: null,
+            durationMs,
+            error: 'INVALID_JSON_PAYLOAD: Response could not be parsed as valid JSON.',
+          };
+        }
+
+        this.recordAudit(source, urlStr, 200, durationMs, true, Array.isArray(json) ? json.length : 1);
         return {
-          status: response.status,
-          data: null,
+          status: 200,
+          data: json,
           durationMs,
-          error: `UPSTREAM_HTTP_ERROR_${response.status}`,
         };
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastError = err;
+        if (attempts <= maxRetries) {
+          await new Promise((r) => setTimeout(r, 200));
+          continue;
+        }
       }
-
-      const json = await response.json().catch(() => null);
-      if (!json) {
-        this.recordAudit(source, urlStr, 200, durationMs, false, 0, 'Invalid JSON response payload');
-        return {
-          status: 422,
-          data: null,
-          durationMs,
-          error: 'INVALID_JSON_PAYLOAD: Response could not be parsed as valid JSON.',
-        };
-      }
-
-      this.recordAudit(source, urlStr, 200, durationMs, true, Array.isArray(json) ? json.length : 1);
-      return {
-        status: 200,
-        data: json,
-        durationMs,
-      };
-    } catch (err: any) {
-      clearTimeout(timer);
-      const durationMs = Date.now() - startTime;
-      const isTimeout = err.name === 'AbortError';
-      const status = isTimeout ? 504 : 500;
-      const errorMsg = isTimeout ? 'TIMEOUT: Upstream API failed to respond within limit.' : err.message || 'Fetch failed';
-
-      this.recordAudit(source, urlStr, status, durationMs, false, 0, errorMsg);
-      return {
-        status,
-        data: null,
-        durationMs,
-        error: isTimeout ? 'UPSTREAM_TIMEOUT' : `FETCH_ERROR: ${errorMsg}`,
-      };
     }
+
+    const durationMs = Date.now() - startTime;
+    const isTimeout = lastError?.name === 'AbortError';
+    const status = isTimeout ? 504 : 500;
+    const errorMsg = isTimeout ? 'TIMEOUT: Upstream API failed to respond within limit.' : lastError?.message || 'Fetch failed';
+
+    this.recordAudit(source, urlStr, status, durationMs, false, 0, errorMsg);
+    return {
+      status,
+      data: null,
+      durationMs,
+      error: isTimeout ? 'UPSTREAM_TIMEOUT' : `FETCH_ERROR: ${errorMsg}`,
+    };
   }
 
   /**
@@ -185,7 +243,8 @@ export class StateAdminApiClient {
   public static async executeSparqlQuery(
     source: StateAdminSourceCategory,
     sparqlQuery: string,
-    timeoutMs: number = 10000
+    timeoutMs: number = 10000,
+    maxRetries: number = 1
   ): Promise<{ status: number; data: any; durationMs: number; error?: string }> {
     const sparqlEndpoint = 'https://data.gov.cz/sparql';
     const startTime = Date.now();
@@ -226,68 +285,83 @@ export class StateAdminApiClient {
       };
     }
 
-    // 4. Execute HTTP POST to SPARQL endpoint
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let lastError: any = null;
+    let attempts = 0;
 
-    try {
-      const response = await fetch(sparqlEndpoint, {
-        method: 'POST',
-        headers: {
-          'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
-          Accept: 'application/sparql-results+json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `query=${encodeURIComponent(sparqlQuery)}`,
-        signal: controller.signal,
-      });
+    while (attempts <= maxRetries) {
+      attempts++;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-      clearTimeout(timer);
-      const durationMs = Date.now() - startTime;
+      try {
+        const response = await fetch(sparqlEndpoint, {
+          method: 'POST',
+          headers: {
+            'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
+            Accept: 'application/sparql-results+json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `query=${encodeURIComponent(sparqlQuery)}`,
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        this.recordAudit(source, sparqlEndpoint, response.status, durationMs, false, 0, `SPARQL HTTP ${response.status}`);
+        clearTimeout(timer);
+        const durationMs = Date.now() - startTime;
+
+        if (!response.ok) {
+          if ((response.status === 502 || response.status === 503 || response.status === 504) && attempts <= maxRetries) {
+            await new Promise((r) => setTimeout(r, 200));
+            continue;
+          }
+          this.recordAudit(source, sparqlEndpoint, response.status, durationMs, false, 0, `SPARQL HTTP ${response.status}`);
+          return {
+            status: response.status,
+            data: null,
+            durationMs,
+            error: `UPSTREAM_HTTP_ERROR_${response.status}`,
+          };
+        }
+
+        const json = await response.json().catch(() => null);
+        if (!json || !json.results || !Array.isArray(json.results.bindings)) {
+          this.recordAudit(source, sparqlEndpoint, 200, durationMs, false, 0, 'Invalid SPARQL JSON bindings response');
+          return {
+            status: 422,
+            data: null,
+            durationMs,
+            error: 'INVALID_SPARQL_RESPONSE: Response does not contain valid SPARQL result bindings.',
+          };
+        }
+
+        const bindings = json.results.bindings;
+        this.recordAudit(source, sparqlEndpoint, 200, durationMs, true, bindings.length);
         return {
-          status: response.status,
-          data: null,
+          status: 200,
+          data: bindings,
           durationMs,
-          error: `UPSTREAM_HTTP_ERROR_${response.status}`,
         };
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastError = err;
+        if (attempts <= maxRetries) {
+          await new Promise((r) => setTimeout(r, 200));
+          continue;
+        }
       }
-
-      const json = await response.json().catch(() => null);
-      if (!json || !json.results || !Array.isArray(json.results.bindings)) {
-        this.recordAudit(source, sparqlEndpoint, 200, durationMs, false, 0, 'Invalid SPARQL JSON bindings response');
-        return {
-          status: 422,
-          data: null,
-          durationMs,
-          error: 'INVALID_SPARQL_RESPONSE: Response does not contain valid SPARQL result bindings.',
-        };
-      }
-
-      const bindings = json.results.bindings;
-      this.recordAudit(source, sparqlEndpoint, 200, durationMs, true, bindings.length);
-      return {
-        status: 200,
-        data: bindings,
-        durationMs,
-      };
-    } catch (err: any) {
-      clearTimeout(timer);
-      const durationMs = Date.now() - startTime;
-      const isTimeout = err.name === 'AbortError';
-      const status = isTimeout ? 504 : 500;
-      const errorMsg = isTimeout ? 'TIMEOUT: SPARQL endpoint failed to respond within limit.' : err.message || 'Fetch failed';
-
-      this.recordAudit(source, sparqlEndpoint, status, durationMs, false, 0, errorMsg);
-      return {
-        status,
-        data: null,
-        durationMs,
-        error: isTimeout ? 'UPSTREAM_TIMEOUT' : `SPARQL_FETCH_ERROR: ${errorMsg}`,
-      };
     }
+
+    const durationMs = Date.now() - startTime;
+    const isTimeout = lastError?.name === 'AbortError';
+    const status = isTimeout ? 504 : 500;
+    const errorMsg = isTimeout ? 'TIMEOUT: SPARQL endpoint failed to respond within limit.' : lastError?.message || 'Fetch failed';
+
+    this.recordAudit(source, sparqlEndpoint, status, durationMs, false, 0, errorMsg);
+    return {
+      status,
+      data: null,
+      durationMs,
+      error: isTimeout ? 'UPSTREAM_TIMEOUT' : `SPARQL_FETCH_ERROR: ${errorMsg}`,
+    };
   }
 
   /**
@@ -329,5 +403,6 @@ export class StateAdminApiClient {
   public static resetForTesting(): void {
     this.auditLogs = [];
     this.rateLimiterMap.clear();
+    this.cacheStore.clear();
   }
 }

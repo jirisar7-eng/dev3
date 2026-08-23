@@ -981,8 +981,9 @@ app.get('/api/state-admin/csu/demographics', async (req: express.Request, res: e
 
 const handleNkodSearch = async (req: express.Request, res: express.Response) => {
   try {
-    const keyword = (req.query.keyword as string) || (req.query.q as string) || 'rodina';
-    const result = await StateAdminHubService.searchNkodDatasets(keyword);
+    const keyword = (req.query.keyword as string) || (req.query.q as string) || '';
+    const thematicGroup = (req.query.category as string) || (req.query.thematicGroup as string) || 'ALL';
+    const result = await StateAdminHubService.searchNkodDatasets(keyword, thematicGroup);
     sendStateAdminResponse(res, result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error searching NKOD datasets' });

@@ -67,7 +67,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Chyba při AI analýze dokumentu.');
+      if (!res.ok) throw new Error(data.message || data.error || 'Chyba při AI analýze dokumentu.');
 
       setExtractedData(data);
     } catch (err: any) {

@@ -424,23 +424,18 @@ router.get('/:caseId/export', async (req: AuthenticatedRequest, res) => {
 // ----------------------------------------------------
 
 function handleCareError(res: any, err: any) {
-  const msg = err?.message || String(err);
-  if (
+  const msg = err?.userMessage || err?.message || String(err);
+  const code = err?.code || 'ERROR';
+  const statusCode = err?.statusCode || (
     msg.includes('DATABASE_UNAVAILABLE') ||
     msg.includes('Databáz') ||
     msg.includes('database') ||
     msg.includes('Database') ||
-    msg.includes('dostupná')
-  ) {
-    return res.status(503).json({ error: 'Databázový server je momentálně nedostupný. Zkuste to prosím znovu.' });
-  }
-  if (msg.includes('Přístup odepřen')) {
-    return res.status(403).json({ error: msg });
-  }
-  if (msg.includes('nebyl nalezen') || msg.includes('nebylo nalezeno')) {
-    return res.status(404).json({ error: msg });
-  }
-  return res.status(400).json({ error: msg });
+    msg.includes('dostupná') ? 503 :
+    msg.includes('Přístup odepřen') ? 403 :
+    msg.includes('nebyl nalezen') || msg.includes('nebylo nalezeno') ? 404 : 400
+  );
+  return res.status(statusCode).json({ success: false, code, error: msg, message: msg });
 }
 
 // GET /api/cases/:caseId/care -> Care Hub summary

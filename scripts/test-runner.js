@@ -7,7 +7,7 @@ console.log('--- TÁTA MÁ PRÁVO : TEST RUNNER ---');
 const tests = [
   { cmd: 'node', args: ['--test', 'test/main.test.cjs'], name: 'Static & Security Integrity (PWA, Disclaimers, Auth, RBAC)' },
   { cmd: 'node', args: ['run_security_tests.cjs'], name: 'Security & Audit Integrations' },
-  { cmd: 'node', args: ['run_ai_rate_limit_test.cjs'], name: 'AI Rate Limits Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/state-admin-p1-p2.test.js'], name: 'State Administration API Hub (P1 & P2 Connectors)' },
   { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' }
 ];
 

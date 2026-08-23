@@ -172,20 +172,120 @@ export class StateAdminHubService {
 
   // P1: Justice / MSp
   public static async getJudicialStatistics(agenda: string = 'P'): Promise<ConnectorResult<any>> {
-    return JusticeOpenDataConnector.getJudicialStatistics(agenda);
+    const cacheKey = `msp_judicial_statistics_${agenda || 'P'}`;
+    const result = await JusticeOpenDataConnector.getJudicialStatistics(agenda);
+
+    if (result.success && result.data && result.data.length > 0) {
+      StateAdminApiClient.setCache(cacheKey, 'P1_JUSTICE', result.data);
+      return result;
+    }
+
+    // Fallback to verified server cache if upstream unavailable
+    const cached = StateAdminApiClient.getCache(cacheKey);
+    if (cached && cached.data.length > 0) {
+      return {
+        success: true,
+        source: 'P1_JUSTICE',
+        httpStatus: 200,
+        data: cached.data,
+        recordsCount: cached.recordsCount,
+        durationMs: result.durationMs || 0,
+        fetchedAt: cached.fetchedAt,
+        lastSuccessAt: cached.lastSuccessAt,
+        isCached: true,
+        warning: 'Oficiální zdroj je momentálně nedostupný. Zobrazuji poslední úspěšně načtená data.',
+      };
+    }
+
+    return result;
   }
 
   public static async getJudicialCases(courtType: string = 'Ústavní soud'): Promise<ConnectorResult<any>> {
-    return JusticeOpenDataConnector.getJudicialCases(courtType);
+    const cacheKey = `msp_judicial_cases_${courtType}`;
+    const result = await JusticeOpenDataConnector.getJudicialCases(courtType);
+
+    if (result.success && result.data && result.data.length > 0) {
+      StateAdminApiClient.setCache(cacheKey, 'P1_JUSTICE', result.data);
+      return result;
+    }
+
+    const cached = StateAdminApiClient.getCache(cacheKey);
+    if (cached && cached.data.length > 0) {
+      return {
+        success: true,
+        source: 'P1_JUSTICE',
+        httpStatus: 200,
+        data: cached.data,
+        recordsCount: cached.recordsCount,
+        durationMs: result.durationMs || 0,
+        fetchedAt: cached.fetchedAt,
+        lastSuccessAt: cached.lastSuccessAt,
+        isCached: true,
+        warning: 'Oficiální zdroj je momentálně nedostupný. Zobrazuji poslední úspěšně načtená data.',
+      };
+    }
+
+    return result;
   }
 
   // P2: ČSÚ / NKOD
   public static async getDemographicStatistics(): Promise<ConnectorResult<any>> {
-    return CsuNkodConnector.getDemographicStatistics();
+    const cacheKey = 'csu_demographic_statistics';
+    const result = await CsuNkodConnector.getDemographicStatistics();
+
+    if (result.success && result.data && result.data.length > 0) {
+      StateAdminApiClient.setCache(cacheKey, 'P2_CSU_NKOD', result.data);
+      return result;
+    }
+
+    const cached = StateAdminApiClient.getCache(cacheKey);
+    if (cached && cached.data.length > 0) {
+      return {
+        success: true,
+        source: 'P2_CSU_NKOD',
+        httpStatus: 200,
+        data: cached.data,
+        recordsCount: cached.recordsCount,
+        durationMs: result.durationMs || 0,
+        fetchedAt: cached.fetchedAt,
+        lastSuccessAt: cached.lastSuccessAt,
+        isCached: true,
+        warning: 'Oficiální zdroj je momentálně nedostupný. Zobrazuji poslední úspěšně načtená data.',
+      };
+    }
+
+    return result;
   }
 
-  public static async searchNkodDatasets(keyword: string = 'rodina'): Promise<ConnectorResult<any>> {
-    return CsuNkodConnector.searchNkodDatasets(keyword);
+  public static async searchNkodDatasets(
+    keyword: string = '',
+    thematicGroup: any = 'ALL'
+  ): Promise<ConnectorResult<any>> {
+    const cacheKey = `nkod_search_${keyword || 'default'}_${thematicGroup || 'ALL'}`;
+    const result = await CsuNkodConnector.searchNkodDatasets(keyword, thematicGroup);
+
+    if (result.success && result.data && result.data.length > 0) {
+      StateAdminApiClient.setCache(cacheKey, 'P2_CSU_NKOD', result.data);
+      return result;
+    }
+
+    const cached = StateAdminApiClient.getCache(cacheKey);
+    if (cached && cached.data.length > 0) {
+      return {
+        success: true,
+        source: 'P2_CSU_NKOD',
+        httpStatus: 200,
+        data: cached.data,
+        recordsCount: cached.recordsCount,
+        durationMs: result.durationMs || 0,
+        fetchedAt: cached.fetchedAt,
+        lastSuccessAt: cached.lastSuccessAt,
+        isCached: true,
+        warning: 'Oficiální zdroj je momentálně nedostupný. Zobrazuji poslední úspěšně načtená data.',
+      };
+    }
+
+    return result;
   }
 
   // P3: Public Registries

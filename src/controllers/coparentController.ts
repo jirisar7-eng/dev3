@@ -318,14 +318,27 @@ export class CoParentController {
       const file = req.file;
 
       if (!text && !file) {
-        return res.status(400).json({ success: false, message: "Musíte nahrát soubor rozsudku nebo vložit text." });
+        return res.status(400).json({
+          success: false,
+          code: 'EMPTY_INPUT',
+          error: "Musíte nahrát soubor rozsudku nebo vložit text.",
+          message: "Musíte nahrát soubor rozsudku nebo vložit text."
+        });
       }
 
       const extracted = await JudgmentParserService.parseJudgmentFile(file, text);
       res.json({ success: true, ...extracted });
     } catch (err: any) {
       console.error('[CoParentController.parseJudgment error]:', err?.message || err);
-      res.status(400).json({ success: false, message: err?.message || "Chyba při zpracování rozsudku." });
+      const statusCode = err?.statusCode || 400;
+      const userMessage = err?.userMessage || err?.message || "Chyba při zpracování rozsudku.";
+      const code = err?.code || 'INTERNAL_ERROR';
+      res.status(statusCode).json({
+        success: false,
+        code,
+        error: userMessage,
+        message: userMessage
+      });
     }
   }
 

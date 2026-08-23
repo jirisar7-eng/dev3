@@ -23,6 +23,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
 
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -60,6 +61,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     setLoadingText('AI analyzuje právní dokument a extrahuje data...');
 
@@ -82,12 +84,12 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Chyba při AI analýze.');
+      if (!res.ok) throw new Error(data.message || data.error || 'Chyba při AI analýze.');
 
       setExtractedData(data);
       setStep('review');
     } catch (err: any) {
-      alert(err.message || 'Chyba při zpracování dokumentu.');
+      setError(err.message || 'Chyba při zpracování dokumentu.');
     } finally {
       setLoading(false);
     }
@@ -170,6 +172,15 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
           </div>
         ) : step === 'upload' ? (
           <form onSubmit={handleAnalyze} className="space-y-6">
+            {error && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold">Nepodařilo se zpracovat dokument</div>
+                  <div className="mt-0.5">{error}</div>
+                </div>
+              </div>
+            )}
             <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
               <FileText className="w-5 h-5 text-indigo-700 shrink-0 mt-0.5" />
               <div className="text-xs text-indigo-900">

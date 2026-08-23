@@ -1,5 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
 
+export interface AiGenerateOptions {
+  timeoutMs?: number;
+  jsonMode?: boolean;
+  modelOverride?: string;
+}
+
 export class AiService {
   private static getGeminiClient(keyEnvVar: string): GoogleGenAI {
     const key = process.env[keyEnvVar];
@@ -7,66 +13,200 @@ export class AiService {
     return new GoogleGenAI({ apiKey: key });
   }
 
-  static async generateContent(prompt: string): Promise<string> {
-    // 1. Try Primary Gemini Key
-    try {
-      if (process.env.GEMINI_API_KEY) {
-        console.log('[AiService] Using Primary GEMINI_API_KEY...');
-        const ai = this.getGeminiClient('GEMINI_API_KEY');
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: prompt,
-        });
-        if (response.text) return response.text;
+  /**
+   * Universal AI content generation with multi-provider resilience:
+   * 1. Gemini Primary (gemini-2.5-flash via GEMINI_API_KEY)
+   * 2. Gemini Secondary (gemini-2.5-flash via GEMINI_API_KEY_2)
+   * 3. Grok / xAI (grok-2-latest via XAI_API_KEY or GROK_API_KEY)
+   * 4. Groq (llama-3.3-70b-versatile via GROQ_API_KEY)
+   */
+  static async generateContent(prompt: string, options?: AiGenerateOptions): Promise<string> {
+    const timeoutMs = options?.timeoutMs || 25000;
+    const errors: Array<{ provider: string; error: string }> = [];
+
+    // Helper for timeout execution
+    const withTimeout = async <T>(promise: Promise<T>, providerName: string): Promise<T> => {
+      let timer: NodeJS.Timeout;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`Timeout: ${providerName} neodpověděl do ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+      try {
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        clearTimeout(timer!);
       }
-    } catch (err: any) {
-      console.warn('[AiService] Primary GEMINI_API_KEY failed:', err?.message);
+    };
+
+    // 1. Try Primary Gemini Key
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const start = Date.now();
+        console.log('[AiService] Calling Primary Gemini AI (gemini-2.5-flash)...');
+        const ai = this.getGeminiClient('GEMINI_API_KEY');
+        const call = async () => {
+          const response = await ai.models.generateContent({
+            model: options?.modelOverride || 'gemini-2.5-flash',
+            contents: prompt,
+            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+          });
+          return response.text || '';
+        };
+
+        const text = await withTimeout(call(), 'Gemini Primary');
+        if (text && text.trim().length > 0) {
+          console.log(`[AiService] Primary Gemini AI completed successfully in ${Date.now() - start}ms (${text.length} chars output).`);
+          return text;
+        }
+      } catch (err: any) {
+        console.warn('[AiService] Primary Gemini AI failed:', err?.message || err);
+        errors.push({ provider: 'Gemini Primary', error: err?.message || String(err) });
+      }
     }
 
     // 2. Try Secondary Gemini Key
-    try {
-      if (process.env.GEMINI_API_KEY_2) {
-        console.log('[AiService] Using Secondary GEMINI_API_KEY_2...');
-        const ai2 = this.getGeminiClient('GEMINI_API_KEY_2');
-        const response2 = await ai2.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: prompt,
-        });
-        if (response2.text) return response2.text;
-      }
-    } catch (err: any) {
-      console.warn('[AiService] Secondary GEMINI_API_KEY_2 failed:', err?.message);
-    }
-
-    // 3. Fallback to Groq API
-    if (process.env.GROQ_API_KEY) {
-      console.log('[AiService] Fallback to GROQ_API_KEY (llama-3.3-70b-versatile)...');
+    if (process.env.GEMINI_API_KEY_2) {
       try {
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
+        const start = Date.now();
+        console.log('[AiService] Calling Secondary Gemini AI (gemini-2.5-flash)...');
+        const ai2 = this.getGeminiClient('GEMINI_API_KEY_2');
+        const call = async () => {
+          const response2 = await ai2.models.generateContent({
+            model: options?.modelOverride || 'gemini-2.5-flash',
+            contents: prompt,
+            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+          });
+          return response2.text || '';
+        };
 
-        if (!groqResponse.ok) {
-          const errData = await groqResponse.json().catch(() => ({}));
-          throw new Error(`Groq API returned ${groqResponse.status}: ${JSON.stringify(errData)}`);
+        const text = await withTimeout(call(), 'Gemini Secondary');
+        if (text && text.trim().length > 0) {
+          console.log(`[AiService] Secondary Gemini AI completed successfully in ${Date.now() - start}ms.`);
+          return text;
         }
-
-        const data = await groqResponse.json();
-        return data.choices[0]?.message?.content || '';
       } catch (err: any) {
-        console.error('[AiService] Groq fallback failed:', err?.message);
-        throw new Error('All AI providers (Gemini Primary, Gemini Secondary, Groq) failed.');
+        console.warn('[AiService] Secondary Gemini AI failed:', err?.message || err);
+        errors.push({ provider: 'Gemini Secondary', error: err?.message || String(err) });
       }
     }
 
-    throw new Error('No available AI providers succeeded or configured.');
+    // 3. Fallback to Grok (xAI API)
+    const grokKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
+    if (grokKey) {
+      try {
+        const start = Date.now();
+        console.log('[AiService] Fallback to Grok AI (grok-2-latest)...');
+        const call = async () => {
+          const controller = new AbortController();
+          const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${grokKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'grok-2-latest',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.1,
+              response_format: options?.jsonMode ? { type: 'json_object' } : undefined
+            }),
+            signal: controller.signal
+          });
+
+          if (!grokResponse.ok) {
+            const errData = await grokResponse.text().catch(() => '');
+            throw new Error(`Grok API returned HTTP ${grokResponse.status}: ${errData.slice(0, 200)}`);
+          }
+
+          const data: any = await grokResponse.json();
+          return data.choices?.[0]?.message?.content || '';
+        };
+
+        const text = await withTimeout(call(), 'Grok AI');
+        if (text && text.trim().length > 0) {
+          console.log(`[AiService] Grok AI fallback succeeded in ${Date.now() - start}ms.`);
+          return text;
+        }
+      } catch (err: any) {
+        console.warn('[AiService] Grok AI fallback failed:', err?.message || err);
+        errors.push({ provider: 'Grok AI', error: err?.message || String(err) });
+      }
+    }
+
+    // 4. Fallback to Groq API (llama-3.3-70b-versatile)
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const start = Date.now();
+        console.log('[AiService] Fallback to Groq AI (llama-3.3-70b-versatile)...');
+        const call = async () => {
+          const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.1,
+              response_format: options?.jsonMode ? { type: 'json_object' } : undefined
+            })
+          });
+
+          if (!groqResponse.ok) {
+            const errData = await groqResponse.text().catch(() => '');
+            throw new Error(`Groq API returned HTTP ${groqResponse.status}: ${errData.slice(0, 200)}`);
+          }
+
+          const data: any = await groqResponse.json();
+          return data.choices?.[0]?.message?.content || '';
+        };
+
+        const text = await withTimeout(call(), 'Groq AI');
+        if (text && text.trim().length > 0) {
+          console.log(`[AiService] Groq AI fallback succeeded in ${Date.now() - start}ms.`);
+          return text;
+        }
+      } catch (err: any) {
+        console.warn('[AiService] Groq AI fallback failed:', err?.message || err);
+        errors.push({ provider: 'Groq AI', error: err?.message || String(err) });
+      }
+    }
+
+    // If all providers failed or no keys configured
+    if (errors.length === 0) {
+      throw new Error('AI_AUTH_ERROR: Žádný AI poskytovatel není nakonfigurován (chybí GEMINI_API_KEY, XAI_API_KEY i GROQ_API_KEY).');
+    }
+
+    const isTimeout = errors.some(e => e.error.toLowerCase().includes('timeout'));
+    const isRateLimit = errors.some(e => e.error.includes('429') || e.error.toLowerCase().includes('quota') || e.error.toLowerCase().includes('rate limit'));
+
+    if (isRateLimit) {
+      throw new Error(`AI_RATE_LIMIT: Poskytovatelé AI hlásí překročení kvóty nebo limitu požadavků.`);
+    }
+    if (isTimeout) {
+      throw new Error(`AI_TIMEOUT: Zpracování dokumentu překročilo časový limit.`);
+    }
+
+    throw new Error(`AI_PROVIDER_ERROR: Selhali všichni dostupní AI poskytovatelé (${errors.map(e => `${e.provider}: ${e.error}`).join('; ')})`);
   }
 }
