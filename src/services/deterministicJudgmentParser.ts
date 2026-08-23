@@ -466,30 +466,38 @@ export class DeterministicJudgmentParser {
 
   private static extractChild(text: string): ParseMatch<{ name: string; birthDate: string | null }> | null {
     const childRegexes = [
-      /(?:péče\s+o\s+nezletil[ého|ou|é]+|nezletil[ého|ou|ý|á|é]:?|nezl\.:?)\s+([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+(?:\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+)+)(?:[,\s]+nar(?:ozen[a-y]?)?(?:\s+dne)?\.?\s*([0-9]{1,2}\.\s*(?:[0-9]{1,2}\.|[a-záčďéěíňóřšťúůýž]+)\s*[0-9]{4}))?/i,
-      /(?:zastupující\s+nezl\.|ve\s+věci\s+nezl\.)\s+([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+(?:\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+)+)/i
+      /(?:nezl\.|nezletil(?:ého|ou|ý|á|é)?:?|péče\s+o\s+nezletil(?:ého|ou|é)?)\s+([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+(?:\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+)*)(?:[,\s]+nar(?:ozen[a-y]?)?(?:\s+dne)?\.?\s*([0-9]{1,2}\.\s*(?:[0-9]{1,2}\.|[a-záčďéěíňóřšťúůýž]+)\s*[0-9]{4}))?/gi,
+      /(?:zastupující\s+nezl\.|ve\s+věci\s+nezl\.)\s+([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+(?:\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+)*)/gi
     ];
 
-    for (const r of childRegexes) {
-      const m = text.match(r);
-      if (m && m[1]) {
-        const name = m[1].trim().replace(/\s+/g, ' ');
-        let birthDate: string | null = null;
-        if (m[2]) {
-          birthDate = this.normalizeCzechDate(m[2]);
-        } else {
-          // Look for birth date near child mention
-          const nearbyBirth = text.match(/nar(?:ozen[a-y]?)?(?:\s+dne)?\.?\s*([0-9]{1,2}\.\s*(?:[0-9]{1,2}\.|[a-záčďéěíňóřšťúůýž]+)\s*[0-9]{4})/i);
-          if (nearbyBirth && nearbyBirth[1]) {
-            birthDate = this.normalizeCzechDate(nearbyBirth[1]);
-          }
-        }
+    const invalidNames = ['dítě', 'dítěte', 'rodiče', 'rodičů', 'obou', 'všech', 'syna', 'dceru', 'nezletilého', 'nezletilou', 'nezletilé'];
 
-        return {
-          value: { name, birthDate },
-          confidence: 0.92,
-          sourceText: m[0]
-        };
+    for (const r of childRegexes) {
+      const matches = Array.from(text.matchAll(r));
+      for (const m of matches) {
+        if (m && m[1]) {
+          let name = m[1].trim().replace(/\s+/g, ' ');
+          name = name.replace(/\s+(?:se\s+sv[eěřr]+uje|nar\.?|dne|bytem|zastoupený|zastoupená|v\s+péči).*/i, '').trim();
+          if (!name || name.length < 2 || invalidNames.includes(name.toLowerCase())) continue;
+
+          let birthDate: string | null = null;
+          if (m[2]) {
+            birthDate = this.normalizeCzechDate(m[2]);
+          } else {
+            // Look for birth date near child mention in the source text
+            const nearbyBirth = m[0].match(/nar(?:ozen[a-y]?)?(?:\s+dne)?\.?\s*([0-9]{1,2}\.\s*(?:[0-9]{1,2}\.|[a-záčďéěíňóřšťúůýž]+)\s*[0-9]{4})/i) ||
+                                text.match(new RegExp(name + `[\\s\\S]{0,60}?nar(?:ozen[a-y]?)?(?:\\s+dne)?\\.?\\s*([0-9]{1,2}\\.\\s*(?:[0-9]{1,2}\\.|[a-záčďéěíňóřšťúůýž]+)\\s*[0-9]{4})`, 'i'));
+            if (nearbyBirth && nearbyBirth[1]) {
+              birthDate = this.normalizeCzechDate(nearbyBirth[1]);
+            }
+          }
+
+          return {
+            value: { name, birthDate },
+            confidence: 0.92,
+            sourceText: m[0]
+          };
+        }
       }
     }
 
@@ -525,7 +533,7 @@ export class DeterministicJudgmentParser {
   }
 
   private static extractScheduleType(text: string): ParseMatch<'EVEN_ODD_WEEKS' | 'WEEK_A_B' | 'EVERY_OTHER_WEEKEND' | 'CUSTOM' | 'STANDARD'> | null {
-    if (/(?:sud[ýé]\s+(?:a\s+lich[ýé]\s+)?týden|sudých\s+a\s+lichých\s+týdnech|v\s+sudém\s+týdnu|v\s+lichém\s+týdnu|v\s+sudých\s+týdnech)/i.test(text)) {
+    if (/(?:sud[ýéáých]+\s+(?:a\s+lich[ýéáých]+\s+)?(?:kalendářní(?:ch)?\s+)?týdn[euåůych]+|sudých\s+a\s+lichých\s+(?:kalendářních\s+)?týdn[ůech]+|v\s+sudém\s+týdnu|v\s+lichém\s+týdnu)/i.test(text)) {
       return {
         value: 'EVEN_ODD_WEEKS',
         confidence: 0.95,
