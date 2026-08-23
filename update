@@ -11,24 +11,60 @@ echo "       DEV3 UPDATE WORKFLOW"
 echo "=========================================="
 
 echo
-echo "=== 1. AKTUÁLNÍ VĚTEV ==="
+echo "=== 1. KONTROLA VĚTVE ==="
 
 CURRENT_BRANCH=$(git branch --show-current)
 
-if [ -z "$CURRENT_BRANCH" ]; then
-    echo "CHYBA: Nelze zjistit aktuální větev."
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo "CHYBA: Nejsme na main."
+    echo "Aktuální větev: $CURRENT_BRANCH"
     exit 1
 fi
 
-echo "Větev: $CURRENT_BRANCH"
+echo "Aktuální větev: main"
 
 echo
-echo "=== 2. GIT STATUS ==="
+echo "=== 2. FETCH GITHUB ==="
+
+git fetch origin --prune
+
+echo
+echo "=== 3. KONTROLA STAVU ==="
+
+LOCAL=$(git rev-parse main)
+REMOTE=$(git rev-parse origin/main)
+
+echo "LOCAL : $LOCAL"
+echo "REMOTE: $REMOTE"
+
+echo
+echo "=== COMMITY POUZE NA VPS ==="
+git log --oneline origin/main..main || true
+
+echo
+echo "=== COMMITY POUZE NA GITHUBU ==="
+git log --oneline main..origin/main || true
+
+echo
+echo "=== 4. SYNCHRONIZACE S GITHUB ==="
+
+if [ "$LOCAL" != "$REMOTE" ]; then
+
+    echo "Main není synchronizovaný."
+
+    echo "Provádím rebase na origin/main..."
+
+    git rebase origin/main
+
+fi
+
+echo
+echo "=== 5. KONTROLA PRACOVNÍHO STROMU ==="
 
 git status --short
 
 echo
-echo "=== 3. COMMIT VŠECH ZMĚN ==="
+echo "=== 6. COMMIT VŠECH ZMĚN ==="
 
 if [ -n "$(git status --porcelain)" ]; then
 
@@ -40,121 +76,23 @@ if [ -n "$(git status --porcelain)" ]; then
 
 else
 
-    echo "Žádné nové změny k commitnutí."
+    echo "Žádné nové změny."
 
 fi
 
 echo
-echo "=== 4. PUSH AKTUÁLNÍ VĚTVĚ ==="
-
-git push origin "$CURRENT_BRANCH"
-
-echo
-echo "=== 5. FETCH GITHUB ==="
-
-git fetch origin --prune
-
-echo
-echo "=== 6. PŘECHOD NA MAIN ==="
-
-git switch main
-
-echo
-echo "=== 7. BACKUP MAIN ==="
-
-BACKUP_TAG="backup-before-update-$(date +%Y%m%d-%H%M%S)"
-
-git tag "$BACKUP_TAG"
-
-git push origin "$BACKUP_TAG"
-
-echo "Backup tag:"
-echo "$BACKUP_TAG"
-
-echo
-echo "=== 8. AKTUALIZACE MAIN ==="
-
-git pull --ff-only origin main
-
-echo
-echo "=== 9. KONTROLA LOKÁLNÍCH VĚTVÍ ==="
-
-BRANCHES=$(git for-each-ref \
-    --format="%(refname:short)" \
-    refs/remotes/origin/ \
-    | grep -v "^origin/HEAD$" \
-    | sed 's#^origin/##' \
-    | grep -v "^main$" \
-    || true)
-
-for BRANCH in $BRANCHES; do
-
-    if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
-
-        COUNT=$(git rev-list --count main.."origin/$BRANCH")
-
-        if [ "$COUNT" -gt 0 ]; then
-
-            echo
-            echo "------------------------------------------"
-            echo "VĚTEV: $BRANCH"
-            echo "Commity mimo main: $COUNT"
-            echo "------------------------------------------"
-
-            git log --oneline --decorate main.."origin/$BRANCH"
-
-            echo
-            echo "Větev obsahuje změny mimo main."
-            echo "Automatický merge NEPROVEDU bez kontroly."
-            echo
-            echo "Pokud je větev připravena k merge:"
-            echo
-            echo "git merge origin/$BRANCH"
-            echo
-
-        fi
-
-    fi
-
-done
-
-echo
-echo "=== 10. KONTROLA MAIN ==="
-
-git status
-
-echo
-echo "HEAD:"
-git rev-parse main
-
-echo
-echo "ORIGIN/MAIN:"
-git rev-parse origin/main
-
-echo
-echo "=== 11. LINT ==="
-
-npm run lint
-
-echo
-echo "=== 12. BUILD ==="
-
-npm run build
-
-echo
-echo "=== 13. PUSH MAIN ==="
+echo "=== 7. PUSH MAIN ==="
 
 git push origin main
 
 echo
-echo "=== 14. FINÁLNÍ KONTROLA ==="
+echo "=== 8. FINÁLNÍ KONTROLA GITHUB ==="
 
 git fetch origin
 
 LOCAL=$(git rev-parse main)
 REMOTE=$(git rev-parse origin/main)
 
-echo
 echo "LOCAL MAIN : $LOCAL"
 echo "REMOTE MAIN: $REMOTE"
 
@@ -170,23 +108,38 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 fi
 
 echo
+echo "=== 9. LINT ==="
+
+npm run lint
+
+echo
+echo "=== 10. BUILD ==="
+
+npm run build
+
+echo
+echo "=== 11. FINÁLNÍ GIT STATUS ==="
+
+git status
+
+echo
 echo "=========================================="
 echo "       UPDATE ÚSPĚŠNĚ DOKONČEN"
 echo "=========================================="
 
 echo
-echo "GitHub main je aktuální."
-echo "Build prošel."
-echo "Lint prošel."
-echo
-echo "Commit:"
+echo "GitHub main:"
 echo "$LOCAL"
+
 echo
-echo "Backup:"
-echo "$BACKUP_TAG"
+echo "Lint: PASS"
+echo "Build: PASS"
+
 echo
-echo "Produkce zatím NEBYLA změněna."
+echo "Produkce nebyla změněna."
+
 echo
 echo "Další krok:"
 echo "update-prod3"
+
 echo
