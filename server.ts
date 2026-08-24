@@ -552,7 +552,7 @@ app.get('/api/esbirka/verify', async (req: express.Request, res: express.Respons
   });
 });
 
-// Admin sync endpoint (PROTECTED: Requires ADMIN or LEGAL_EDITOR role, strictly enforced quota & lock)
+// Admin sync endpoint (PROTECTED: Requires ADMIN role or higher, strictly enforced quota & lock)
 app.post('/api/esbirka/sync', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const { cislo, rok, actCode } = req.body;

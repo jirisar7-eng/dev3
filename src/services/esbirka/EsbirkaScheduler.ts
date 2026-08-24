@@ -195,15 +195,15 @@ export class EsbirkaScheduler {
    * Triggers an authorized manual synchronization by an administrator.
    * 
    * Strict guards:
-   * - Requires role ADMIN, SUPER_ADMIN, SYSTEM_ADMIN, or LEGAL_EDITOR.
+   * - Requires role ADMIN, SYSTEM_ADMIN, SUPER_ADMIN.
    * - Cannot exceed MAX_DAILY_CALLS (5/day) - fails closed immediately.
    * - Always passes through EsbirkaLockGuard and EsbirkaQuotaGuard.
    */
   public static async triggerManualSync(options: ManualSyncOptions): Promise<SyncResult> {
-    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'SYSTEM_ADMIN', 'LEGAL_EDITOR'];
+    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'SYSTEM_ADMIN'];
     if (options.userRole && !allowedRoles.includes(options.userRole)) {
       throw new EsbirkaApiError({
-        message: `Unauthorized manual sync attempt: user role '${options.userRole}' is insufficient. Required: ADMIN or LEGAL_EDITOR.`,
+        message: `Unauthorized manual sync attempt: user role '${options.userRole}' is insufficient. Required: ADMIN.`,
         code: 'AUTHORIZATION_ERROR',
         httpStatus: 403,
       });
