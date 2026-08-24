@@ -14,6 +14,15 @@ import { EsbirkaApiError } from '../services/esbirka/errors';
  * - Rigorous verification of all 13+ required failure, concurrency, quota, and lifecycle scenarios.
  */
 export async function runSchedulerTests(): Promise<{ passed: number; failed: number }> {
+  // Test-only environment: enables scheduler lifecycle tests without using a real secret.
+  const originalApiKey = process.env.ESBIRKA_API_KEY;
+  const originalSchedulerEnabled = process.env.ESBIRKA_SCHEDULER_ENABLED;
+  const originalNodeEnv = process.env.NODE_ENV;
+
+  process.env.ESBIRKA_API_KEY = 'TEST_ONLY_MOCK_KEY';
+  process.env.ESBIRKA_SCHEDULER_ENABLED = 'true';
+  process.env.NODE_ENV = 'test';
+
   console.log('======================================================================');
   console.log('--- STARTING ÚKOL 7/10: SECURE SCHEDULER & CONTROLLED SYNC SUITE ---');
   console.log('======================================================================');
@@ -437,6 +446,13 @@ export async function runSchedulerTests(): Promise<{ passed: number; failed: num
   console.log('\n======================================================================');
   console.log(`--- ÚKOL 7/10 TEST RESULTS: ${passed} PASSED, ${failed} FAILED ---`);
   console.log('======================================================================\n');
+
+  if (originalApiKey === undefined) delete process.env.ESBIRKA_API_KEY;
+  else process.env.ESBIRKA_API_KEY = originalApiKey;
+  if (originalSchedulerEnabled === undefined) delete process.env.ESBIRKA_SCHEDULER_ENABLED;
+  else process.env.ESBIRKA_SCHEDULER_ENABLED = originalSchedulerEnabled;
+  if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+  else process.env.NODE_ENV = originalNodeEnv;
 
   return { passed, failed };
 }
