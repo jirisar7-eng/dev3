@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
 
 interface ThemeContextType {
+  branding: any;
   themes: Theme[];
   activeTheme: Theme | null;
   themeSettings: ThemeSetting[];
@@ -21,10 +22,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [themes, setThemes] = useState<Theme[]>([]);
   const [activeTheme, setActiveThemeState] = useState<Theme | null>(null);
   const [themeSettings, setThemeSettings] = useState<ThemeSetting[]>([]);
+  const [branding, setBranding] = useState<any>(null);
 
 
   const { currentUser } = useAuth();
   
+  
+  const fetchBranding = async () => {
+    try {
+      const res = await fetch('/api/public/branding');
+      if (res.ok) {
+        const data = await res.json();
+        setBranding(data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch branding', e);
+    }
+  };
+
   const applyPreferences = (prefs: any) => {
     const root = document.documentElement;
     // Theme mode
@@ -161,6 +176,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     reloadThemes();
+    fetchBranding();
   }, []);
 
   const updateColor = async (key: string, value: string) => {
@@ -298,6 +314,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activateTheme,
         createNewTheme,
         deleteThemeById,
+        branding,
         resetToDefaults,
         reloadThemes,
       }}

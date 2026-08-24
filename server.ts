@@ -26,6 +26,7 @@ import { MinioStorageService } from './src/services/minioStorageService.ts';
 import { ClamAvService } from './src/services/clamAvService.ts';
 import { ComplianceService } from './src/services/complianceService.ts';
 import { AuditService } from './src/services/auditService.ts';
+import { BrandingService } from './src/services/brandingService.ts';
 import { SettingsService } from './src/services/settingsService.ts';
 import { seedDatabaseIfEmpty, ensureSuperAdminAccount } from './src/services/seedService.ts';
 import { runSeed } from './prisma/seed';

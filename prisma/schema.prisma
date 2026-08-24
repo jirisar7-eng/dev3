@@ -1140,18 +1140,18 @@ model Case {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  participants     CaseParticipant[]
-  children         Child[]
-  events           CaseEvent[]
-  deadlines        CaseDeadline[]
-  tasks            CaseTask[]
-  notes            CaseNote[]
-  documents        CaseDocument[]
-  evidence         CaseEvidence[]
-  communications   CaseCommunication[]
-  careArrangements CareArrangement[]
-  carePlans        CarePlan[]
-  careComparisons  CareSimulationComparison[]
+  participants         CaseParticipant[]
+  children             Child[]
+  events               CaseEvent[]
+  deadlines            CaseDeadline[]
+  tasks                CaseTask[]
+  notes                CaseNote[]
+  documents            CaseDocument[]
+  evidence             CaseEvidence[]
+  communications       CaseCommunication[]
+  careArrangements     CareArrangement[]
+  carePlans            CarePlan[]
+  careComparisons      CareSimulationComparison[]
   judgments            Judgment[]
   legalFacts           JudgmentLegalFact[]
   financialObligations FinancialObligation[]
@@ -1191,7 +1191,7 @@ model Child {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  carePlans CarePlanChild[]
+  carePlans            CarePlanChild[]
   financialObligations FinancialObligation[]
 
   @@index([caseId])
@@ -1299,7 +1299,7 @@ model CaseDocument {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  evidence CaseEvidence[]
+  evidence  CaseEvidence[]
   judgments Judgment[]
 
   @@index([caseId])
@@ -2106,29 +2106,29 @@ model MementoCase {
 // ------------------------------------------------------
 
 model Judgment {
-  id                 String   @id @default(uuid())
+  id                 String        @id @default(uuid())
   caseId             String
-  case               Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case               Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
   documentId         String?
   document           CaseDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
   courtName          String
-  caseNumber         String?  // sp. zn.
-  judgmentNumber     String?  // č. j.
+  caseNumber         String? // sp. zn.
+  judgmentNumber     String? // č. j.
   issueDate          DateTime? // datum rozhodnutí
   promulgationDate   DateTime? // datum vyhlášení
   effectiveDate      DateTime? // datum právní moci
   enforceabilityDate DateTime? // vykonatelnost
   judgeName          String?
-  status             String   @default("CONFIRMED") // DRAFT, CONFIRMED, SUPERSEDED, ARCHIVED
-  sourceFileType     String   @default("PDF") // PDF, DOCX, TXT
-  scanStatus         String   @default("CLEAN")
-  aiEnriched         Boolean  @default(false)
-  extractionQuality  Float    @default(1.0)
-  rawText            String?  @db.Text
-  notes              String?  @db.Text
+  status             String        @default("CONFIRMED") // DRAFT, CONFIRMED, SUPERSEDED, ARCHIVED
+  sourceFileType     String        @default("PDF") // PDF, DOCX, TXT
+  scanStatus         String        @default("CLEAN")
+  aiEnriched         Boolean       @default(false)
+  extractionQuality  Float         @default(1.0)
+  rawText            String?       @db.Text
+  notes              String?       @db.Text
   createdBy          String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   sentences            JudgmentSentence[]
   facts                JudgmentLegalFact[]
@@ -2144,9 +2144,9 @@ model JudgmentSentence {
   id              String   @id @default(uuid())
   judgmentId      String
   judgment        Judgment @relation(fields: [judgmentId], references: [id], onDelete: Cascade)
-  sentenceIndex   Int      // 1-based order
-  pageNumber      Int?     // 1-based PDF page number
-  paragraphNumber Int?     // paragraph index
+  sentenceIndex   Int // 1-based order
+  pageNumber      Int? // 1-based PDF page number
+  paragraphNumber Int? // paragraph index
   section         String   @default("VYROK") // HEADER, VYROK, ODUVODNENI, POUCENI, PARTICIPANTS
   text            String   @db.Text
   confidence      Float    @default(1.0)
@@ -2162,27 +2162,27 @@ model JudgmentSentence {
 }
 
 model JudgmentLegalFact {
-  id                  String            @id @default(uuid())
-  caseId              String
-  case                Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  judgmentId          String
-  judgment            Judgment          @relation(fields: [judgmentId], references: [id], onDelete: Cascade)
-  sentenceId          String?
-  sentence            JudgmentSentence? @relation(fields: [sentenceId], references: [id], onDelete: SetNull)
-  category            String            // CUSTODY, CHILD_SUPPORT, CHILD_SUPPORT_ARREARS, HANDOVER_SCHEDULE, SPECIAL_HOLIDAY_SCHEDULE, PARENTAL_DUTY, INFORMATION_DUTY, LEGAL_COSTS, PROCEDURAL_DEADLINE, OTHER
-  factKey             String            // CUSTODY_TYPE, ALIMONY_AMOUNT, HANDOVER_TIME, CHRISTMAS_RULE, etc.
-  factValue           String            @db.Text
-  confidence          Float             @default(1.0)
-  source              String            @default("LOCAL_PDF") // LOCAL_PDF, AI, USER, SYSTEM
-  verificationStatus  String            @default("VERIFIED") // EXTRACTED, AI_ENRICHED, VERIFIED, USER_EDITED, CONFLICT
-  rawSourceText       String?           @db.Text
-  notes               String?           @db.Text
-  isOverriddenByUser  Boolean           @default(false)
-  userOverrideReason  String?           @db.Text
-  userOverrideDate    DateTime?
-  createdBy           String?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  id                 String            @id @default(uuid())
+  caseId             String
+  case               Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  judgmentId         String
+  judgment           Judgment          @relation(fields: [judgmentId], references: [id], onDelete: Cascade)
+  sentenceId         String?
+  sentence           JudgmentSentence? @relation(fields: [sentenceId], references: [id], onDelete: SetNull)
+  category           String // CUSTODY, CHILD_SUPPORT, CHILD_SUPPORT_ARREARS, HANDOVER_SCHEDULE, SPECIAL_HOLIDAY_SCHEDULE, PARENTAL_DUTY, INFORMATION_DUTY, LEGAL_COSTS, PROCEDURAL_DEADLINE, OTHER
+  factKey            String // CUSTODY_TYPE, ALIMONY_AMOUNT, HANDOVER_TIME, CHRISTMAS_RULE, etc.
+  factValue          String            @db.Text
+  confidence         Float             @default(1.0)
+  source             String            @default("LOCAL_PDF") // LOCAL_PDF, AI, USER, SYSTEM
+  verificationStatus String            @default("VERIFIED") // EXTRACTED, AI_ENRICHED, VERIFIED, USER_EDITED, CONFLICT
+  rawSourceText      String?           @db.Text
+  notes              String?           @db.Text
+  isOverriddenByUser Boolean           @default(false)
+  userOverrideReason String?           @db.Text
+  userOverrideDate   DateTime?
+  createdBy          String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@index([caseId])
   @@index([judgmentId])
@@ -2206,7 +2206,7 @@ model FinancialObligation {
   monthlyAmount  Float?            @default(0)
   paymentDueDate Int?              @default(15) // Day of month 1-31
   bankAccount    String?
-  paymentSymbol  String?           // Variabilní symbol
+  paymentSymbol  String? // Variabilní symbol
   totalArrears   Float?            @default(0)
   arrearsPeriod  String?
   arrearsDueDate DateTime?
@@ -2223,19 +2223,37 @@ model FinancialObligation {
 }
 
 model UserPreference {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  themeMode      String   @default("system")
-  colorPreset    String   @default("default")
-  customColors   String?  @db.Text
-  fontFamily     String   @default("default")
-  fontSize       Int      @default(100)
-  density        String   @default("standard")
-  borderRadius   String   @default("standard")
-  highContrast   Boolean  @default(false)
-  updatedAt      DateTime @updatedAt
-  createdAt      DateTime @default(now())
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themeMode    String   @default("system")
+  colorPreset  String   @default("default")
+  customColors String?  @db.Text
+  fontFamily   String   @default("default")
+  fontSize     Int      @default(100)
+  density      String   @default("standard")
+  borderRadius String   @default("standard")
+  highContrast Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
 
   @@index([userId])
+}
+
+// ------------------------------------------------------
+// BRANDING
+// ------------------------------------------------------
+model BrandingVersion {
+  id             String   @id @default(uuid())
+  version        Int      @default(1)
+  primaryLogoSvg String?  @db.Text
+  darkLogoSvg    String?  @db.Text
+  faviconType    String?  @default("svg")
+  faviconSvg     String?  @db.Text
+  logoAlt        String?  @default("Táta má právo")
+  isActive       Boolean  @default(false)
+  updatedBy      String?
+  updatedAt      DateTime @default(now())
+
+  @@index([isActive])
 }
