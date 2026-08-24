@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { UserSubmissionsTab } from './UserSubmissionsTab';
+import { UserAppearanceTab } from './UserAppearanceTab';
 import {
   User as UserIcon,
+  Monitor,
   Mail,
   Phone,
   Camera,
@@ -47,7 +49,7 @@ const getAuthHeaders = (extraHeaders: Record<string, string> = {}) => {
 export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfileUpdated }) => {
   const { loginWithGoogle, loginWithMicrosoft, registerPasskey } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'security' | 'passkeys' | 'social' | 'notifications' | 'submissions'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'appearance' | 'password' | 'security' | 'passkeys' | 'social' | 'notifications' | 'submissions'>('profile');
 
   // --- Profile Form State ---
   const [name, setName] = useState(user.name || '');
@@ -344,6 +346,17 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
           <UserIcon className="w-4 h-4" />
           Osobní & Kontaktní údaje
         </button>
+        <button
+          onClick={() => setActiveTab('appearance')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all ${
+            activeTab === 'appearance' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Monitor className="w-4 h-4" />
+          <span className="hidden sm:inline">Vzhled</span>
+        </button>
+  
+
 
         <button
           onClick={() => setActiveTab('password')}
@@ -511,6 +524,11 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
       )}
 
       {/* --- TAB 2: ZMĚNA HESLA --- */}
+      {activeTab === 'appearance' && (
+        <UserAppearanceTab user={user} />
+      )}
+  
+
       {activeTab === 'password' && (
         <div className="space-y-6 max-w-lg">
           <div className="space-y-1">

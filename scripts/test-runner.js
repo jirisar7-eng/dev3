@@ -12,6 +12,8 @@ const tests = [
   { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-case-sync.test.ts'], name: 'Judgment AI Extractor -> Case Persistence Integration' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/care-occurrence-engine.test.ts'], name: 'Care Occurrence Engine & Calendar Integration' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-ai-extractor-fallback.test.ts'], name: 'AI Extractor Local PDF Fallback & Deterministic Extraction (20 Tests)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-and-svg.test.ts'], name: 'Branding API & Secure SVG Sanitization' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
 ];
 
 let failed = false;

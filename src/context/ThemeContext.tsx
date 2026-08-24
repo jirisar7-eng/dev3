@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
 
 interface ThemeContextType {
+  branding: any;
   themes: Theme[];
   activeTheme: Theme | null;
   themeSettings: ThemeSetting[];
@@ -20,11 +22,124 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [themes, setThemes] = useState<Theme[]>([]);
   const [activeTheme, setActiveThemeState] = useState<Theme | null>(null);
   const [themeSettings, setThemeSettings] = useState<ThemeSetting[]>([]);
+  const [branding, setBranding] = useState<any>(null);
+
+
+  const { currentUser } = useAuth();
+  
+  
+  const fetchBranding = async () => {
+    try {
+      const res = await fetch('/api/public/branding');
+      if (res.ok) {
+        const data = await res.json();
+        setBranding(data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch branding', e);
+    }
+  };
+
+  const applyPreferences = (prefs: any) => {
+    const root = document.documentElement;
+    // Theme mode
+    if (prefs.themeMode === 'dark' || (prefs.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
+    // Color Presets
+    if (prefs.colorPreset) {
+       root.setAttribute('data-color-preset', prefs.colorPreset);
+       if (prefs.colorPreset === 'blue') {
+          root.style.setProperty('--color-primary', '#2563eb');
+          root.style.setProperty('--color-background', '#eff6ff');
+       } else if (prefs.colorPreset === 'green') {
+          root.style.setProperty('--color-primary', '#16a34a');
+          root.style.setProperty('--color-background', '#f0fdf4');
+       } else if (prefs.colorPreset === 'purple') {
+          root.style.setProperty('--color-primary', '#9333ea');
+          root.style.setProperty('--color-background', '#faf5ff');
+       } else if (prefs.colorPreset === 'neutral') {
+          root.style.setProperty('--color-primary', '#475569');
+          root.style.setProperty('--color-background', '#f8fafc');
+       } else if (prefs.colorPreset === 'high-contrast') {
+          root.style.setProperty('--color-primary', '#000000');
+          root.style.setProperty('--color-background', '#ffffff');
+          root.classList.add('high-contrast');
+       } else {
+          // default, let it use global vars
+          root.removeAttribute('data-color-preset');
+          root.classList.remove('high-contrast');
+       }
+    }
+    
+    // Typography
+    if (prefs.fontFamily && prefs.fontFamily !== 'default') {
+      root.style.setProperty('font-family', prefs.fontFamily);
+    } else {
+      root.style.removeProperty('font-family');
+    }
+    
+    // Font Size
+    if (prefs.fontSize) {
+      root.style.setProperty('font-size', `${prefs.fontSize}%`);
+    } else {
+      root.style.removeProperty('font-size');
+    }
+    
+    // Density (e.g. padding adjustments) - can use custom vars
+    if (prefs.density) {
+      root.setAttribute('data-density', prefs.density);
+    } else {
+      root.removeAttribute('data-density');
+    }
+    
+    // Border Radius
+    if (prefs.borderRadius) {
+      root.setAttribute('data-radius', prefs.borderRadius);
+    } else {
+      root.removeAttribute('data-radius');
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.preferences) {
+      applyPreferences(currentUser.preferences);
+    } else {
+      // Clear preferences if logged out
+      const root = document.documentElement;
+      root.classList.remove('dark', 'high-contrast');
+      root.removeAttribute('data-color-preset');
+      root.style.removeProperty('font-family');
+      root.style.removeProperty('font-size');
+      root.removeAttribute('data-density');
+      root.removeAttribute('data-radius');
+      // Re-apply global theme
+      if (activeTheme?.variables) {
+         applyCssVariables(activeTheme.variables);
+      }
+    }
+  }, [currentUser?.preferences, activeTheme]);
+
+  useEffect(() => {
+    const handlePrefChange = (e: any) => {
+      applyPreferences(e.detail);
+    };
+    window.addEventListener('user-preferences-updated', handlePrefChange);
+    return () => window.removeEventListener('user-preferences-updated', handlePrefChange);
+  }, []);
 
   const applyCssVariables = (vars: ThemeVariable[] | ThemeSetting[]) => {
     const root = document.documentElement;
     vars.forEach((v) => {
-      root.style.setProperty(`--color-${v.key}`, v.value);
+      
+      // Only apply if user has not overridden color (handled in applyPreferences)
+      if (!currentUser?.preferences || currentUser.preferences.colorPreset === 'default') {
+        root.style.setProperty(`--color-${v.key}`, v.value);
+      }
+    
     });
   };
 
@@ -61,6 +176,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     reloadThemes();
+    fetchBranding();
   }, []);
 
   const updateColor = async (key: string, value: string) => {
@@ -198,6 +314,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activateTheme,
         createNewTheme,
         deleteThemeById,
+        branding,
         resetToDefaults,
         reloadThemes,
       }}

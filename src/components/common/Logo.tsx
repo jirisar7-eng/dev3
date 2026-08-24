@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 
 export interface LogoProps {
   variant?: 'full' | 'icon' | 'white';
@@ -16,6 +17,25 @@ export const Logo: React.FC<LogoProps> = ({
   showSubtitle = true,
 }) => {
   const isWhite = variant === 'white';
+  
+  const { branding } = useTheme();
+  
+  // Check if we are in dark mode to show dark logo if available
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const customSvg = isDarkMode && branding?.darkLogoSvg ? branding.darkLogoSvg : branding?.primaryLogoSvg;
+
+  if (customSvg) {
+    return (
+      <div 
+        onClick={onClick}
+        className={`inline-flex items-center ${onClick ? 'cursor-pointer' : ''} ${className}`}
+        title={branding?.logoAlt || 'Táta má právo'}
+        dangerouslySetInnerHTML={{ __html: customSvg }}
+        style={{ maxWidth: '100%', maxHeight: '48px' }}
+      />
+    );
+  }
+
   const isIconOnly = variant === 'icon';
 
   // Size configurations

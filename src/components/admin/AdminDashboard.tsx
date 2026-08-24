@@ -5,7 +5,7 @@ import { useText } from '../../context/TextContext';
 import {
   LayoutDashboard,
   Type,
-  Palette,
+  Palette, Image as ImageIcon,
   Sliders,
   FileText,
   Users,
@@ -25,6 +25,7 @@ import {
 import { TextManager } from './TextManager';
 import { ThemeManager } from './ThemeManager';
 import { ModuleManager } from './ModuleManager';
+import { BrandingManager } from './BrandingManager';
 import { CmsManager } from './CmsManager';
 import { UserManager } from './UserManager';
 import { ComplianceManager } from './ComplianceManager';
@@ -58,6 +59,7 @@ type AdminTab =
   | 'page-builder'
   | 'texts'
   | 'theme'
+  | 'branding'
   | 'modules'
   | 'custom-modules'
   | 'esbirka'
@@ -698,6 +700,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'page-builder' && <AdminPageBuilder onNavigate={onNavigate} />}
           {activeTab === 'texts' && <TextManager />}
           {activeTab === 'theme' && <ThemeManager />}
+        {activeTab === 'branding' && <BrandingManager />}
           {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
           {activeTab === 'esbirka' && <EsbirkaAdminPanel />}
