@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { VisualSvgEditor } from './svg';
 import { Shield, Upload, History, Check, AlertTriangle, Image as ImageIcon, RotateCcw, Monitor, FileCode, CheckCircle2, Moon, Sun, Smartphone } from 'lucide-react';
 
 interface BrandingVersion {
@@ -16,6 +17,7 @@ interface BrandingVersion {
 export const BrandingManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'editor' | 'history'>('editor');
   const [editorSection, setEditorSection] = useState<'primary' | 'dark' | 'favicon'>('primary');
+  const [editorMode, setEditorMode] = useState<'code' | 'visual'>('code');
   
   const [currentBranding, setCurrentBranding] = useState<Partial<BrandingVersion>>({});
   const [history, setHistory] = useState<BrandingVersion[]>([]);
@@ -268,11 +270,11 @@ export const BrandingManager: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Code Editor Area */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FileCode className="w-4 h-4" />
-                    SVG Kód ({editorSection})
-                  </label>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button onClick={() => setEditorMode('code')} className={`px-3 py-1.5 text-xs font-bold rounded-md ${editorMode === 'code' ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}>Kód</button>
+                    <button onClick={() => setEditorMode('visual')} className={`px-3 py-1.5 text-xs font-bold rounded-md ${editorMode === 'visual' ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}>Vizuální Editor</button>
+                  </div>
                   <button 
                     onClick={() => validateSvg(currentSvgEditorVal)}
                     className="text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded"
@@ -280,7 +282,21 @@ export const BrandingManager: React.FC = () => {
                     Ověřit bezpečnost
                   </button>
                 </div>
-                
+
+                {editorMode === 'visual' ? (
+                  <div className="h-[600px] border border-slate-200 rounded-xl overflow-hidden mb-6">
+                    <VisualSvgEditor 
+                       initialSvg={currentSvgEditorVal || ''} 
+                       onSave={async (svg) => {
+                          handleSvgChange(svg, editorSection);
+                          setEditorMode('code');
+                          setMessage({ text: 'SVG úspěšně aktualizováno z editoru. Nezapomeňte změny uložit tlačítkem Uložit změny.', type: 'success' });
+                       }}
+                       onCancel={() => setEditorMode('code')}
+                    />
+                  </div>
+                ) : (
+                  <>
                 <textarea
                   value={currentSvgEditorVal}
                   onChange={(e) => handleSvgChange(e.target.value, editorSection)}
@@ -296,6 +312,8 @@ export const BrandingManager: React.FC = () => {
                     {validationResult.valid ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
                     {validationResult.valid ? 'SVG bylo úspěšně validováno' : `Chyba: ${validationResult.error}`}
                   </div>
+                )}
+                </>
                 )}
               </div>
 
