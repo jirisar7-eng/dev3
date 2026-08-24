@@ -19,7 +19,7 @@ export class UserDataService {
       try {
         const u = await (prisma as any).user.findUnique({
           where: { id: userId },
-          include: { profile: true },
+          include: { profile: true, preferences: true },
         });
         if (!u) return null;
 
@@ -53,6 +53,7 @@ export class UserDataService {
           createdAt: new Date(u.createdAt).toISOString(),
           updatedAt: new Date(u.updatedAt).toISOString(),
           profile: profileObj || undefined,
+          preferences: u.preferences || undefined,
         };
 
         return { user: userObj, profile: profileObj };
@@ -64,6 +65,45 @@ export class UserDataService {
     const fallbackUser = dbStore.users.find((u) => u.id === userId) || null;
     if (!fallbackUser) return null;
     return { user: fallbackUser, profile: null };
+  }
+
+  
+  static async updateUserPreferences(targetUserId: string, data: any, requestingUser?: User | null) {
+    if (!this.isOwnerOrAdmin(targetUserId, requestingUser)) {
+      throw new Error("Unauthorized");
+    }
+    if (!prisma) throw new Error("Database not available");
+    
+    try {
+      const prefs = await (prisma as any).userPreference.upsert({
+        where: { userId: targetUserId },
+        update: {
+          themeMode: data.themeMode,
+          colorPreset: data.colorPreset,
+          customColors: data.customColors ? JSON.stringify(data.customColors) : null,
+          fontFamily: data.fontFamily,
+          fontSize: data.fontSize,
+          density: data.density,
+          borderRadius: data.borderRadius,
+          highContrast: data.highContrast,
+        },
+        create: {
+          userId: targetUserId,
+          themeMode: data.themeMode || "system",
+          colorPreset: data.colorPreset || "default",
+          customColors: data.customColors ? JSON.stringify(data.customColors) : null,
+          fontFamily: data.fontFamily || "default",
+          fontSize: data.fontSize || 100,
+          density: data.density || "standard",
+          borderRadius: data.borderRadius || "standard",
+          highContrast: data.highContrast || false,
+        }
+      });
+      return prefs;
+    } catch (e) {
+      console.error('Error updating preferences', e);
+      throw e;
+    }
   }
 
   static async updateUserProfile(

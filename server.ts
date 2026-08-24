@@ -2084,6 +2084,18 @@ app.delete('/api/auth/accounts/:provider', requireAuth as any, async (req: Authe
   }
 });
 
+
+app.put('/api/users/me/preferences', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const prefs = await UserDataService.updateUserPreferences(req.user.id, req.body, req.user);
+    res.json({ preferences: prefs });
+  } catch (err) {
+    console.error('Error saving preferences', err);
+    res.status(500).json({ error: 'Chyba při ukládání nastavení vzhledu' });
+  }
+});
+
 app.get('/api/users/me', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   if (req.user?.id) {
     try {

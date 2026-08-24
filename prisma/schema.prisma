@@ -56,6 +56,7 @@ model User {
 
   // Relationships
   profile                  UserProfile?
+  preferences              UserPreference?
   documentData             UserDocumentData[]
   userRoles                UserRole[]
   articles                 Article[]                 @relation("UserArticles")
@@ -2219,4 +2220,22 @@ model FinancialObligation {
   @@index([judgmentId])
   @@index([type])
   @@index([status])
+}
+
+model UserPreference {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themeMode      String   @default("system")
+  colorPreset    String   @default("default")
+  customColors   String?  @db.Text
+  fontFamily     String   @default("default")
+  fontSize       Int      @default(100)
+  density        String   @default("standard")
+  borderRadius   String   @default("standard")
+  highContrast   Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
 }

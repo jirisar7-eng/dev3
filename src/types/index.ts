@@ -56,6 +56,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   profile?: UserProfile;
+  preferences?: UserPreference;
 }
 
 export interface UserCase {
@@ -1215,3 +1216,18 @@ export interface MementoCase {
   updatedAt: string;
 }
 
+
+export interface UserPreference {
+  id: string;
+  userId: string;
+  themeMode: string;
+  colorPreset: string;
+  customColors?: string | null;
+  fontFamily: string;
+  fontSize: number;
+  density: string;
+  borderRadius: string;
+  highContrast: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
