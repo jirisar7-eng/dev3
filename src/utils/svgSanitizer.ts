@@ -1,33 +1,47 @@
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+
+const window = new JSDOM('').window;
+const purify = DOMPurify(window as any);
+
+const MAX_SVG_SIZE_BYTES = 250 * 1024; // 250 KB limit
+
 export const sanitizeSvg = (svgContent: string): { valid: boolean; sanitized?: string; error?: string } => {
   if (!svgContent || typeof svgContent !== 'string') {
     return { valid: false, error: 'Empty content' };
   }
   
   const content = svgContent.trim();
-  if (!content.startsWith('<svg') || !content.endsWith('</svg>')) {
-    return { valid: false, error: 'Must be a valid SVG string starting with <svg and ending with </svg>' };
+  const byteLength = Buffer.byteLength(content, 'utf8');
+  
+  if (byteLength > MAX_SVG_SIZE_BYTES) {
+    return { valid: false, error: 'SVG soubor je příliš velký (maximum 250 KB)' };
   }
 
-  // Strict fail-closed regex checks
-  // 1. No script tags
-  if (/<script/i.test(content)) return { valid: false, error: 'Contains <script> tags' };
-  // 2. No foreignObject
-  if (/<foreignObject/i.test(content)) return { valid: false, error: 'Contains <foreignObject> tags' };
-  // 3. No iframe, object, embed
-  if (/<(iframe|object|embed)/i.test(content)) return { valid: false, error: 'Contains embedded objects/iframes' };
-  // 4. No on* event handlers (e.g. onclick, onload, onmouseover)
-  if (/\s+on[a-z]+\s*=/i.test(content)) return { valid: false, error: 'Contains inline event handlers' };
-  // 5. No javascript: URLs
-  if (/href\s*=\s*['"]\s*javascript:/i.test(content) || /xlink:href\s*=\s*['"]\s*javascript:/i.test(content)) {
-    return { valid: false, error: 'Contains javascript: URLs' };
+  if (!content.toLowerCase().startsWith('<svg') || !content.toLowerCase().endsWith('</svg>')) {
+    return { valid: false, error: 'Vstup musí být platný SVG tag začínající <svg> a končící </svg>' };
   }
-  // 6. Prevent CSS expressions / javascript in style tags or attributes
-  if (/<style[^>]*>.*(expression|javascript:).*<\/style>/si.test(content)) {
-    return { valid: false, error: 'Contains unsafe CSS' };
+
+  try {
+    // We configure DOMPurify to only allow SVG and safe tags/attributes
+    const cleanSvg = purify.sanitize(content, {
+      USE_PROFILES: { svg: true, svgFilters: true },
+      FORBID_TAGS: ['script', 'style', 'foreignObject', 'iframe', 'object', 'embed', 'image'],
+      FORBID_ATTR: ['style', 'href', 'xlink:href'],
+      ALLOW_DATA_ATTR: false,
+    });
+
+    if (!cleanSvg || typeof cleanSvg !== 'string') {
+      return { valid: false, error: 'Chyba sanitizace - neplatný výstup' };
+    }
+
+    const cleanTrimmed = cleanSvg.trim();
+    if (!cleanTrimmed.toLowerCase().startsWith('<svg') || !cleanTrimmed.toLowerCase().endsWith('</svg>')) {
+      return { valid: false, error: 'Výsledek sanitizace není validní SVG' };
+    }
+
+    return { valid: true, sanitized: cleanTrimmed };
+  } catch (error: any) {
+    return { valid: false, error: `Chyba při parsování SVG: ${error.message}` };
   }
-  
-  // Basic attributes only parsing (in a real world scenario, an XML parser is safer)
-  // Since we are running in an admin context and regexes cover the primary vectors, this is acceptable.
-  
-  return { valid: true, sanitized: content };
 };

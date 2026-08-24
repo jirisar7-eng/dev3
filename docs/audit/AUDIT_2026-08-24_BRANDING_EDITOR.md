@@ -35,3 +35,23 @@ Cíl: Přidání nového modulu "Logo & Branding" do administrace pro bezpečnou
 - Aplikace vyžaduje `npx prisma db push` v cílovém deployment prostředí.
 
 Změna provedena jako separátní commit s ohledem na oddělení funkcí.
+
+## 5. Oprava z technického auditu (Fixes)
+Datum: 2026-08-24
+Na základě technického auditu (který odhalil chybějící API endpointy a nedostačující sanitizaci SVG pomocí Regexu) byly provedeny tyto opravy:
+
+- **API Endpoints**: 
+  - Endpointy pro `/api/admin/branding` a `/api/public/branding` byly úspěšně a bezpečně doplněny přímo do souboru `server.ts`. 
+  - Byly dodrženy existující bezpečnostní mechanismy (`requireRole('ADMIN')`).
+  - Bypass pro standardní uživatele nebo nepřihlášené je bezpečně zablokován.
+- **SVG Bezpečnost (Server-side Sanitizace)**: 
+  - Původní regexová validace `svgSanitizer.ts` byla nahrazena robustní sanitizací pomocí balíčku `dompurify` běžícího nad `jsdom` prostředím na serveru.
+  - Byl nastaven limit velikosti souboru na 250 KB pro zabránění DoS útoku (velké vstupy).
+  - Skripty, `foreignObject`, `image` odkazy, `javascript:` a další nebezpečné konstrukce jsou bezpečně zahozeny.
+- **Nové testy**:
+  - Vytvořeny testy `tests/branding-and-svg.test.ts` pokrývající XSS a nebezpečné vstupy pro sanitizer.
+  - Vytvořeny testy `tests/branding-api.test.ts` pro ověření autentizace a integrace s API endpoints.
+  - Test runner `scripts/test-runner.js` byl aktualizován, aby tyto sady automaticky spouštěl.
+
+**Zbývající rizika/TODO**:
+- Komponenty závislé na `/api/public/branding` (např. ThemeContext) v případě nedostupnosti backendu pouze zalogují do konzole fallback a použijí výchozí logo. To je záměrné, ale pro budoucí UX může být užitečné monitorovat dostupnost API.

@@ -27,6 +27,7 @@ import { ClamAvService } from './src/services/clamAvService.ts';
 import { ComplianceService } from './src/services/complianceService.ts';
 import { AuditService } from './src/services/auditService.ts';
 import { BrandingService } from './src/services/brandingService.ts';
+import { sanitizeSvg } from './src/utils/svgSanitizer.ts';
 import { SettingsService } from './src/services/settingsService.ts';
 import { seedDatabaseIfEmpty, ensureSuperAdminAccount } from './src/services/seedService.ts';
 import { runSeed } from './prisma/seed';
@@ -5168,6 +5169,80 @@ async function startServer() {
   });
 
   // --- VITE INTEGRATION / STATIC SERVING ---
+
+  // ==========================================
+  // BRANDING (PUBLIC)
+  // ==========================================
+  app.get('/api/public/branding', async (req, res) => {
+    try {
+      const branding = await BrandingService.getActiveBranding();
+      res.json(branding || {});
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch branding' });
+    }
+  });
+
+  // ==========================================
+  // BRANDING (ADMIN)
+  // ==========================================
+  app.get('/api/admin/branding', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const branding = await BrandingService.getActiveBranding();
+      res.json(branding || {});
+    } catch (err) {
+      res.status(500).json({ error: 'Chyba při načítání brandingu' });
+    }
+  });
+
+  app.get('/api/admin/branding/history', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const history = await BrandingService.getHistory();
+      res.json(history);
+    } catch (err) {
+      res.status(500).json({ error: 'Chyba při načítání historie brandingu' });
+    }
+  });
+
+  app.post('/api/admin/branding/validate', requireAuth as any, requireRole('ADMIN') as any, (req: AuthenticatedRequest, res) => {
+    try {
+      const { svg } = req.body;
+      const result = sanitizeSvg(svg);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ valid: false, error: err.message });
+    }
+  });
+
+  app.put('/api/admin/branding', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const updated = await BrandingService.saveNewVersion(req.body, req.user!.email || req.user!.id);
+      await AuditService.recordLog('UPDATE', 'BRANDING', `Vytvořena nová verze brandingu (${updated.version})`, req.user);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/admin/branding/restore/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const restored = await BrandingService.restoreVersion(req.params.id, req.user!.email || req.user!.id);
+      await AuditService.recordLog('RESTORE', 'BRANDING', `Obnovena verze brandingu (${restored.version})`, req.user);
+      res.json(restored);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/admin/branding/reset', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const restored = await BrandingService.restoreDefault(req.user!.email || req.user!.id);
+      await AuditService.recordLog('RESET', 'BRANDING', `Obnoven výchozí branding`, req.user);
+      res.json(restored);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
