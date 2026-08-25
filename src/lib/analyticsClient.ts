@@ -93,13 +93,36 @@ class AnalyticsClient {
   }
 
   /**
-   * Tracks internal search queries (sanitized, privacy-safe).
+   * Tracks a step within a multi-step funnel (e.g. generator_podani, alimony_calculator).
    */
-  trackSearch(query: string, category?: string) {
+  trackFunnelStep(
+    funnelId: string,
+    stepIndex: number,
+    stepName: string,
+    totalSteps?: number,
+    metadata?: Record<string, any>
+  ) {
+    const currentRoute = typeof window !== 'undefined' ? window.location.pathname : '/';
+    this.sendEvent('feature_use', currentRoute, funnelId, {
+      funnelId,
+      step: stepIndex,
+      stepName,
+      totalSteps,
+      ...(metadata || {}),
+    });
+  }
+
+  /**
+   * Tracks internal search queries with result counts (sanitized, privacy-safe).
+   */
+  trackSearch(query: string, category?: string, resultsCount?: number, metadata?: Record<string, any>) {
     const currentRoute = typeof window !== 'undefined' ? window.location.pathname : '/';
     this.sendEvent('search', currentRoute, category ? `search_${category}` : 'search', {
       query: query.trim(),
       category: category || 'all',
+      resultsCount: resultsCount !== undefined ? resultsCount : 1,
+      hasResults: resultsCount !== undefined ? resultsCount > 0 : true,
+      ...(metadata || {}),
     });
   }
 

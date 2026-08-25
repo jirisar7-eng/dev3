@@ -15,6 +15,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-and-svg.test.ts'], name: 'Branding API & Secure SVG Sanitization' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/analytics-2-user-journey.test.ts'], name: 'Analytics 2.0 (User Journey, Funnels, Search Intelligence & Zero-PII)' }
 ];
 
 let failed = false;

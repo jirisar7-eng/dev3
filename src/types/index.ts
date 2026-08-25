@@ -1327,3 +1327,126 @@ export interface AdminAnalyticsStats {
   settings: AnalyticsSetting;
 }
 
+export type AnalyticsTimeRange = 'today' | '7d' | '30d' | 'all';
+
+export interface UserJourneyTransition {
+  fromRoute: string;
+  toRoute: string;
+  count: number;
+  percentage: number;
+}
+
+export interface UserJourneyPath {
+  path: string[];
+  count: number;
+  percentage: number;
+}
+
+export interface UserJourneyStats {
+  timeRange: AnalyticsTimeRange;
+  totalSessionsAnalyzed: number;
+  avgStepsPerSession: number;
+  avgSessionDurationSeconds: number;
+  entryPages: { route: string; count: number; percentage: number }[];
+  exitPages: { route: string; count: number; percentage: number }[];
+  topPaths: UserJourneyPath[];
+  topTransitions: UserJourneyTransition[];
+  featureCombinations: { features: string[]; count: number }[];
+}
+
+export interface FunnelStepStats {
+  stepIndex: number;
+  stepName: string;
+  count: number;
+  dropOffCount: number;
+  dropOffRate: number;
+  conversionFromFirstStep: number;
+  conversionFromPrevStep: number;
+}
+
+export interface FunnelStats {
+  funnelId: string;
+  title: string;
+  featureId?: string;
+  timeRange: AnalyticsTimeRange;
+  totalStarts: number;
+  totalCompletions: number;
+  completionRate: number;
+  abandonmentRate: number;
+  biggestDropOffStep?: { stepIndex: number; stepName: string; dropOffCount: number; dropOffRate: number };
+  steps: FunnelStepStats[];
+}
+
+export interface SearchQueryStat {
+  query: string;
+  count: number;
+  resultsCountAvg: number;
+  hasResults: boolean;
+  lastSearchedAt: string;
+}
+
+export interface SearchIntelligenceStats {
+  timeRange: AnalyticsTimeRange;
+  totalSearches: number;
+  uniqueQueriesCount: number;
+  zeroResultsCount: number;
+  zeroResultsRate: number;
+  avgResultsCount: number;
+  topQueries: SearchQueryStat[];
+  zeroResultQueries: SearchQueryStat[];
+  searchesByDay: { date: string; total: number; zeroResults: number }[];
+}
+
+export interface FeatureAnalyticsDeepStat {
+  featureId: string;
+  label: string;
+  openCount: number;
+  useCount: number;
+  completeCount: number;
+  completionRate: number;
+  abandonmentRate: number;
+  avgDurationSeconds: number;
+  uniqueUsersCount: number;
+  trendPercentage?: number;
+}
+
+export interface UserTimelineEvent {
+  id: string;
+  timestamp: string;
+  eventType: string;
+  route: string;
+  featureId?: string | null;
+  durationSeconds?: number;
+  safeDescription: string;
+  metadata?: Record<string, any>;
+}
+
+export interface UserAnalyticsHistory {
+  userId: string;
+  userEmail?: string;
+  userRole?: string;
+  totalSessions: number;
+  totalEvents: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  totalDurationMinutes: number;
+  topUsedFeatures: { featureId: string; label: string; count: number }[];
+  timeline: UserTimelineEvent[];
+}
+
+export interface AnalyticsAiInsightsData {
+  timeRange: AnalyticsTimeRange;
+  generatedAt: string;
+  summary: {
+    totalVisitors: number;
+    totalPageViews: number;
+    totalSearches: number;
+    zeroResultsRate: number;
+    primaryDropOffFeature: string;
+  };
+  missingContentTopics: { topic: string; queryCount: number; sampleQueries: string[] }[];
+  funnelBottlenecks: { funnelTitle: string; dropOffStep: string; dropOffPercentage: number; recommendation: string }[];
+  underutilizedFeatures: { featureId: string; label: string; useCount: number }[];
+  highEngagementFeatures: { featureId: string; label: string; completeCount: number; completionRate: number }[];
+}
+

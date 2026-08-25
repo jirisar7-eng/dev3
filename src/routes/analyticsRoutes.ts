@@ -170,3 +170,150 @@ analyticsRouter.post(
     }
   }
 );
+
+/**
+ * 5. GET /api/analytics/admin/journey
+ * User Journey & Path analysis (Admin only).
+ */
+analyticsRouter.get(
+  '/admin/journey',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const timeRange = (req.query.timeRange as any) || '30d';
+      const stats = await analyticsService.getUserJourneyStats(timeRange);
+      return res.json(stats);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching user journey stats:', err);
+      return res.status(500).json({ error: 'Chyba při načítání cesty uživatelů' });
+    }
+  }
+);
+
+/**
+ * 6. GET /api/analytics/admin/funnels
+ * Funnel conversion & drop-off metrics (Admin only).
+ */
+analyticsRouter.get(
+  '/admin/funnels',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const funnelId = (req.query.funnelId as string) || 'generator_podani';
+      const timeRange = (req.query.timeRange as any) || '30d';
+      const stats = await analyticsService.getFunnelStats(funnelId, timeRange);
+      return res.json(stats);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching funnel stats:', err);
+      return res.status(500).json({ error: 'Chyba při načítání konverzního trychtýře' });
+    }
+  }
+);
+
+/**
+ * 7. GET /api/analytics/admin/search-intelligence
+ * Search Intelligence & Zero Results queries (Admin only).
+ */
+analyticsRouter.get(
+  '/admin/search-intelligence',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const timeRange = (req.query.timeRange as any) || '30d';
+      const stats = await analyticsService.getSearchIntelligence(timeRange);
+      return res.json(stats);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching search intelligence stats:', err);
+      return res.status(500).json({ error: 'Chyba při načítání vyhledávacích statistik' });
+    }
+  }
+);
+
+/**
+ * 8. GET /api/analytics/admin/features
+ * Deep feature usage & completion analytics (Admin only).
+ */
+analyticsRouter.get(
+  '/admin/features',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const timeRange = (req.query.timeRange as any) || '30d';
+      const stats = await analyticsService.getFeatureDeepAnalytics(timeRange);
+      return res.json(stats);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching feature deep analytics:', err);
+      return res.status(500).json({ error: 'Chyba při načítání statistik nástrojů' });
+    }
+  }
+);
+
+/**
+ * 9. GET /api/analytics/admin/users/:userId/history
+ * Individual user analytics history (Admin only + Mandatory Audit Log).
+ */
+analyticsRouter.get(
+  '/admin/users/:userId/history',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const timeRange = (req.query.timeRange as any) || 'all';
+      const stats = await analyticsService.getUserIndividualHistory(
+        userId,
+        timeRange,
+        req.user ? { id: req.user.id, email: req.user.email } : undefined
+      );
+      return res.json(stats);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching user history:', err);
+      return res.status(500).json({ error: 'Chyba při načítání časové osy uživatele' });
+    }
+  }
+);
+
+/**
+ * 10. GET /api/analytics/admin/ai-insights-data
+ * Aggregated structured data for AI Studio preparation (Admin only).
+ */
+analyticsRouter.get(
+  '/admin/ai-insights-data',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const timeRange = (req.query.timeRange as any) || '30d';
+      const insights = await analyticsService.getAnalyticsAiInsights(timeRange);
+      return res.json(insights);
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error fetching AI insights data:', err);
+      return res.status(500).json({ error: 'Chyba při přípravě dat pro AI souhrn' });
+    }
+  }
+);
+
+/**
+ * 11. POST /api/analytics/admin/clean-old
+ * Manual retention cleanup trigger (Admin only).
+ */
+analyticsRouter.post(
+  '/admin/clean-old',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const days = req.body?.days ? Number(req.body.days) : 90;
+      const result = await analyticsService.cleanOldEvents(days);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      console.error('[AnalyticsRouter] Error cleaning old events:', err);
+      return res.status(500).json({ error: 'Chyba při čištění starých událostí' });
+    }
+  }
+);
+
