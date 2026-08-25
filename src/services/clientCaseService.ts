@@ -1,4 +1,4 @@
-import { prisma, isPrismaAvailable } from '../db/prisma';
+import { prisma, isPrismaAvailable, markPrismaUnavailable, isFallbackAllowed } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { AuditService } from './auditService';
 import { CarePlanService } from './care/carePlanService';
@@ -59,33 +59,39 @@ export class ClientCaseService {
       return dbStore.cases.filter(c => c.ownerId === targetUserId || (c as any).userId === targetUserId);
     }
 
-    const prisma = getPrismaClient();
-    if (!prisma)
-      throw new Error("Databáze není dostupná.");
+    try {
+      const prisma = getPrismaClient();
+      if (!prisma)
+        throw new Error("Databáze není dostupná.");
 
-    const found = await (prisma).case.findMany({
-      where: { ownerId: targetUserId },
-      include: {
-        children: true,
-        participants: true,
-        careArrangements: true,
-        documents: true,
-        evidence: true,
-        deadlines: true,
-        tasks: true,
-        events: true,
-        notes: true,
-        carePlans: {
-          include: {
-            days: true,
-            holidayRules: true,
-            children: true,
+      const found = await (prisma).case.findMany({
+        where: { ownerId: targetUserId },
+        include: {
+          children: true,
+          participants: true,
+          careArrangements: true,
+          documents: true,
+          evidence: true,
+          deadlines: true,
+          tasks: true,
+          events: true,
+          notes: true,
+          carePlans: {
+            include: {
+              days: true,
+              holidayRules: true,
+              children: true,
+            }
           }
-        }
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-    return found || [];
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+      return found || [];
+    } catch (err: any) {
+      if (!isFallbackAllowed()) throw err;
+      markPrismaUnavailable(err);
+      return dbStore.cases.filter(c => c.ownerId === targetUserId || (c as any).userId === targetUserId);
+    }
   }
 
   /**
@@ -104,43 +110,60 @@ export class ClientCaseService {
       return null;
     }
 
-    const prisma = getPrismaClient();
-    if (!prisma)
-      throw new Error("Databáze není dostupná.");
+    try {
+      const prisma = getPrismaClient();
+      if (!prisma)
+        throw new Error("Databáze není dostupná.");
 
-    const c = await (prisma).case.findUnique({
-      where: { id: caseId },
-      include: {
-        children: true,
-        participants: true,
-        events: { orderBy: { eventDate: 'asc' } },
-        deadlines: { orderBy: { dueDate: 'asc' } },
-        tasks: { orderBy: { createdAt: 'desc' } },
-        notes: { orderBy: { createdAt: 'desc' } },
-        documents: { orderBy: { createdAt: 'desc' } },
-        evidence: {
-          include: { document: true, event: true },
-          orderBy: { createdAt: 'desc' },
-        },
-        communications: { orderBy: { date: 'desc' } },
-        careArrangements: { orderBy: { createdAt: 'desc' } },
-        carePlans: {
-          include: {
-            days: true,
-            holidayRules: true,
-            children: true,
+      const c = await (prisma).case.findUnique({
+        where: { id: caseId },
+        include: {
+          children: true,
+          participants: true,
+          events: { orderBy: { eventDate: 'asc' } },
+          deadlines: { orderBy: { dueDate: 'asc' } },
+          tasks: { orderBy: { createdAt: 'desc' } },
+          notes: { orderBy: { createdAt: 'desc' } },
+          documents: { orderBy: { createdAt: 'desc' } },
+          evidence: {
+            include: { document: true, event: true },
+            orderBy: { createdAt: 'desc' },
+          },
+          communications: { orderBy: { date: 'desc' } },
+          careArrangements: { orderBy: { createdAt: 'desc' } },
+          carePlans: {
+            include: {
+              days: true,
+              holidayRules: true,
+              children: true,
+            }
           }
+        },
+      });
+      if (c) {
+        const caseOwner = c.ownerId || (c as any).userId;
+        if (caseOwner && caseOwner !== requestingUser.id && !this.isAdmin(requestingUser)) {
+          throw new Error('Přístup odepřen: Tento spis patří jinému uživateli.');
         }
-      },
-    });
-    if (c) {
-      const caseOwner = c.ownerId || (c as any).userId;
-      if (caseOwner && caseOwner !== requestingUser.id && !this.isAdmin(requestingUser)) {
-        throw new Error('Přístup odepřen: Tento spis patří jinému uživateli.');
+        return c;
       }
-      return c;
+      return null;
+    } catch (err: any) {
+      if (err.message && err.message.includes('Přístup odepřen')) {
+        throw err;
+      }
+      if (!isFallbackAllowed()) throw err;
+      markPrismaUnavailable(err);
+      const memoryCase = dbStore.cases.find(c => c.id === caseId);
+      if (memoryCase) {
+        const caseOwner = memoryCase.ownerId || (memoryCase as any).userId;
+        if (caseOwner && caseOwner !== requestingUser.id && !this.isAdmin(requestingUser)) {
+          throw new Error('Přístup odepřen: Tento spis patří jinému uživateli.');
+        }
+        return memoryCase;
+      }
+      return null;
     }
-    return null;
   }
 
   /**
@@ -1271,8 +1294,10 @@ export class ClientCaseService {
       };
     }
 
-    // 2. Execute ALL changes in a single atomic PostgreSQL transaction with automatic rollback
-    const txResult = await prisma.$transaction(async (tx) => {
+    // 2. Execute ALL changes in a single atomic PostgreSQL transaction with automatic rollback (or in-memory fallback)
+    let txResult: any;
+    if (isPrismaAvailable()) {
+      txResult = await prisma.$transaction(async (tx) => {
       // a) Update Case
       const caseNumberStr = (typeof extractedData.caseNumber === 'string' ? extractedData.caseNumber : (extractedData.caseNumber as any)?.value) || undefined;
       const courtStr = (typeof extractedData.court === 'string' ? extractedData.court : (extractedData.court as any)?.value) || undefined;
@@ -2037,6 +2062,80 @@ export class ClientCaseService {
         deadlinesCount: alimonyAmt > 0 ? 1 : 0
       };
     });
+    } else {
+      // In-memory fallback execution
+      const fileMeta = extractedData.fileMetadata || {};
+      const docName = fileMeta.fileName || `Rozsudek_${extractedData.caseNumber ? extractedData.caseNumber.replace(/[^a-zA-Z0-9]/g, '_') : 'soud'}.pdf`;
+      const caseDoc = {
+        id: `doc-${Date.now()}`,
+        caseId,
+        uploadedBy: requestingUser.id,
+        name: docName,
+        category: 'COURT',
+        scanStatus: 'CLEAN',
+        notes: 'Soudní rozsudek (AI Extractor - ověřeno ClamAV)',
+        createdAt: new Date().toISOString()
+      };
+
+      const rawChildName = typeof extractedData.childName === 'string' ? extractedData.childName : (extractedData.childName as any)?.value || 'Dítě';
+      const cleanChildName = rawChildName.replace(/\s+(?:se\s+svěřuje|nar\.?|dne|bytem|zastoupený|zastoupená|v\s+péči).*/i, '').trim();
+      const parts = cleanChildName.split(' ');
+      const firstName = parts[0] || 'Dítě';
+      const lastName = parts.slice(1).join(' ') || 'Šár';
+      const birthDateStr = extractedData.childBirthDate ? (typeof extractedData.childBirthDate === 'string' ? extractedData.childBirthDate : (extractedData.childBirthDate as any)?.value) : null;
+
+      const child = extractedData.childName ? {
+        id: `child-${Date.now()}`,
+        caseId,
+        firstName,
+        lastName,
+        dateOfBirth: birthDateStr,
+        notes: `Zdroj: JUDGMENT. Režim: ${extractedData.custodyType || 'N/A'}, Rozvrh: ${extractedData.scheduleType || 'N/A'}`
+      } : null;
+
+      const handoverTime = extractedData.handoverTime || extractedData.handoverStartTime || '08:45';
+      const handoverLocation = extractedData.handoverLocation || 'Předávací místo dle rozsudku';
+
+      const structuredRules = CareOccurrenceEngine.parseJudgmentToCareRules(extractedData);
+      const engineResult = CareOccurrenceEngine.generateOccurrencesAndDays({
+        caseId,
+        startDate: new Date(),
+        daysCount: 28,
+        rules: structuredRules,
+        children: child ? [{ id: child.id, name: `${child.firstName} ${child.lastName}`.trim() }] : [],
+        defaultLocation: handoverLocation,
+        defaultHandoverTime: handoverTime,
+        parentAName: 'Otec',
+        parentBName: 'Matka'
+      });
+
+      const carePlan = {
+        id: `plan-${Date.now()}`,
+        caseId,
+        title: `Soudní rozsudek (${extractedData.court || 'Soud'} ${extractedData.caseNumber || ''})`,
+        description: `Automaticky vygenerovaný plán péče z rozsudku. Režim: ${extractedData.custodyType || 'Střídavá péče'}, Rozvrh: ${extractedData.scheduleType || 'Standardní'}.`,
+        status: 'ACTIVE',
+        type: 'CURRENT',
+        source: 'JUDGMENT_IMPORT',
+        startDate: new Date(),
+        rotationPattern: extractedData.scheduleType || '7/7',
+        createdBy: requestingUser.name || requestingUser.email,
+        parentAName: 'Otec',
+        parentBName: 'Matka',
+        parentAAddress: handoverLocation,
+        defaultHandoverTime: handoverTime,
+        days: engineResult.days,
+        children: child ? [{ childId: child.id }] : []
+      };
+
+      txResult = {
+        updatedCase: existingCase,
+        child,
+        caseDoc,
+        carePlan,
+        deadlinesCount: (Number(extractedData.alimonyAmount) > 0 ? 1 : 0) + (Number(extractedData.alimonyDebtAmount) > 0 ? 1 : 0)
+      };
+    }
 
     // Sync in-memory dbStore if active
     const memCase = dbStore.cases.find(c => c.id === caseId);
