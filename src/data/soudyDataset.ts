@@ -15,6 +15,60 @@ export interface CourtEntry {
   lng: number;
 }
 
+
+export interface CourtLookupResult {
+  name: string;
+  address: string;
+  city: string;
+  postalCode: string;
+}
+
+function normalizeString(str: string): string {
+  if (!str) return '';
+  return str.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, ' ')
+    .replace(/ - /g, '-')
+    .trim();
+}
+
+function extractPostalCodeAndCity(address: string): { postalCode: string, city: string } {
+  const parts = address.split(',');
+  if (parts.length > 1) {
+    const lastPart = parts[parts.length - 1].trim();
+    const match = lastPart.match(/^(\d{3}\s?\d{2})\s+(.+)$/);
+    if (match) {
+      return { postalCode: match[1], city: match[2].trim() };
+    }
+    return { postalCode: '', city: lastPart };
+  }
+  return { postalCode: '', city: '' };
+}
+
+export function findCourtByName(courtName: string): CourtLookupResult | null {
+  if (!courtName) return null;
+  const normalizedSearch = normalizeString(courtName);
+
+  let found = soudyDataset.find(s => s.name.toLowerCase() === courtName.toLowerCase().trim());
+  if (!found) {
+    found = soudyDataset.find(s => normalizeString(s.name) === normalizedSearch);
+  }
+  if (!found && normalizedSearch.length > 4) {
+    found = soudyDataset.find(s => normalizeString(s.name).includes(normalizedSearch) || normalizedSearch.includes(normalizeString(s.name)));
+  }
+
+  if (found) {
+    const { postalCode, city } = extractPostalCodeAndCity(found.address);
+    return {
+      name: found.name,
+      address: found.address,
+      city: city || found.city,
+      postalCode: postalCode
+    };
+  }
+  return null;
+}
+
 export const soudyDataset: CourtEntry[] = [
   // ÚSTAVNÍ A NEJVYŠŠÍ SOUDY
   {

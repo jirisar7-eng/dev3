@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
+import { findCourtByName } from '../../../data/soudyDataset';
 import { useAuth } from '../../../context/AuthContext';
 import { UserChild } from '../../../types';
 
@@ -397,6 +398,11 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childBirthDate, setChildBirthDate] = useState('');
+  const [courtAddress, setCourtAddress] = useState('');
+  const [childAddressMode, setChildAddressMode] = useState<'SAME_AS_MOTHER' | 'CUSTOM'>('SAME_AS_MOTHER');
+  const [childAddress, setChildAddress] = useState('');
+  const [caseLoaded, setCaseLoaded] = useState(false);
+
 
   // Selected Template
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('stridava-pece');
@@ -444,7 +450,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
     fetchEsbirkaStatus();
   }, [fetchEsbirkaStatus]);
 
-  // Load Real Profile & Children from Auth / API
+  // Load Real Profile, Children & Case from Auth / API
   useEffect(() => {
     if (!currentUser) return;
 
@@ -457,41 +463,132 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
 
     const token = localStorage.getItem('tatovacesta_auth_token');
     const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    const params = new URLSearchParams(window.location.search);
+    const caseId = params.get('caseId');
 
-    // Fetch Full Profile
-    fetch(`/api/user/profile/${currentUser.id}`, { headers: authHeaders })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.profile) {
-          const p = data.profile;
-          setProfile((prev) => ({
-            ...prev,
-            firstName: p.firstName || prev.firstName,
-            lastName: p.lastName || prev.lastName,
-            birthDate: p.birthDate || prev.birthDate,
-            street: p.address || prev.street,
-            city: p.city || prev.city,
-            zip: p.postalCode || prev.zip,
-            phone: p.phone || currentUser.phone || prev.phone,
-          }));
-        }
-      })
-      .catch((e) => console.error('Error loading user profile:', e));
+    const loadFallbackProfile = () => {
+      // Fetch Full Profile
+      fetch(`/api/user/profile/${currentUser.id}`, { headers: authHeaders })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.profile) {
+            const p = data.profile;
+            setProfile((prev) => ({
+              ...prev,
+              firstName: p.firstName || prev.firstName,
+              lastName: p.lastName || prev.lastName,
+              birthDate: p.birthDate || prev.birthDate,
+              street: p.address || prev.street,
+              city: p.city || prev.city,
+              zip: p.postalCode || prev.zip,
+              phone: p.phone || currentUser.phone || prev.phone,
+            }));
+          }
+        })
+        .catch((e) => console.error('Error loading user profile:', e));
 
-    // Fetch Children
-    fetch(`/api/portal/children/${currentUser.id}`, { headers: authHeaders })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setChildrenList(data);
-          const first = data[0];
-          setSelectedChildId(first.id);
-          setChildFirstName(first.firstName || first.name || '');
-          setChildLastName(first.lastName || '');
-          setChildBirthDate(first.birthDate || '');
-        }
-      })
-      .catch((e) => console.error('Error loading children:', e));
+      // Fetch Children
+      fetch(`/api/portal/children/${currentUser.id}`, { headers: authHeaders })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setChildrenList(data);
+            const first = data[0];
+            setSelectedChildId(first.id);
+            setChildFirstName(first.firstName || first.name || '');
+            setChildLastName(first.lastName || '');
+            setChildBirthDate(first.birthDate || '');
+          }
+        })
+        .catch((e) => console.error('Error loading children:', e));
+    };
+
+    if (caseId) {
+      fetch(`/api/cases/${caseId}`, { headers: authHeaders })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json && json.data) {
+            const c = json.data;
+            setCaseLoaded(true);
+            
+            // Court lookup
+            let foundCourt = '';
+            let foundCourtAddress = '';
+            if (c.court) {
+              const cData = findCourtByName(c.court);
+              if (cData) {
+                foundCourt = cData.name;
+                foundCourtAddress = cData.address;
+                setCourtAddress(foundCourtAddress);
+              } else {
+                foundCourt = c.court;
+              }
+            }
+
+            // Ex / Mother
+            const mother = (c.participants || []).find((p: any) => p.role === 'MATKA');
+            let mFirst = '', mLast = '', mAddr = '';
+            if (mother) {
+              const nameParts = (mother.name || '').split(' ');
+              if (nameParts.length > 1) {
+                mLast = nameParts.pop() || '';
+                mFirst = nameParts.join(' ');
+              } else {
+                mFirst = mother.name;
+              }
+              mAddr = mother.address || '';
+            }
+
+            setProfile((prev) => ({
+              ...prev,
+              caseNumber: c.caseNumber || prev.caseNumber,
+              courtName: foundCourt || prev.courtName,
+              exFirstName: mFirst || prev.exFirstName,
+              exLastName: mLast || prev.exLastName,
+              exStreet: mAddr || prev.exStreet,
+            }));
+
+            // Children
+            if (c.children && c.children.length > 0) {
+              setChildrenList(c.children);
+              const first = c.children[0];
+              setSelectedChildId(first.id);
+              setChildFirstName(first.firstName || '');
+              setChildLastName(first.lastName || '');
+              setChildBirthDate(first.dateOfBirth || '');
+              setChildAddressMode(first.addressMode || 'SAME_AS_MOTHER');
+              setChildAddress(first.address || '');
+            }
+
+            // Load Father's info from owner profile fallback
+            fetch(`/api/user/profile/${c.ownerId || currentUser.id}`, { headers: authHeaders })
+              .then(r => r.ok ? r.json() : null)
+              .then(pData => {
+                 if (pData && pData.profile) {
+                    const p = pData.profile;
+                    setProfile(prev => ({
+                      ...prev,
+                      firstName: p.firstName || prev.firstName,
+                      lastName: p.lastName || prev.lastName,
+                      birthDate: p.birthDate || prev.birthDate,
+                      street: p.address || prev.street,
+                      city: p.city || prev.city,
+                      zip: p.postalCode || prev.zip,
+                    }));
+                 }
+              });
+
+          } else {
+            loadFallbackProfile();
+          }
+        })
+        .catch((e) => {
+          console.error('Error loading case:', e);
+          loadFallbackProfile();
+        });
+    } else {
+      loadFallbackProfile();
+    }
   }, [currentUser]);
 
   // Handle Child Selection
@@ -510,8 +607,11 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
     (rawTemplate: string) => {
       const currentDateStr = new Date().toLocaleDateString('cs-CZ');
       const clause = esbirkaClause || `Právní citace ověřeny vůči e-Sbírce k ${currentDateStr}`;
+      const finalChildAddress = childAddressMode === 'SAME_AS_MOTHER' ? profile.exStreet.trim() : childAddress.trim();
+      
+      let template = rawTemplate.replace(/\[Adresa příslušného okresního soudu\]/g, '{{court.address}}');
 
-      return rawTemplate
+      return template
         .replace(/\{\{user\.firstName\}\}/g, profile.firstName.trim() || '[Jméno otce]')
         .replace(/\{\{user\.lastName\}\}/g, profile.lastName.trim() || '[Příjmení otce]')
         .replace(/\{\{user\.birthDate\}\}/g, profile.birthDate.trim() || '[Datum nar. otce]')
@@ -521,18 +621,21 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
         .replace(/\{\{user\.phone\}\}/g, profile.phone.trim() || '[Telefon]')
         .replace(/\{\{user\.email\}\}/g, profile.email.trim() || '[E-mail]')
         .replace(/\{\{court\.name\}\}/g, profile.courtName.trim() || '[Místně příslušný okresní soud]')
+        .replace(/\{\{court\.address\}\}/g, courtAddress.trim() || '[Adresa soudu]')
         .replace(/\{\{case\.number\}\}/g, profile.caseNumber.trim() || '[Spisová značka]')
         .replace(/\{\{ex\.firstName\}\}/g, profile.exFirstName.trim() || '[Jméno matky]')
         .replace(/\{\{ex\.lastName\}\}/g, profile.exLastName.trim() || '[Příjmení matky]')
-        .replace(/\{\{ex\.street\}\}/g, profile.exStreet.trim() || '[Ulice matky]')
-        .replace(/\{\{ex\.city\}\}/g, profile.exCity.trim() || '[Město matky]')
+        .replace(/\{\{ex\.street\}\}/g, profile.exStreet.trim() || '[Adresa matky]')
+        .replace(/\{\{ex\.fullAddress\}\}/g, profile.exStreet.trim() || '[Adresa matky]')
+        .replace(/\{\{ex\.city\}\}/g, profile.exCity.trim() || '')
         .replace(/\{\{child\.firstName\}\}/g, childFirstName.trim() || '[Jméno dítěte]')
         .replace(/\{\{child\.lastName\}\}/g, childLastName.trim() || '[Příjmení dítěte]')
         .replace(/\{\{child\.birthDate\}\}/g, childBirthDate.trim() || '[Datum nar. dítěte]')
+        .replace(/\{\{child\.address\}\}/g, finalChildAddress || '[Adresa dítěte]')
         .replace(/\{\{current\.date\}\}/g, currentDateStr)
         .replace(/\{\{esbirka\.clause\}\}/g, clause);
     },
-    [profile, childFirstName, childLastName, childBirthDate, esbirkaClause]
+    [profile, childFirstName, childLastName, childBirthDate, childAddressMode, childAddress, courtAddress, esbirkaClause]
   );
 
   // Update compiled text on template / variable changes
@@ -551,9 +654,36 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   };
 
   // Generate Document Action Button
+  const validateGeneratedDocument = (text: string) => {
+    const missing = [];
+    if (text.includes('[Jméno otce]')) missing.push('Jméno otce');
+    if (text.includes('[Příjmení otce]')) missing.push('Příjmení otce');
+    if (text.includes('[Datum nar. otce]')) missing.push('Datum narození otce');
+    if (text.includes('[Ulice a č.p.]')) missing.push('Ulice otce');
+    if (text.includes('[Město]')) missing.push('Město otce');
+    if (text.includes('[PSČ]')) missing.push('PSČ otce');
+    if (text.includes('[Místně příslušný okresní soud]')) missing.push('Soud');
+    if (text.includes('[Adresa soudu]')) missing.push('Adresa soudu');
+    if (text.includes('[Spisová značka]')) missing.push('Spisová značka');
+    if (text.includes('[Jméno matky]')) missing.push('Jméno matky');
+    if (text.includes('[Příjmení matky]')) missing.push('Příjmení matky');
+    if (text.includes('[Adresa matky]')) missing.push('Adresa matky');
+    if (text.includes('[Jméno dítěte]')) missing.push('Jméno dítěte');
+    if (text.includes('[Příjmení dítěte]')) missing.push('Příjmení dítěte');
+    if (text.includes('[Datum nar. dítěte]')) missing.push('Datum nar. dítěte');
+    if (text.includes('[Adresa dítěte]')) missing.push('Adresa dítěte');
+    return missing;
+  };
+
   const handleGenerateDocument = () => {
     const raw = editedTemplateContent || selectedTemplate.content;
     const result = compileDocumentText(raw);
+    
+    const missingFields = validateGeneratedDocument(result);
+    if (missingFields.length > 0) {
+      alert('Dokument obsahuje nevyplněné povinné údaje:\n- ' + missingFields.join('\n- ') + '\n\nProsím doplňte je v levém panelu.');
+    }
+
     setCompiledText(result);
 
     // Scroll smooth to document preview area
@@ -958,6 +1088,29 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                     className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white font-semibold"
                   />
                 </div>
+                <div className="col-span-3 mt-1 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={childAddressMode === 'SAME_AS_MOTHER'} 
+                      onChange={(e) => setChildAddressMode(e.target.checked ? 'SAME_AS_MOTHER' : 'CUSTOM')}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs font-bold text-slate-600">Dítě bydlí na adrese matky</span>
+                  </label>
+                  {childAddressMode === 'CUSTOM' && (
+                    <div>
+                      <label className="block text-slate-600 font-bold mb-1">Vlastní adresa dítěte:</label>
+                      <input
+                        type="text"
+                        placeholder="Ulice, Město, PSČ"
+                        value={childAddress}
+                        onChange={(e) => setChildAddress(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <strong className="text-[11px] uppercase tracking-wider text-slate-400 font-black block pt-2">
@@ -984,15 +1137,42 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                     className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white"
                   />
                 </div>
+                <div className="col-span-2">
+                  <label className="block text-slate-600 font-bold mb-1">Adresa matky (Odpůrkyně):</label>
+                  <input
+                    type="text"
+                    placeholder="Ulice, Město, PSČ"
+                    value={profile.exStreet}
+                    onChange={(e) => setProfile({ ...profile, exStreet: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-slate-600 font-bold mb-1">Okresní soud v:</label>
                   <input
                     type="text"
-                    placeholder="např. Brně / Olomouci"
+                    placeholder="např. Okresní soud v Brně"
                     value={profile.courtName}
-                    onChange={(e) => setProfile({ ...profile, courtName: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setProfile({ ...profile, courtName: val });
+                      const cData = findCourtByName(val);
+                      if (cData) {
+                        setCourtAddress(cData.address);
+                      }
+                    }}
                     className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white font-bold"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-slate-600 font-bold mb-1">Adresa soudu:</label>
+                  <input
+                    type="text"
+                    placeholder="Adresa soudu"
+                    value={courtAddress}
+                    onChange={(e) => setCourtAddress(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white"
                   />
                 </div>
 
