@@ -182,6 +182,16 @@ const dummyModel = new Proxy({}, {
   },
 });
 
+const SECURITY_MODELS = [
+  'user', 'passkey', 'userProfile', 'userDocumentData', 
+  'role', 'permission', 'userRole', 'rolePermission',
+  'auditLog', 'auditDocument', 'auditShare', 'userConsentLog',
+  'sensitiveAccessLog', 'gdprDeletionRequest', 'legalAuditLog',
+  'coParentAuditLog', 'case', 'caseParticipant', 'child', 
+  'caseEvent', 'caseDocument', 'caseEvidence', 'coParentSpace', 
+  'coParentMember', 'carePlan', 'session', 'mfaConfiguration'
+];
+
 export const prisma = new Proxy({} as any, {
   get(_target, prop) {
     if (prop === '$transaction') {
@@ -202,7 +212,7 @@ export const prisma = new Proxy({} as any, {
 
     const client = getPrismaClient();
     if (!client) {
-      if (isFallbackAllowed()) {
+      if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
         return dummyModel;
       }
       throw new Error('Databáze je momentálně nedostupná.');
@@ -245,7 +255,7 @@ export const prisma = new Proxy({} as any, {
                 if (res && typeof res.catch === 'function') {
                   return res.catch((err: any) => {
                     markPrismaUnavailable(err);
-                    if (isFallbackAllowed()) {
+                    if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
                       console.warn(`[Prisma Proxy] Model query selhal, vracím dummy.`);
                       return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                     }
@@ -255,7 +265,7 @@ export const prisma = new Proxy({} as any, {
                 return res;
               } catch (err) {
                 markPrismaUnavailable(err);
-                if (isFallbackAllowed()) {
+                if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
                    return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                 }
                 throw err;
