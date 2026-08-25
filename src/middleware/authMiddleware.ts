@@ -214,10 +214,7 @@ export function requirePermission(permissionKey: string) {
       next();
     } catch (err) {
       console.error('Error in requirePermission database query:', err);
-      if (req.user && (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN')) {
-        return next();
-      }
-      return res.status(403).json({ error: `Přístup odepřen. Vyžadováno oprávnění '${permissionKey}'.` });
+      return res.status(500).json({ error: `Interní chyba serveru. Oprávnění '${permissionKey}' nebylo možné ověřit.` });
     }
   };
 }
