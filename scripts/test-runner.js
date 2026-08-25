@@ -14,6 +14,7 @@ const tests = [
   { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-ai-extractor-fallback.test.ts'], name: 'AI Extractor Local PDF Fallback & Deterministic Extraction (20 Tests)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-and-svg.test.ts'], name: 'Branding API & Secure SVG Sanitization' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
 ];
 
 let failed = false;

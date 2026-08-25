@@ -170,19 +170,40 @@ export function isPrismaAvailable(): boolean {
   }
 }
 
+const SAFE_READ_OPERATIONS = new Set([
+  'findUnique',
+  'findUniqueOrThrow',
+  'findFirst',
+  'findFirstOrThrow',
+  'findMany',
+  'count',
+  'aggregate',
+  'groupBy'
+]);
+
 const dummyModel = new Proxy({}, {
   get(_target, prop: string) {
-    return function () {
-      if (prop === 'findMany') return Promise.resolve([]);
-      if (prop === 'count') return Promise.resolve(0);
-      if (prop === 'findUnique' || prop === 'findFirst') return Promise.resolve({ id: 'dummy-1234-uuid', name: 'Mock Data' });
-      if (prop === 'upsert' || prop === 'create' || prop === 'update' || prop === 'delete') return Promise.resolve({ id: 'dummy-1234-uuid', name: 'Mock Data' });
-      return Promise.resolve(null);
+    if (!SAFE_READ_OPERATIONS.has(prop)) {
+      return async function () {
+        throw new Error('Databáze je momentálně nedostupná. Zápisové a nepodporované operace nelze simulovat.');
+      };
+    }
+
+    return async function () {
+      if (prop === 'findMany') return [];
+      if (prop === 'count') return 0;
+      if (prop === 'findUnique' || prop === 'findFirst') return null;
+      if (prop === 'aggregate') return { _count: 0, _avg: {}, _sum: {}, _min: {}, _max: {} };
+      if (prop === 'groupBy') return [];
+      if (prop === 'findUniqueOrThrow' || prop === 'findFirstOrThrow') {
+        throw new Error('Dokument nenalezen (fallback režim).');
+      }
+      return null;
     };
   },
 });
 
-const SAFE_CONTENT_FALLBACK_MODELS = [
+export const SAFE_CONTENT_FALLBACK_MODELS = [
   'page',
   'pageSection',
   'category',
@@ -201,10 +222,16 @@ const SAFE_CONTENT_FALLBACK_MODELS = [
 
 export const prisma = new Proxy({} as any, {
   get(_target, prop) {
-    if (prop === '$transaction') {
+    if (
+      prop === '$transaction' ||
+      prop === '$queryRaw' ||
+      prop === '$queryRawUnsafe' ||
+      prop === '$executeRaw' ||
+      prop === '$executeRawUnsafe'
+    ) {
       const client = getPrismaClient();
-      if (client && typeof (client as any).$transaction === 'function') {
-        return (client as any).$transaction.bind(client);
+      if (client && typeof (client as any)[prop] === 'function') {
+        return (client as any)[prop].bind(client);
       }
       throw new Error('Databáze je momentálně nedostupná.');
     }
@@ -225,9 +252,14 @@ export const prisma = new Proxy({} as any, {
           if (res && typeof res.catch === 'function') {
             return res.catch((err: any) => {
               markPrismaUnavailable(err);
-              if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+              if (
+                isFallbackAllowed() &&
+                typeof prop === 'string' &&
+                SAFE_CONTENT_FALLBACK_MODELS.includes(prop) &&
+                SAFE_READ_OPERATIONS.has(prop)
+              ) {
                 console.warn(`[Prisma Proxy] Dotaz na ${prop as string} selhal, vracím dummy.`);
-                return dummyModel[prop] ? dummyModel[prop](...args) : null;
+                return (dummyModel as any)[prop] ? (dummyModel as any)[prop](...args) : null;
               }
               throw err;
             });
@@ -235,8 +267,13 @@ export const prisma = new Proxy({} as any, {
           return res;
         } catch (err) {
           markPrismaUnavailable(err);
-          if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
-            return dummyModel[prop] ? dummyModel[prop](...args) : null;
+          if (
+            isFallbackAllowed() &&
+            typeof prop === 'string' &&
+            SAFE_CONTENT_FALLBACK_MODELS.includes(prop) &&
+            SAFE_READ_OPERATIONS.has(prop)
+          ) {
+            return (dummyModel as any)[prop] ? (dummyModel as any)[prop](...args) : null;
           }
           throw err;
         }
@@ -254,7 +291,13 @@ export const prisma = new Proxy({} as any, {
                 if (res && typeof res.catch === 'function') {
                   return res.catch((err: any) => {
                     markPrismaUnavailable(err);
-                    if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+                    if (
+                      isFallbackAllowed() &&
+                      typeof prop === 'string' &&
+                      SAFE_CONTENT_FALLBACK_MODELS.includes(prop) &&
+                      typeof modelProp === 'string' &&
+                      SAFE_READ_OPERATIONS.has(modelProp)
+                    ) {
                       console.warn(`[Prisma Proxy] Model query na ${prop as string}.${modelProp as string} selhal, vracím dummy.`);
                       return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                     }
@@ -264,7 +307,13 @@ export const prisma = new Proxy({} as any, {
                 return res;
               } catch (err) {
                 markPrismaUnavailable(err);
-                if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+                if (
+                  isFallbackAllowed() &&
+                  typeof prop === 'string' &&
+                  SAFE_CONTENT_FALLBACK_MODELS.includes(prop) &&
+                  typeof modelProp === 'string' &&
+                  SAFE_READ_OPERATIONS.has(modelProp)
+                ) {
                   return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                 }
                 throw err;

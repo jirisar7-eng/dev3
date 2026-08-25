@@ -1,4 +1,4 @@
-import { prisma } from '../db/prisma';
+import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, UserConsent, ConsentRecord, User, LegalDocStatus } from '../types';
 
@@ -45,7 +45,7 @@ export class ComplianceService {
 
   // 1. Get all documents summary for Compliance Center / Public listing
   static async getDocs(): Promise<ComplianceDoc[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const docs = await prisma.legalDocument.findMany({
           include: {
@@ -96,7 +96,7 @@ export class ComplianceService {
   static async getDocByKey(keyOrAlias: string): Promise<LegalDocument | null> {
     const targetKey = this.resolveKey(keyOrAlias);
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const doc = await prisma.legalDocument.findUnique({
           where: { key: targetKey },
@@ -203,7 +203,7 @@ export class ComplianceService {
     const content = data.initialContent || `Tento dokument (${data.title}) je v procesu přípravy.`;
     const authorName = user?.name || 'Administrátor';
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const doc = await prisma.legalDocument.create({
           data: {
@@ -279,7 +279,7 @@ export class ComplianceService {
   ): Promise<ComplianceDoc> {
     const targetKey = this.resolveKey(key);
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.legalDocument.update({
           where: { key: targetKey },
@@ -343,7 +343,7 @@ export class ComplianceService {
     const authorName = data.author || user?.name || 'Administrátor';
     const effDate = data.effectiveDate ? new Date(data.effectiveDate) : new Date();
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const doc = await prisma.legalDocument.findUnique({ where: { key: targetKey } });
         if (!doc) throw new Error(`Dokument '${targetKey}' nenalezen.`);
@@ -435,7 +435,7 @@ export class ComplianceService {
 
   // 7. Publish a specific version ID
   static async publishVersion(versionId: string, user?: User | null): Promise<LegalDocumentVersion> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const ver = await prisma.legalDocumentVersion.findUnique({
           where: { id: versionId },
@@ -488,7 +488,7 @@ export class ComplianceService {
 
   // 8. Deactivate / Archive a specific version ID
   static async deactivateVersion(versionId: string, user?: User | null): Promise<LegalDocumentVersion> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const ver = await prisma.legalDocumentVersion.findUnique({
           where: { id: versionId },
@@ -543,7 +543,7 @@ export class ComplianceService {
   ): Promise<UserConsent> {
     const key = this.resolveKey(docKey);
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const consent = await prisma.consent.upsert({
           where: { userId_docKey_docVersion: { userId, docKey: key, docVersion } },
@@ -603,7 +603,7 @@ export class ComplianceService {
 
   // 10. Get Consents List for Admin Compliance Registry
   static async getConsents(userId?: string, docKey?: string): Promise<ConsentRecord[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const whereClause: any = {};
         if (userId) whereClause.userId = userId;
@@ -681,7 +681,7 @@ export class ComplianceService {
       ipAddress,
     };
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const consent = await (prisma as any).cookieConsent.create({
           data,
@@ -704,7 +704,7 @@ export class ComplianceService {
 
   // 14. Get Cookie Consent
   static async getCookieConsent(userIdOrSession: string): Promise<any> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const consent = await (prisma as any).cookieConsent.findFirst({
           where: {
@@ -741,7 +741,7 @@ export class ComplianceService {
       metadataJson,
     };
 
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const log = await (prisma as any).legalAuditLog.create({
           data,
@@ -764,7 +764,7 @@ export class ComplianceService {
 
   // 16. Get Legal Audit Logs
   static async getLegalAuditLogs(): Promise<any[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const logs = await (prisma as any).legalAuditLog.findMany({
           orderBy: { createdAt: 'desc' },

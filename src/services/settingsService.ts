@@ -1,10 +1,10 @@
-import { prisma } from '../db/prisma';
+import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { Setting, User } from '../types';
 
 export class SettingsService {
   static async getSettings(): Promise<Setting[]> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const settings = await prisma.systemSetting.findMany({
           orderBy: { key: 'asc' },
@@ -24,7 +24,7 @@ export class SettingsService {
   }
 
   static async updateSetting(key: string, value: string, user?: User | null): Promise<Setting> {
-    if (prisma) {
+    if (isPrismaAvailable()) {
       try {
         const updated = await prisma.systemSetting.upsert({
           where: { key },
