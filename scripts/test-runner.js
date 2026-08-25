@@ -16,6 +16,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/analytics-2-user-journey.test.ts'], name: 'Analytics 2.0 (User Journey, Funnels, Search Intelligence & Zero-PII)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/ai-provider-consistency.test.ts'], name: 'AI Provider Consistency & Failover (P0.1 Hardening)' }
 ];
 
 let failed = false;

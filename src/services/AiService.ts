@@ -4,6 +4,8 @@ export interface AiGenerateOptions {
   timeoutMs?: number;
   jsonMode?: boolean;
   modelOverride?: string;
+  systemInstruction?: string;
+  temperature?: number;
 }
 
 export class AiService {
@@ -39,6 +41,32 @@ export class AiService {
       }
     };
 
+    // Prepare Gemini configuration
+    const geminiConfig: Record<string, any> = {};
+    if (options?.systemInstruction && options.systemInstruction.trim().length > 0) {
+      geminiConfig.systemInstruction = options.systemInstruction;
+    }
+    if (options?.jsonMode) {
+      geminiConfig.responseMimeType = 'application/json';
+    }
+    if (typeof options?.temperature === 'number') {
+      geminiConfig.temperature = options.temperature;
+    }
+    const geminiConfigParam = Object.keys(geminiConfig).length > 0 ? geminiConfig : undefined;
+
+    // Prepare OpenAI-compatible messages for Grok and Groq (system + user)
+    const openAiMessages: Array<{ role: string; content: string }> = [];
+    if (options?.systemInstruction && options.systemInstruction.trim().length > 0) {
+      openAiMessages.push({
+        role: 'system',
+        content: options.systemInstruction
+      });
+    }
+    openAiMessages.push({
+      role: 'user',
+      content: prompt
+    });
+
     // 1. Try Primary Gemini Key
     if (process.env.GEMINI_API_KEY) {
       try {
@@ -49,7 +77,7 @@ export class AiService {
           const response = await ai.models.generateContent({
             model: options?.modelOverride || 'gemini-2.5-flash',
             contents: prompt,
-            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+            config: geminiConfigParam
           });
           return response.text || '';
         };
@@ -75,7 +103,7 @@ export class AiService {
           const response2 = await ai2.models.generateContent({
             model: options?.modelOverride || 'gemini-2.5-flash',
             contents: prompt,
-            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+            config: geminiConfigParam
           });
           return response2.text || '';
         };
@@ -107,17 +135,8 @@ export class AiService {
             },
             body: JSON.stringify({
               model: 'grok-2-latest',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ],
-              temperature: 0.1,
+              messages: openAiMessages,
+              temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
             }),
             signal: controller.signal
@@ -157,17 +176,8 @@ export class AiService {
             },
             body: JSON.stringify({
               model: 'llama-3.3-70b-versatile',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ],
-              temperature: 0.1,
+              messages: openAiMessages,
+              temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
             })
           });
