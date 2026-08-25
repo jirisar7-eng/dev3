@@ -19,7 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
-import { findCourtByName } from '../../../data/soudyDataset';
+
 import { useAuth } from '../../../context/AuthContext';
 import { UserChild } from '../../../types';
 
@@ -315,7 +315,7 @@ Kontakt: [Váš e-mail / telefon]
 Nezletilý pacient:
 {{child.firstName}} {{child.lastName}}, nar. {{child.birthDate}}
 
-Jako zákonný zástupce výše jmenovaného nezletilého dítěte Vás žádám o poskytnutí úplných informací o jeho zdravotním stavu, probíhající léčbě a plánovaných zdravotních úkonech. 
+Jako zákonný zástupce výše jmenovaného nezletilého dítěte Vás žádám o poskytnutí úplných informací o jeho zdravotním stavu, probíhající léčbě a plánovaných zdravotních úkonech.
 
 Podle § 31 zákona č. 372/2011 Sb., o zdravotních službách, mám jako zákonný zástupce nezletilého pacienta plné právo na tyto informace, bez ohledu na to, u kterého z rodičů se dítě zrovna nachází. Souhlas druhého rodiče k poskytnutí těchto informací není vyžadován.
 
@@ -510,19 +510,27 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
           if (json && json.data) {
             const c = json.data;
             setCaseLoaded(true);
-            
+
             // Court lookup
             let foundCourt = '';
-            let foundCourtAddress = '';
             if (c.court) {
-              const cData = findCourtByName(c.court);
-              if (cData) {
-                foundCourt = cData.name;
-                foundCourtAddress = cData.address;
-                setCourtAddress(foundCourtAddress);
-              } else {
-                foundCourt = c.court;
-              }
+              foundCourt = c.court;
+
+              // Only override address if not already manually set
+              fetch(`/api/subjekty/lookup?name=${encodeURIComponent(c.court)}`)
+                .then(res => {
+                  if (!res.ok) throw new Error('Not found');
+                  return res.json();
+                })
+                .then(cData => {
+                  if (cData && cData.address) {
+                    // Mělo by nastavit pouze pokud uživatel mezitím sám adresu nenapsal,
+                    // ale v kontextu initial loadu je courtAddress zatím prázdná, takže to můžeme setnout.
+                    setCourtAddress(prev => prev ? prev : cData.address);
+                    setProfile(prev => ({ ...prev, courtName: cData.name || c.court }));
+                  }
+                })
+                .catch(() => {});
             }
 
             // Ex / Mother
@@ -608,7 +616,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
       const currentDateStr = new Date().toLocaleDateString('cs-CZ');
       const clause = esbirkaClause || `Právní citace ověřeny vůči e-Sbírce k ${currentDateStr}`;
       const finalChildAddress = childAddressMode === 'SAME_AS_MOTHER' ? profile.exStreet.trim() : childAddress.trim();
-      
+
       let template = rawTemplate.replace(/\[Adresa příslušného okresního soudu\]/g, '{{court.address}}');
 
       return template
@@ -678,7 +686,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   const handleGenerateDocument = () => {
     const raw = editedTemplateContent || selectedTemplate.content;
     const result = compileDocumentText(raw);
-    
+
     const missingFields = validateGeneratedDocument(result);
     if (missingFields.length > 0) {
       alert('Dokument obsahuje nevyplněné povinné údaje:\n- ' + missingFields.join('\n- ') + '\n\nProsím doplňte je v levém panelu.');
@@ -1090,9 +1098,9 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                 </div>
                 <div className="col-span-3 mt-1 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={childAddressMode === 'SAME_AS_MOTHER'} 
+                    <input
+                      type="checkbox"
+                      checked={childAddressMode === 'SAME_AS_MOTHER'}
                       onChange={(e) => setChildAddressMode(e.target.checked ? 'SAME_AS_MOTHER' : 'CUSTOM')}
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
@@ -1157,9 +1165,24 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                     onChange={(e) => {
                       const val = e.target.value;
                       setProfile({ ...profile, courtName: val });
-                      const cData = findCourtByName(val);
-                      if (cData) {
-                        setCourtAddress(cData.address);
+                      // Nepřetěžujeme API každou klávesou. V reálu by tu byl debounce.
+                      // Pokud chceme lookup, zavoláme ho např na onBlur, nebo debounced
+                    }}
+                    onBlur={(e) => {
+                      const val = e.target.value;
+                      if (val && val.length > 3) {
+                         fetch(`/api/subjekty/lookup?name=${encodeURIComponent(val)}`)
+                          .then(res => {
+                            if (!res.ok) throw new Error('Not found');
+                            return res.json();
+                          })
+                          .then(cData => {
+                            if (cData && cData.address) {
+                              setCourtAddress(cData.address);
+                              setProfile(prev => ({ ...prev, courtName: cData.name }));
+                            }
+                          })
+                          .catch(() => {});
                       }
                     }}
                     className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white font-bold"
@@ -1285,14 +1308,14 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
-      
+
       {/* AI Disclaimer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-4">
         <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex gap-3 text-xs text-amber-900">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
           <p>
-            <strong>Právní upozornění:</strong> Vygenerovaný dokument pomocí umělé inteligence (AI) slouží pouze jako předloha a inspirace. 
-            Může obsahovat faktické či právní nepřesnosti. Výstup nenahrazuje odbornou právní pomoc ani právní zastoupení. 
+            <strong>Právní upozornění:</strong> Vygenerovaný dokument pomocí umělé inteligence (AI) slouží pouze jako předloha a inspirace.
+            Může obsahovat faktické či právní nepřesnosti. Výstup nenahrazuje odbornou právní pomoc ani právní zastoupení.
             Před podáním na soud dokument důkladně zkontrolujte a případně zkonzultujte s advokátem.
           </p>
         </div>

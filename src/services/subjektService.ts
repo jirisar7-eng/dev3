@@ -1,9 +1,64 @@
 import { EntityType } from '@prisma/client';
 import { Subjekt, Review } from '../types';
-import { prisma } from '../db/prisma';
+import { prisma, isPrismaAvailable, getPrismaClient } from '../db/prisma';
 import { AresApiClient, AresVerifyResult } from './ares';
 
 export class SubjektService {
+  /**
+   * Najde soud podle jména (s podporou překlepů, diakritiky, velkých/malých písmen).
+   * Slouží pro AiFormsView jako Single Source of Truth přes Registr.
+   */
+  async findCourtByFuzzyName(courtName: string) {
+    if (!courtName || courtName.trim() === '') return null;
+
+    // Fallback if DB is not available
+    if (!isPrismaAvailable()) {
+      const { findCourtByName } = await import('../data/soudyDataset');
+      return findCourtByName(courtName);
+    }
+
+    const prismaClient = getPrismaClient();
+    if (!prismaClient) return null;
+
+    const normalizeString = (str: string) => {
+      if (!str) return '';
+      return str.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, ' ')
+        .replace(/ - /g, '-')
+        .trim();
+    };
+
+    const normalizedSearch = normalizeString(courtName);
+    const searchTrimmed = courtName.toLowerCase().trim();
+
+    // Načteme všechny soudy do paměti (je jich cca 108, bezpečné pro full-table scan a fuzzy match v JS)
+    const allCourts = await prismaClient.subjekt.findMany({
+      where: { type: 'SOUD', status: 'VERIFIED' }
+    });
+
+    let found = allCourts.find(s => s.name.toLowerCase().trim() === searchTrimmed);
+
+    if (!found) {
+      found = allCourts.find(s => normalizeString(s.name) === normalizedSearch);
+    }
+
+    if (!found && normalizedSearch.length > 4) {
+      found = allCourts.find(s => normalizeString(s.name).includes(normalizedSearch) || normalizedSearch.includes(normalizeString(s.name)));
+    }
+
+    if (found) {
+      return {
+        id: found.id,
+        name: found.name,
+        address: found.address || '',
+        city: found.city || '',
+        region: found.region || ''
+      };
+    }
+    return null;
+  }
+
   /**
    * Get filtered subjekty with optional type, region, or search term
    */

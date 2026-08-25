@@ -5,6 +5,25 @@ import { requireAuth, requireRole } from '../middleware/authMiddleware';
 const router = Router();
 
 // GET /api/subjekty - Get all subjekty with optional filtering
+
+// GET /api/subjekty/lookup?name=...
+router.get('/lookup', async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Missing name parameter' });
+    }
+    const court = await subjektService.findCourtByFuzzyName(name);
+    if (!court) {
+      return res.status(404).json({ error: 'Court not found' });
+    }
+    return res.json(court);
+  } catch (error) {
+    console.error('Error looking up court:', error);
+    return res.status(500).json({ error: 'Server error during lookup' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const { type, region, kraj, city, search, minRating, status } = req.query;
@@ -91,9 +110,9 @@ router.post('/geocode', requireAuth as any, async (req: any, res) => {
     if (!address && !city) {
       return res.status(400).json({ error: 'Nebylo zadáno město nebo adresa' });
     }
-    
+
     const query = `${address ? address + ', ' : ''}${city || ''}`.trim();
-    
+
     // Mapy.cz API
     const apiKey = process.env.MAPY_API_KEY;
     if (apiKey) {
@@ -111,7 +130,7 @@ router.post('/geocode', requireAuth as any, async (req: any, res) => {
         }
       }
     }
-    
+
     // Fallback to Nominatim if key missing or failed
     const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`;
     const nomResp = await fetch(nomUrl, { headers: { 'User-Agent': 'dev3-app' } });
@@ -126,7 +145,7 @@ router.post('/geocode', requireAuth as any, async (req: any, res) => {
         });
       }
     }
-    
+
     return res.status(404).json({ error: 'Lokace nenalezena' });
   } catch (error) {
     console.error('Geocode error:', error);
@@ -203,7 +222,7 @@ router.put('/:id/reject', requireAuth as any, requireRole('MODERATOR') as any, a
     if (!subj) return res.status(404).json({ error: 'Subjekt nenalezen' });
     const { rejectionReason } = req.body;
     if (!rejectionReason) return res.status(400).json({ error: 'Chybí důvod zamítnutí' });
-    
+
     const updated = await subjektService.updateSubjekt(req.params.id, {
       status: 'REJECTED',
       isVerified: false,
