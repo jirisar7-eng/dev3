@@ -182,14 +182,21 @@ const dummyModel = new Proxy({}, {
   },
 });
 
-const SECURITY_MODELS = [
-  'user', 'passkey', 'userProfile', 'userDocumentData', 
-  'role', 'permission', 'userRole', 'rolePermission',
-  'auditLog', 'auditDocument', 'auditShare', 'userConsentLog',
-  'sensitiveAccessLog', 'gdprDeletionRequest', 'legalAuditLog',
-  'coParentAuditLog', 'case', 'caseParticipant', 'child', 
-  'caseEvent', 'caseDocument', 'caseEvidence', 'coParentSpace', 
-  'coParentMember', 'carePlan', 'session', 'mfaConfiguration'
+const SAFE_CONTENT_FALLBACK_MODELS = [
+  'page',
+  'pageSection',
+  'category',
+  'article',
+  'faq',
+  'navigationItem',
+  'mediaContent',
+  'media',
+  'contentString',
+  'theme',
+  'stringTheme',
+  'themeVariable',
+  'module',
+  'moduleSetting'
 ];
 
 export const prisma = new Proxy({} as any, {
@@ -199,20 +206,12 @@ export const prisma = new Proxy({} as any, {
       if (client && typeof (client as any).$transaction === 'function') {
         return (client as any).$transaction.bind(client);
       }
-      return async function (fnOrArray: any) {
-        if (typeof fnOrArray === 'function') {
-          return await fnOrArray(prisma);
-        }
-        if (Array.isArray(fnOrArray)) {
-          return await Promise.all(fnOrArray);
-        }
-        return null;
-      };
+      throw new Error('Databáze je momentálně nedostupná.');
     }
 
     const client = getPrismaClient();
     if (!client) {
-      if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
+      if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
         return dummyModel;
       }
       throw new Error('Databáze je momentálně nedostupná.');
@@ -226,7 +225,7 @@ export const prisma = new Proxy({} as any, {
           if (res && typeof res.catch === 'function') {
             return res.catch((err: any) => {
               markPrismaUnavailable(err);
-              if (isFallbackAllowed()) {
+              if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
                 console.warn(`[Prisma Proxy] Dotaz na ${prop as string} selhal, vracím dummy.`);
                 return dummyModel[prop] ? dummyModel[prop](...args) : null;
               }
@@ -236,8 +235,8 @@ export const prisma = new Proxy({} as any, {
           return res;
         } catch (err) {
           markPrismaUnavailable(err);
-          if (isFallbackAllowed()) {
-             return dummyModel[prop] ? dummyModel[prop](...args) : null;
+          if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+            return dummyModel[prop] ? dummyModel[prop](...args) : null;
           }
           throw err;
         }
@@ -255,8 +254,8 @@ export const prisma = new Proxy({} as any, {
                 if (res && typeof res.catch === 'function') {
                   return res.catch((err: any) => {
                     markPrismaUnavailable(err);
-                    if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
-                      console.warn(`[Prisma Proxy] Model query selhal, vracím dummy.`);
+                    if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+                      console.warn(`[Prisma Proxy] Model query na ${prop as string}.${modelProp as string} selhal, vracím dummy.`);
                       return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                     }
                     throw err;
@@ -265,8 +264,8 @@ export const prisma = new Proxy({} as any, {
                 return res;
               } catch (err) {
                 markPrismaUnavailable(err);
-                if (isFallbackAllowed() && typeof prop === 'string' && !SECURITY_MODELS.includes(prop)) {
-                   return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
+                if (isFallbackAllowed() && typeof prop === 'string' && SAFE_CONTENT_FALLBACK_MODELS.includes(prop)) {
+                  return (dummyModel as any)[modelProp] ? (dummyModel as any)[modelProp](...args) : null;
                 }
                 throw err;
               }
