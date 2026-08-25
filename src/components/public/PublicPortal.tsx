@@ -73,6 +73,8 @@ import {
 } from './academy';
 import { SeoHead } from './SeoHead';
 import { MajetekView, PsychologieView, KalendarView } from '../placeholderViews';
+import { PortalActivityPanel } from './PortalActivityPanel';
+import { analytics } from '../../lib/analyticsClient';
 
 import { useText } from '../../context/TextContext';
 import { Send, CheckCircle2, MessageSquare, Phone, Mail, MapPin } from 'lucide-react';
@@ -94,9 +96,28 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   const cleanPath = rawPath === '' || rawPath === '/' ? '/' : rawPath;
   const slug = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
 
+  // Real, privacy-safe analytics page tracking (Zero PII)
+  useEffect(() => {
+    analytics.trackPageView(cleanPath, { isAuth: !!currentUser });
+  }, [cleanPath, currentUser]);
+
   if (cleanPath.startsWith('/audit/share/') || cleanPath.startsWith('/audity/share/')) {
     const shareToken = cleanPath.split('/share/')[1] || '';
     return <SharedAuditView token={shareToken} onNavigate={onNavigate} />;
+  }
+
+  // 0.0 Public Activity / Statistika Portálu (/aktivita-portalu, /aktivita, /statistiky-portalu)
+  if (slug === 'aktivita-portalu' || slug === 'aktivita' || slug === 'statistiky-portalu') {
+    return (
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-6">
+        <SeoHead
+          title="Aktivita na portálu • Táta má právo"
+          description="Živý přehled využití komunitních a právních nástrojů na portálu Táta má právo."
+          canonicalPath="/aktivita-portalu"
+        />
+        <PortalActivityPanel variant="full" onNavigate={onNavigate} />
+      </div>
+    );
   }
 
   const COMPLIANCE_SLUGS = [
@@ -174,6 +195,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
           canonicalPath="/"
         />
         <Hero />
+        <PortalActivityPanel variant="compact" onNavigate={onNavigate} className="my-2" />
         <CorePrincipleCard />
         <ArticlesSection onNavigate={onNavigate} />
         <ModulesSection onNavigate={onNavigate} />

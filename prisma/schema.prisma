@@ -2261,3 +2261,53 @@ model BrandingVersion {
 
   @@index([isActive])
 }
+
+// ------------------------------------------------------
+// PRIVACY-FIRST ANALYTICS & ACTIVITY LOGGING
+// ------------------------------------------------------
+
+enum AnalyticsEventType {
+  SESSION_START
+  SESSION_END
+  PAGE_VIEW
+  FEATURE_OPEN
+  FEATURE_COMPLETE
+  SEARCH
+  FORM_START
+  FORM_COMPLETE
+  DOCUMENT_DOWNLOAD
+  LOGIN
+  LOGOUT
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  timestamp   DateTime @default(now())
+  sessionId   String
+  userId      String?
+  eventType   String   // session_start, session_end, page_view, feature_open, feature_complete, search, form_start, form_complete, document_download, login, logout
+  route       String
+  featureId   String?
+  metadata    Json?
+  isAnonymous Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([route])
+  @@index([featureId])
+}
+
+model AnalyticsSetting {
+  id                       String   @id @default(uuid())
+  publicStatsEnabled       Boolean  @default(true)
+  simulatedActivityEnabled Boolean  @default(false)
+  simulationMultiplier     Float    @default(1.0)
+  simulationMin            Int      @default(0)
+  simulationMax            Int      @default(5)
+  simulationTimeWindow     Int      @default(15) // minut
+  updatedAt                DateTime @default(now()) @updatedAt
+}
+

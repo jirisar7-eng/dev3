@@ -64,6 +64,7 @@ import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
 import aiContextRoutes from './src/routes/aiContextRoutes';
 import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCenterRoutes';
+import { analyticsRouter } from './src/routes/analyticsRoutes';
 
 dotenv.config();
 
@@ -219,6 +220,7 @@ app.use('/api/custom-modules', customModuleRoutes);
 app.use('/api/subjekty', subjektRoutes);
 app.use('/api/cases', caseRoutes);
 app.use('/api/coparent', coparentRoutes);
+app.use('/api/analytics', analyticsRouter);
 
 // --- INCIDENTS & HANDOVER LOGS ENDPOINTS ---
 app.get('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {

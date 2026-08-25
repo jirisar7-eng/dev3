@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SeoHead } from './SeoHead';
 import { calculateChildSupport, AlimonyInput, ChildInput, AlimonyResult, AgeGroup } from '../../utils/alimonyCalculator';
 import { Calculator, AlertTriangle, Info, RefreshCw, ChevronRight, User, Plus, Trash2 } from 'lucide-react';
+import { analytics } from '../../lib/analyticsClient';
 
 export const AlimonyCalculatorView: React.FC = () => {
+  useEffect(() => {
+    analytics.trackFeature('alimony_calculator', 'feature_open');
+  }, []);
+
   const [netIncome, setNetIncome] = useState<string>('');
   const [otherObligations, setOtherObligations] = useState<number>(0);
   const [children, setChildren] = useState<ChildInput[]>([
@@ -44,6 +49,7 @@ export const AlimonyCalculatorView: React.FC = () => {
         otherObligations: Number(otherObligations)
       });
       setResult(calcResult);
+      analytics.trackFeature('alimony_calculator', 'feature_complete');
     } catch (err: any) {
       setError(err.message || 'Nastala chyba při výpočtu.');
     }

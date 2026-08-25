@@ -54,6 +54,8 @@ import {
   AcademyVideo,
   Quiz,
   MementoCase,
+  AnalyticsEvent,
+  AnalyticsSetting,
 } from '../types';
 import ospodDataset from '../data/ospodDataset.json';
 import { nonOspodSubjekty } from '../data/nonOspodSubjekty'; // Contains Alena Malá
@@ -2815,6 +2817,79 @@ class MemoryStore {
   academyVideos: AcademyVideo[] = [...DEFAULT_ACADEMY_VIDEOS];
   quizzes: Quiz[] = [...DEFAULT_QUIZZES];
   mementoCases: MementoCase[] = [...DEFAULT_MEMENTO_CASES];
+
+  analyticsEvents: AnalyticsEvent[] = [
+    {
+      id: 'evt-seed-1',
+      timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      sessionId: 'sess-seed-anon-1',
+      userId: null,
+      eventType: 'page_view',
+      route: '/',
+      featureId: null,
+      metadata: {},
+      isAnonymous: true,
+      createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'evt-seed-2',
+      timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      sessionId: 'sess-seed-anon-2',
+      userId: null,
+      eventType: 'feature_open',
+      route: '/kalkulacka-vyzivneho',
+      featureId: 'alimony_calculator',
+      metadata: {},
+      isAnonymous: true,
+      createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'evt-seed-3',
+      timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      sessionId: 'sess-seed-anon-2',
+      userId: null,
+      eventType: 'feature_complete',
+      route: '/kalkulacka-vyzivneho',
+      featureId: 'alimony_calculator',
+      metadata: { durationSeconds: 120 },
+      isAnonymous: true,
+      createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'evt-seed-4',
+      timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+      sessionId: 'sess-seed-auth-1',
+      userId: 'user-1',
+      eventType: 'page_view',
+      route: '/muj-pripad',
+      featureId: 'my_case_dossier',
+      metadata: {},
+      isAnonymous: false,
+      createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'evt-seed-5',
+      timestamp: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+      sessionId: 'sess-seed-anon-3',
+      eventType: 'search',
+      route: '/studie',
+      featureId: 'studies_search',
+      metadata: { query: 'střídavá péče kojenec' },
+      isAnonymous: true,
+      createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  analyticsSetting: AnalyticsSetting = {
+    id: 'analytics-settings-default',
+    publicStatsEnabled: true,
+    simulatedActivityEnabled: false,
+    simulationMultiplier: 1.0,
+    simulationMin: 0,
+    simulationMax: 5,
+    simulationTimeWindow: 15,
+    updatedAt: new Date().toISOString(),
+  };
 
   // Helper methods
   logAudit(action: string, module: string, details: string, user?: User | null) {

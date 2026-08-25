@@ -1231,3 +1231,99 @@ export interface UserPreference {
   updatedAt: string;
   createdAt: string;
 }
+
+// ------------------------------------------------------
+// PRIVACY-FIRST ANALYTICS & ACTIVITY LOGGING
+// ------------------------------------------------------
+
+export type AnalyticsEventType =
+  | 'session_start'
+  | 'session_end'
+  | 'page_view'
+  | 'feature_open'
+  | 'feature_complete'
+  | 'search'
+  | 'form_start'
+  | 'form_complete'
+  | 'document_download'
+  | 'login'
+  | 'logout';
+
+export interface AnalyticsEvent {
+  id: string;
+  timestamp: string;
+  sessionId: string;
+  userId?: string | null;
+  eventType: AnalyticsEventType | string;
+  route: string;
+  featureId?: string | null;
+  metadata?: Record<string, any> | null;
+  isAnonymous: boolean;
+  ipHash?: string | null;
+  createdAt?: string;
+}
+
+export interface AnalyticsSetting {
+  id: string;
+  publicStatsEnabled: boolean;
+  simulatedActivityEnabled: boolean;
+  simulationMultiplier: number;
+  simulationMin: number;
+  simulationMax: number;
+  simulationTimeWindow: number; // minutes
+  updatedAt: string;
+}
+
+export interface PublicActivitySummary {
+  activeVisitorsNow: number;
+  visitsToday: number;
+  uniqueVisitorsToday: number;
+  pageViewsToday: number;
+  featureUsesToday: number;
+  searchesToday: number;
+  topFeaturesToday: { featureId: string; label: string; count: number }[];
+  isSimulationActive: boolean;
+  lastUpdated: string;
+}
+
+export interface AdminAnalyticsStats {
+  real: {
+    activeVisitorsNow: number;
+    visitsToday: number;
+    uniqueVisitorsToday: number;
+    visitsYesterday: number;
+    visitsLast7Days: number;
+    visitsLast30Days: number;
+    pageViewsTotal: number;
+    pageViewsToday: number;
+    anonymousVisitsToday: number;
+    registeredVisitsToday: number;
+    topSections: { route: string; count: number }[];
+    topFeatures: { featureId: string; label: string; count: number; completedCount: number }[];
+    searches: { totalCount: number; topQueries: { query: string; count: number }[] };
+    completedFeaturesCount: number;
+    uncompletedFeaturesCount: number;
+    avgTimeInFeatureSeconds?: number;
+    entryPages: { route: string; count: number }[];
+    exitPages: { route: string; count: number }[];
+    activityByHour: { hour: number; visits: number; pageViews: number }[];
+  };
+  simulation: {
+    enabled: boolean;
+    multiplier: number;
+    min: number;
+    max: number;
+    timeWindow: number;
+    simulatedActiveVisitors: number;
+    simulatedVisitsToday: number;
+    simulatedPageViewsToday: number;
+  };
+  publicDisplay: {
+    activeVisitorsNow: number;
+    visitsToday: number;
+    pageViewsToday: number;
+    featureUsesToday: number;
+  };
+  settings: AnalyticsSetting;
+}
+
