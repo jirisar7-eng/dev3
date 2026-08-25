@@ -1,3 +1,4 @@
+import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -57,36 +58,32 @@ export class OAuthService {
       throw new Error('Google did not return an ID token.');
     }
 
-    // Decode ID Token without signature verification if dummy keys are used (fallback)
-    // In production, you would retrieve Google's JWKS and verify the signature.
-    const decoded = jwt.decode(idToken) as any;
-    if (!decoded) {
-      throw new Error('Failed to decode Google ID token.');
+        // We MUST cryptographically verify the signature, issuer, audience, and expiration.
+    const client = new OAuth2Client(clientId);
+    let payload;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch (error) {
+      throw new Error('Nepodařilo se ověřit platnost Google ID tokenu.');
     }
 
-    // Validate Issuer & Audience & Expiration
-    const iss = decoded.iss;
-    if (iss !== 'https://accounts.google.com' && iss !== 'accounts.google.com') {
-      throw new Error(`Invalid Google ID token issuer: ${iss}`);
+    if (!payload) {
+      throw new Error('Google ID token payload is missing.');
     }
 
-    if (decoded.aud !== clientId && process.env.GOOGLE_CLIENT_ID) {
-      throw new Error(`Invalid Google ID token audience: ${decoded.aud}`);
-    }
-
-    if (decoded.exp < Math.floor(Date.now() / 1000)) {
-      throw new Error('Google ID token is expired.');
-    }
-
-    if (!decoded.email_verified) {
+    if (!payload.email_verified) {
       throw new Error('Google email is not verified.');
     }
 
     return {
-      providerAccountId: decoded.sub,
-      email: decoded.email,
-      name: decoded.name || decoded.email.split('@')[0],
-      avatar: decoded.picture || null,
+      providerAccountId: payload.sub,
+      email: payload.email,
+      name: payload.name || payload.email?.split('@')[0] || 'Unknown',
+      avatar: payload.picture || null,
     };
   }
 
