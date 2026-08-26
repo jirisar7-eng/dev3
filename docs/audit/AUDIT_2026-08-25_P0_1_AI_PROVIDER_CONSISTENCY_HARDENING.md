@@ -1,8 +1,8 @@
 # AUDIT REPORT: P0.1 AI PROVIDER CONSISTENCY & FAILOVER HARDENING
 
-**Datum a čas auditu:** 2026-08-25 21:07 UTC  
-**Úkol:** P0.1 — AI Provider Consistency Hardening  
-**Projekt:** Táta má právo (dev3)  
+**Datum a čas auditu:** 2026-08-25 21:07 UTC
+**Úkol:** P0.1 — AI Provider Consistency Hardening
+**Projekt:** Táta má právo (dev3)
 **Status:** DOKONČENO (PASS)
 
 ---

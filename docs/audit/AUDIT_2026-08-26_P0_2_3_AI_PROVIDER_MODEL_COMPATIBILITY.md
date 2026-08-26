@@ -1,9 +1,9 @@
 # AUDIT REPORT: P0.2.3 — AI PROVIDER MODEL COMPATIBILITY & RUNTIME PARITY
 
-**Datum a čas:** 2026-08-26  
-**Úkol:** P0.2.3 — AI Provider Model Compatibility & Runtime Parity  
-**Projekt:** Táta má právo / dev3  
-**Větev:** `feat/ai-failsafe-client-prompt-hardening`  
+**Datum a čas:** 2026-08-26
+**Úkol:** P0.2.3 — AI Provider Model Compatibility & Runtime Parity
+**Projekt:** Táta má právo / dev3
+**Větev:** `feat/ai-failsafe-client-prompt-hardening`
 
 ---
 

@@ -1,11 +1,11 @@
 # IMPLEMENTAČNÍ PLÁN & ARCHITEKTONICKÝ NÁVRH: AI SIMULATOR – SPRÁVA SCÉNÁŘŮ
 
-**Projekt:** Táta má právo (`dev3`)  
-**Datum:** 25. srpna 2026  
-**Autor:** Hlavní softwarový architekt, DevSecOps inženýr & QA auditor  
-**Typ dokumentu:** READ-ONLY ARCHITECTURAL & IMPLEMENTATION SPECIFICATION  
-**Vazba na předchozí audit:** `docs/audit/AUDIT_2026-08-25_P0_AI_INTERACTION_CONSISTENCY_AUDIT.md`  
-**Stav:** READY FOR REVIEW (Nulové zásahy do kódu / databáze / Git repozitáře)  
+**Projekt:** Táta má právo (`dev3`)
+**Datum:** 25. srpna 2026
+**Autor:** Hlavní softwarový architekt, DevSecOps inženýr & QA auditor
+**Typ dokumentu:** READ-ONLY ARCHITECTURAL & IMPLEMENTATION SPECIFICATION
+**Vazba na předchozí audit:** `docs/audit/AUDIT_2026-08-25_P0_AI_INTERACTION_CONSISTENCY_AUDIT.md`
+**Stav:** READY FOR REVIEW (Nulové zásahy do kódu / databáze / Git repozitáře)
 
 ---
 
@@ -122,29 +122,29 @@ model AiSimulatorScenario {
   category         ScenarioCategory   @default(HANDOVER)
   difficulty       ScenarioDifficulty @default(INTERMEDIATE)
   iconName         String             @default("UserX") // Název Lucide ikony
-  
+
   // Roleplay definice
   aiRoleName       String             // např. "Matka / Nový partner"
   initialMessage   String             @db.Text
-  
+
   // Řízená strukturovaná data (Guardrails)
   knownFacts       Json               // string[] - Fakta, která AI zná a smí použít
   allowedBehaviors Json               // string[] - Povolené taktiky protistrany
   forbiddenClaims  Json               // string[] - Striktní zákaz tvrzení (lékař, rozsudek...)
   evaluationRules  Json               // StructuredEvaluationCriteria
-  
+
   // Stav a řazení
   status           ScenarioStatus     @default(DRAFT)
   sortOrder        Int                @default(0)
   version          Int                @default(1)
-  
+
   // Systémové a auditní vazby
   isSystem         Boolean            @default(false) // Výchozí systémové scénáře
   createdById      String?
   createdBy        User?              @relation("ScenarioCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   updatedById      String?
   updatedBy        User?              @relation("ScenarioUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  
+
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   archivedAt       DateTime?

@@ -1,9 +1,9 @@
 # AUDIT REPORT: P0.2.1 — AI FORMS FAIL-SAFE & CASE MANAGER SOURCE FIDELITY
 
-**Datum a čas:** 2026-08-25  
-**Projekt:** Táta má právo / dev3  
-**Pracovní větev:** `feat/ai-failsafe-client-prompt-hardening`  
-**Úkol:** P0.2.1 — AI Forms Fail-Safe & Case Manager Source Fidelity  
+**Datum a čas:** 2026-08-25
+**Projekt:** Táta má právo / dev3
+**Pracovní větev:** `feat/ai-failsafe-client-prompt-hardening`
+**Úkol:** P0.2.1 — AI Forms Fail-Safe & Case Manager Source Fidelity
 
 ---
 

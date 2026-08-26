@@ -1,10 +1,10 @@
 # AUDIT REPORT: P0.2 AI FAIL-SAFE & CLIENT PROMPT HARDENING
 
-**Datum a čas:** 2026-08-25  
-**Projekt:** Táta má právo / dev3  
-**Repo:** `/var/www/tatovacesta_dev3`  
-**Pracovní větev:** `feat/ai-failsafe-client-prompt-hardening`  
-**Úkol:** P0.2 — AI Fail-Safe & Client Prompt Hardening  
+**Datum a čas:** 2026-08-25
+**Projekt:** Táta má právo / dev3
+**Repo:** `/var/www/tatovacesta_dev3`
+**Pracovní větev:** `feat/ai-failsafe-client-prompt-hardening`
+**Úkol:** P0.2 — AI Fail-Safe & Client Prompt Hardening
 
 ---
 

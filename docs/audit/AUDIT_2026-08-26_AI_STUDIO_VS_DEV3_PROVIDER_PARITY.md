@@ -1,8 +1,8 @@
 # AUDIT REPORT: AI STUDIO PREVIEW VS DEV3 PROVIDER PARITY & DIAGNOSTIC (P0.2.2)
 
-**Datum a čas:** 2026-08-26  
-**Projekt:** Táta má právo / dev3  
-**Větev:** `feat/ai-failsafe-client-prompt-hardening`  
+**Datum a čas:** 2026-08-26
+**Projekt:** Táta má právo / dev3
+**Větev:** `feat/ai-failsafe-client-prompt-hardening`
 **Rozsah:** Diagnostic & Parity Analysis (Strict Read-Only)
 
 ---
