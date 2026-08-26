@@ -1,3 +1,4 @@
+import { getClearCookieOptions } from './src/utils/cookieUtils';
 import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
@@ -2132,7 +2133,7 @@ app.post('/api/auth/logout', (req: AuthenticatedRequest, res) => {
   if (req.session && req.session.destroy) {
     req.session.destroy();
   }
-  res.clearCookie('token', { path: '/' });
+  res.clearCookie('token', getClearCookieOptions(false));
   res.json({ success: true, message: 'Uživatel byl úspěšně odhlášen.' });
 });
 
@@ -2346,7 +2347,7 @@ app.post(['/api/auth/2fa/verify', '/api/auth/mfa/verify'], authRateLimiter as an
     if (req.session) {
       delete req.session.pendingMfaUserId;
     }
-    res.clearCookie('pending_mfa_user', { path: '/' });
+    res.clearCookie('pending_mfa_user', getClearCookieOptions(true));
 
     if (getPrismaClient()) {
       try {

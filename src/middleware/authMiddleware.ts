@@ -1,3 +1,4 @@
+import { getClearCookieOptions } from '../utils/cookieUtils';
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
 import { User, UserRole } from '../types';
@@ -63,11 +64,11 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
     userId,
     pendingMfaUserId: req.session?.pendingMfaUserId || pendingMfaCookie,
     regenerate: () => {
-      res.clearCookie('token', { path: '/' });
+      res.clearCookie('token', getClearCookieOptions(false));
     },
     destroy: () => {
-      res.clearCookie('token', { path: '/' });
-      res.clearCookie('pending_mfa_user', { path: '/' });
+      res.clearCookie('token', getClearCookieOptions(false));
+      res.clearCookie('pending_mfa_user', getClearCookieOptions(true));
       if (req.session) {
         req.session.userId = undefined;
         req.session.pendingMfaUserId = undefined;

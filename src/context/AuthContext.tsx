@@ -117,6 +117,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshMe();
   }, []);
 
+  useEffect(() => {
+    const handle401 = () => {
+      if (currentUser) {
+        console.warn('Received 401 globally, clearing user context...');
+        setCurrentUser(null);
+        localStorage.removeItem('tatovacesta_auth_token');
+      }
+    };
+    window.addEventListener('auth_401_error', handle401);
+    return () => window.removeEventListener('auth_401_error', handle401);
+  }, [currentUser]);
+
+
   // Automatické odhlášení při nečinnosti uživatele (30 minut)
   useEffect(() => {
     if (!currentUser) return;
