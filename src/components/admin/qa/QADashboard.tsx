@@ -43,12 +43,12 @@ type QATab = 'dashboard' | 'runs' | 'findings' | 'ai' | 'registry' | 'copilot';
 
 export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigate }) => {
   const getTabFromPath = (path?: string): QATab => {
-    const p = path || (typeof window !== 'undefined' ? window.location.pathname : '');
-    if (p.includes('/qa/runs')) return 'runs';
-    if (p.includes('/qa/findings')) return 'findings';
-    if (p.includes('/qa/ai')) return 'ai';
-    if (p.includes('/qa/registry')) return 'registry';
-    if (p.includes('/qa/copilot')) return 'copilot';
+    const p = path || (typeof window !== 'undefined' ? window.location.pathname + window.location.search + window.location.hash : '');
+    if (p.includes('/qa/copilot') || p.includes('/admin/copilot') || p.includes('tab=copilot') || p.includes('subtab=copilot') || p.includes('sub=copilot') || p.includes('#copilot')) return 'copilot';
+    if (p.includes('/qa/runs') || p.includes('tab=runs') || p.includes('subtab=runs') || p.includes('sub=runs')) return 'runs';
+    if (p.includes('/qa/findings') || p.includes('tab=findings') || p.includes('subtab=findings') || p.includes('sub=findings')) return 'findings';
+    if (p.includes('/qa/ai') || p.includes('tab=ai') || p.includes('subtab=ai') || p.includes('sub=ai')) return 'ai';
+    if (p.includes('/qa/registry') || p.includes('tab=registry') || p.includes('subtab=registry') || p.includes('sub=registry')) return 'registry';
     return 'dashboard';
   };
 

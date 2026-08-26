@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   ChevronDown,
@@ -37,6 +37,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     'sec-overview': true,
     'sec-cms': true,
   });
+
+  useEffect(() => {
+    const sec = findSectionByTabId(activeTab);
+    if (sec) {
+      setExpandedSections((prev) => ({
+        ...prev,
+        [sec]: true,
+      }));
+    }
+  }, [activeTab]);
 
   const visibleSections = useMemo(() => {
     return getVisibleAdminSections(currentUser?.role);

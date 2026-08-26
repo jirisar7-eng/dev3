@@ -36,7 +36,11 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-export const CmsManager: React.FC = () => {
+interface CmsManagerProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
   const [activeSubtab, setActiveSubtab] = useState<
     | 'dashboard'
     | 'pages'
@@ -317,7 +321,7 @@ export const CmsManager: React.FC = () => {
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            Stránky ({pages.length})
+            Stránky (Legacy: {pages.length})
           </button>
           <button
             onClick={() => setActiveSubtab('articles')}
@@ -353,7 +357,7 @@ export const CmsManager: React.FC = () => {
             }`}
           >
             <Navigation className="w-3.5 h-3.5" />
-            Navigace ({navItems.length})
+            Navigace (Archiv: {navItems.length})
           </button>
           <button
             onClick={() => setActiveSubtab('media')}
@@ -492,6 +496,31 @@ export const CmsManager: React.FC = () => {
       {/* 2. PAGES & PAGE SECTIONS SUBTAB */}
       {activeSubtab === 'pages' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Legacy Notice Banner */}
+          <div className="lg:col-span-3 bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+              <div>
+                <span className="font-bold block">Archivní sekční editor stránek (Legacy)</span>
+                <span className="text-[11px] text-amber-800">
+                  Hlavní a doporučená správa stránek probíhá v moderním <strong>Vizuálním Editoru Puck</strong> (/admin/pages). Tento sekční editor je plně funkční a zachován pro zpětnou kompatibilitu a archivní data.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (onNavigate) onNavigate('/admin/pages');
+                else {
+                  window.history.pushState({}, '', '/admin/pages');
+                  window.dispatchEvent(new Event('popstate'));
+                }
+              }}
+              className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950 transition-all shrink-0 text-center cursor-pointer shadow-xs"
+            >
+              Přejít do Vizuálního Puck Editoru
+            </button>
+          </div>
+
           {/* Pages List & Sections Editor */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
@@ -507,7 +536,8 @@ export const CmsManager: React.FC = () => {
                 </button>
               </div>
 
-              <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs min-w-[500px]">
                 <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
                   <tr>
                     <th className="p-3.5">Název</th>
@@ -576,6 +606,7 @@ export const CmsManager: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
 
             {/* Selected Page Section Management Panel */}
@@ -1064,37 +1095,50 @@ export const CmsManager: React.FC = () => {
       {/* 6. NAVIGATION SUBTAB */}
       {activeSubtab === 'nav' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Navigation Notice Banner */}
+          <div className="lg:col-span-3 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-center gap-3 text-xs text-blue-950 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
+            <div>
+              <span className="font-bold block">Autoritativní zdroj navigace portálu</span>
+              <span className="text-[11px] text-blue-800">
+                Navigace portálu je autoritativně řízena centrálním konfiguračním souborem <code className="bg-blue-100 px-1 py-0.5 rounded font-mono font-bold">src/config/navigation.ts</code> (Fáze 02). Níže uvedené databázové záznamy jsou archivní a zachovány pro zpětnou kompatibilitu.
+              </span>
+            </div>
+          </div>
+
           <div className="lg:col-span-2 space-y-3">
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
-                  <tr>
-                    <th className="p-3.5">Pořadí</th>
-                    <th className="p-3.5">Klíč / Štítek</th>
-                    <th className="p-3.5">Cílová URL</th>
-                    <th className="p-3.5">Cíl</th>
-                    <th className="p-3.5 text-right">Akce</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {navItems.map((nav) => (
-                    <tr key={nav.id} className="hover:bg-slate-50">
-                      <td className="p-3.5 font-bold font-mono text-slate-900">#{nav.order}</td>
-                      <td className="p-3.5 font-bold text-slate-900">{nav.labelKey}</td>
-                      <td className="p-3.5 font-mono text-slate-500">{nav.url}</td>
-                      <td className="p-3.5 text-slate-600">{nav.target}</td>
-                      <td className="p-3.5 text-right">
-                        <button
-                          onClick={() => handleDeleteNavItem(nav.id)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs min-w-[500px]">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+                    <tr>
+                      <th className="p-3.5">Pořadí</th>
+                      <th className="p-3.5">Klíč / Štítek</th>
+                      <th className="p-3.5">Cílová URL</th>
+                      <th className="p-3.5">Cíl</th>
+                      <th className="p-3.5 text-right">Akce</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {navItems.map((nav) => (
+                      <tr key={nav.id} className="hover:bg-slate-50">
+                        <td className="p-3.5 font-bold font-mono text-slate-900">#{nav.order}</td>
+                        <td className="p-3.5 font-bold text-slate-900">{nav.labelKey}</td>
+                        <td className="p-3.5 font-mono text-slate-500">{nav.url}</td>
+                        <td className="p-3.5 text-slate-600">{nav.target}</td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => handleDeleteNavItem(nav.id)}
+                            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 

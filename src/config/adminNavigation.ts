@@ -284,20 +284,20 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       },
       {
         id: 'audit',
-        title: 'Audit Log (DB)',
-        subtitle: 'Bezpečnostní systémové logy z PostgreSQL',
+        title: 'Audit Log (Provozní DB)',
+        subtitle: 'Bezpečnostní a systémové logy z PostgreSQL',
         icon: Clock,
-        badge: { text: 'PostgreSQL', variant: 'rose' },
-        keywords: ['audit log', 'logy', 'databáze', 'bezpečnost', 'události', 'přihlášení', 'změny'],
+        badge: { text: 'DB Logy', variant: 'rose' },
+        keywords: ['audit log', 'provozní logy', 'databáze', 'bezpečnost', 'události', 'přihlášení', 'změny', 'db'],
       },
       {
         id: 'audits',
-        title: 'Audit Center DEV3',
-        subtitle: 'Prohlížeč vývojových auditních reportů z docs/audit',
+        title: 'Audit Center (Vývojové zprávy)',
+        subtitle: 'Architektonické a QA auditní reporty z docs/audit',
         icon: ShieldCheck,
-        badge: { text: 'DEV3', variant: 'blue' },
+        badge: { text: 'docs/audit', variant: 'blue' },
         path: '/administrace/audity',
-        keywords: ['audit center', 'audity', 'reporty', 'dev3', 'markdown', 'dokumentace', 'qa reporty'],
+        keywords: ['audit center', 'audity', 'reporty', 'dev3', 'markdown', 'dokumentace', 'qa reporty', 'vývojové zprávy'],
       },
       {
         id: 'compliance',
@@ -437,4 +437,65 @@ export function findSectionByTabId(tabId: AdminTabId): string | undefined {
     }
   }
   return undefined;
+}
+
+export function getAllAdminItems(): AdminNavItem[] {
+  return ADMIN_NAV_SECTIONS.flatMap((sec) => sec.items);
+}
+
+export function findItemByTabId(tabId: AdminTabId): AdminNavItem | undefined {
+  for (const section of ADMIN_NAV_SECTIONS) {
+    const found = section.items.find((item) => item.id === tabId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
+  const target = urlOrPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search + window.location.hash : '');
+  
+  // 1. Query parameter matching (?tab=xxx or ?subtab=xxx)
+  let searchStr = '';
+  if (target.includes('?')) {
+    searchStr = target.slice(target.indexOf('?'));
+  } else if (typeof window !== 'undefined' && window.location.search) {
+    searchStr = window.location.search;
+  }
+
+  if (searchStr) {
+    const params = new URLSearchParams(searchStr);
+    const tabParam = params.get('tab') || params.get('subtab') || params.get('sub');
+    if (tabParam) {
+      if (tabParam === 'copilot') return 'qa';
+      if (tabParam === 'audit-center' || tabParam === 'audity') return 'audits';
+      if (tabParam === 'audit-log') return 'audit';
+      if (tabParam === 'analytika') return 'analytics';
+      
+      const matched = findItemByTabId(tabParam as AdminTabId);
+      if (matched) return matched.id;
+    }
+  }
+
+  // 2. Specific Path matches
+  if (target.startsWith('/admin/pages/new') || target.startsWith('/admin/pages/edit')) return 'page-builder';
+  if (target.startsWith('/admin/pages')) return 'pages';
+  if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
+  if (target.startsWith('/admin/dns')) return 'dns';
+  if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'qa';
+  if (target.includes('/qa') || target.includes('/administrace/qa') || target.includes('/admin/copilot')) return 'qa';
+  if (target.includes('/audity') || target.includes('/administrace/audity') || target.includes('/admin/audit-center')) return 'audits';
+  if (target.includes('/audit-log') || target.includes('/administrace/audit-log')) return 'audit';
+  if (target.includes('/admin/team-center')) return 'team-center';
+
+  // 3. Match against configured item paths
+  for (const section of ADMIN_NAV_SECTIONS) {
+    for (const item of section.items) {
+      if (item.path && (target === item.path || target.startsWith(item.path + '/') || target.startsWith(item.path + '?'))) {
+        return item.id;
+      }
+    }
+  }
+
+  // Default fallback
+  return 'overview';
 }

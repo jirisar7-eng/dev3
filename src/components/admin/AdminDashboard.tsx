@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { AdminTabId, ADMIN_NAV_SECTIONS, findSectionByTabId } from '../../config/adminNavigation';
+import { AdminTabId, ADMIN_NAV_SECTIONS, findSectionByTabId, resolveAdminTabFromUrl } from '../../config/adminNavigation';
 import { AdminHeader } from './layout/AdminHeader';
 import { AdminSidebar } from './layout/AdminSidebar';
 import { TeamCenterSlot } from './layout/TeamCenterSlot';
@@ -58,36 +58,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
   const { modules } = useModules();
   const { texts } = useText();
 
-  const getInitialTab = (): AdminTabId => {
-    const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
-    if (path.startsWith('/admin/pages/new') || path.startsWith('/admin/pages/edit')) return 'page-builder';
-    if (path.startsWith('/admin/pages')) return 'pages';
-    if (path.startsWith('/admin/analytics') || path.includes('/analytika')) return 'analytics';
-    if (path.startsWith('/admin/dns')) return 'dns';
-    if (path.includes('/qa') || path.includes('/administrace/qa')) return 'qa';
-    if (path.includes('/audity') || path.includes('/administrace/audity')) return 'audits';
-    return 'overview';
-  };
-
-  const [activeTab, setActiveTab] = useState<AdminTabId>(getInitialTab());
+  const [activeTab, setActiveTab] = useState<AdminTabId>(() => resolveAdminTabFromUrl(currentPath));
   const [mailcowInitName, setMailcowInitName] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
-    if (path.startsWith('/admin/pages/new') || path.startsWith('/admin/pages/edit')) {
-      setActiveTab('page-builder');
-    } else if (path.startsWith('/admin/pages')) {
-      setActiveTab('pages');
-    } else if (path.startsWith('/admin/analytics') || path.includes('/analytika')) {
-      setActiveTab('analytics');
-    } else if (path.startsWith('/admin/dns')) {
-      setActiveTab('dns');
-    } else if (path.includes('/qa') || path.includes('/administrace/qa')) {
-      setActiveTab('qa');
-    } else if (path.includes('/audity') || path.includes('/administrace/audity')) {
-      setActiveTab('audits');
-    }
+    setActiveTab(resolveAdminTabFromUrl(currentPath));
   }, [currentPath]);
 
   const handleSelectTab = (tabId: AdminTabId, path?: string) => {
@@ -388,7 +364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'theme' && <ThemeManager />}
           {activeTab === 'branding' && <BrandingManager />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
-          {activeTab === 'cms' && <CmsManager />}
+          {activeTab === 'cms' && <CmsManager onNavigate={onNavigate} />}
 
           {/* 👥 Uživatelé & Přístupy */}
           {activeTab === 'users' && (
