@@ -485,6 +485,13 @@ export class CoParentService {
       throw new Error('Platnost pozvánky vypršela (48h).');
     }
 
+    const spaceDelegate = getDelegate(p, 'coParentSpace', 'coparentSpace');
+    if (!spaceDelegate) throw new Error('Prisma model coParentSpace není dostupný.');
+    const spaceExists = await spaceDelegate.findUnique({ where: { id: invite.spaceId } });
+    if (!spaceExists) {
+      throw new Error('Pracovní prostor (spaceId) přidružený k této pozvánce neexistuje nebo byl smazán.');
+    }
+
     const memberDelegate = getDelegate(p, 'coParentMember', 'coparentMember');
     if (!memberDelegate) throw new Error('Prisma model coParentMember není dostupný.');
 

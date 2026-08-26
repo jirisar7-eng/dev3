@@ -6,7 +6,7 @@ import { AiService } from '../services/AiService';
 const router = express.Router();
 
 // Strict rate limiter for public AI endpoints (10 requests per hour per IP)
-const aiRateLimiter = rateLimit({
+const aiRateLimiter = process.env.NODE_ENV === 'test' ? ((req, res, next) => next()) : rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { error: 'Překročen limit dotazů na umělou inteligenci. Zkuste to prosím znovu za hodinu.' },
@@ -196,9 +196,9 @@ ${documentText}
 Vystup ve formátu JSON:
 {
   "summary": "Stručné manažerské shrnutí obsahu a hlavních závěrů dokumentu (3-5 vě́t)",
+  "summaryQuotes": ["přesná věta nebo fráze z textu, o kterou se opírá summary", "další přesná citace"],
   "contradictions": [
-    "Identifikovaný rozpor nebo tvrzení bez důkazní opory 1",
-    "Identifikovaný rozpor 2"
+    { "claim": "Identifikovaný rozpor nebo tvrzení bez opory", "exactQuote": "přesná citace z textu dokazující tento rozpor" }
   ],
   "counterArguments": [
     "Doporučený protiargument do vyjádření s odkazem na zákon nebo judikaturu 1",
@@ -211,8 +211,32 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
-    if (!parsed.summary || !Array.isArray(parsed.contradictions)) throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
-    res.json({ success: true, ...parsed });
+    
+    if (!parsed.summary || !Array.isArray(parsed.contradictions) || !Array.isArray(parsed.summaryQuotes)) {
+      throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
+    }
+
+    const normalize = (s: string) => s.replace(/\s+/g, ' ').toLowerCase().trim();
+    const normalizedDoc = normalize(documentText);
+
+    for (const q of parsed.summaryQuotes) {
+      if (q && !normalizedDoc.includes(normalize(q))) {
+        throw new Error('Failsafe trigger: Odvozený závěr (summary) není podložen zdrojovým textem (citace nebyla nalezena).');
+      }
+    }
+
+    for (const c of parsed.contradictions) {
+      if (c.exactQuote && !normalizedDoc.includes(normalize(c.exactQuote))) {
+         throw new Error('Failsafe trigger: Rozpor (contradiction) není podložen zdrojovým textem (citace nebyla nalezena).');
+      }
+    }
+
+    const out = {
+      ...parsed,
+      contradictions: parsed.contradictions.map((c: any) => `${c.claim} (Citace: "${c.exactQuote}")`)
+    };
+
+    res.json({ success: true, ...out });
   } catch (err: any) {
     console.error('Analyze Document Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);

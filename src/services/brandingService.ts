@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma';
+import { Prisma } from '@prisma/client';
 import { sanitizeSvg } from '../utils/svgSanitizer';
 
 export class BrandingService {
@@ -48,12 +49,13 @@ export class BrandingService {
       }
     }
 
-    const latest = await prisma.brandingVersion.findFirst({
-      orderBy: { version: 'desc' }
-    });
-    const nextVersion = (latest?.version || 0) + 1;
-
     return prisma.$transaction(async (tx) => {
+      // Locking / Race condition prevention: Compute nextVersion inside transaction
+      const latest = await tx.brandingVersion.findFirst({
+        orderBy: { version: 'desc' }
+      });
+      const nextVersion = (latest?.version || 0) + 1;
+
       await tx.brandingVersion.updateMany({
         where: { isActive: true },
         data: { isActive: false }
