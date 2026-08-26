@@ -27,6 +27,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/ai-provider-consistency.test.ts'], name: 'AI Provider Consistency & Failover (P0.1 Hardening)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-1-ai-forms-source-fidelity.test.ts'], name: 'AI Forms Source Fidelity (P0.2.1)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-3-model-compatibility.test.ts'], name: 'AI Provider Model Compatibility (P0.2.3)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/navigation-consolidation-phase02.test.ts'], name: 'Navigation Consolidation & Visibility (Phase 02)' }
 ];
 
 let failed = false;

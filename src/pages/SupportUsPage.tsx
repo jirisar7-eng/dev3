@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Building2, ChevronRight, Users, Sparkles, HandHeart, ShieldCheck, Scale, FileText, Eye } from 'lucide-react';
-import { Navbar } from '../components/Navbar';
 import { SupportInterestModal } from '../components/support/SupportInterestModal';
 import { AssociationDocumentsModal } from '../components/support/AssociationDocumentsModal';
 import { AssociationDemoModal } from '../components/support/AssociationDemoModal';
@@ -30,9 +29,7 @@ const SupportUsPage: React.FC<{ interactiveOnly?: boolean }> = ({ interactiveOnl
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
-      {!interactiveOnly && <Navbar onLoginClick={() => {}} user={null} />}
-      
-      <main className="flex-grow pt-24 pb-20">
+      <main className="flex-grow pt-8 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Hero Section */}

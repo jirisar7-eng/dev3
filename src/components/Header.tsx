@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
-import { NAVIGATION_ITEMS } from '../config/navigation';
+import { NAVIGATION_ITEMS, getVisibleNavItems } from '../config/navigation';
 import { RegisterModal } from './public/RegisterModal';
 import { Logo } from './common/Logo';
 import { MegaMenu } from './layout/MegaMenu';
@@ -11,7 +11,6 @@ import {
   Shield,
   User as UserIcon,
   ChevronDown,
-  Check,
   Menu,
   X,
   UserPlus,
@@ -36,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentPath = '/',
   onNavigate,
 }) => {
-  const { currentUser, users, switchUser, hasRole, logout } = useAuth();
+  const { currentUser, switchUser, hasRole, logout } = useAuth();
   const { t } = useText();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -71,30 +70,15 @@ export const Header: React.FC<HeaderProps> = ({
     hasRole('MODERATOR') ||
     hasRole('LEGAL_EDITOR') ||
     hasRole('CONTENT_MANAGER');
-  const isSuperAdmin = hasRole('SUPER_ADMIN') || hasRole('SYSTEM_ADMIN') || hasRole('ADMIN');
 
   const effectiveNavItems = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
 
   const allowedNavItems = useMemo(() => {
-    return effectiveNavItems.filter((item) => {
-      const isCategory10 = item.id === 'cat-10' || item.parentId === 'cat-10';
-      const isAdminRoute =
-        item.url === '/admin' ||
-        item.url.startsWith('/admin/') ||
-        item.url === '/administrace' ||
-        item.url.startsWith('/administrace/') ||
-        item.url === '/ai-admin' ||
-        item.url === '/ai-context';
-
-      if ((isCategory10 || isAdminRoute) && !isAuthorizedAdmin) {
-        return false;
-      }
-      if (item.url === '/admin/vps' && !isSuperAdmin) {
-        return false;
-      }
-      return true;
+    return getVisibleNavItems(effectiveNavItems, {
+      isAuthenticated: !!currentUser,
+      role: currentUser?.role || null,
     });
-  }, [effectiveNavItems, isAuthorizedAdmin, isSuperAdmin]);
+  }, [effectiveNavItems, currentUser]);
 
   useEffect(() => {
     Promise.all([
@@ -239,10 +223,8 @@ export const Header: React.FC<HeaderProps> = ({
       });
     };
 
-    // Initial measurement
     updateDimensions();
 
-    // ResizeObserver to detect change in container size
     const observer = new ResizeObserver(() => {
       updateDimensions();
     });
@@ -251,7 +233,6 @@ export const Header: React.FC<HeaderProps> = ({
       observer.observe(containerRef.current);
     }
 
-    // Additional event listeners
     window.addEventListener('resize', updateDimensions);
     window.addEventListener('orientationchange', updateDimensions);
 
@@ -260,21 +241,21 @@ export const Header: React.FC<HeaderProps> = ({
       window.removeEventListener('resize', updateDimensions);
       window.removeEventListener('orientationchange', updateDimensions);
     };
-  }, [allowedNavItems]); // update whenever allowedNavItems changes
+  }, [allowedNavItems]);
 
   // 4. Decision logic
   const isSpaceSufficient =
     dimensions.containerWidth > 0 &&
-    dimensions.containerWidth >= dimensions.logoWidth + dimensions.navWidth + dimensions.rightWidth + 48; // 48px safety gap margin
+    dimensions.containerWidth >= dimensions.logoWidth + dimensions.navWidth + dimensions.rightWidth + 48;
 
   const showDesktopNav =
     capabilities.hasHover &&
     capabilities.isPointerFine &&
     isSpaceSufficient;
 
-  // 5. Render helper for navigation items to avoid duplication
+  // 5. Render helper for navigation items
   const renderNavigation = (isMeasuring = false) => {
-    const parentItems = allowedNavItems.filter((item) => !item.parentId);
+    const parentItems = allowedNavItems.filter((item) => !item.parentId && item.id !== 'nav-1');
     const childItemsMap = allowedNavItems.reduce((acc, item) => {
       if (item.parentId) {
         if (!acc[item.parentId]) acc[item.parentId] = [];
@@ -294,8 +275,9 @@ export const Header: React.FC<HeaderProps> = ({
       if (children.length > 0) {
         const isDropdownOpen = !isMeasuring && openDesktopDropdown === item.id;
         return (
-          <div key={item.id} className="relative group py-2">
+          <div key={item.id} id={`nav-desktop-cat-${item.id}`} className="relative group py-2">
             <button
+              id={`nav-desktop-btn-${item.id}`}
               type="button"
               onClick={isMeasuring ? undefined : (e) => {
                 e.stopPropagation();
@@ -318,6 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
                 return (
                   <button
                     key={subItem.id}
+                    id={`nav-desktop-sub-${subItem.id}`}
                     type="button"
                     onClick={isMeasuring ? undefined : () => {
                       handleNavClick(subItem.url);
@@ -341,6 +324,7 @@ export const Header: React.FC<HeaderProps> = ({
       return (
         <button
           key={item.id}
+          id={`nav-desktop-link-${item.id}`}
           type="button"
           onClick={isMeasuring ? undefined : () => handleNavClick(item.url)}
           className={`transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
@@ -356,7 +340,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
+    <header id="main-app-header" className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
       <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
         <div ref={logoRef} className="shrink-0 flex items-center">
@@ -370,7 +354,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* CMS Dynamic Navigation Links (Desktop) */}
         {showDesktopNav && (
-          <nav className="flex items-center gap-5 text-xs sm:text-sm font-medium">
+          <nav id="header-desktop-nav" className="flex items-center gap-5 text-xs sm:text-sm font-medium">
             {renderNavigation(false)}
           </nav>
         )}
@@ -390,12 +374,14 @@ export const Header: React.FC<HeaderProps> = ({
               
               {/* 1. MENU Button (Priority 1) */}
               <button
+                id="header-mobile-menu-btn"
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setMobileMenuOpen(!mobileMenuOpen);
                 }}
                 className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                aria-label="Otevřít hlavním menu"
+                aria-label="Otevřít hlavní menu"
                 aria-expanded={mobileMenuOpen}
                 title="MENU"
               >
@@ -406,116 +392,131 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
 
-              {/* 2. MŮJ ÚČET / AVATAR (Priority 2) */}
-              {dimensions.containerWidth >= 280 && (
-                currentUser ? (
-                  <div className="relative user-dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUserDropdownOpen(!userDropdownOpen);
-                      }}
-                      className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-xs cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      aria-label="Uživatelské menu"
-                      aria-expanded={userDropdownOpen}
-                      title={currentUser.name}
-                    >
-                      <img
-                        src={currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentUser.name)}`}
-                        alt={currentUser.name}
-                        className="w-7 h-7 rounded-full border border-slate-200"
-                        referrerPolicy="no-referrer"
-                      />
-                    </button>
-                    {userDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
-                        <div className="px-4 py-2 border-b border-slate-100">
-                          <span className="font-bold text-slate-900 block truncate">{currentUser.name}</span>
-                          <span className="text-slate-500 text-[11px] block truncate">{currentUser.email}</span>
-                          <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-[10px] font-bold">
-                            Role: {currentUser.role}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setUserDropdownOpen(false);
-                            if (onNavigate) onNavigate('/muj-pripad');
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
-                        >
-                          <Briefcase className="w-4 h-4 text-blue-600" />
-                          <span>Osobní spis / Můj případ</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setUserDropdownOpen(false);
-                            if (onNavigate) onNavigate('/portal/profil');
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
-                        >
-                          <UserIcon className="w-4 h-4 text-slate-600" />
-                          <span>Můj profil</span>
-                        </button>
-                        <div className="border-t border-slate-100 my-1" />
-                        <button
-                          onClick={() => {
-                            setUserDropdownOpen(false);
-                            logout();
-                            if (onNavigate) onNavigate('/login');
-                          }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-rose-50 flex items-center gap-2 font-bold text-rose-600 cursor-pointer"
-                        >
-                          <LogOut className="w-4 h-4 text-rose-500" />
-                          <span>Odhlásit se</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
+              {/* 2. AUTHENTICATED: Avatar & Profile Menu */}
+              {currentUser ? (
+                <div className="relative user-dropdown-container">
                   <button
-                    onClick={() => {
-                      if (onNavigate) onNavigate('/portal');
+                    id="header-mobile-user-menu-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserDropdownOpen(!userDropdownOpen);
                     }}
-                    className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="Můj účet"
-                    title="Můj účet"
+                    className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-xs cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Uživatelské menu"
+                    aria-expanded={userDropdownOpen}
+                    title={currentUser.name}
                   >
-                    <UserIcon className="w-5 h-5" />
+                    <img
+                      src={currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentUser.name)}`}
+                      alt={currentUser.name}
+                      className="w-7 h-7 rounded-full border border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
                   </button>
-                )
+                  {userDropdownOpen && (
+                    <div id="header-mobile-user-dropdown" className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
+                      <div className="px-4 py-2 border-b border-slate-100">
+                        <span className="font-bold text-slate-900 block truncate">{currentUser.name}</span>
+                        <span className="text-slate-500 text-[11px] block truncate">{currentUser.email}</span>
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-[10px] font-bold">
+                          Role: {currentUser.role}
+                        </span>
+                      </div>
+                      <button
+                        id="header-mobile-user-link-case"
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          if (onNavigate) onNavigate('/muj-pripad');
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
+                      >
+                        <Briefcase className="w-4 h-4 text-blue-600" />
+                        <span>Osobní spis / Můj případ</span>
+                      </button>
+                      <button
+                        id="header-mobile-user-link-profile"
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          if (onNavigate) onNavigate('/portal/profil');
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-600" />
+                        <span>Můj profil</span>
+                      </button>
+                      {isAuthorizedAdmin && (
+                        <button
+                          id="header-mobile-user-link-admin"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            if (onNavigate) onNavigate('/administrace');
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-amber-700 cursor-pointer"
+                        >
+                          <Shield className="w-4 h-4 text-amber-600" />
+                          <span>Administrace</span>
+                        </button>
+                      )}
+                      <div className="border-t border-slate-100 my-1" />
+                      <button
+                        id="header-mobile-user-link-logout"
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          logout();
+                          if (onNavigate) onNavigate('/login');
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-rose-50 flex items-center gap-2 font-bold text-rose-600 cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500" />
+                        <span>Odhlásit se</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* UNATHENTICATED: Login & Register only */
+                <>
+                  {dimensions.containerWidth >= 280 && (
+                    <button
+                      id="header-mobile-login-btn"
+                      type="button"
+                      onClick={() => {
+                        if (onNavigate) onNavigate('/login');
+                      }}
+                      className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-300 text-blue-700 bg-blue-50 hover:bg-blue-100 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Přihlásit se"
+                      title="Přihlásit"
+                    >
+                      <LogIn className="w-5 h-5" />
+                    </button>
+                  )}
+                  {dimensions.containerWidth >= 380 && (
+                    <button
+                      id="header-mobile-register-btn"
+                      type="button"
+                      onClick={() => {
+                        if (onNavigate) onNavigate('/registrace');
+                      }}
+                      className="flex items-center justify-center w-11 h-11 rounded-xl bg-blue-800 text-white hover:bg-blue-950 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Registrace"
+                      title="Registrace"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
               )}
 
-              {/* 3. PŘIHLÁSIT (Priority 3) */}
-              {!currentUser && dimensions.containerWidth >= 340 && (
+              {/* 3. VEŘEJNOST (Priority 3/4) */}
+              {dimensions.containerWidth >= 440 && (
                 <button
-                  onClick={() => {
-                    if (onNavigate) onNavigate('/login');
-                  }}
-                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-300 text-blue-700 bg-blue-50 hover:bg-blue-100 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Přihlásit"
-                  title="Přihlásit"
-                >
-                  <LogIn className="w-5 h-5" />
-                </button>
-              )}
-
-              {/* 3b. REGISTRACE (Priority 3b) */}
-              {!currentUser && dimensions.containerWidth >= 420 && (
-                <button
-                  onClick={() => {
-                    if (onNavigate) onNavigate('/registrace');
-                  }}
-                  className="flex items-center justify-center w-11 h-11 rounded-xl bg-blue-800 text-white hover:bg-blue-950 shadow-xs cursor-pointer transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Registrace"
-                  title="Registrace"
-                >
-                  <UserPlus className="w-5 h-5" />
-                </button>
-              )}
-
-              {/* 4. VEŘEJNOST (Priority 4) */}
-              {dimensions.containerWidth >= 380 && (
-                <button
+                  id="header-mobile-public-btn"
+                  type="button"
                   onClick={() => {
                     setCurrentView('public');
                     handleNavClick('/');
@@ -537,12 +538,14 @@ export const Header: React.FC<HeaderProps> = ({
               {/* ORIGINAL STANDARD/DESKTOP CONTROLS */}
               {/* MENU Button */}
               <button
+                id="header-desktop-menu-btn"
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setMobileMenuOpen(!mobileMenuOpen);
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95"
-                aria-label="Otevřít hlavním menu"
+                aria-label="Otevřít hlavní menu"
               >
                 {mobileMenuOpen ? (
                   <X className="w-4 h-4 text-red-600" />
@@ -552,54 +555,64 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="tracking-wide uppercase">MENU</span>
               </button>
 
-              {/* View Switcher Buttons */}
-              <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-medium">
-                <button
-                  onClick={() => {
-                    setCurrentView('public');
-                    handleNavClick(currentPath || '/');
-                  }}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
-                    currentView === 'public'
-                      ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Veřejnost
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentView('private');
-                    if (onNavigate) onNavigate('/portal');
-                  }}
-                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
-                    currentView === 'private'
-                      ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <UserIcon className="w-3.5 h-3.5" />
-                  <span>Můj Účet</span>
-                </button>
-                {hasRole('ADMIN') && (
+              {/* View Switcher Buttons (only for authenticated users or when useful) */}
+              {currentUser && (
+                <div id="header-desktop-layer-switcher" className="hidden sm:flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-medium">
                   <button
-                    onClick={() => setCurrentView('admin')}
-                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
-                      currentView === 'admin'
-                        ? 'bg-amber-500 text-white font-semibold shadow-xs'
-                        : 'text-amber-700 hover:bg-amber-100'
+                    id="header-layer-public-btn"
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('public');
+                      handleNavClick(currentPath || '/');
+                    }}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      currentView === 'public'
+                        ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>CMS</span>
+                    Veřejnost
                   </button>
-                )}
-              </div>
+                  <button
+                    id="header-layer-private-btn"
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('private');
+                      if (onNavigate) onNavigate('/portal');
+                    }}
+                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                      currentView === 'private'
+                        ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <UserIcon className="w-3.5 h-3.5" />
+                    <span>Můj Portál</span>
+                  </button>
+                  {isAuthorizedAdmin && (
+                    <button
+                      id="header-layer-admin-btn"
+                      type="button"
+                      onClick={() => setCurrentView('admin')}
+                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                        currentView === 'admin'
+                          ? 'bg-amber-500 text-white font-semibold shadow-xs'
+                          : 'text-amber-700 hover:bg-amber-100'
+                      }`}
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>CMS</span>
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Auth Controls */}
               {currentUser ? (
                 <div className="relative user-dropdown-container">
                   <button
+                    id="header-user-dropdown-btn"
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setUserDropdownOpen(!userDropdownOpen);
@@ -621,7 +634,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
+                    <div id="header-user-dropdown-menu" className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
                       <div className="px-4 py-2 border-b border-slate-100">
                         <span className="font-bold text-slate-900 block truncate">{currentUser.name}</span>
                         <span className="text-slate-500 text-[11px] block truncate">{currentUser.email}</span>
@@ -631,22 +644,26 @@ export const Header: React.FC<HeaderProps> = ({
                       </div>
 
                       <button
+                        id="header-user-dropdown-case"
+                        type="button"
                         onClick={() => {
                           setUserDropdownOpen(false);
                           if (onNavigate) onNavigate('/muj-pripad');
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800"
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
                       >
                         <Briefcase className="w-4 h-4 text-blue-600" />
                         <span>Osobní spis / Můj případ</span>
                       </button>
 
                       <button
+                        id="header-user-dropdown-profile"
+                        type="button"
                         onClick={() => {
                           setUserDropdownOpen(false);
                           if (onNavigate) onNavigate('/portal/profil');
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800"
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-slate-800 cursor-pointer"
                       >
                         <UserIcon className="w-4 h-4 text-slate-600" />
                         <span>Můj profil (správa účtu)</span>
@@ -654,6 +671,8 @@ export const Header: React.FC<HeaderProps> = ({
 
                       {isAuthorizedAdmin && (
                         <button
+                          id="header-user-dropdown-admin"
+                          type="button"
                           onClick={() => {
                             setUserDropdownOpen(false);
                             if (onNavigate) onNavigate('/administrace');
@@ -668,12 +687,14 @@ export const Header: React.FC<HeaderProps> = ({
                       <div className="border-t border-slate-100 my-1" />
 
                       <button
+                        id="header-user-dropdown-logout"
+                        type="button"
                         onClick={() => {
                           setUserDropdownOpen(false);
                           logout();
                           if (onNavigate) onNavigate('/login');
                         }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-rose-50 flex items-center gap-2 font-bold text-rose-600"
+                        className="w-full text-left px-4 py-2.5 hover:bg-rose-50 flex items-center gap-2 font-bold text-rose-600 cursor-pointer"
                       >
                         <LogOut className="w-4 h-4 text-rose-500" />
                         <span>Odhlásit se</span>
@@ -682,8 +703,10 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div id="header-auth-buttons" className="flex items-center gap-2">
                   <button
+                    id="header-login-btn"
+                    type="button"
                     onClick={() => {
                       if (onNavigate) onNavigate('/login');
                     }}
@@ -694,6 +717,8 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
 
                   <button
+                    id="header-register-btn"
+                    type="button"
                     onClick={() => {
                       if (onNavigate) onNavigate('/registrace');
                     }}
@@ -716,8 +741,7 @@ export const Header: React.FC<HeaderProps> = ({
         currentPath={currentPath}
         onNavigate={handleNavClick}
         isAuthorizedAdmin={isAuthorizedAdmin}
-        isSuperAdmin={isSuperAdmin}
-        items={allowedNavItems}
+        items={effectiveNavItems}
       />
       {/* Register Wizard Modal */}
       <RegisterModal
@@ -736,3 +760,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+export default Header;

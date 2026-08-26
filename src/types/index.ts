@@ -659,6 +659,9 @@ export interface NavItem {
   target: string;
   isExternal: boolean;
   parentId?: string;
+  visibility?: 'public' | 'user' | 'team' | 'admin';
+  requiredRoles?: string[];
+  requiredPermissions?: string[];
 }
 
 export interface MediaItem {
