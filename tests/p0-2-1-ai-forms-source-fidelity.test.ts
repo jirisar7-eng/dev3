@@ -53,7 +53,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
       // Mocking provider boundary, returning expected JSON output
       return JSON.stringify({
         summary: 'Rozbor opatrovnické zprávy.',
-        summaryQuotes: [],
+        summaryQuotes: ['otec nekomunikuje'],
         contradictions: [],
         counterArguments: ['Doložit komunikaci otce.'],
         riskLevel: 'Nízké',
@@ -62,6 +62,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: documentTextWithoutDate });
+    assert.strictEqual(res.status, 200, 'Must return 200 OK');
     const result = res.body;
 
     assert.ok(!JSON.stringify(result).includes('12.5.'), 'Output must NOT contain hallucinated date 12.5.');
@@ -73,7 +74,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Zpráva OSPOD popisuje komplikace při předávání dítěte na veřejném místě.',
-        summaryQuotes: [],
+        summaryQuotes: ['žádá o změnu styku'],
         contradictions: [],
         counterArguments: ['Navrhnout předávání přes mateřskou školu.'],
         riskLevel: 'Střední',
@@ -82,6 +83,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: documentTextWithoutEmail });
+    assert.strictEqual(res.status, 200, 'Must return 200 OK');
     const result = res.body;
 
     assert.ok(!JSON.stringify(result).includes('e-mailová komunikace ze dne'), 'Output must NOT fabricate email communications');
@@ -94,7 +96,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Jednostranné tvrzení matky v protokolu o nepodílení se na výchově.',
-        summaryQuotes: [],
+        summaryQuotes: ['otec se nepodílí na výchově'],
         contradictions: [],
         counterArguments: ['Doložit aktivní účast otce na péči a zájmových kroužcích.'],
         riskLevel: 'Střední',
@@ -103,6 +105,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: singleClaimDoc });
+    assert.strictEqual(res.status, 200, 'Must return 200 OK');
     assert.deepStrictEqual(res.body.contradictions, [], 'Contradictions must be empty when only one claim exists');
   });
 
@@ -112,7 +115,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Vyhodnocení vyjádření matky s vnitřními rozpory.',
-        summaryQuotes: [],
+        summaryQuotes: ['otec nekomunikuje'],
         contradictions: [
           { claim: 'Rozpor v tvrzení o nekomunikaci otce (odst. 2) a současném přiznání týdenní e-mailové komunikace (odst. 5).', exactQuote: 'otec nekomunikuje' }
         ],
@@ -123,6 +126,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: twoClaimsDoc });
+    assert.strictEqual(res.status, 200, 'Must return 200 OK');
     assert.strictEqual(res.body.contradictions.length, 1, 'Should identify valid contradiction');
     assert.ok(res.body.contradictions[0].includes('Rozpor v tvrzení'), 'Contradiction text must describe the conflict');
   });
@@ -152,7 +156,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Dokument obsahuje informaci o nařízení soudního jednání na příští měsíc.',
-        summaryQuotes: [],
+        summaryQuotes: ['jednání je nařízeno'],
         contradictions: [],
         counterArguments: ['Vyžádat přesný termín a čas jednání od soudu.'],
         riskLevel: 'Nízké',
@@ -161,6 +165,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: briefDoc });
+    assert.strictEqual(res.status, 200, 'Must return 200 OK');
     assert.ok(!JSON.stringify(res.body).includes('spisová značka 12 P 45/2024'), 'Must NOT invent unmentioned case numbers');
     assert.ok(!JSON.stringify(res.body).includes('OSPOD Praha 4'), 'Must NOT invent unmentioned OSPOD offices');
   });
@@ -186,5 +191,40 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     assert.strictEqual(res2.status, 200, 'Second attempt should succeed');
     assert.ok(res2.body.reply.includes('flexibilní pracovní dobou'), 'Text updated correctly on Retry');
     assert.strictEqual(executeCount, 2, 'Executed exactly twice');
+  });
+
+  test('TEST 9: Analyze Document fails if summaryQuotes is empty', async () => {
+    AiService.generateContent = async () => JSON.stringify({
+      summary: "Shrnutí",
+      summaryQuotes: [],
+      contradictions: []
+    });
+    const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
+    assert.strictEqual(res.status, 500);
+    assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
+  });
+
+  test('TEST 10: Analyze Document fails if a contradiction exactQuote is empty', async () => {
+    AiService.generateContent = async () => JSON.stringify({
+      summary: "Shrnutí",
+      summaryQuotes: ["Nějaký text"],
+      contradictions: [
+        { claim: "Tvrzení", exactQuote: "" }
+      ]
+    });
+    const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
+    assert.strictEqual(res.status, 500);
+    assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
+  });
+
+  test('TEST 11: Analyze Document fails if summaryQuote contains an empty string', async () => {
+    AiService.generateContent = async () => JSON.stringify({
+      summary: "Shrnutí",
+      summaryQuotes: [" "],
+      contradictions: []
+    });
+    const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
+    assert.strictEqual(res.status, 500);
+    assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
   });
 });

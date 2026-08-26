@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 import { spawnSync } from 'child_process';
 import { readdirSync } from 'fs';
 import { join } from 'path';

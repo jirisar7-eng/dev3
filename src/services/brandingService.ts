@@ -21,6 +21,10 @@ export class BrandingService {
     if (!version) throw new Error("Version not found");
 
     return prisma.$transaction(async (tx) => {
+      // 1. Zámek na úrovni transakce (Advisory Lock) pro zajištění sériovosti operací
+      // To garantuje unikátnost verze i dodržení invariantu jediného aktivního záznamu v případě souběhu.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(20240826)`;
+
       await tx.brandingVersion.updateMany({
         where: { isActive: true },
         data: { isActive: false }
@@ -50,17 +54,22 @@ export class BrandingService {
     }
 
     return prisma.$transaction(async (tx) => {
-      // Locking / Race condition prevention: Compute nextVersion inside transaction
+      // 1. Zámek na úrovni transakce pro zabránění race conditions
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(20240826)`;
+
+      // 2. Compute nextVersion safely inside the locked transaction
       const latest = await tx.brandingVersion.findFirst({
         orderBy: { version: 'desc' }
       });
       const nextVersion = (latest?.version || 0) + 1;
 
+      // 3. Deactivate current
       await tx.brandingVersion.updateMany({
         where: { isActive: true },
         data: { isActive: false }
       });
 
+      // 4. Insert new version
       return tx.brandingVersion.create({
         data: {
           version: nextVersion,

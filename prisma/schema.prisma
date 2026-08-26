@@ -2249,7 +2249,7 @@ model UserPreference {
 // ------------------------------------------------------
 model BrandingVersion {
   id             String   @id @default(uuid())
-  version        Int      @default(1)
+  version        Int      @default(1) @unique
   primaryLogoSvg String?  @db.Text
   darkLogoSvg    String?  @db.Text
   faviconType    String?  @default("svg")
@@ -2259,6 +2259,9 @@ model BrandingVersion {
   updatedBy      String?
   updatedAt      DateTime @default(now())
 
+  // NÁVRH MIGRACE DB INVARIANTU:
+  // Pro zajištění "právě jeden aktivní" na úrovni DB je navržen partial unique index:
+  // CREATE UNIQUE INDEX "one_active_branding" ON "BrandingVersion"("isActive") WHERE "isActive" = true;
   @@index([isActive])
 }
 

@@ -216,17 +216,30 @@ Vystup ve formátu JSON:
       throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
     }
 
+    if (parsed.summaryQuotes.length === 0) {
+      throw new Error('Failsafe trigger: summaryQuotes nesmí být prázdné.');
+    }
+
     const normalize = (s: string) => s.replace(/\s+/g, ' ').toLowerCase().trim();
     const normalizedDoc = normalize(documentText);
 
     for (const q of parsed.summaryQuotes) {
-      if (q && !normalizedDoc.includes(normalize(q))) {
+      if (typeof q !== 'string' || q.trim() === '') {
+        throw new Error('Failsafe trigger: summaryQuote nesmí být prázdný.');
+      }
+      if (!normalizedDoc.includes(normalize(q))) {
         throw new Error('Failsafe trigger: Odvozený závěr (summary) není podložen zdrojovým textem (citace nebyla nalezena).');
       }
     }
 
     for (const c of parsed.contradictions) {
-      if (c.exactQuote && !normalizedDoc.includes(normalize(c.exactQuote))) {
+      if (!c.claim || typeof c.claim !== 'string' || c.claim.trim() === '') {
+        throw new Error('Failsafe trigger: contradiction claim nesmí být prázdný.');
+      }
+      if (!c.exactQuote || typeof c.exactQuote !== 'string' || c.exactQuote.trim() === '') {
+        throw new Error('Failsafe trigger: contradiction exactQuote nesmí být prázdný.');
+      }
+      if (!normalizedDoc.includes(normalize(c.exactQuote))) {
          throw new Error('Failsafe trigger: Rozpor (contradiction) není podložen zdrojovým textem (citace nebyla nalezena).');
       }
     }

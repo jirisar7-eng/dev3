@@ -84,21 +84,28 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
   const [chatError, setChatError] = useState<string | null>(null);
   const [biffError, setBiffError] = useState<string | null>(null);
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = textToSend || inputMessage;
-    if (!text.trim() || loading) return;
+  const handleSendMessage = async (textToSend?: string, isRetry: boolean = false) => {
+    let newMessages = [...messages];
+
+    if (!isRetry) {
+      const text = textToSend || inputMessage;
+      if (!text.trim() || loading) return;
+
+      const userMsg: Message = {
+        id: `usr-${Date.now()}`,
+        role: 'user',
+        content: text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      newMessages = [...messages, userMsg];
+      setMessages(newMessages);
+      if (!textToSend) setInputMessage('');
+    } else {
+      if (newMessages.length === 0 || loading) return;
+    }
 
     setChatError(null);
-    const userMsg: Message = {
-      id: `usr-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    if (!textToSend) setInputMessage('');
     setLoading(true);
 
     try {
@@ -334,7 +341,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
                   <span>{chatError}</span>
                   <button
-                    onClick={() => handleSendMessage(undefined)}
+                    onClick={() => handleSendMessage(undefined, true)}
                     className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
                   >
                     <RefreshCw className="w-3 h-3" />
