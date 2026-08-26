@@ -65,6 +65,7 @@ import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
 import aiContextRoutes from './src/routes/aiContextRoutes';
 import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCenterRoutes';
+import synthesisRoutes from './src/routes/synthesisRoutes';
 import { analyticsRouter } from './src/routes/analyticsRoutes';
 import teamRoutes from './src/routes/teamRoutes';
 
@@ -396,6 +397,7 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
 });
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use('/api/admin/audits', auditCenterRoutes);
+app.use('/api/admin/synthesis', synthesisRoutes);
 app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);

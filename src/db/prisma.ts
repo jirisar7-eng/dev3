@@ -24,6 +24,15 @@ process.on('unhandledRejection', (reason: any) => {
 let clientInstance: PrismaClientType | null = null;
 let isPrismaDisabled = false;
 
+export function setPrismaDisabled(disabled: boolean) {
+  isPrismaDisabled = disabled;
+}
+
+export function setPrismaClientForTest(client: any) {
+  clientInstance = client;
+  isPrismaDisabled = false;
+}
+
 export function isFallbackAllowed(): boolean {
   if (process.env.NODE_ENV === 'production') {
     return process.env.DATABASE_FALLBACK_ENABLED === 'true';
