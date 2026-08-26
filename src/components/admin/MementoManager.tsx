@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { MementoCase } from '../../types';
 import {
@@ -66,7 +67,7 @@ export const MementoManager: React.FC = () => {
   const fetchCases = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/memento');
+      const res = await apiFetch('/api/cms/memento');
       if (res.ok) {
         const data = await res.json();
         setCases(data);
@@ -132,7 +133,7 @@ export const MementoManager: React.FC = () => {
 
     try {
       if (selectedCase) {
-        const res = await fetch(`/api/cms/memento/${selectedCase.id}`, {
+        const res = await apiFetch(`/api/cms/memento/${selectedCase.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -145,7 +146,7 @@ export const MementoManager: React.FC = () => {
           alert(`Chyba: ${err.error || 'Uložení se nezdařilo'}`);
         }
       } else {
-        const res = await fetch('/api/cms/memento', {
+        const res = await apiFetch('/api/cms/memento', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -167,7 +168,7 @@ export const MementoManager: React.FC = () => {
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Opravdu chcete smazat případ procesní chyby "${title}"?`)) return;
     try {
-      const res = await fetch(`/api/cms/memento/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/cms/memento/${id}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchCases();
       } else {

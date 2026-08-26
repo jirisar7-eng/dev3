@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Subjekt, EntityType, Review } from '../../types';
@@ -132,7 +133,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
       if (minRatingFilter > 0) params.append('minRating', minRatingFilter.toString());
 
-      const res = await fetch(`/api/subjekty?${params.toString()}`);
+      const res = await apiFetch(`/api/subjekty?${params.toString()}`);
       if (res.ok) {
         const data: Subjekt[] = await res.json();
         setSubjekty(data);
@@ -183,7 +184,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
 
     setFormSubmitting(true);
     try {
-      const res = await fetch(`/api/subjekty/${showReviewModal.id}/reviews`, {
+      const res = await apiFetch(`/api/subjekty/${showReviewModal.id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewForm),
@@ -229,7 +230,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
 
     setFormSubmitting(true);
     try {
-      const res = await fetch('/api/pracovnici', {
+      const res = await apiFetch('/api/pracovnici', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

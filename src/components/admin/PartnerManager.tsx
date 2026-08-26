@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Partner, PartnerType } from '../../types';
 import { CheckCircle2, Plus, Edit2, Trash2, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
@@ -21,7 +22,7 @@ export const PartnerManager: React.FC = () => {
   const fetchPartners = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/partners');
+      const res = await apiFetch('/api/admin/partners');
       if (!res.ok) throw new Error('Nepodařilo se načíst partnery.');
       const data = await res.json();
       setPartners(data);
@@ -68,7 +69,7 @@ export const PartnerManager: React.FC = () => {
       const url = isEditing ? `/api/admin/partners/${isEditing}` : '/api/admin/partners';
       const method = isEditing ? 'PUT' : 'POST';
       
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -89,7 +90,7 @@ export const PartnerManager: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Opravdu chcete tohoto partnera smazat?')) return;
     try {
-      const res = await fetch(`/api/admin/partners/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/partners/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Nepodařilo se smazat partnera.');
       await fetchPartners();
     } catch (err: any) {

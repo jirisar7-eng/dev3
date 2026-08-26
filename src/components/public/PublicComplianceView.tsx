@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Calendar, CheckCircle2, ArrowLeft, FileText, ExternalLink, AlertTriangle } from 'lucide-react';
 import { ComplianceDoc } from '../../types';
@@ -18,14 +19,14 @@ export const PublicComplianceView: React.FC<PublicComplianceViewProps> = ({ slug
   const fetchDocument = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/compliance/docs/public/${slug}`);
+      const res = await apiFetch(`/api/compliance/docs/public/${slug}`);
       if (res.ok) {
         const data = await res.json();
         setDoc(data);
 
         if (currentUser && data) {
           // Check existing consent
-          const consentRes = await fetch(`/api/compliance/consent/${currentUser.id}`);
+          const consentRes = await apiFetch(`/api/compliance/consent/${currentUser.id}`);
           if (consentRes.ok) {
             const consents = await consentRes.json();
             const existing = consents.find(
@@ -51,7 +52,7 @@ export const PublicComplianceView: React.FC<PublicComplianceViewProps> = ({ slug
     try {
       setConsentLoading(true);
       setMessage(null);
-      const res = await fetch('/api/compliance/consent', {
+      const res = await apiFetch('/api/compliance/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

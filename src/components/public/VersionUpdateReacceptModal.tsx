@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, AlertTriangle, FileText, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -21,9 +22,9 @@ export const VersionUpdateReacceptModal: React.FC = () => {
     const checkRequiredConsents = async () => {
       try {
         // Fetch all active/published documents
-        const docsRes = await fetch('/api/legal/documents');
+        const docsRes = await apiFetch('/api/legal/documents');
         // Fetch user's recorded consents
-        const consentsRes = await fetch(`/api/compliance/consent/${currentUser.id}`);
+        const consentsRes = await apiFetch(`/api/compliance/consent/${currentUser.id}`);
 
         if (docsRes.ok && consentsRes.ok) {
           const docs: ComplianceDoc[] = await docsRes.json();
@@ -65,7 +66,7 @@ export const VersionUpdateReacceptModal: React.FC = () => {
       setLoading(true);
       // Accept all pending docs concurrently
       const acceptPromises = pendingDocs.map(doc => 
-        fetch('/api/legal/accept', {
+        apiFetch('/api/legal/accept', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

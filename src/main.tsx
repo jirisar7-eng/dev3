@@ -3,16 +3,6 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-const originalFetch = window.fetch;
-window.fetch = async (...args) => {
-  const response = await originalFetch(...args);
-  if (response.status === 401) {
-    window.dispatchEvent(new CustomEvent('auth_401_error'));
-  }
-  return response;
-};
-
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

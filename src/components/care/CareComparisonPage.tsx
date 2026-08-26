@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CareSimulationComparison } from '../../types';
 import {
@@ -41,7 +42,7 @@ export const CareComparisonPage: React.FC<CareComparisonPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/comparisons`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/comparisons`, {
         headers: authHeaders,
       });
       if (res.ok) {
@@ -65,7 +66,7 @@ export const CareComparisonPage: React.FC<CareComparisonPageProps> = ({
     const childId = activeCase.children && activeCase.children.length > 0 ? activeCase.children[0].id : undefined;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/compare`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/compare`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -107,7 +108,7 @@ export const CareComparisonPage: React.FC<CareComparisonPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/comparisons/${id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/comparisons/${id}`, {
         method: 'DELETE',
         headers: authHeaders,
       });

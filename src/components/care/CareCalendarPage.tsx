@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useMemo } from 'react';
 import { ClientCase, CarePlan, CareDay } from '../../types';
 import {
@@ -112,7 +113,7 @@ export const CareCalendarPage: React.FC<CareCalendarPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}/sync`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}/sync`, {
         method: 'POST',
         headers: authHeaders,
       });

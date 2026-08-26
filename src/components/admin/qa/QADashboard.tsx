@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Activity,
@@ -95,7 +96,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/qa/dashboard', {
+      const res = await apiFetch('/api/admin/qa/dashboard', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
       const json = await res.json();
@@ -109,7 +110,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
 
   const fetchAiStats = async () => {
     try {
-      const res = await fetch('/api/admin/qa/ai-stats', {
+      const res = await apiFetch('/api/admin/qa/ai-stats', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
       const json = await res.json();
@@ -123,7 +124,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
 
   const fetchRegistry = async () => {
     try {
-      const res = await fetch('/api/admin/qa/registry', {
+      const res = await apiFetch('/api/admin/qa/registry', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
       const json = await res.json();
@@ -140,7 +141,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
 
   const fetchRuns = async () => {
     try {
-      const res = await fetch('/api/admin/qa/runs', {
+      const res = await apiFetch('/api/admin/qa/runs', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
       const json = await res.json();
@@ -174,7 +175,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
     setRunningAI(true);
     setAiMessage(null);
     try {
-      const res = await fetch('/api/admin/qa/run-ai-analysis', {
+      const res = await apiFetch('/api/admin/qa/run-ai-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +217,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
   const handleDiscover = async () => {
     setDiscovering(true);
     try {
-      const res = await fetch('/api/admin/qa/discover', {
+      const res = await apiFetch('/api/admin/qa/discover', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
@@ -244,7 +245,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
 
     try {
       const endpoint = incremental ? '/api/admin/qa/run-incremental-audit' : '/api/admin/qa/run-audit';
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
@@ -271,7 +272,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
     if (!prevRunId || !currRunId) return;
     setComparing(true);
     try {
-      const res = await fetch(`/api/admin/qa/runs/compare?prev=${prevRunId}&curr=${currRunId}`, {
+      const res = await apiFetch(`/api/admin/qa/runs/compare?prev=${prevRunId}&curr=${currRunId}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('tatovacesta_auth_token')}` }
       });
       const json = await res.json();
@@ -295,7 +296,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
     setCopilotStepLogs([]);
     
     try {
-      const res = await fetch('/api/admin/qa/copilot/plan', {
+      const res = await apiFetch('/api/admin/qa/copilot/plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -336,7 +337,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
     setCopilotPlan(updatedPlan);
 
     try {
-      const res = await fetch('/api/admin/qa/copilot/execute-step', {
+      const res = await apiFetch('/api/admin/qa/copilot/execute-step', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

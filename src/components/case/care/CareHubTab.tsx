@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CareMetrics, CareDay, ChildAgeDetail } from '../../../types';
 import {
@@ -99,7 +100,7 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care`, {
         headers: authHeaders,
       });
 
@@ -152,7 +153,7 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
   // Handle creating new plan from Simulator or Import
   const handleSaveNewPlan = async (planData: Partial<CarePlan>) => {
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(planData),
@@ -176,7 +177,7 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
   const handleUpdateDays = async (updatedDays: CareDay[]) => {
     if (!activePlan) return;
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({ days: updatedDays }),
@@ -201,7 +202,7 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
     setError(null);
     setSuccessMsg(null);
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/sync`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/sync`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({ planId: activePlan.id }),
@@ -223,7 +224,7 @@ export const CareHubTab: React.FC<CareHubTabProps> = ({
   const handleDeletePlan = async (planId: string) => {
     if (!confirm('Opravdu chcete smazat tento plán péče?')) return;
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${planId}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${planId}`, {
         method: 'DELETE',
         headers: authHeaders,
       });

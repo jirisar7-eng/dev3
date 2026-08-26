@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CareMetrics, CareDay, CareHolidayRule, CareLocation } from '../../types';
 import {
@@ -65,7 +66,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${planId}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${planId}`, {
         headers: authHeaders,
       });
 
@@ -97,7 +98,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/history`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/history`, {
         headers: authHeaders,
       });
       if (res.ok) {
@@ -129,7 +130,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({ status: 'ACTIVE' }),
@@ -157,7 +158,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({ status: 'ARCHIVED' }),
@@ -179,7 +180,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
         method: 'DELETE',
         headers: authHeaders,
       });
@@ -201,7 +202,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}/sync`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}/sync`, {
         method: 'POST',
         headers: authHeaders,
       });
@@ -234,7 +235,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({
@@ -694,7 +695,7 @@ export const CarePlanDetailPage: React.FC<CarePlanDetailPageProps> = ({
                 const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
                 if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
-                await fetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
+                await apiFetch(`/api/cases/${activeCase.id}/care/plans/${plan.id}`, {
                   method: 'PATCH',
                   headers: authHeaders,
                   body: JSON.stringify({

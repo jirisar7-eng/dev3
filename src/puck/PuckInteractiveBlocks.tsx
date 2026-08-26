@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
@@ -57,7 +58,7 @@ export const PollComponent: React.FC<PollBlockProps> = ({
     // Fetch initial poll stats
     let isMounted = true;
     setLoading(true);
-    fetch(`/api/polls/${pollId}`)
+    apiFetch(`/api/polls/${pollId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (isMounted && data) {
@@ -83,7 +84,7 @@ export const PollComponent: React.FC<PollBlockProps> = ({
     setError(null);
 
     try {
-      const res = await fetch('/api/polls/vote', {
+      const res = await apiFetch('/api/polls/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -281,7 +282,7 @@ export const FormComponent: React.FC<FormBlockProps> = ({
     setError(null);
 
     try {
-      const res = await fetch('/api/forms/submit', {
+      const res = await apiFetch('/api/forms/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

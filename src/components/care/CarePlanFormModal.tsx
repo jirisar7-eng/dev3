@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CaseChild } from '../../types';
 import { X, Calendar, Clock, MapPin, Users, Sparkles, Check, AlertCircle } from 'lucide-react';
@@ -106,7 +107,7 @@ export const CarePlanFormModal: React.FC<CarePlanFormModalProps> = ({
         : `/api/cases/${activeCase.id}/care/plans`;
       const method = editingPlan ? 'PATCH' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: authHeaders,
         body: JSON.stringify(payload),

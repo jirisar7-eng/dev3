@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { LifeBuoy, Plus, MessageCircle, AlertCircle, Clock, CheckCircle2, ChevronRight, X, Tag, Calendar } from 'lucide-react';
 
@@ -48,7 +49,7 @@ export const UserSupportTicketingView: React.FC<{ user: User }> = ({ user }) => 
 
   const fetchTickets = async () => {
     try {
-      const response = await fetch('/api/portal/tickets', {
+      const response = await apiFetch('/api/portal/tickets', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
       });
       if (response.ok) {
@@ -68,7 +69,7 @@ export const UserSupportTicketingView: React.FC<{ user: User }> = ({ user }) => 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/portal/tickets', {
+      const response = await apiFetch('/api/portal/tickets', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ export const UserSupportTicketingView: React.FC<{ user: User }> = ({ user }) => 
 
   const loadTicketDetails = async (id: string) => {
     try {
-      const response = await fetch(`/api/portal/tickets/${id}`, {
+      const response = await apiFetch(`/api/portal/tickets/${id}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
       });
       if (response.ok) {
@@ -106,7 +107,7 @@ export const UserSupportTicketingView: React.FC<{ user: User }> = ({ user }) => 
     if (!selectedTicket || !replyContent) return;
 
     try {
-      const response = await fetch(`/api/portal/tickets/${selectedTicket.id}/messages`, {
+      const response = await apiFetch(`/api/portal/tickets/${selectedTicket.id}/messages`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import {
   AdminAnalyticsStats,
@@ -82,7 +83,7 @@ export const AnalyticsManager: React.FC = () => {
   const fetchOverviewStats = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/analytics/admin-stats');
+      const res = await apiFetch('/api/analytics/admin-stats');
       if (res.ok) {
         const json: AdminAnalyticsStats = await res.json();
         setOverviewData(json);
@@ -108,7 +109,7 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchJourneyStats = async () => {
     try {
-      const res = await fetch(`/api/analytics/admin/journey?timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/journey?timeRange=${timeRange}`);
       if (res.ok) {
         const json: UserJourneyStats = await res.json();
         setJourneyData(json);
@@ -120,7 +121,7 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchFunnelStats = async (fid = selectedFunnelId) => {
     try {
-      const res = await fetch(`/api/analytics/admin/funnels?funnelId=${fid}&timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/funnels?funnelId=${fid}&timeRange=${timeRange}`);
       if (res.ok) {
         const json: FunnelStats = await res.json();
         setFunnelData(json);
@@ -132,7 +133,7 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchSearchStats = async () => {
     try {
-      const res = await fetch(`/api/analytics/admin/search-intelligence?timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/search-intelligence?timeRange=${timeRange}`);
       if (res.ok) {
         const json: SearchIntelligenceStats = await res.json();
         setSearchData(json);
@@ -144,7 +145,7 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchFeatureStats = async () => {
     try {
-      const res = await fetch(`/api/analytics/admin/features?timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/features?timeRange=${timeRange}`);
       if (res.ok) {
         const json: FeatureAnalyticsDeepStat[] = await res.json();
         setFeatureData(json);
@@ -156,7 +157,7 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchAiInsights = async () => {
     try {
-      const res = await fetch(`/api/analytics/admin/ai-insights-data?timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/ai-insights-data?timeRange=${timeRange}`);
       if (res.ok) {
         const json: AnalyticsAiInsightsData = await res.json();
         setAiInsights(json);
@@ -186,7 +187,7 @@ export const AnalyticsManager: React.FC = () => {
     try {
       setUserHistoryLoading(true);
       setUserHistoryError(null);
-      const res = await fetch(`/api/analytics/admin/users/${encodeURIComponent(searchUserId.trim())}/history?timeRange=${timeRange}`);
+      const res = await apiFetch(`/api/analytics/admin/users/${encodeURIComponent(searchUserId.trim())}/history?timeRange=${timeRange}`);
       if (res.ok) {
         const json: UserAnalyticsHistory = await res.json();
         setUserHistoryData(json);
@@ -211,7 +212,7 @@ export const AnalyticsManager: React.FC = () => {
 
       const payload = override ? { ...formSettings, ...override } : formSettings;
 
-      const res = await fetch('/api/analytics/admin-settings', {
+      const res = await apiFetch('/api/analytics/admin-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

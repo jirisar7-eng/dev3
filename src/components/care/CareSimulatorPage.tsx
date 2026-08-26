@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CareMetrics } from '../../types';
 import {
@@ -60,7 +61,7 @@ export const CareSimulatorPage: React.FC<CareSimulatorPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/simulate`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/simulate`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -112,7 +113,7 @@ export const CareSimulatorPage: React.FC<CareSimulatorPageProps> = ({
     const newPlanTitle = `Plán péče (${rotationPattern}) – ${new Date().toLocaleDateString('cs-CZ')}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({

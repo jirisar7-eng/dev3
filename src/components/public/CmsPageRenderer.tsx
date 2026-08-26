@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { Page, Faq, CustomModule } from '../../types';
 import { useModules } from '../../context/ModuleContext';
@@ -44,12 +45,12 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
     setCustomModule(null);
 
     // Try /api/pages/:slug first, then fallback to /api/cms/pages/slug/:slug, then /api/custom-modules/slug/:slug
-    fetch(`/api/pages/${slug}`)
+    apiFetch(`/api/pages/${slug}`)
       .then(async (res) => {
         if (res.ok) return res.json();
-        const fallbackRes = await fetch(`/api/cms/pages/slug/${slug}`);
+        const fallbackRes = await apiFetch(`/api/cms/pages/slug/${slug}`);
         if (fallbackRes.ok) return fallbackRes.json();
-        const moduleRes = await fetch(`/api/custom-modules/slug/${slug}`);
+        const moduleRes = await apiFetch(`/api/custom-modules/slug/${slug}`);
         if (moduleRes.ok) {
           const modData = await moduleRes.json();
           return { _isCustomModule: true, ...modData };

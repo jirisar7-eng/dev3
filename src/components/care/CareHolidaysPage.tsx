@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { ClientCase, CarePlan, CareHolidayRule } from '../../types';
 import {
@@ -42,7 +43,7 @@ export const CareHolidaysPage: React.FC<CareHolidaysPageProps> = ({
 
     const existing = activePlan.holidayRules || [];
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({
@@ -70,7 +71,7 @@ export const CareHolidaysPage: React.FC<CareHolidaysPageProps> = ({
     const existing = activePlan.holidayRules || [];
     const updated = existing.filter((r) => r.id !== ruleId);
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({

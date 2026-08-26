@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { PublicActivitySummary } from '../../types';
 import { Users, Eye, Sparkles, TrendingUp, RefreshCw, BarChart2 } from 'lucide-react';
@@ -21,7 +22,7 @@ export const PortalActivityPanel: React.FC<PortalActivityPanelProps> = ({
   const fetchStats = async () => {
     try {
       setRefreshing(true);
-      const res = await fetch('/api/analytics/public-summary');
+      const res = await apiFetch('/api/analytics/public-summary');
       if (res.ok) {
         const json = await res.json();
         setData(json);

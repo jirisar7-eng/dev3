@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import {
   FileText,
@@ -77,7 +78,7 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
     const { text: cleanText, count: anonCount } = anonymizeText(docText);
 
     try {
-      const res = await fetch('/api/ai/analyze-document', {
+      const res = await apiFetch('/api/ai/analyze-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { CareMetrics, CaseChild, CarePlan } from '../../../types';
 import {
@@ -105,7 +106,7 @@ export const CareComparisonView: React.FC<CareComparisonViewProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/cases/${caseId}/care/compare`, {
+      const res = await apiFetch(`/api/cases/${caseId}/care/compare`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -201,7 +202,7 @@ export const CareComparisonView: React.FC<CareComparisonViewProps> = ({
             <button
               onClick={async () => {
                 try {
-                  const res = await fetch(`/api/cases/${caseId}/care/compare`, {
+                  const res = await apiFetch(`/api/cases/${caseId}/care/compare`, {
                     method: 'POST',
                     headers: authHeaders,
                     body: JSON.stringify({

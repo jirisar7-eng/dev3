@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { Page } from '../../types';
 import { FileText, Compass, Info, ArrowUpRight } from 'lucide-react';
@@ -8,7 +9,7 @@ export const PagesSection: React.FC = () => {
   const [activeSlug, setActiveSlug] = useState<string>('');
 
   useEffect(() => {
-    fetch('/api/cms/pages')
+    apiFetch('/api/cms/pages')
       .then((res) => res.json())
       .then((data: Page[]) => {
         const published = data.filter((p) => p.published);

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -67,7 +68,7 @@ export const AuditCenter: React.FC = () => {
       if (statusFilter !== 'ALL') queryParams.set('status', statusFilter);
       queryParams.set('sortBy', sortBy);
 
-      const res = await fetch(`/api/admin/audits?${queryParams.toString()}`);
+      const res = await apiFetch(`/api/admin/audits?${queryParams.toString()}`);
       const json = await res.json();
 
       if (json.success) {
@@ -99,7 +100,7 @@ export const AuditCenter: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
     try {
-      const res = await fetch('/api/admin/audits/sync', { method: 'POST' });
+      const res = await apiFetch('/api/admin/audits/sync', { method: 'POST' });
       const json = await res.json();
       if (json.success) {
         setSuccessMessage(json.message);
@@ -121,7 +122,7 @@ export const AuditCenter: React.FC = () => {
     setLoadingContent(true);
     setDocContent('');
     try {
-      const res = await fetch(`/api/admin/audits/${doc.id}`);
+      const res = await apiFetch(`/api/admin/audits/${doc.id}`);
       const json = await res.json();
       if (json.success && json.audit) {
         setSelectedDoc(json.audit);
@@ -148,7 +149,7 @@ export const AuditCenter: React.FC = () => {
     if (!sharingDoc) return;
     setCreatingShare(true);
     try {
-      const res = await fetch(`/api/admin/audits/${sharingDoc.id}/share`, {
+      const res = await apiFetch(`/api/admin/audits/${sharingDoc.id}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessMode: 'SHARED_LINK', expiresDays }),
@@ -173,7 +174,7 @@ export const AuditCenter: React.FC = () => {
   // Revoke share link
   const handleRevokeShare = async (shareId: string) => {
     try {
-      const res = await fetch(`/api/admin/audits/shares/${shareId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/audits/shares/${shareId}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
         setSharesList((prev) => prev.filter((s) => s.id !== shareId));

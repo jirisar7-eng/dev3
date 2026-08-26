@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { CustomModule, SchemaDrivenContent } from '../../types';
 import { SchemaDrivenRenderer } from '../common/SchemaDrivenRenderer';
@@ -197,12 +198,12 @@ export const CustomModuleManager: React.FC = () => {
   const fetchModules = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/custom-modules/admin');
+      const res = await apiFetch('/api/custom-modules/admin');
       if (res.ok) {
         const data = await res.json();
         setModules(data);
       } else {
-        const fallbackRes = await fetch('/api/custom-modules?all=true');
+        const fallbackRes = await apiFetch('/api/custom-modules?all=true');
         if (fallbackRes.ok) {
           const fallbackData = await fallbackRes.json();
           setModules(fallbackData);
@@ -317,7 +318,7 @@ export const CustomModuleManager: React.FC = () => {
       const url = editingId ? `/api/custom-modules/${editingId}` : '/api/custom-modules';
       const method = editingId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -339,7 +340,7 @@ export const CustomModuleManager: React.FC = () => {
 
   const handleToggleState = async (id: string, field: 'isActive' | 'showInMenu', currentValue: boolean) => {
     try {
-      const res = await fetch(`/api/custom-modules/${id}/toggle`, {
+      const res = await apiFetch(`/api/custom-modules/${id}/toggle`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: !currentValue }),
@@ -358,7 +359,7 @@ export const CustomModuleManager: React.FC = () => {
     if (!window.confirm(`Opravdu chcete smazat modul "${moduleTitle}"?`)) return;
 
     try {
-      const res = await fetch(`/api/custom-modules/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/custom-modules/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setModules((prev) => prev.filter((m) => m.id !== id));
       } else {

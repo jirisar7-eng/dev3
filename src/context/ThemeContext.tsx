@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
@@ -30,7 +31,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const fetchBranding = async () => {
     try {
-      const res = await fetch('/api/public/branding');
+      const res = await apiFetch('/api/public/branding');
       if (res.ok) {
         const data = await res.json();
         setBranding(data);
@@ -145,7 +146,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const reloadThemes = async () => {
     try {
-      const res = await fetch('/api/themes');
+      const res = await apiFetch('/api/themes');
       if (res.ok) {
         const data: Theme[] = await res.json();
         setThemes(data);
@@ -183,7 +184,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!activeTheme) return;
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/themes/${activeTheme.id}/variables`, {
+      const res = await apiFetch(`/api/themes/${activeTheme.id}/variables`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +204,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateThemeVars = async (themeId: string, variables: Record<string, string>) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/themes/${themeId}/variables`, {
+      const res = await apiFetch(`/api/themes/${themeId}/variables`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +223,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const activateTheme = async (themeIdOrKey: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/themes/${themeIdOrKey}/activate`, {
+      const res = await apiFetch(`/api/themes/${themeIdOrKey}/activate`, {
         method: 'POST',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -239,7 +240,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const createNewTheme = async (data: { key: string; name: string; description?: string; context?: string; variables?: Record<string, string> }) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/themes', {
+      const res = await apiFetch('/api/themes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteThemeById = async (themeId: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/themes/${themeId}`, {
+      const res = await apiFetch(`/api/themes/${themeId}`, {
         method: 'DELETE',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

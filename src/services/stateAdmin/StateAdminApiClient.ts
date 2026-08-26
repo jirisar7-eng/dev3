@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 /**
  * STATE ADMINISTRATION API HUB - SERVER-SIDE BASE CLIENT
  * Phase 5: High-Security SSRF-Protected HTTP Transport
@@ -169,7 +170,7 @@ export class StateAdminApiClient {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        const response = await fetch(urlStr, {
+        const response = await apiFetch(urlStr, {
           method: 'GET',
           headers: {
             'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',
@@ -294,7 +295,7 @@ export class StateAdminApiClient {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        const response = await fetch(sparqlEndpoint, {
+        const response = await apiFetch(sparqlEndpoint, {
           method: 'POST',
           headers: {
             'User-Agent': 'TataMaPravo-StateAdminHub/1.0 (+https://ai.tatovacesta.cz)',

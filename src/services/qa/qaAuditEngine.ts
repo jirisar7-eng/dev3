@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
@@ -259,7 +260,7 @@ export const qaAuditEngine = {
 
     for (const ep of testEndpoints) {
       try {
-        const res = await fetch(`${API_URL}${ep.path}`, { method: ep.method });
+        const res = await apiFetch(`${API_URL}${ep.path}`, { method: ep.method });
         if (ep.expectedStatus.includes(res.status)) {
           logFinding('P3', 'API', `API Audit PASS: ${ep.method} ${ep.path} [${res.status}]`);
         } else {
@@ -278,7 +279,7 @@ export const qaAuditEngine = {
 
     try {
       // CREATE
-      const regRes = await fetch(`${API_URL}/auth/register`, {
+      const regRes = await apiFetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'QA Audit User', email: testEmail, password: testPassword })
@@ -346,7 +347,7 @@ export const qaAuditEngine = {
     // Step 6: SECURITY AUDIT
     // Check 1: Unauthenticated Admin Access
     try {
-      const unauthRes = await fetch(`${API_URL}/admin/qa/dashboard`);
+      const unauthRes = await apiFetch(`${API_URL}/admin/qa/dashboard`);
       if (unauthRes.status === 401 || unauthRes.status === 403) {
         logFinding('P3', 'SECURITY', 'Security Audit: Unauthenticated admin endpoint access correctly blocked (401/403).');
       } else {
@@ -358,7 +359,7 @@ export const qaAuditEngine = {
 
     // Check 2: Cross-user IDOR check
     try {
-      const idorRes = await fetch(`${API_URL}/cases/test-case-id-other-user`, {
+      const idorRes = await apiFetch(`${API_URL}/cases/test-case-id-other-user`, {
         headers: { 'Authorization': 'Bearer fake-token-123' }
       });
       if (idorRes.status === 401 || idorRes.status === 403 || idorRes.status === 404) {
@@ -372,7 +373,7 @@ export const qaAuditEngine = {
 
     // Step 7: INTEGRATION AUDIT (UI -> API -> Service -> DB -> Reload)
     try {
-      const pingRes = await fetch(`${API_URL}/health`);
+      const pingRes = await apiFetch(`${API_URL}/health`);
       if (pingRes.ok) {
         logFinding('P3', 'INTEGRATION', 'Integration Audit: Complete UI -> API -> Service -> DB pipeline verified active.');
       } else {

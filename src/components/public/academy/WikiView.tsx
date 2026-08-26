@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   BookMarked,
@@ -547,7 +548,7 @@ export const WikiView: React.FC<WikiViewProps> = ({ onNavigate }) => {
   const fetchWikiTerms = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/wiki');
+      const res = await apiFetch('/api/cms/wiki');
       if (res.ok) {
         const data: WikiTerm[] = await res.json();
         if (Array.isArray(data) && data.length > 0) {

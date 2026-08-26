@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { SeoHead } from './SeoHead';
@@ -46,7 +47,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
   const handleLogConsent = async () => {
     try {
       setConsentLoading(true);
-      const res = await fetch('/api/gdpr/consent-log', {
+      const res = await apiFetch('/api/gdpr/consent-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,7 +70,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
   const handleExportData = async () => {
     try {
       setExportLoading(true);
-      const res = await fetch(`/api/gdpr/export-data?userId=${userId}`);
+      const res = await apiFetch(`/api/gdpr/export-data?userId=${userId}`);
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
@@ -98,7 +99,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
     }
     try {
       setDeletionLoading(true);
-      const res = await fetch('/api/gdpr/deletion-request', {
+      const res = await apiFetch('/api/gdpr/deletion-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, notes: deletionNote }),
@@ -117,7 +118,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
   useEffect(() => {
     if (activeTab === 'admin' && currentUser?.role && ['ADMIN', 'SUPER_ADMIN'].includes(currentUser.role)) {
       setAdminLoading(true);
-      fetch('/api/gdpr/deletion-requests')
+      apiFetch('/api/gdpr/deletion-requests')
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) setAdminRequests(data);
@@ -129,7 +130,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
 
   const handleUpdateDeletionStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch(`/api/gdpr/deletion-requests/${id}`, {
+      const res = await apiFetch(`/api/gdpr/deletion-requests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, notes: `Aktualizováno administrátorem dne ${new Date().toLocaleString()}` }),

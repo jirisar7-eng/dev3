@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/users', {
+      const res = await apiFetch('/api/admin/users', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -93,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshMe = async () => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/auth/me', {
+      const res = await apiFetch('/api/auth/me', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -169,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password?: string): Promise<AuthResult> => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -197,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyMfa = async (mfaToken: string, code: string, userId?: string): Promise<AuthResult> => {
     try {
-      const res = await fetch('/api/auth/2fa/verify', {
+      const res = await apiFetch('/api/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mfaToken, code, userId }),
@@ -234,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasChildrenInitial?: boolean
   ): Promise<AuthResult> => {
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role, profileData, childrenData, consents, gender, hasChildrenInitial }),
@@ -259,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     localStorage.removeItem('tatovacesta_auth_token');
     setCurrentUser(null);
   };
@@ -271,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserRole = async (userId: string, role: UserRole) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/users/${userId}/role`, {
+      const res = await apiFetch(`/api/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -342,7 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        const res = await fetch(urlEndpoint);
+        const res = await apiFetch(urlEndpoint);
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           return safeResolve({ success: false, error: data?.error || 'Nepodařilo se inicializovat přihlášení.' });
@@ -362,7 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const checkAuthStatus = async (): Promise<User | null> => {
         try {
           const token = localStorage.getItem('tatovacesta_auth_token');
-          const res = await fetch('/api/auth/me', {
+          const res = await apiFetch('/api/auth/me', {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
           if (res.ok) {
@@ -468,7 +469,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const registerPasskey = async (name: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/auth/passkey/register/options', {
+      const res = await apiFetch('/api/auth/passkey/register/options', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -480,7 +481,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const options = await res.json();
       const credential = await startRegistration({ optionsJSON: options });
 
-      const verifyRes = await fetch('/api/auth/passkey/register/verify', {
+      const verifyRes = await apiFetch('/api/auth/passkey/register/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +504,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithPasskey = async (): Promise<AuthResult> => {
     try {
-      const res = await fetch('/api/auth/passkey/login/options', { method: 'POST' });
+      const res = await apiFetch('/api/auth/passkey/login/options', { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
         return { success: false, error: err?.error || 'Nelze načíst výzvu pro bezpečnostní klíč.' };
@@ -512,7 +513,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const options = await res.json();
       const assertion = await startAuthentication({ optionsJSON: options });
 
-      const verifyRes = await fetch('/api/auth/passkey/login/verify', {
+      const verifyRes = await apiFetch('/api/auth/passkey/login/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(assertion),

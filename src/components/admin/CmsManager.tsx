@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { Page, PageSection, Article, Category, Faq, NavItem, MediaItem } from '../../types';
 import { MarkdownEditor } from '../MarkdownEditor';
@@ -91,7 +92,7 @@ export const CmsManager: React.FC = () => {
   const [newMedia, setNewMedia] = useState({ name: '', url: '', type: 'image', size: 102400, alt: '' });
 
   const fetchCmsData = () => {
-    fetch('/api/cms/pages')
+    apiFetch('/api/cms/pages')
       .then((res) => res.json())
       .then((data) => {
         setPages(data);
@@ -99,19 +100,19 @@ export const CmsManager: React.FC = () => {
           setSelectedPageId(data[0].id);
         }
       });
-    fetch('/api/cms/articles')
+    apiFetch('/api/cms/articles')
       .then((res) => res.json())
       .then((data) => setArticles(data));
-    fetch('/api/cms/categories')
+    apiFetch('/api/cms/categories')
       .then((res) => res.json())
       .then((data) => setCategories(data));
-    fetch('/api/cms/faqs')
+    apiFetch('/api/cms/faqs')
       .then((res) => res.json())
       .then((data) => setFaqs(data));
-    fetch('/api/cms/nav')
+    apiFetch('/api/cms/nav')
       .then((res) => res.json())
       .then((data) => setNavItems(data));
-    fetch('/api/cms/media')
+    apiFetch('/api/cms/media')
       .then((res) => res.json())
       .then((data) => setMediaItems(data));
   };
@@ -123,7 +124,7 @@ export const CmsManager: React.FC = () => {
   // --- PAGES & SECTIONS HANDLERS ---
   const handleSyncPages = async () => {
     try {
-      await fetch('/api/admin/pages/sync-modules', { method: 'POST' });
+      await apiFetch('/api/admin/pages/sync-modules', { method: 'POST' });
       fetchCmsData();
     } catch (err) {
       console.error('Error syncing module pages:', err);
@@ -133,7 +134,7 @@ export const CmsManager: React.FC = () => {
   const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPage.title || !newPage.slug) return;
-    await fetch('/api/cms/pages', {
+    await apiFetch('/api/cms/pages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newPage, published: true }),
@@ -143,7 +144,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleUpdatePage = async (id: string, updatedData: Partial<Page>) => {
-    await fetch(`/api/cms/pages/${id}`, {
+    await apiFetch(`/api/cms/pages/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedData),
@@ -153,7 +154,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleTogglePublishPage = async (page: Page) => {
-    await fetch(`/api/cms/pages/${page.id}`, {
+    await apiFetch(`/api/cms/pages/${page.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ published: !page.published }),
@@ -163,7 +164,7 @@ export const CmsManager: React.FC = () => {
 
   const handleDeletePage = async (id: string) => {
     if (!confirm('Opravdu chcete smazat tuto stránku?')) return;
-    await fetch(`/api/cms/pages/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/pages/${id}`, { method: 'DELETE' });
     if (selectedPageId === id) setSelectedPageId(null);
     fetchCmsData();
   };
@@ -171,7 +172,7 @@ export const CmsManager: React.FC = () => {
   const handleCreateSection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPageId) return;
-    await fetch(`/api/cms/pages/${selectedPageId}/sections`, {
+    await apiFetch(`/api/cms/pages/${selectedPageId}/sections`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newSection),
@@ -181,7 +182,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleDeleteSection = async (sectionId: string) => {
-    await fetch(`/api/cms/sections/${sectionId}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/sections/${sectionId}`, { method: 'DELETE' });
     fetchCmsData();
   };
 
@@ -189,7 +190,7 @@ export const CmsManager: React.FC = () => {
   const handleCreateArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newArticle.title || !newArticle.slug) return;
-    await fetch('/api/cms/articles', {
+    await apiFetch('/api/cms/articles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newArticle, published: true }),
@@ -199,7 +200,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleTogglePublishArticle = async (art: Article) => {
-    await fetch(`/api/cms/articles/${art.id}`, {
+    await apiFetch(`/api/cms/articles/${art.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ published: !art.published }),
@@ -209,7 +210,7 @@ export const CmsManager: React.FC = () => {
 
   const handleDeleteArticle = async (id: string) => {
     if (!confirm('Opravdu smazat tento článek?')) return;
-    await fetch(`/api/cms/articles/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/articles/${id}`, { method: 'DELETE' });
     fetchCmsData();
   };
 
@@ -217,7 +218,7 @@ export const CmsManager: React.FC = () => {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategory.name || !newCategory.slug) return;
-    await fetch('/api/cms/categories', {
+    await apiFetch('/api/cms/categories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCategory),
@@ -227,7 +228,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    await fetch(`/api/cms/categories/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/categories/${id}`, { method: 'DELETE' });
     fetchCmsData();
   };
 
@@ -235,7 +236,7 @@ export const CmsManager: React.FC = () => {
   const handleCreateFaq = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFaq.question || !newFaq.answer) return;
-    await fetch('/api/cms/faqs', {
+    await apiFetch('/api/cms/faqs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newFaq, order: faqs.length + 1, published: true }),
@@ -245,7 +246,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleDeleteFaq = async (id: string) => {
-    await fetch(`/api/cms/faqs/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/faqs/${id}`, { method: 'DELETE' });
     fetchCmsData();
   };
 
@@ -253,7 +254,7 @@ export const CmsManager: React.FC = () => {
   const handleCreateNavItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNavItem.labelKey || !newNavItem.url) return;
-    await fetch('/api/cms/nav', {
+    await apiFetch('/api/cms/nav', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newNavItem, order: navItems.length + 1 }),
@@ -263,7 +264,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleDeleteNavItem = async (id: string) => {
-    await fetch(`/api/cms/nav/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/nav/${id}`, { method: 'DELETE' });
     fetchCmsData();
   };
 
@@ -271,7 +272,7 @@ export const CmsManager: React.FC = () => {
   const handleAddMedia = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMedia.name || !newMedia.url) return;
-    await fetch('/api/cms/media', {
+    await apiFetch('/api/cms/media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newMedia),
@@ -281,7 +282,7 @@ export const CmsManager: React.FC = () => {
   };
 
   const handleDeleteMedia = async (id: string) => {
-    await fetch(`/api/cms/media/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/cms/media/${id}`, { method: 'DELETE' });
     fetchCmsData();
   };
 

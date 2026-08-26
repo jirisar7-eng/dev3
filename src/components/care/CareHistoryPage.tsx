@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan } from '../../types';
 import { History, ArrowLeft, RotateCcw, ShieldCheck, AlertCircle, Calendar, User } from 'lucide-react';
@@ -25,7 +26,7 @@ export const CareHistoryPage: React.FC<CareHistoryPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/history`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/history`, {
         headers: authHeaders,
       });
 

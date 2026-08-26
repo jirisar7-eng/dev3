@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { User, UserDocument } from '../../types';
 import { FileText, Plus, Download, FolderOpen, Tag, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
@@ -19,7 +20,7 @@ export const UserDocumentsView: React.FC<UserDocumentsViewProps> = ({ user }) =>
   const fetchDocs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/portal/documents/${user.id}`, {
+      const res = await apiFetch(`/api/portal/documents/${user.id}`, {
         headers: {
           'Authorization': `Bearer jwt_token_${user.id}_${Date.now()}`,
         },
@@ -46,7 +47,7 @@ export const UserDocumentsView: React.FC<UserDocumentsViewProps> = ({ user }) =>
     setErrorMsg('');
 
     try {
-      const res = await fetch('/api/portal/documents', {
+      const res = await apiFetch('/api/portal/documents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

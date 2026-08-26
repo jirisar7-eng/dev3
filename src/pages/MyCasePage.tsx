@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ClientCase, CaseChild, CaseEvent, CaseTask, CaseDeadline, CaseNote, CaseEvidence, CaseParticipant, CareArrangement } from '../types';
@@ -77,7 +78,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/cases', { credentials: 'include', headers: authHeaders });
+      const res = await apiFetch('/api/cases', { credentials: 'include', headers: authHeaders });
       if (!res.ok) {
         throw new Error(`Nepodařilo se načíst spisy (kód: ${res.status})`);
       }
@@ -107,7 +108,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!newCaseTitle.trim()) return;
     try {
-      const res = await fetch('/api/cases', {
+      const res = await apiFetch('/api/cases', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -133,7 +134,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Case update
   const handleUpdateCase = async (data: Partial<ClientCase>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify(data),
@@ -148,7 +149,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Child handlers
   const handleAddChild = async (childData: Partial<CaseChild>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/children`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/children`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(childData),
@@ -166,7 +167,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleUpdateChild = async (childId: string, childData: Partial<CaseChild>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/children/${childId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/children/${childId}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify(childData),
@@ -184,7 +185,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteChild = async (childId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/children/${childId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/children/${childId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -200,7 +201,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Event handlers
   const handleAddEvent = async (eventData: Partial<CaseEvent>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/events`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/events`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(eventData),
@@ -218,7 +219,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/events/${eventId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/events/${eventId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -240,7 +241,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
     mimeType?: string;
   }) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/documents`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/documents`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(docData),
@@ -258,7 +259,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteDoc = async (docId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/documents/${docId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/documents/${docId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -274,7 +275,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Participant handlers
   const handleAddParticipant = async (pData: Partial<CaseParticipant>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/participants`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/participants`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(pData),
@@ -292,7 +293,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleUpdateParticipant = async (id: string, pData: Partial<CaseParticipant>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/participants/${id}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/participants/${id}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify(pData),
@@ -310,7 +311,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteParticipant = async (id: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/participants/${id}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/participants/${id}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -326,7 +327,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Task & Deadline handlers
   const handleAddTask = async (tData: Partial<CaseTask>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/tasks`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/tasks`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(tData),
@@ -344,7 +345,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleUpdateTask = async (taskId: string, tData: Partial<CaseTask>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/tasks/${taskId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/tasks/${taskId}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify(tData),
@@ -362,7 +363,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteTask = async (taskId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/tasks/${taskId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/tasks/${taskId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -377,7 +378,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleAddDeadline = async (dlData: Partial<CaseDeadline>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/deadlines`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/deadlines`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(dlData),
@@ -397,7 +398,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
     if (!activeCase) return;
     const target = (activeCase.deadlines || []).find((d) => d.id === dlId);
     if (!target) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/deadlines/${dlId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/deadlines/${dlId}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify({ isCompleted: !target.isCompleted }),
@@ -415,7 +416,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteDeadline = async (dlId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/deadlines/${dlId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/deadlines/${dlId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -431,7 +432,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Note handlers
   const handleAddNote = async (nData: Partial<CaseNote>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/notes`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/notes`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(nData),
@@ -449,7 +450,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleUpdateNote = async (noteId: string, nData: Partial<CaseNote>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/notes/${noteId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/notes/${noteId}`, {
       method: 'PUT',
       headers: authHeaders,
       body: JSON.stringify(nData),
@@ -467,7 +468,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteNote = async (noteId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/notes/${noteId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/notes/${noteId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });
@@ -483,7 +484,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
   // Evidence handlers
   const handleAddEvidence = async (eviData: Partial<CaseEvidence>) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/evidence`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/evidence`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify(eviData),
@@ -501,7 +502,7 @@ export const MyCasePage: React.FC<MyCasePageProps> = ({ onNavigate }) => {
 
   const handleDeleteEvidence = async (eviId: string) => {
     if (!activeCase) return;
-    const res = await fetch(`/api/cases/${activeCase.id}/evidence/${eviId}`, {
+    const res = await apiFetch(`/api/cases/${activeCase.id}/evidence/${eviId}`, {
       method: 'DELETE',
       headers: authHeaders,
     });

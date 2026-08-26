@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import { CarePlan, CaseChild } from '../../../types';
 import {
@@ -64,7 +65,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`/api/cases/${caseId}/parse-judgment`, {
+      const res = await apiFetch(`/api/cases/${caseId}/parse-judgment`, {
         method: 'POST',
         headers,
         credentials: 'include',
@@ -96,7 +97,7 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`/api/cases/${caseId}/apply-judgment`, {
+      const res = await apiFetch(`/api/cases/${caseId}/apply-judgment`, {
         method: 'POST',
         headers,
         credentials: 'include',

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { SeoHead } from '../SeoHead';
 import { Newspaper, Calendar, ExternalLink, Search, Filter, Tag, ArrowRight } from 'lucide-react';
@@ -22,7 +23,7 @@ export const NewsHubView: React.FC = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch('/api/news');
+        const response = await apiFetch('/api/news');
         if (response.ok) {
           const data = await response.json();
           setNewsData(data);

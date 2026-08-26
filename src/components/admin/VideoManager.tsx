@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { AcademyVideo, VideoAttachment } from '../../types';
 import {
@@ -68,7 +69,7 @@ export const VideoManager: React.FC = () => {
   const fetchVideos = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/videos');
+      const res = await apiFetch('/api/cms/videos');
       if (res.ok) {
         const data = await res.json();
         setVideos(data);
@@ -143,7 +144,7 @@ export const VideoManager: React.FC = () => {
     try {
       if (selectedVideo) {
         // Update
-        const res = await fetch(`/api/cms/videos/${selectedVideo.id}`, {
+        const res = await apiFetch(`/api/cms/videos/${selectedVideo.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -157,7 +158,7 @@ export const VideoManager: React.FC = () => {
         }
       } else {
         // Create
-        const res = await fetch('/api/cms/videos', {
+        const res = await apiFetch('/api/cms/videos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -179,7 +180,7 @@ export const VideoManager: React.FC = () => {
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Opravdu chcete smazat video "${title}"?`)) return;
     try {
-      const res = await fetch(`/api/cms/videos/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/cms/videos/${id}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchVideos();
       } else {

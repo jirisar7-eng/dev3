@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { VisualSvgEditor } from './svg';
 import { Shield, Upload, History, Check, AlertTriangle, Image as ImageIcon, RotateCcw, Monitor, FileCode, CheckCircle2, Moon, Sun, Smartphone } from 'lucide-react';
@@ -35,7 +36,7 @@ export const BrandingManager: React.FC = () => {
   const fetchBranding = async () => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/branding', {
+      const res = await apiFetch('/api/admin/branding', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -54,7 +55,7 @@ export const BrandingManager: React.FC = () => {
   const fetchHistory = async () => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/branding/history', {
+      const res = await apiFetch('/api/admin/branding/history', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -79,7 +80,7 @@ export const BrandingManager: React.FC = () => {
     }
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/branding/validate', {
+      const res = await apiFetch('/api/admin/branding/validate', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -126,7 +127,7 @@ export const BrandingManager: React.FC = () => {
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/branding', {
+      const res = await apiFetch('/api/admin/branding', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@ export const BrandingManager: React.FC = () => {
     
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/admin/branding/restore/${id}`, {
+      const res = await apiFetch(`/api/admin/branding/restore/${id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -180,7 +181,7 @@ export const BrandingManager: React.FC = () => {
     
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/admin/branding/reset`, {
+      const res = await apiFetch(`/api/admin/branding/reset`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

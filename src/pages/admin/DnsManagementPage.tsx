@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, RefreshCw, AlertTriangle, Search, Zap } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export const DnsManagementPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/dns');
+      const res = await apiFetch('/api/admin/dns');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load DNS records');
       const recordsList = Array.isArray(data) ? data : (data.records || data.data || []);
@@ -38,7 +39,7 @@ export const DnsManagementPage: React.FC = () => {
   const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/admin/dns', {
+      const res = await apiFetch('/api/admin/dns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord),
@@ -55,7 +56,7 @@ export const DnsManagementPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Opravdu chcete smazat tento DNS záznam?')) return;
     try {
-      const res = await fetch(`/api/admin/dns/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/dns/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete record');
       await loadRecords();

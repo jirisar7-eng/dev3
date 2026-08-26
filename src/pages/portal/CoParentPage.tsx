@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Home, Calendar, Handshake, MessageSquare, Repeat, DollarSign, 
@@ -51,7 +52,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
 
   const fetchHandoverLogs = async () => {
     try {
-      const res = await fetch('/api/incidents?category=handover', {
+      const res = await apiFetch('/api/incidents?category=handover', {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
       if (res.ok) {
@@ -78,7 +79,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     const description = `Čas: ${newHandover.time}\nMísto: ${newHandover.location}\nStav: ${statusText}\nPoznámka: ${newHandover.note || 'Bez poznámky'}`;
 
     try {
-      const res = await fetch('/api/incidents', {
+      const res = await apiFetch('/api/incidents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +126,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const handleDeleteHandoverLog = async (id: string) => {
     if (!confirm('Opravdu chcete smazat tento záznam předání?')) return;
     try {
-      await fetch(`/api/incidents/${id}`, {
+      await apiFetch(`/api/incidents/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
@@ -137,7 +138,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
 
   const handleSaveToCaseFile = async (title: string, category: string, content: string) => {
     try {
-      const res = await fetch('/api/case-files', {
+      const res = await apiFetch('/api/case-files', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const fetchMembers = async () => {
     if (!space?.id) return;
     try {
-      const res = await fetch(`/api/coparent/members?spaceId=${space.id}`, {
+      const res = await apiFetch(`/api/coparent/members?spaceId=${space.id}`, {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
       if (res.ok) {
@@ -182,7 +183,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!space || !inviteEmail) return;
     try {
-      const res = await fetch('/api/coparent/invite/create', {
+      const res = await apiFetch('/api/coparent/invite/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +204,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!pairCodeInput.trim()) return;
     try {
-      const res = await fetch('/api/coparent/invite/accept', {
+      const res = await apiFetch('/api/coparent/invite/accept', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +226,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const fetchCoParentData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/coparent/dashboard', {
+      const res = await apiFetch('/api/coparent/dashboard', {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
       const data = await res.json();
@@ -249,7 +250,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const handleConflictModeChange = async (mode: string) => {
     try {
       if (!space) return;
-      const res = await fetch('/api/coparent/conflict-mode', {
+      const res = await apiFetch('/api/coparent/conflict-mode', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -268,7 +269,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!newMessage.trim() || !space) return;
     try {
-      const res = await fetch('/api/coparent/messages', {
+      const res = await apiFetch('/api/coparent/messages', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -289,7 +290,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!newExpense.title || !newExpense.amount || !space) return;
     try {
-      const res = await fetch('/api/coparent/expenses', {
+      const res = await apiFetch('/api/coparent/expenses', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -314,7 +315,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!newRequest.details || !space) return;
     try {
-      const res = await fetch('/api/coparent/requests', {
+      const res = await apiFetch('/api/coparent/requests', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -337,7 +338,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const handleExportData = async () => {
     if (!space) return;
     try {
-      const res = await fetch(`/api/coparent/export?spaceId=${space.id}`, {
+      const res = await apiFetch(`/api/coparent/export?spaceId=${space.id}`, {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
       if (!res.ok) throw new Error('Chyba při generování exportu.');
@@ -356,7 +357,7 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const handleShowPrintAudit = async () => {
     if (!space) return;
     try {
-      const res = await fetch(`/api/coparent/export?spaceId=${space.id}`, {
+      const res = await apiFetch(`/api/coparent/export?spaceId=${space.id}`, {
         headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
       });
       if (!res.ok) throw new Error('Chyba při načítání dat pro audit.');

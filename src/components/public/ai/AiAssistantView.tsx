@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import {
   Bot,
@@ -109,7 +110,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
     setLoading(true);
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const res = await apiFetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +150,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
     setBiffError(null);
 
     try {
-      const res = await fetch('/api/ai/biff-convert', {
+      const res = await apiFetch('/api/ai/biff-convert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawMessage: biffInput })

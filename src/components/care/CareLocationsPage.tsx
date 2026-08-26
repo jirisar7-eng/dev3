@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { ClientCase, CarePlan, CareLocation } from '../../types';
 import {
@@ -76,7 +77,7 @@ export const CareLocationsPage: React.FC<CareLocationsPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/geocode`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/geocode`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({ address: address.trim() }),
@@ -135,7 +136,7 @@ export const CareLocationsPage: React.FC<CareLocationsPageProps> = ({
     }
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({
@@ -167,7 +168,7 @@ export const CareLocationsPage: React.FC<CareLocationsPageProps> = ({
 
     const updatedList = locations.filter((l) => l.id !== id);
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/plans/${activePlan.id}`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({
@@ -196,7 +197,7 @@ export const CareLocationsPage: React.FC<CareLocationsPageProps> = ({
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(`/api/cases/${activeCase.id}/care/route`, {
+      const res = await apiFetch(`/api/cases/${activeCase.id}/care/route`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({

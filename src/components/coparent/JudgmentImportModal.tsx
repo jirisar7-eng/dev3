@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Sparkles, FileText, Upload, CheckCircle2, X, AlertCircle } from 'lucide-react';
 
@@ -75,7 +76,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
         throw new Error('Musíte nahrát soubor nebo zadat text.');
       }
 
-      const res = await fetch('/api/coparent/parse-judgment', {
+      const res = await apiFetch('/api/coparent/parse-judgment', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer jwt_token_user_${Date.now()}`
@@ -104,7 +105,7 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
       const activeSpaceId = spaceId || null;
       const formData = extractedData;
 
-      const res = await fetch('/api/coparent/apply-judgment', {
+      const res = await apiFetch('/api/coparent/apply-judgment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

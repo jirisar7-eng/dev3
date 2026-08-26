@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -34,7 +35,7 @@ export class OAuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID || 'dummy-google-client-id';
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET || 'dummy-google-client-secret';
 
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    const tokenResponse = await apiFetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -92,7 +93,7 @@ export class OAuthService {
     const clientSecret = process.env.MICROSOFT_CLIENT_SECRET || 'dummy-ms-client-secret';
     const tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
 
-    const tokenResponse = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+    const tokenResponse = await apiFetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({

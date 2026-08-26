@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import { Router } from 'express';
 import { subjektService } from '../services/subjektService';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
@@ -116,7 +117,7 @@ router.post('/geocode', requireAuth as any, async (req: any, res) => {
     // Mapy.cz API
     const apiKey = process.env.MAPY_API_KEY;
     if (apiKey) {
-      const resp = await fetch(`https://api.mapy.cz/v1/geocode?query=${encodeURIComponent(query)}&apikey=${apiKey}`);
+      const resp = await apiFetch(`https://api.mapy.cz/v1/geocode?query=${encodeURIComponent(query)}&apikey=${apiKey}`);
       if (resp.ok) {
         const data = await resp.json();
         const items = data?.items || [];
@@ -133,7 +134,7 @@ router.post('/geocode', requireAuth as any, async (req: any, res) => {
 
     // Fallback to Nominatim if key missing or failed
     const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`;
-    const nomResp = await fetch(nomUrl, { headers: { 'User-Agent': 'dev3-app' } });
+    const nomResp = await apiFetch(nomUrl, { headers: { 'User-Agent': 'dev3-app' } });
     if (nomResp.ok) {
       const data = await nomResp.json();
       if (data && data.length > 0) {

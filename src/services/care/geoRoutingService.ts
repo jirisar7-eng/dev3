@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 export interface GeoLocation {
   latitude: number;
   longitude: number;
@@ -42,7 +43,7 @@ export class NominatimGeocodingProvider implements IGeocodingProvider {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: {
           'User-Agent': this.userAgent,
           'Accept-Language': 'cs,en',
@@ -102,7 +103,7 @@ export class OsrmRoutingProvider implements IRoutingProvider {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-      const res = await fetch(url, { signal: controller.signal });
+      const res = await apiFetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
 
       if (res.ok) {

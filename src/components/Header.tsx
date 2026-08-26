@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
@@ -97,8 +98,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/cms/nav').then((res) => (res.ok ? res.json() : [])).catch(() => []),
-      fetch('/api/custom-modules?all=false').then((res) => (res.ok ? res.json() : [])).catch(() => []),
+      apiFetch('/api/cms/nav').then((res) => (res.ok ? res.json() : [])).catch(() => []),
+      apiFetch('/api/custom-modules?all=false').then((res) => (res.ok ? res.json() : [])).catch(() => []),
     ]).then(([navData, customMods]: [NavItem[], any[]]) => {
       let baseNav = [...FALLBACK_NAV_ITEMS];
       if (Array.isArray(navData) && navData.length > 0) {

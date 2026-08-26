@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Study } from '../../types';
 import { SeoHead } from './SeoHead';
@@ -38,7 +39,7 @@ export const StudyLibraryPage: React.FC = () => {
       if (selectedCategory !== 'ALL') params.push(`category=${selectedCategory}`);
       url = `/api/cms/studies?${params.join('&')}`;
 
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = await res.json();
       if (Array.isArray(data)) {
         setStudies(data);

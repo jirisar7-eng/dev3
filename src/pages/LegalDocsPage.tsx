@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { 
   ShieldCheck, 
@@ -35,7 +36,7 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
 
   // Fetch registered compliance documents from backend
   useEffect(() => {
-    fetch('/api/compliance/docs')
+    apiFetch('/api/compliance/docs')
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error('Chyba při načítání dokumentů');
@@ -51,7 +52,7 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
   // Fetch current user consents
   useEffect(() => {
     if (currentUser) {
-      fetch(`/api/compliance/consent/${currentUser.id}`)
+      apiFetch(`/api/compliance/consent/${currentUser.id}`)
         .then((res) => {
           if (res.ok) return res.json();
           return [];
@@ -185,7 +186,7 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
     try {
       setConsentLoading(true);
       setMessage(null);
-      const res = await fetch('/api/compliance/consent', {
+      const res = await apiFetch('/api/compliance/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

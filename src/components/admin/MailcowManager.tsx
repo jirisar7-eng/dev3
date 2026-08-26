@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Mail,
@@ -146,7 +147,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
     setErrorCode(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/mailcow/mailboxes', {
+      const res = await apiFetch('/api/mailcow/mailboxes', {
         headers: {
           'Accept': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -189,7 +190,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
     setHealthLoading(true);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/mailcow/health', {
+      const res = await apiFetch('/api/mailcow/health', {
         headers: {
           'Accept': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -237,7 +238,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
     const email = `${formLocalPart.toLowerCase().trim()}@tatovacesta.cz`;
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/mailcow/mailboxes', {
+      const res = await apiFetch('/api/mailcow/mailboxes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +279,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
     setSuccess(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/mailcow/mailboxes/${encodeURIComponent(email)}`, {
+      const res = await apiFetch(`/api/mailcow/mailboxes/${encodeURIComponent(email)}`, {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
@@ -313,7 +314,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
     setSuccess(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/mailcow/mailboxes/${encodeURIComponent(passwordModal.email)}/password`, {
+      const res = await apiFetch(`/api/mailcow/mailboxes/${encodeURIComponent(passwordModal.email)}/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

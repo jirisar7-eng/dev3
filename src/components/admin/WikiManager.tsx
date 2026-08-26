@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { WikiTerm } from '../../types';
 import {
@@ -68,7 +69,7 @@ export const WikiManager: React.FC = () => {
   const fetchTerms = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/wiki');
+      const res = await apiFetch('/api/cms/wiki');
       if (res.ok) {
         const data = await res.json();
         setTerms(data);
@@ -154,13 +155,13 @@ export const WikiManager: React.FC = () => {
 
       let res;
       if (selectedTerm) {
-        res = await fetch(`/api/cms/wiki/${selectedTerm.id}`, {
+        res = await apiFetch(`/api/cms/wiki/${selectedTerm.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch('/api/cms/wiki', {
+        res = await apiFetch('/api/cms/wiki', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -182,7 +183,7 @@ export const WikiManager: React.FC = () => {
   const handleDelete = async (id: string, termName: string) => {
     if (!confirm(`Opravdu chcete smazat pojem "${termName}"?`)) return;
     try {
-      const res = await fetch(`/api/cms/wiki/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/cms/wiki/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchTerms();
       } else {

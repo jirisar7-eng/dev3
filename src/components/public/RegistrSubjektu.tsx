@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -76,7 +77,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     if (!aresIco.trim()) return;
     setAresLoading(true);
     try {
-      const res = await fetch(`/api/state-admin/registries/verify-professional?ico=${encodeURIComponent(aresIco.trim())}`);
+      const res = await apiFetch(`/api/state-admin/registries/verify-professional?ico=${encodeURIComponent(aresIco.trim())}`);
       const data = await res.json();
       setAresResult(data);
     } catch (err) {
@@ -150,7 +151,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     e.preventDefault();
     if (!selectedSubjekt || !pracovnikForm.jmeno.trim()) return;
     try {
-      const res = await fetch('/api/pracovnici', {
+      const res = await apiFetch('/api/pracovnici', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -197,7 +198,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
       if (minRatingFilter > 0) params.append('minRating', minRatingFilter.toString());
 
-      const res = await fetch(`/api/subjekty?${params.toString()}`);
+      const res = await apiFetch(`/api/subjekty?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setSubjekty(data);
@@ -217,7 +218,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
       // Step 1: Geocode
       setGeocodeLoading(true);
       try {
-        const geoRes = await fetch('/api/subjekty/geocode', {
+        const geoRes = await apiFetch('/api/subjekty/geocode', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ address: newSubjektForm.address, city: newSubjektForm.city })
@@ -260,7 +261,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
     // Step 3: Submit
     setFormSubmitting(true);
     try {
-      const res = await fetch('/api/subjekty/submit', {
+      const res = await apiFetch('/api/subjekty/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSubjektForm),
@@ -289,7 +290,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
     setFormSubmitting(true);
     try {
-      const res = await fetch(`/api/subjekty/${showReviewModal.id}/reviews`, {
+      const res = await apiFetch(`/api/subjekty/${showReviewModal.id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewForm),
@@ -324,7 +325,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
         // Refresh detail if open
         if (selectedSubjekt && selectedSubjekt.id === showReviewModal.id) {
-          const detailRes = await fetch(`/api/subjekty/${selectedSubjekt.id}`);
+          const detailRes = await apiFetch(`/api/subjekty/${selectedSubjekt.id}`);
           if (detailRes.ok) {
             const updatedDetail = await detailRes.json();
             setSelectedSubjekt(updatedDetail);
@@ -344,7 +345,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
 
     setFormSubmitting(true);
     try {
-      const res = await fetch(`/api/subjekty/${selectedSubjekt.id}/reviews`, {
+      const res = await apiFetch(`/api/subjekty/${selectedSubjekt.id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -380,7 +381,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
         setTimeout(() => setSuccessMessage(null), 4000);
 
         // Refresh detail to get the new reviews of the workers
-        const detailRes = await fetch(`/api/subjekty/${selectedSubjekt.id}`);
+        const detailRes = await apiFetch(`/api/subjekty/${selectedSubjekt.id}`);
         if (detailRes.ok) {
           const updatedDetail = await detailRes.json();
           setSelectedSubjekt(updatedDetail);

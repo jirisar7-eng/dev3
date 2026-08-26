@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Study, StudyStatus } from '../../types';
 import {
@@ -73,7 +74,7 @@ export const StudyManager: React.FC = () => {
       if (categoryFilter !== 'ALL') params.push(`category=${categoryFilter}`);
       if (params.length > 0) url += `?${params.join('&')}`;
 
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = await res.json();
       if (Array.isArray(data)) {
         setStudies(data);
@@ -167,7 +168,7 @@ export const StudyManager: React.FC = () => {
       const reader = new FileReader();
       reader.onload = async () => {
         const base64 = reader.result as string;
-        const res = await fetch('/api/cms/studies/upload-pdf', {
+        const res = await apiFetch('/api/cms/studies/upload-pdf', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -219,7 +220,7 @@ export const StudyManager: React.FC = () => {
       const url = selectedStudy ? `/api/cms/studies/${selectedStudy.id}` : '/api/cms/studies';
       const method = selectedStudy ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +243,7 @@ export const StudyManager: React.FC = () => {
 
   const handleStatusChange = async (study: Study, newStatus: StudyStatus) => {
     try {
-      const res = await fetch(`/api/cms/studies/${study.id}`, {
+      const res = await apiFetch(`/api/cms/studies/${study.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export const StudyManager: React.FC = () => {
     if (!confirm(`Opravdu chcete odstranit vědeckou studii "${study.title}"?`)) return;
 
     try {
-      const res = await fetch(`/api/cms/studies/${study.id}`, {
+      const res = await apiFetch(`/api/cms/studies/${study.id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Terminal,
@@ -55,7 +56,7 @@ export const VpsManagement: React.FC = () => {
   const fetchStatus = async () => {
     setLoadingStatus(true);
     try {
-      const res = await fetch('/api/admin/vps/status', {
+      const res = await apiFetch('/api/admin/vps/status', {
         headers: {
           ...getAuthHeader(),
           'Accept': 'application/json',
@@ -102,7 +103,7 @@ export const VpsManagement: React.FC = () => {
         url += `&container=${encodeURIComponent(targetId)}`;
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: {
           ...getAuthHeader(),
           'Accept': 'application/json',
@@ -136,7 +137,7 @@ export const VpsManagement: React.FC = () => {
 
     setUpdating(true);
     try {
-      const res = await fetch('/api/admin/vps/update', {
+      const res = await apiFetch('/api/admin/vps/update', {
         method: 'POST',
         headers: {
           ...getAuthHeader(),

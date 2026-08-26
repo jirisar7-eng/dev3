@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import fetch from 'node-fetch';
 
 const VERCEL_API_URL = 'https://api.vercel.com/v2/domains';
@@ -17,7 +18,7 @@ export async function getDnsRecords() {
     url += `?teamId=${teamId}`;
   }
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -41,7 +42,7 @@ export async function getDnsRecords() {
 
 export async function addDnsRecord(domain: string, token: string, record: any) {
   try {
-    const response = await fetch(`${VERCEL_API_URL}/${domain}/records`, {
+    const response = await apiFetch(`${VERCEL_API_URL}/${domain}/records`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,7 +63,7 @@ export async function addDnsRecord(domain: string, token: string, record: any) {
 
 export async function deleteDnsRecord(domain: string, token: string, recordId: string) {
   try {
-    const response = await fetch(`${VERCEL_API_URL}/${domain}/records/${recordId}`, {
+    const response = await apiFetch(`${VERCEL_API_URL}/${domain}/records/${recordId}`, {
       method: 'DELETE',
       headers: { 
         Authorization: `Bearer ${token}`,

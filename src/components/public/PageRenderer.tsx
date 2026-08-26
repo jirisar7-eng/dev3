@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { Page, PageSection, Faq } from '../../types';
 import {
@@ -31,10 +32,10 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ slug, onNavigate }) 
     setError(null);
 
     // Try /api/pages/:slug first, then /api/cms/pages/slug/:slug as fallback
-    fetch(`/api/pages/${slug}`)
+    apiFetch(`/api/pages/${slug}`)
       .then(async (res) => {
         if (res.ok) return res.json();
-        const fallbackRes = await fetch(`/api/cms/pages/slug/${slug}`);
+        const fallbackRes = await apiFetch(`/api/cms/pages/slug/${slug}`);
         if (!fallbackRes.ok) throw new Error('Stránka nebyla nalezena');
         return fallbackRes.json();
       })

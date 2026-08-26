@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { X, Heart, Building2, Send, Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -32,7 +33,7 @@ export const SupportInterestModal: React.FC<SupportInterestModalProps> = ({
     setError(null);
     
     try {
-      const response = await fetch('/api/system/support-interest', {
+      const response = await apiFetch('/api/system/support-interest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

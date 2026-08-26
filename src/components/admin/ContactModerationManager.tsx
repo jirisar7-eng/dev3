@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Users, CheckCircle, XCircle, Trash2, Phone, Mail, MapPin, AlertCircle, Building2 } from 'lucide-react';
 import { Pracovnik } from '../../types';
@@ -13,7 +14,7 @@ export const ContactModerationManager: React.FC = () => {
     try {
       setLoading(true);
       const url = viewMode === 'PENDING' ? '/api/pracovnici/pending' : '/api/pracovnici';
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (res.ok) {
         const data = await res.json();
         setPracovnici(data);
@@ -34,7 +35,7 @@ export const ContactModerationManager: React.FC = () => {
 
   const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const res = await fetch(`/api/pracovnici/${id}/status`, {
+      const res = await apiFetch(`/api/pracovnici/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -60,7 +61,7 @@ export const ContactModerationManager: React.FC = () => {
     
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/pracovnici/${id}`, {
+      const res = await apiFetch(`/api/pracovnici/${id}`, {
         method: 'DELETE',
       });
       

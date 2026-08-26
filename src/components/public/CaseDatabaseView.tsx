@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Search, Scale, ExternalLink, Tag, Gavel, Filter, Calendar, BookOpen, ShieldCheck, Sparkles, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { SeoHead } from './SeoHead';
@@ -49,7 +50,7 @@ export const CaseDatabaseView: React.FC = () => {
     setLoading(true);
     try {
       // 1. Fetch from P1 State Admin Hub API
-      const res = await fetch('/api/state-admin/justice/cases?court=Ústavní+soud');
+      const res = await apiFetch('/api/state-admin/justice/cases?court=Ústavní+soud');
       const data: StateAdminResult<CourtCaseItem[]> = await res.json();
       setStateCasesResult(data);
 
@@ -57,7 +58,7 @@ export const CaseDatabaseView: React.FC = () => {
         setCases(data.data);
       } else {
         // Also query legacy local endpoint if needed
-        const legacyRes = await fetch('/api/state/cases');
+        const legacyRes = await apiFetch('/api/state/cases');
         if (legacyRes.ok) {
           const legacyData = await legacyRes.json();
           const list = legacyData.cases || legacyData.courtCases || legacyData.data;

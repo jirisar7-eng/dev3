@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Quiz, QuizQuestion } from '../../types';
 import {
@@ -71,7 +72,7 @@ export const QuizManager: React.FC = () => {
   const fetchQuizzes = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/quizzes');
+      const res = await apiFetch('/api/cms/quizzes');
       if (res.ok) {
         const data = await res.json();
         setQuizzes(data);
@@ -163,7 +164,7 @@ export const QuizManager: React.FC = () => {
 
     try {
       if (selectedQuiz) {
-        const res = await fetch(`/api/cms/quizzes/${selectedQuiz.id}`, {
+        const res = await apiFetch(`/api/cms/quizzes/${selectedQuiz.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -176,7 +177,7 @@ export const QuizManager: React.FC = () => {
           alert(`Chyba: ${err.error || 'Uložení se nezdařilo'}`);
         }
       } else {
-        const res = await fetch('/api/cms/quizzes', {
+        const res = await apiFetch('/api/cms/quizzes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -198,7 +199,7 @@ export const QuizManager: React.FC = () => {
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Opravdu chcete smazat kvíz "${title}" včetně všech otázek?`)) return;
     try {
-      const res = await fetch(`/api/cms/quizzes/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/cms/quizzes/${id}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchQuizzes();
       } else {

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
@@ -95,7 +96,7 @@ export const StateStatisticsView: React.FC = () => {
   const fetchJusticeStats = async () => {
     setJusticeLoading(true);
     try {
-      const res = await fetch('/api/state-admin/justice/statistics?agenda=P');
+      const res = await apiFetch('/api/state-admin/justice/statistics?agenda=P');
       const data = await res.json();
       setJusticeData(data);
     } catch (err) {
@@ -116,7 +117,7 @@ export const StateStatisticsView: React.FC = () => {
   const fetchCsuDemographics = async () => {
     setCsuLoading(true);
     try {
-      const res = await fetch('/api/state-admin/csu/demographics');
+      const res = await apiFetch('/api/state-admin/csu/demographics');
       const data = await res.json();
       setCsuData(data);
     } catch (err) {
@@ -141,7 +142,7 @@ export const StateStatisticsView: React.FC = () => {
       if (keyword.trim()) params.append('keyword', keyword.trim());
       if (thematicGroup !== 'ALL') params.append('category', thematicGroup);
 
-      const res = await fetch(`/api/state-admin/nkod/search?${params.toString()}`);
+      const res = await apiFetch(`/api/state-admin/nkod/search?${params.toString()}`);
       const data = await res.json();
       setNkodData(data);
     } catch (err) {

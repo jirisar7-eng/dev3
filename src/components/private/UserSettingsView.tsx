@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { Lock, ShieldAlert, KeyRound, CheckCircle2, AlertCircle, Save, Bell, Fingerprint, Trash2, Plus, Unlink, RefreshCw } from 'lucide-react';
@@ -22,8 +23,8 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({ user }) => {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const [pRes, aRes] = await Promise.all([
-        fetch('/api/auth/passkey/list', { headers }),
-        fetch('/api/auth/accounts', { headers })
+        apiFetch('/api/auth/passkey/list', { headers }),
+        apiFetch('/api/auth/accounts', { headers })
       ]);
 
       if (pRes.ok) {
@@ -90,7 +91,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({ user }) => {
     setSecurityStatus(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/auth/accounts/${provider}`, {
+      const res = await apiFetch(`/api/auth/accounts/${provider}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -140,7 +141,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({ user }) => {
     setSecurityStatus(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/auth/passkey/${id}`, {
+      const res = await apiFetch(`/api/auth/passkey/${id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -174,7 +175,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({ user }) => {
     setChangingPassword(true);
 
     try {
-      const res = await fetch('/api/user/password', {
+      const res = await apiFetch('/api/user/password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

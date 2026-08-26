@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Play,
@@ -52,7 +53,7 @@ export const TestRunnerCard: React.FC<{ compact?: boolean }> = ({ compact = fals
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/admin/test-status', { headers });
+      const res = await apiFetch('/api/admin/test-status', { headers });
       if (res.ok) {
         const data = await res.json();
         if (data.state) {
@@ -88,7 +89,7 @@ export const TestRunnerCard: React.FC<{ compact?: boolean }> = ({ compact = fals
       };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/admin/run-tests', {
+      const res = await apiFetch('/api/admin/run-tests', {
         method: 'POST',
         headers,
       });

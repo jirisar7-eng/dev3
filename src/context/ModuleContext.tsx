@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Module } from '../types';
 
@@ -19,7 +20,7 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const reloadModules = async () => {
     try {
-      const res = await fetch('/api/modules');
+      const res = await apiFetch('/api/modules');
       if (res.ok) {
         const data: Module[] = await res.json();
         setModules(data);
@@ -51,7 +52,7 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const enableModule = async (key: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/modules/${key}/enable`, {
+      const res = await apiFetch(`/api/modules/${key}/enable`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +72,7 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const disableModule = async (key: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/modules/${key}/disable`, {
+      const res = await apiFetch(`/api/modules/${key}/disable`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const toggleModule = async (key: string, enabled: boolean) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/modules/${key}/toggle`, {
+      const res = await apiFetch(`/api/modules/${key}/toggle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +113,7 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const updateModuleConfig = async (key: string, configJson: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/modules/${key}/config`, {
+      const res = await apiFetch(`/api/modules/${key}/config`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

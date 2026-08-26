@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType, Review } from '../../types';
 import {
@@ -94,7 +95,7 @@ export const SubjektManager: React.FC = () => {
       if (selectedRegion !== 'Všechny kraje') params.append('region', selectedRegion);
       if (search.trim()) params.append('search', search.trim());
 
-      const res = await fetch(`/api/subjekty?${params.toString()}`);
+      const res = await apiFetch(`/api/subjekty?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setSubjekty(data);
@@ -170,7 +171,7 @@ export const SubjektManager: React.FC = () => {
     setAresApplied(false);
 
     try {
-      const res = await fetch('/api/subjekty/verify-ico', {
+      const res = await apiFetch('/api/subjekty/verify-ico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ico: cleanIco }),
@@ -220,7 +221,7 @@ export const SubjektManager: React.FC = () => {
     setGeocodeLoading(true);
     setGeocodeError(null);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}&limit=1`);
+      const res = await apiFetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}&limit=1`);
       const data = await res.json();
       if (data && data.length > 0) {
         setForm(prev => ({ ...prev, lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }));
@@ -260,13 +261,13 @@ const handleSave = async (e: React.FormEvent) => {
     };
 
       if (editingSubjekt) {
-        await fetch(`/api/subjekty/${editingSubjekt.id}`, {
+        await apiFetch(`/api/subjekty/${editingSubjekt.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
-        await fetch('/api/subjekty', {
+        await apiFetch('/api/subjekty', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -284,7 +285,7 @@ const handleSave = async (e: React.FormEvent) => {
   
   const handleApprove = async (id: string) => {
     try {
-      const res = await fetch(`/api/subjekty/${id}/approve`, { method: 'PUT' });
+      const res = await apiFetch(`/api/subjekty/${id}/approve`, { method: 'PUT' });
       if (res.ok) {
         fetchSubjekty();
       } else {
@@ -300,7 +301,7 @@ const handleSave = async (e: React.FormEvent) => {
     const reason = prompt('Zadejte důvod zamítnutí:');
     if (!reason) return;
     try {
-      const res = await fetch(`/api/subjekty/${id}/reject`, {
+      const res = await apiFetch(`/api/subjekty/${id}/reject`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rejectionReason: reason })
@@ -319,7 +320,7 @@ const handleSave = async (e: React.FormEvent) => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Opravdu chcete smazat tento subjekt včetně všech jeho recenzí?')) return;
     try {
-      await fetch(`/api/subjekty/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/subjekty/${id}`, { method: 'DELETE' });
       fetchSubjekty();
     } catch (err) {
       console.error('Error deleting subjekt:', err);

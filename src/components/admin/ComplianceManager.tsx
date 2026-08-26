@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, ConsentRecord, LegalDocStatus } from '../../types';
 import { ShieldCheck, FileText, GitBranch, CheckCircle2, Settings, Plus, Eye, Check, X, Search, Filter, History, Calendar, AlertCircle } from 'lucide-react';
@@ -53,7 +54,7 @@ export const ComplianceManager: React.FC = () => {
   const fetchDocsSummary = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/compliance/docs');
+      const res = await apiFetch('/api/compliance/docs');
       const data = await res.json();
       if (Array.isArray(data)) {
         setDocs(data);
@@ -68,7 +69,7 @@ export const ComplianceManager: React.FC = () => {
   const fetchDocDetail = async (key: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/compliance/docs/${key}`);
+      const res = await apiFetch(`/api/compliance/docs/${key}`);
       if (res.ok) {
         const data = await res.json();
         setSelectedDocDetail(data);
@@ -83,7 +84,7 @@ export const ComplianceManager: React.FC = () => {
   const fetchConsents = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/compliance/consent');
+      const res = await apiFetch('/api/compliance/consent');
       if (res.ok) {
         const data = await res.json();
         setConsents(data);
@@ -98,7 +99,7 @@ export const ComplianceManager: React.FC = () => {
   const fetchAuditLogs = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/legal/admin/audit-logs');
+      const res = await apiFetch('/api/legal/admin/audit-logs');
       if (res.ok) {
         const data = await res.json();
         setAuditLogs(data);
@@ -131,7 +132,7 @@ export const ComplianceManager: React.FC = () => {
     e.preventDefault();
     try {
       setMessage(null);
-      const res = await fetch('/api/compliance/docs', {
+      const res = await apiFetch('/api/compliance/docs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newDocData),
@@ -153,7 +154,7 @@ export const ComplianceManager: React.FC = () => {
     e.preventDefault();
     try {
       setMessage(null);
-      const res = await fetch(`/api/compliance/docs/${selectedDocKey}/versions`, {
+      const res = await apiFetch(`/api/compliance/docs/${selectedDocKey}/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newVersionData),
@@ -173,7 +174,7 @@ export const ComplianceManager: React.FC = () => {
   const handlePublishVersion = async (versionId: string) => {
     try {
       setMessage(null);
-      const res = await fetch(`/api/compliance/versions/${versionId}/publish`, { method: 'PUT' });
+      const res = await apiFetch(`/api/compliance/versions/${versionId}/publish`, { method: 'PUT' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Chyba při publikaci verze');
 
@@ -188,7 +189,7 @@ export const ComplianceManager: React.FC = () => {
   const handleDeactivateVersion = async (versionId: string) => {
     try {
       setMessage(null);
-      const res = await fetch(`/api/compliance/versions/${versionId}/deactivate`, { method: 'PUT' });
+      const res = await apiFetch(`/api/compliance/versions/${versionId}/deactivate`, { method: 'PUT' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Chyba při deaktivaci verze');
 

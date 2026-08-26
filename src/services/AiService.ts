@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import { GoogleGenAI } from '@google/genai';
 
 export interface AiGenerateOptions {
@@ -127,7 +128,7 @@ export class AiService {
         console.log('[AiService] Fallback to Grok AI (grok-2-1212)...');
         const call = async () => {
           const controller = new AbortController();
-          const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+          const grokResponse = await apiFetch('https://api.x.ai/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${grokKey}`,
@@ -168,7 +169,7 @@ export class AiService {
         const start = Date.now();
         console.log('[AiService] Fallback to Groq AI (llama-3.3-70b-versatile)...');
         const call = async () => {
-          const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          const groqResponse = await apiFetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,

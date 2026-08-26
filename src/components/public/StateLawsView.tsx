@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Search,
@@ -143,7 +144,7 @@ export const StateLawsView: React.FC = () => {
     setLoading(true);
     setErrorStatus(null);
     setErrorMessage(null);
-    fetch('/api/esbirka/acts')
+    apiFetch('/api/esbirka/acts')
       .then(async (res) => {
         if (!res.ok) {
           setErrorStatus(res.status);
@@ -174,7 +175,7 @@ export const StateLawsView: React.FC = () => {
   const fetchLegislativeBills = async () => {
     setBillsLoading(true);
     try {
-      const res = await fetch('/api/state-admin/e-legislativa/bills?actCode=89/2012');
+      const res = await apiFetch('/api/state-admin/e-legislativa/bills?actCode=89/2012');
       const data = await res.json();
       setBillsData(data);
     } catch (err) {
@@ -207,7 +208,7 @@ export const StateLawsView: React.FC = () => {
     setDateWordingResult(null);
     setSelectedHistoricalVersion(null);
 
-    fetch(`/api/esbirka/acts/${encodeURIComponent(selectedLawCode)}`)
+    apiFetch(`/api/esbirka/acts/${encodeURIComponent(selectedLawCode)}`)
       .then(async (res) => {
         if (!res.ok) {
           setErrorStatus(res.status);
@@ -240,7 +241,7 @@ export const StateLawsView: React.FC = () => {
     setDateWordingLoading(true);
     setDateWordingError(null);
 
-    fetch(`/api/esbirka/acts/${encodeURIComponent(selectedLawCode)}/at-date?date=${encodeURIComponent(dateStr)}`)
+    apiFetch(`/api/esbirka/acts/${encodeURIComponent(selectedLawCode)}/at-date?date=${encodeURIComponent(dateStr)}`)
       .then(async (res) => {
         if (!res.ok) {
           const errData = await res.json().catch(() => null);

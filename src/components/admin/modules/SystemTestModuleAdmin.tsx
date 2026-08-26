@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import { useModules } from '../../../context/ModuleContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -26,7 +27,7 @@ export const SystemTestModuleAdmin: React.FC = () => {
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/modules/system-test-module/run-test', {
+      const res = await apiFetch('/api/modules/system-test-module/run-test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { SeoHead } from './SeoHead';
@@ -133,12 +134,12 @@ export const VolunteerAgreementPage: React.FC<VolunteerAgreementPageProps> = ({ 
         const token = localStorage.getItem('tatovacesta_auth_token');
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-        let res = await fetch('/api/profile', { headers });
+        let res = await apiFetch('/api/profile', { headers });
         if (!res.ok) {
-          res = await fetch('/api/users/me', { headers });
+          res = await apiFetch('/api/users/me', { headers });
         }
         if (!res.ok && user?.id) {
-          res = await fetch(`/api/user/profile/${user.id}`, { headers });
+          res = await apiFetch(`/api/user/profile/${user.id}`, { headers });
         }
 
         if (res.ok) {
@@ -194,7 +195,7 @@ export const VolunteerAgreementPage: React.FC<VolunteerAgreementPageProps> = ({ 
 
     try {
       setSignLoading(true);
-      const res = await fetch('/api/compliance/volunteer-agreement/sign', {
+      const res = await apiFetch('/api/compliance/volunteer-agreement/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

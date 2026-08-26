@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { SeoHead } from './SeoHead';
 import { Cpu, FileText, Globe, Shield, RefreshCw, CheckCircle2, Terminal, Database, Copy, ExternalLink, ArrowRight } from 'lucide-react';
@@ -14,7 +15,7 @@ export const AiContextView: React.FC<AiContextViewProps> = ({ onNavigate }) => {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/ai-context/status');
+      const res = await apiFetch('/api/ai-context/status');
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
@@ -33,7 +34,7 @@ export const AiContextView: React.FC<AiContextViewProps> = ({ onNavigate }) => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch('/api/admin/ai-context/refresh', { method: 'POST' });
+      const res = await apiFetch('/api/admin/ai-context/refresh', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setStatus(data.status);

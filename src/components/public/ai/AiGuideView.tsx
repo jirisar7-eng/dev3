@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import {
   Compass,
@@ -44,7 +45,7 @@ export const AiGuideView: React.FC<AiGuideViewProps> = ({ onNavigate }) => {
   const handleGeneratePlan = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/ai/guide-plan', {
+      const res = await apiFetch('/api/ai/guide-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

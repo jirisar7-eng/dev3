@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import { AnalyticsEventType } from '../types';
 
 class AnalyticsClient {
@@ -49,7 +50,7 @@ class AnalyticsClient {
       if (navigator.sendBeacon && eventType === 'session_end') {
         navigator.sendBeacon('/api/analytics/event', new Blob([body], { type: 'application/json' }));
       } else {
-        await fetch('/api/analytics/event', {
+        await apiFetch('/api/analytics/event', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body,

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Puck, type Data } from '@measured/puck';
 import '@measured/puck/puck.css';
@@ -74,7 +75,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
     const fetchPage = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/pages/${encodeURIComponent(urlSlug)}`);
+        const res = await apiFetch(`/api/pages/${encodeURIComponent(urlSlug)}`);
         if (!res.ok) throw new Error('Stránka nebyla nalezena.');
         const pageData = await res.json();
         setTitle(pageData.title || '');
@@ -100,7 +101,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
   const fetchTemplates = async () => {
     setIsLoadingTemplates(true);
     try {
-      const res = await fetch('/api/templates');
+      const res = await apiFetch('/api/templates');
       if (res.ok) {
         const data = await res.json();
         setTemplates(data || []);
@@ -146,7 +147,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
         puckDataJson: JSON.stringify(localData),
       };
 
-      const res = await fetch('/api/templates', {
+      const res = await apiFetch('/api/templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -172,7 +173,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
     setNotification(null);
 
     try {
-      const res = await fetch('/api/pages', {
+      const res = await apiFetch('/api/pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: finalTitle, slug: finalSlug, content: puckData }),
@@ -196,7 +197,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
     if (!aiRawText) return;
     setIsGenerating(true);
     try {
-      const res = await fetch('/api/ai/generate-page', {
+      const res = await apiFetch('/api/ai/generate-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText: aiRawText, title: aiTitle }),

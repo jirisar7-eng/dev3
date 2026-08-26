@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit3, Trash2, ExternalLink, Layout, Sparkles, FileText, RefreshCw } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/pages');
+      const res = await apiFetch('/api/pages');
       if (!res.ok) throw new Error('Nepodařilo se načíst seznam stránek.');
       const data = await res.json();
       setPages(Array.isArray(data) ? data : []);
@@ -52,7 +53,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
     setSyncMessage(null);
     setError(null);
     try {
-      const res = await fetch('/api/pages/convert-all-to-puck', {
+      const res = await apiFetch('/api/pages/convert-all-to-puck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -73,7 +74,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
     setSyncMessage(null);
     setError(null);
     try {
-      const res = await fetch('/api/admin/pages/sync-modules', {
+      const res = await apiFetch('/api/admin/pages/sync-modules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -96,7 +97,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
     if (!window.confirm(`Opravdu chcete smazat stránku "${title}"?`)) return;
 
     try {
-      const res = await fetch(`/api/pages/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/pages/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Chyba při mazání stránky.');
       setPages((prev) => prev.filter((p) => p.id !== id));
     } catch (err: any) {

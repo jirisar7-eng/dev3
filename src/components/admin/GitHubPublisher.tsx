@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -55,7 +56,7 @@ export const GitHubPublisher: React.FC = () => {
     setIsGeneratingTitle(true);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/git/suggest-push-name', {
+      const res = await apiFetch('/api/admin/git/suggest-push-name', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -79,7 +80,7 @@ export const GitHubPublisher: React.FC = () => {
     setErrorMsg(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/github/status', {
+      const res = await apiFetch('/api/admin/github/status', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -149,7 +150,7 @@ export const GitHubPublisher: React.FC = () => {
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/github/push', {
+      const res = await apiFetch('/api/admin/github/push', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ export const GitHubPublisher: React.FC = () => {
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/admin/github/force-push', {
+      const res = await apiFetch('/api/admin/github/force-push', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

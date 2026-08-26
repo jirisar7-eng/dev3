@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 /**
  * Shared Request Deduplication and Caching utility for Public CMS Content (/api/cms/articles, /api/cms/faqs).
  * Ensures concurrent requests for public CMS resources are deduplicated into a single in-flight promise
@@ -27,7 +28,7 @@ export async function fetchCmsPublic<T = any>(endpoint: string): Promise<T> {
 
   const promise = (async () => {
     try {
-      const res = await fetch(endpoint);
+      const res = await apiFetch(endpoint);
       const text = await res.text();
       let data: any;
       try {

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { SeoHead } from './SeoHead';
 import { ShieldCheck, Book, Search, PlayCircle, FileText, LifeBuoy, ArrowRight } from 'lucide-react';
@@ -27,7 +28,7 @@ export const UserManualPage: React.FC<UserManualPageProps> = ({ onNavigate }) =>
   useEffect(() => {
     const fetchHelpData = async () => {
       try {
-        const response = await fetch('/api/help');
+        const response = await apiFetch('/api/help');
         if (response.ok) {
           const data = await response.json();
           setHelpData(data);

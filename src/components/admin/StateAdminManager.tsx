@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Activity,
@@ -70,8 +71,8 @@ export const StateAdminManager: React.FC = () => {
       setError(null);
 
       const [healthRes, auditsRes] = await Promise.all([
-        fetch('/api/admin/state-admin/health'),
-        fetch('/api/admin/state-admin/audits'),
+        apiFetch('/api/admin/state-admin/health'),
+        apiFetch('/api/admin/state-admin/audits'),
       ]);
 
       if (!healthRes.ok) {
@@ -123,7 +124,7 @@ export const StateAdminManager: React.FC = () => {
       setIsChecking(true);
       setError(null);
 
-      const res = await fetch('/api/admin/state-admin/health-check', {
+      const res = await apiFetch('/api/admin/state-admin/health-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +143,7 @@ export const StateAdminManager: React.FC = () => {
       }
 
       // Refresh audit logs
-      const auditsRes = await fetch('/api/admin/state-admin/audits');
+      const auditsRes = await apiFetch('/api/admin/state-admin/audits');
       if (auditsRes.ok) {
         const auditsJson = await auditsRes.json();
         if (auditsJson.success && Array.isArray(auditsJson.audits)) {

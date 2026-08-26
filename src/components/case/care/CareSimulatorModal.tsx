@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { CareMetrics, CareDay, CaseChild, CarePlan } from '../../../types';
 import {
@@ -114,7 +115,7 @@ export const CareSimulatorModal: React.FC<CareSimulatorModalProps> = ({
     setIsSimulating(true);
     setError(null);
     try {
-      const res = await fetch(`/api/cases/${caseId}/care/simulate`, {
+      const res = await apiFetch(`/api/cases/${caseId}/care/simulate`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -153,7 +154,7 @@ export const CareSimulatorModal: React.FC<CareSimulatorModalProps> = ({
     setGeoTesting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/cases/${caseId}/care/route`, {
+      const res = await apiFetch(`/api/cases/${caseId}/care/route`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Users, X, Copy, Check, Sparkles, FileText, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -45,7 +46,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({
     setError(null);
 
     try {
-      const res = await fetch('/api/coparent/invite/create', {
+      const res = await apiFetch('/api/coparent/invite/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

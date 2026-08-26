@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Scale,
@@ -39,7 +40,7 @@ export const LegalGuideDynamicView: React.FC<LegalGuideDynamicViewProps> = ({
     let isMounted = true;
     setLoading(true);
 
-    fetch(`/api/cms/legal-guides/${slug}`)
+    apiFetch(`/api/cms/legal-guides/${slug}`)
       .then((res) => {
         if (res.ok) return res.json();
         return null;

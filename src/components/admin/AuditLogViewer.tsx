@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { AuditLog } from '../../types';
 import { ShieldCheck, Search, RefreshCw, Clock } from 'lucide-react';
@@ -8,7 +9,7 @@ export const AuditLogViewer: React.FC = () => {
 
   const fetchLogs = () => {
     const url = filterModule ? `/api/audit?module=${filterModule}` : '/api/audit';
-    fetch(url)
+    apiFetch(url)
       .then((res) => res.json())
       .then((data) => setLogs(Array.isArray(data) ? data : []))
       .catch((err) => {

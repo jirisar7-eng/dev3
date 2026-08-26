@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { SeoHead } from './SeoHead';
 import { 
@@ -66,7 +67,7 @@ export const VolunteersPage: React.FC<{ onNavigate: (path: string) => void; form
       // Map availability & message to 'motivation' field for existing DB schema compatibility
       const compositeMotivation = `Dostupnost: ${formData.availability || 'Nespecifikováno'}\n\nZpráva / motivace:\n${formData.message}`;
 
-      const response = await fetch('/api/volunteers', {
+      const response = await apiFetch('/api/volunteers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

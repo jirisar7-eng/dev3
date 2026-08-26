@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Subjekt, EntityType } from '../../types';
 import { Clock, CheckCircle2, XCircle, MapPin, Briefcase } from 'lucide-react';
@@ -21,7 +22,7 @@ export const UserSubmissionsTab: React.FC = () => {
   const fetchSubmissions = async () => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token') || localStorage.getItem('token');
-      const res = await fetch('/api/subjekty/my/submissions', {
+      const res = await apiFetch('/api/subjekty/my/submissions', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (res.ok) {

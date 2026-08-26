@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect, useCallback } from 'react';
 import { SeoHead } from '../SeoHead';
 import { MarkdownEditor } from '../../MarkdownEditor';
@@ -84,7 +85,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ onNavigate }) => {
         ? `/api/forum/threads?category=${encodeURIComponent(selectedCategory)}` 
         : '/api/forum/threads';
       
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (res.ok) {
         const data = await res.json();
         setThreads(data || []);
@@ -112,7 +113,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ onNavigate }) => {
     const fetchThreadDetail = async () => {
       setLoadingDetail(true);
       try {
-        const res = await fetch(`/api/forum/threads/${selectedThreadId}`);
+        const res = await apiFetch(`/api/forum/threads/${selectedThreadId}`);
         if (res.ok) {
           const data = await res.json();
           setActiveThread(data);
@@ -173,7 +174,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ onNavigate }) => {
 
     setIsSubmittingThread(true);
     try {
-      const res = await fetch('/api/forum/threads', {
+      const res = await apiFetch('/api/forum/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +208,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ onNavigate }) => {
 
     setIsSubmittingReply(true);
     try {
-      const res = await fetch(`/api/forum/threads/${threadId}/posts`, {
+      const res = await apiFetch(`/api/forum/threads/${threadId}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,7 +221,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ onNavigate }) => {
       if (res.ok) {
         setReplyText('');
         // Refresh active thread details
-        const detailRes = await fetch(`/api/forum/threads/${threadId}`);
+        const detailRes = await apiFetch(`/api/forum/threads/${threadId}`);
         if (detailRes.ok) {
           const updatedDetail = await detailRes.json();
           setActiveThread(updatedDetail);

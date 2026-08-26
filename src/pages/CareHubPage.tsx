@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { ClientCase, CarePlan, CareMetrics, CareDay } from '../types';
 import {
@@ -49,7 +50,7 @@ export const CareHubPage: React.FC<CareHubPageProps> = ({ onNavigate, currentPat
 
     try {
       // 1. Load cases
-      const casesRes = await fetch('/api/cases', { headers: authHeaders });
+      const casesRes = await apiFetch('/api/cases', { headers: authHeaders });
       if (!casesRes.ok) {
         if (casesRes.status === 503) {
           setIsDb503(true);
@@ -68,7 +69,7 @@ export const CareHubPage: React.FC<CareHubPageProps> = ({ onNavigate, currentPat
 
       if (userCases.length === 0) {
         // Create a default case if none exists
-        const createRes = await fetch('/api/cases', {
+        const createRes = await apiFetch('/api/cases', {
           method: 'POST',
           headers: authHeaders,
         });
@@ -100,7 +101,7 @@ export const CareHubPage: React.FC<CareHubPageProps> = ({ onNavigate, currentPat
 
   const loadCareData = async (caseId: string, authHeaders: Record<string, string>) => {
     try {
-      const careRes = await fetch(`/api/cases/${caseId}/care`, { headers: authHeaders });
+      const careRes = await apiFetch(`/api/cases/${caseId}/care`, { headers: authHeaders });
       if (!careRes.ok) {
         if (careRes.status === 503) {
           setIsDb503(true);

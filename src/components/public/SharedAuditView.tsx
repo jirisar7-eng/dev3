@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -35,7 +36,7 @@ export const SharedAuditView: React.FC<SharedAuditViewProps> = ({ token, onNavig
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/audit/share/${encodeURIComponent(token)}`);
+        const res = await apiFetch(`/api/audit/share/${encodeURIComponent(token)}`);
         const json = await res.json();
 
         if (json.success && json.audit) {

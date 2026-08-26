@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   LayoutTemplate,
@@ -52,7 +53,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/templates');
+      const res = await apiFetch('/api/templates');
       if (!res.ok) throw new Error('Nepodařilo se načíst šablony.');
       const data = await res.json();
       setTemplates(data || []);
@@ -146,13 +147,13 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
       let res;
       if (editingTemplate) {
-        res = await fetch(`/api/templates/${editingTemplate.id}`, {
+        res = await apiFetch(`/api/templates/${editingTemplate.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch('/api/templates', {
+        res = await apiFetch('/api/templates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -178,7 +179,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
     if (!confirm(`Opravdu chcete smazat šablonu "${name}"?`)) return;
 
     try {
-      const res = await fetch(`/api/templates/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/templates/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Smazání selhalo.');
 
       setNotification({ type: 'success', message: 'Šablona byla smazána.' });
@@ -190,7 +191,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
   const handleSeedTemplates = async () => {
     try {
-      const res = await fetch('/api/templates/seed', { method: 'POST' });
+      const res = await apiFetch('/api/templates/seed', { method: 'POST' });
       if (!res.ok) throw new Error('Inicializace selhala.');
       setNotification({ type: 'success', message: 'Systémové šablony byly úspěšně inicializovány.' });
       fetchTemplates();

@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TextItem } from '../types';
 
@@ -23,7 +24,7 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const reloadTexts = async () => {
     try {
-      const res = await fetch('/api/content');
+      const res = await apiFetch('/api/content');
       if (res.ok) {
         const data: TextItem[] = await res.json();
         setTexts(data);
@@ -54,7 +55,7 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateTextKey = async (key: string, data: { valueCzech?: string; valueEnglish?: string; category?: string; description?: string }) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/content/${encodeURIComponent(key)}`, {
+      const res = await apiFetch(`/api/content/${encodeURIComponent(key)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addTextKey = async (key: string, category: string, valueCzech: string, valueEnglish?: string, description?: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/content', {
+      const res = await apiFetch('/api/content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +97,7 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toggleTextActive = async (key: string, active: boolean) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/content/${encodeURIComponent(key)}/toggle`, {
+      const res = await apiFetch(`/api/content/${encodeURIComponent(key)}/toggle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteTextKey = async (key: string) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/content/${encodeURIComponent(key)}`, {
+      const res = await apiFetch(`/api/content/${encodeURIComponent(key)}`, {
         method: 'DELETE',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

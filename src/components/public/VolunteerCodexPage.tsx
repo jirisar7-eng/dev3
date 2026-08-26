@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { SeoHead } from './SeoHead';
@@ -60,7 +61,7 @@ export const VolunteerCodexPage: React.FC<VolunteerCodexPageProps> = ({ onNaviga
   // Check existing signed status
   useEffect(() => {
     if (userId) {
-      fetch(`/api/compliance/volunteer-codex/status/${userId}`)
+      apiFetch(`/api/compliance/volunteer-codex/status/${userId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.signed) {
@@ -86,7 +87,7 @@ export const VolunteerCodexPage: React.FC<VolunteerCodexPageProps> = ({ onNaviga
 
     try {
       setSignLoading(true);
-      const res = await fetch('/api/compliance/volunteer-codex/sign', {
+      const res = await apiFetch('/api/compliance/volunteer-codex/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

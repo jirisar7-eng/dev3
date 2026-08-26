@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { LegalGuide, LegalGuideChapter } from '../../types';
 import {
@@ -81,7 +82,7 @@ export const LegalGuideManager: React.FC = () => {
   const fetchGuides = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms/legal-guides');
+      const res = await apiFetch('/api/cms/legal-guides');
       if (res.ok) {
         const data = await res.json();
         setGuides(data);
@@ -180,13 +181,13 @@ export const LegalGuideManager: React.FC = () => {
 
       let res;
       if (selectedGuide) {
-        res = await fetch(`/api/cms/legal-guides/${selectedGuide.id}`, {
+        res = await apiFetch(`/api/cms/legal-guides/${selectedGuide.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch('/api/cms/legal-guides', {
+        res = await apiFetch('/api/cms/legal-guides', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -208,7 +209,7 @@ export const LegalGuideManager: React.FC = () => {
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Opravdu chcete smazat průvodce "${title}"?`)) return;
     try {
-      const res = await fetch(`/api/cms/legal-guides/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/cms/legal-guides/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchGuides();
       } else {

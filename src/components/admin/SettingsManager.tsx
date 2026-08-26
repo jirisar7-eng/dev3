@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { Setting } from '../../types';
 import { Settings, Save } from 'lucide-react';
@@ -6,7 +7,7 @@ export const SettingsManager: React.FC = () => {
   const [settings, setSettings] = useState<Setting[]>([]);
 
   const fetchSettings = () => {
-    fetch('/api/settings')
+    apiFetch('/api/settings')
       .then((res) => res.json())
       .then((data) => setSettings(data));
   };
@@ -16,7 +17,7 @@ export const SettingsManager: React.FC = () => {
   }, []);
 
   const handleUpdate = async (key: string, value: string) => {
-    await fetch(`/api/settings/${key}`, {
+    await apiFetch(`/api/settings/${key}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value }),

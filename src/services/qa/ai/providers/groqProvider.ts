@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../../utils/apiClient';
 import { AIProvider, AIProviderResponse } from '../types';
 
 export class GroqProvider implements AIProvider {
@@ -30,7 +31,7 @@ export class GroqProvider implements AIProvider {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

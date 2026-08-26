@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { User, UserRole } from '../../types';
@@ -52,7 +53,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/users/quick-create`, {
+      const res = await apiFetch(`/api/users/quick-create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await apiFetch(`/api/admin/users/${user.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -122,7 +123,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+      const res = await apiFetch(`/api/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
 
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/users/${user.id}/status`, {
+      const res = await apiFetch(`/api/users/${user.id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +226,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
     setStatusMsg(null);
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch(`/api/admin/users/${user.id}/reset-password`, {
+      const res = await apiFetch(`/api/admin/users/${user.id}/reset-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

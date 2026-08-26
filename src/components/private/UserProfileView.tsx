@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -97,8 +98,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
     try {
       const headers = getAuthHeaders();
       const [pRes, aRes] = await Promise.all([
-        fetch('/api/auth/passkey/list', { headers }),
-        fetch('/api/auth/accounts', { headers }),
+        apiFetch('/api/auth/passkey/list', { headers }),
+        apiFetch('/api/auth/accounts', { headers }),
       ]);
 
       if (pRes.ok) {
@@ -141,7 +142,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
     }
 
     try {
-      const res = await fetch(`/api/user/profile/${user.id}`, {
+      const res = await apiFetch(`/api/user/profile/${user.id}`, {
         method: 'PUT',
         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
@@ -185,7 +186,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
     setChangingPassword(true);
 
     try {
-      const res = await fetch('/api/user/password', {
+      const res = await apiFetch('/api/user/password', {
         method: 'POST',
         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
@@ -248,7 +249,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
     }
     setSecurityStatus(null);
     try {
-      const res = await fetch(`/api/auth/accounts/${provider}`, {
+      const res = await apiFetch(`/api/auth/accounts/${provider}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -298,7 +299,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
     }
     setSecurityStatus(null);
     try {
-      const res = await fetch(`/api/auth/passkey/${id}`, {
+      const res = await apiFetch(`/api/auth/passkey/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -666,7 +667,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                   setMfaError('');
                   setIsGenerating(true);
                   try {
-                    const res = await fetch('/api/auth/2fa/generate', {
+                    const res = await apiFetch('/api/auth/2fa/generate', {
                       method: 'POST',
                       headers: getAuthHeaders(),
                     });
@@ -790,7 +791,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                   onClick={async () => {
                     setMfaError('');
                     try {
-                      const res = await fetch('/api/auth/2fa/enable', {
+                      const res = await apiFetch('/api/auth/2fa/enable', {
                         method: 'POST',
                         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify({ code: totpVerifyCode }),
@@ -887,7 +888,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ user, onProfil
                     setMfaError('');
                     setMfaSuccess('');
                     try {
-                      const res = await fetch('/api/auth/2fa/disable', {
+                      const res = await apiFetch('/api/auth/2fa/disable', {
                         method: 'POST',
                         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify({ code: totpVerifyCode }),

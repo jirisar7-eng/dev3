@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { User, UserPreference } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -41,7 +42,7 @@ export const UserAppearanceTab: React.FC<UserAppearanceTabProps> = ({ user }) =>
     setMessage('');
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
-      const res = await fetch('/api/users/me/preferences', {
+      const res = await apiFetch('/api/users/me/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

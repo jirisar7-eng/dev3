@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Cookie, Settings, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -52,7 +53,7 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({ forceO
         localStorage.setItem('session_hash', sessionHash);
       }
 
-      await fetch('/api/legal/cookie-consent', {
+      await apiFetch('/api/legal/cookie-consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

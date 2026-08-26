@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { User, UserCase, UserChild, UserCalendarEvent, UserNote } from '../../types';
 import { MarkdownEditor } from '../MarkdownEditor';
@@ -61,10 +62,10 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
     setLoading(true);
     try {
       const [resCases, resChildren, resEvents, resNotes] = await Promise.all([
-        fetch(`/api/portal/cases/${user.id}`, { headers: authHeaders }),
-        fetch(`/api/portal/children/${user.id}`, { headers: authHeaders }),
-        fetch(`/api/portal/events/${user.id}`, { headers: authHeaders }),
-        fetch(`/api/portal/notes/${user.id}`, { headers: authHeaders }),
+        apiFetch(`/api/portal/cases/${user.id}`, { headers: authHeaders }),
+        apiFetch(`/api/portal/children/${user.id}`, { headers: authHeaders }),
+        apiFetch(`/api/portal/events/${user.id}`, { headers: authHeaders }),
+        apiFetch(`/api/portal/notes/${user.id}`, { headers: authHeaders }),
       ]);
 
       if (resCases.ok) setCases(await resCases.json());
@@ -87,7 +88,7 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
     if (!caseTitle.trim()) return;
 
     try {
-      const res = await fetch('/api/portal/cases', {
+      const res = await apiFetch('/api/portal/cases', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -116,7 +117,7 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
     if (!childName.trim()) return;
 
     try {
-      const res = await fetch('/api/portal/children', {
+      const res = await apiFetch('/api/portal/children', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -143,7 +144,7 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
     if (!newNoteTitle.trim() || !newNoteContent.trim()) return;
 
     try {
-      const res = await fetch('/api/portal/notes', {
+      const res = await apiFetch('/api/portal/notes', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -166,7 +167,7 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      const res = await fetch(`/api/portal/notes/${noteId}`, {
+      const res = await apiFetch(`/api/portal/notes/${noteId}`, {
         method: 'DELETE',
         headers: authHeaders,
       });
@@ -184,7 +185,7 @@ export const UserOverviewView: React.FC<UserOverviewViewProps> = ({ user }) => {
     if (!evtTitle.trim() || !evtDate) return;
 
     try {
-      const res = await fetch('/api/portal/events', {
+      const res = await apiFetch('/api/portal/events', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({

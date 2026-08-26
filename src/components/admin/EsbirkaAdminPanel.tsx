@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Scale,
@@ -140,7 +141,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
   const fetchStatus = async () => {
     try {
       setLoadingStatus(true);
-      const res = await fetch('/api/admin/esbirka/scheduler/status');
+      const res = await apiFetch('/api/admin/esbirka/scheduler/status');
       const data = await res.json();
       if (data.success) {
         setSchedulerStatus(data.status);
@@ -157,7 +158,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
   const fetchAudits = async () => {
     try {
       setLoadingAudits(true);
-      const res = await fetch('/api/admin/esbirka/audits?limit=50');
+      const res = await apiFetch('/api/admin/esbirka/audits?limit=50');
       const data = await res.json();
       if (data.success) {
         setAudits(data.audits);
@@ -172,7 +173,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
   const fetchLaws = async () => {
     try {
       setLoadingLaws(true);
-      const res = await fetch('/api/admin/esbirka/laws');
+      const res = await apiFetch('/api/admin/esbirka/laws');
       const data = await res.json();
       if (data.success) {
         setLaws(data.laws);
@@ -188,7 +189,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
     try {
       setLoadingLawDetails(true);
       const urlFriendlyCode = code.replace('/', '-');
-      const res = await fetch(`/api/admin/esbirka/laws/${urlFriendlyCode}`);
+      const res = await apiFetch(`/api/admin/esbirka/laws/${urlFriendlyCode}`);
       const data = await res.json();
       if (data.success) {
         setSelectedLaw(data.law);
@@ -238,7 +239,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
     }
 
     try {
-      const res = await fetch('/api/esbirka/sync', {
+      const res = await apiFetch('/api/esbirka/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

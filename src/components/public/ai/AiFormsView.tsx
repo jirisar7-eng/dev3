@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileCode,
@@ -89,7 +90,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   const fetchEsbirkaStatus = useCallback(async () => {
     setLoadingEsbirka(true);
     try {
-      const res = await fetch('/api/esbirka');
+      const res = await apiFetch('/api/esbirka');
       if (res.ok) {
         const data = await res.json();
         setEsbirkaClause(data.verificationClause || `Právní citace ověřeny vůči e-Sbírce k ${new Date().toLocaleDateString('cs-CZ')}`);
@@ -130,7 +131,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
 
     const loadFallbackProfile = () => {
       // Fetch Full Profile
-      fetch(`/api/user/profile/${currentUser.id}`, { headers: authHeaders })
+      apiFetch(`/api/user/profile/${currentUser.id}`, { headers: authHeaders })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data && data.profile) {
@@ -150,7 +151,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
         .catch((e) => console.error('Error loading user profile:', e));
 
       // Fetch Children
-      fetch(`/api/portal/children/${currentUser.id}`, { headers: authHeaders })
+      apiFetch(`/api/portal/children/${currentUser.id}`, { headers: authHeaders })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
@@ -166,7 +167,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
     };
 
     if (caseId) {
-      fetch(`/api/cases/${caseId}`, { headers: authHeaders })
+      apiFetch(`/api/cases/${caseId}`, { headers: authHeaders })
         .then((res) => (res.ok ? res.json() : null))
         .then((json) => {
           if (json && json.data) {
@@ -179,7 +180,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
               foundCourt = c.court;
 
               // Only override address if not already manually set
-              fetch(`/api/subjekty/lookup?name=${encodeURIComponent(c.court)}`)
+              apiFetch(`/api/subjekty/lookup?name=${encodeURIComponent(c.court)}`)
                 .then(res => {
                   if (!res.ok) throw new Error('Not found');
                   return res.json();
@@ -231,7 +232,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
             }
 
             // Load Father's info from owner profile fallback
-            fetch(`/api/user/profile/${c.ownerId || currentUser.id}`, { headers: authHeaders })
+            apiFetch(`/api/user/profile/${c.ownerId || currentUser.id}`, { headers: authHeaders })
               .then(r => r.ok ? r.json() : null)
               .then(pData => {
                  if (pData && pData.profile) {
@@ -373,7 +374,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
 
     try {
       const currentText = compiledText;
-      const res = await fetch('/api/ai/chat', {
+      const res = await apiFetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -783,7 +784,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                     onBlur={(e) => {
                       const val = e.target.value;
                       if (val && val.length > 3) {
-                         fetch(`/api/subjekty/lookup?name=${encodeURIComponent(val)}`)
+                         apiFetch(`/api/subjekty/lookup?name=${encodeURIComponent(val)}`)
                           .then(res => {
                             if (!res.ok) throw new Error('Not found');
                             return res.json();

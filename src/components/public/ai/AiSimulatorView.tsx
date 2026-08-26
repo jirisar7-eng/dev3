@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../utils/apiClient';
 import React, { useState } from 'react';
 import {
   Gamepad2,
@@ -122,7 +123,7 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
     setLoading(true);
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const res = await apiFetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +169,7 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
     setEvaluating(true);
     setEvalError(null);
     try {
-      const res = await fetch('/api/ai/simulator-evaluate', {
+      const res = await apiFetch('/api/ai/simulator-evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

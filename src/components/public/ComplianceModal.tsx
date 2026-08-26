@@ -1,3 +1,4 @@
+import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ComplianceDoc } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +16,7 @@ export const ComplianceModal: React.FC<ComplianceModalProps> = ({ activeDocKey, 
   const [consented, setConsented] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch('/api/compliance/docs')
+    apiFetch('/api/compliance/docs')
       .then((res) => res.json())
       .then((data) => setDocs(data))
       .catch((err) => console.error('Error fetching compliance docs:', err));
@@ -55,7 +56,7 @@ export const ComplianceModal: React.FC<ComplianceModalProps> = ({ activeDocKey, 
   const handleRecordConsent = async () => {
     if (!currentUser || !activeDoc) return;
     try {
-      const res = await fetch('/api/compliance/consent', {
+      const res = await apiFetch('/api/compliance/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
