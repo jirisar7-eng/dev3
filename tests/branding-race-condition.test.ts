@@ -27,14 +27,14 @@ test('Branding Race Condition and DB Invariant Test Suite', async (t) => {
       const activeCount = await prisma.brandingVersion.count({
         where: { isActive: true }
       });
-      
+
       assert.strictEqual(activeCount, 1, 'Only one BrandingVersion must be active after concurrent saves');
 
       const all = await prisma.brandingVersion.findMany({ orderBy: { version: 'asc' } });
       const versions = all.map(v => v.version);
       const uniqueVersions = new Set(versions);
       assert.strictEqual(versions.length, uniqueVersions.size, 'All versions must be unique');
-      
+
       const totalCount = await prisma.brandingVersion.count();
       assert.strictEqual(totalCount, 5, 'All 5 saves should have succeeded sequentially due to advisory lock');
     });

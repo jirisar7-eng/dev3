@@ -3,13 +3,13 @@
 ## 1. BrandingService: Race Condition a DB Invariant
 - **Problém:** Funkce `saveNewVersion` a `restoreVersion` používaly pouze standardní Prisma transakci (která na PostgreSQL standardně používá Read Committed izolaci), což mohlo vést k race condition (vícenásobné inkrementaci na stejnou verzi a více aktivních záznamům současně).
 - **Root cause:** Pouhé volání transakce nebrání souběžným zápisům.
-- **Řešení a Invarianty:** 
+- **Řešení a Invarianty:**
   - V `prisma/schema.prisma` jsem navrhl `@unique` pro pole `version` a zapsal komentář s návrhem pro parciální unikátní index (`CREATE UNIQUE INDEX one_active_branding ON "BrandingVersion"("isActive") WHERE "isActive" = true;`).
   - Protože nemohu spustit destruktivní `prisma migrate dev` podle zadání, vynutil jsem na úrovni služby konzistenci přes **Advisory Lock** v transakci (`pg_advisory_xact_lock(20240826)`). To garantuje sekvenční provádění a naplnění invariantů i pod paralelní zátěží bez nutnosti okamžité migrace DDL.
 - **Test:** Vytvořen nový test `tests/branding-race-condition.test.ts`, který pomocí `Promise.allSettled` spouští paralelní asynchronní žádosti o zápis a tvrdě asertuje, že nevzniknou žádné duplicity a že je právě jeden aktivní záznam.
 
 ## 2. AiRoutes: Fail-Closed validace (Analyze Document)
-- **Problém:** CodeRabbit identifikoval slabá místa v restriktivní ochraně JSON dat, kde mohly procházet prázdné stringy místo faktických citací. 
+- **Problém:** CodeRabbit identifikoval slabá místa v restriktivní ochraně JSON dat, kde mohly procházet prázdné stringy místo faktických citací.
 - **Root cause:** Validace nekontrolovala explicitně prázdnost polí a stringů, pouze existenci datových uzlů.
 - **Řešení:** V `src/routes/aiRoutes.ts` doplněna tvrdá validace:
   - `parsed.summaryQuotes.length === 0` selže.
