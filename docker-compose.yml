@@ -22,9 +22,11 @@ services:
       - "mail.tatovacesta.cz:${MAILCOW_INTERNAL_IP:-172.22.1.14}"
     restart: always
     networks:
-      - default
-      - caddy_net
-      - mailcow_network
+      default:
+      caddy_net:
+        aliases:
+          - dev3-web
+      mailcow_network:
     depends_on:
       - postgres
       - clamav
