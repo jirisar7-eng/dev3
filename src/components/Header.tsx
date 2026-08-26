@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useText } from '../context/TextContext';
 import { NavItem } from '../types';
-import { NAVIGATION_ITEMS, getVisibleNavItems } from '../config/navigation';
+import { NAVIGATION_ITEMS, getVisibleNavItems, deduplicateNavItems, normalizeNavUrl } from '../config/navigation';
 import { RegisterModal } from './public/RegisterModal';
 import { Logo } from './common/Logo';
 import { MegaMenu } from './layout/MegaMenu';
@@ -79,7 +79,10 @@ export const Header: React.FC<HeaderProps> = ({
     hasRole('SUPER_ADMIN') ||
     hasRole('SYSTEM_ADMIN');
 
-  const effectiveNavItems = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
+  const effectiveNavItems = useMemo(() => {
+    const raw = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
+    return deduplicateNavItems(raw);
+  }, [navItems]);
 
   const allowedNavItems = useMemo(() => {
     return getVisibleNavItems(effectiveNavItems, {
@@ -93,34 +96,48 @@ export const Header: React.FC<HeaderProps> = ({
       apiFetch('/api/cms/nav').then((res) => (res.ok ? res.json() : [])).catch(() => []),
       apiFetch('/api/custom-modules?all=false').then((res) => (res.ok ? res.json() : [])).catch(() => []),
     ]).then(([navData, customMods]: [NavItem[], any[]]) => {
-      let baseNav = [...FALLBACK_NAV_ITEMS];
-      if (Array.isArray(navData) && navData.length > 0) {
-        const dbUrls = new Set(navData.map(n => n.url));
-        const dbIds = new Set(navData.map(n => n.id));
-        const missingRequired = FALLBACK_NAV_ITEMS.filter(n => !dbUrls.has(n.url) && !dbIds.has(n.id));
-        baseNav = [...navData, ...missingRequired];
-      }
+      // 1. Authoritative canonical source of truth for navigation structure
+      let baseNav = deduplicateNavItems([...FALLBACK_NAV_ITEMS]);
 
-      if (Array.isArray(customMods) && customMods.length > 0) {
-        const menuMods = customMods.filter((m) => m.isActive && m.showInMenu);
-        menuMods.forEach((m, idx) => {
-          const modNavItem: NavItem = {
-            id: `custom-mod-${m.id}`,
-            labelKey: m.title,
-            url: `/${m.slug}`,
-            order: 18 + idx,
-            target: '_self',
-            isExternal: false,
-            parentId: 'cat-1',
-          };
-          if (!baseNav.some((n) => n.url === `/${m.slug}`)) {
-            baseNav.push(modNavItem);
+      // 2. If custom DB nav items exist, only add non-duplicate custom items
+      if (Array.isArray(navData) && navData.length > 0) {
+        const canonicalUrls = new Set(baseNav.map((n) => normalizeNavUrl(n.url)));
+        const canonicalIds = new Set(baseNav.map((n) => n.id));
+
+        navData.forEach((dbItem) => {
+          const normUrl = normalizeNavUrl(dbItem.url);
+          // Only append if it's not already covered by canonical ID or canonical URL
+          if (!canonicalIds.has(dbItem.id) && !canonicalUrls.has(normUrl)) {
+            baseNav.push({ ...dbItem, url: normUrl });
+            canonicalIds.add(dbItem.id);
+            canonicalUrls.add(normUrl);
           }
         });
       }
 
-      const sorted = baseNav.sort((a, b) => (a.order || 0) - (b.order || 0));
-      setNavItems(sorted);
+      // 3. Add active custom modules if not already present
+      if (Array.isArray(customMods) && customMods.length > 0) {
+        const menuMods = customMods.filter((m) => m.isActive && m.showInMenu);
+        menuMods.forEach((m, idx) => {
+          const modUrl = normalizeNavUrl(`/${m.slug}`);
+          const modId = `custom-mod-${m.id}`;
+          if (!baseNav.some((n) => normalizeNavUrl(n.url) === modUrl || n.id === modId)) {
+            baseNav.push({
+              id: modId,
+              labelKey: m.title,
+              url: modUrl,
+              order: 18 + idx,
+              target: '_self',
+              isExternal: false,
+              parentId: 'cat-1',
+            });
+          }
+        });
+      }
+
+      // 4. Final deduplication pass & sort
+      const finalNav = deduplicateNavItems(baseNav).sort((a, b) => (a.order || 0) - (b.order || 0));
+      setNavItems(finalNav);
     });
   }, []);
 

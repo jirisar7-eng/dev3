@@ -56,7 +56,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <Compass className="w-5 h-5 text-blue-600" />
-            <span>HLAVNÍ ROZCESTNÍK PORTÁLU</span>
+            <span>Rozcestník portálu</span>
           </div>
           <button
             id="mega-menu-close-button"

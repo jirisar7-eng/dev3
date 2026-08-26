@@ -38,8 +38,6 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   // Category 0: 🏠 Domů & Veřejnost (Public)
   { id: 'cat-home', labelKey: '🏠 Domů & Veřejnost', url: '/', order: 0, target: '_self', isExternal: false, visibility: 'public' },
   { id: 'sub-home-1', labelKey: 'Domů', url: '/', order: 1, target: '_self', isExternal: false, parentId: 'cat-home', visibility: 'public' },
-  { id: 'sub-home-2', labelKey: 'O projektu & Vize', url: '/o-projektu', order: 2, target: '_self', isExternal: false, parentId: 'cat-home', visibility: 'public' },
-  { id: 'sub-home-3', labelKey: 'Veřejný portál', url: '/verejny-portal', order: 3, target: '_self', isExternal: false, parentId: 'cat-home', visibility: 'public' },
   { id: 'sub-home-4', labelKey: 'Přihlásit / Registrace', url: '/login', order: 4, target: '_self', isExternal: false, parentId: 'cat-home', visibility: 'public' },
 
   // Category 1: 🚨 Pomoc & Komunita (Public)
@@ -200,11 +198,70 @@ export function isNavItemVisible(item: NavItem, auth: NavAuthContext): boolean {
 }
 
 /**
+ * Normalizes navigation URLs to canonical forms.
+ * For example, '/cesta-zakladatele' -> '/moje-cesta-zakladatele'
+ */
+export function normalizeNavUrl(url: string): string {
+  if (!url) return '/';
+  let cleanUrl = url.trim();
+  if (cleanUrl.endsWith('/') && cleanUrl.length > 1) {
+    cleanUrl = cleanUrl.slice(0, -1);
+  }
+  if (cleanUrl === '/cesta-zakladatele') {
+    return '/moje-cesta-zakladatele';
+  }
+  if (cleanUrl === '/o-nas') {
+    return '/o-projektu';
+  }
+  return cleanUrl;
+}
+
+/**
+ * Deduplicates and canonicalizes navigation items based on canonical IDs and canonical URLs.
+ * Ensures items like 'Moje cesta zakladatele' are never duplicated.
+ */
+export function deduplicateNavItems(items: NavItem[]): NavItem[] {
+  const seenIds = new Set<string>();
+  const seenUrls = new Set<string>();
+  const result: NavItem[] = [];
+
+  for (const item of items) {
+    const normUrl = normalizeNavUrl(item.url);
+    const normalizedItem: NavItem = { ...item, url: normUrl };
+
+    // 1. Skip duplicate IDs
+    if (seenIds.has(item.id)) {
+      continue;
+    }
+
+    // 2. Skip duplicate normalized URLs (except category containers where url is '#' or category header)
+    const isCategoryHeader = item.id.startsWith('cat-');
+    if (!isCategoryHeader && normUrl !== '#' && normUrl !== '/') {
+      if (seenUrls.has(normUrl)) {
+        continue;
+      }
+    }
+
+    seenIds.add(item.id);
+    if (!isCategoryHeader && normUrl !== '#') {
+      seenUrls.add(normUrl);
+    }
+
+    result.push(normalizedItem);
+  }
+
+  return result;
+}
+
+/**
  * Filters navigation items according to user authorization and cleans up orphaned children or empty parent categories.
  */
 export function getVisibleNavItems(items: NavItem[], auth: NavAuthContext): NavItem[] {
+  // Step 0: Always deduplicate & normalize first
+  const cleanItems = deduplicateNavItems(items);
+
   // Step 1: Filter individual items
-  const visibleItems = items.filter((item) => isNavItemVisible(item, auth));
+  const visibleItems = cleanItems.filter((item) => isNavItemVisible(item, auth));
 
   // Step 2: Build parent-child map
   const visibleItemIds = new Set(visibleItems.map((i) => i.id));

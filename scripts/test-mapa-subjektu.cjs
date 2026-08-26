@@ -63,10 +63,9 @@ runTest('SubjektManager: UI contains lat/lng inputs and geocoding', () => {
 });
 
 // 8. Header Menu Merge
-runTest('Header: properly merges NAVIGATION_ITEMS with API navigation without overwriting', () => {
+runTest('Header: properly merges NAVIGATION_ITEMS with API navigation via deduplicateNavItems', () => {
   const headerContent = fs.readFileSync(path.join(__dirname, '../src/components/Header.tsx'), 'utf8');
-  assert(headerContent.includes('missingRequired'), 'Must calculate missingRequired items from FALLBACK_NAV_ITEMS');
-  assert(headerContent.includes('baseNav = [...navData, ...missingRequired]'), 'Must merge navData with missingRequired');
+  assert(headerContent.includes('deduplicateNavItems'), 'Must use deduplicateNavItems to merge navData with fallback items');
 });
 
 console.log(`\n========================================`);
