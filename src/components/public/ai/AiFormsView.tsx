@@ -76,6 +76,8 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   const [customPrompt, setCustomPrompt] = useState('');
   const [loadingAi, setLoadingAi] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [aiRefineError, setAiRefineError] = useState<string | null>(null);
+  const [lastCustomPrompt, setLastCustomPrompt] = useState<string>('');
 
   // Generated Text State
   const [compiledText, setCompiledText] = useState<string>('');
@@ -362,9 +364,12 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
   };
 
   // AI Refine Document Handler
-  const handleAiRefine = async () => {
-    if (!customPrompt.trim() || loadingAi) return;
+  const handleAiRefine = async (retryPrompt?: string) => {
+    const promptToUse = typeof retryPrompt === 'string' ? retryPrompt : customPrompt;
+    if (!promptToUse.trim() || loadingAi) return;
     setLoadingAi(true);
+    setAiRefineError(null);
+    setLastCustomPrompt(promptToUse);
 
     try {
       const currentText = compiledText;
@@ -375,27 +380,29 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
           messages: [
             {
               role: 'user',
-              content: `Dopracuj následující právní podání podle tohoto požadavku: "${customPrompt}". Zachovej formát a strukturu podání k opatrovnickému soudu ČR a nezapomeň na konečnou doložku e-Sbírky.\n\nDokument:\n${currentText}`,
+              content: `Dopracuj následující právní podání podle tohoto požadavku: "${promptToUse}". Zachovej formát a strukturu podání k opatrovnickému soudu ČR a nezapomeň na konečnou doložku e-Sbírky.\n\nDokument:\n${currentText}`,
             },
           ],
-          systemPrompt:
-            'Jsi vysoce kvalifikovaný právní asistent pro české opatrovnické právo, znalý MS ČR formulářů, Občanského zákoníku, z.ř.s. a o.s.ř.',
+          mode: 'forms',
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`AI služba vrátila chybu ${res.status}`);
+      }
 
       const data = await res.json();
       if (data.reply) {
         setEditedTemplateContent(data.reply);
+        setCustomPrompt('');
+      } else {
+        throw new Error(data.error || 'Neznámá chyba AI odpovedi');
       }
-    } catch {
-      setEditedTemplateContent(
-        (prev) =>
-          prev +
-          `\n\nIV. Doplnění právní argumentace\nNavrhovatel dále zdůrazňuje judikaturu Ústavního soudu garantující rovnocennou péči obou rodičů.`
-      );
+    } catch (err: any) {
+      console.error('AI Refine error:', err);
+      setAiRefineError(err.message || 'AI úprava se nezdařila. Rozpracovaný obsah podání zůstal nezměněn.');
     } finally {
       setLoadingAi(false);
-      setCustomPrompt('');
     }
   };
 
@@ -836,6 +843,19 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
             <p className="text-[11px] text-slate-300 leading-relaxed">
               Zadejte požadavek na úpravu (např. "Přidej důraz na mou profesní stabilitu a flexibilní pracovní dobu", "Rozšiř argumentaci o střídavé péči z nálezu ÚS").
             </p>
+            {aiRefineError && (
+              <div className="p-3 bg-red-900/40 border border-red-700/60 rounded-xl text-xs text-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <span>{aiRefineError}</span>
+                <button
+                  onClick={() => handleAiRefine(lastCustomPrompt)}
+                  disabled={loadingAi}
+                  className="px-3 py-1 bg-red-800 hover:bg-red-700 text-white font-bold rounded-lg text-xs transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <RefreshCw className={`w-3 h-3 ${loadingAi ? 'animate-spin' : ''}`} />
+                  Zkusit znovu
+                </button>
+              </div>
+            )}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -845,7 +865,7 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
                 className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none"
               />
               <button
-                onClick={handleAiRefine}
+                onClick={() => handleAiRefine()}
                 disabled={loadingAi || !customPrompt.trim()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-extrabold text-xs rounded-xl transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
               >

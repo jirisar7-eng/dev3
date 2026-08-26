@@ -2,7 +2,7 @@ import { AIProvider, AIProviderResponse } from '../types';
 
 export class GrokProvider implements AIProvider {
   public name: 'grok' = 'grok';
-  public modelName = 'grok-2-latest';
+  public modelName = 'grok-2-1212';
   private _enabled = true;
 
   public isAvailable(): boolean {

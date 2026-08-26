@@ -6,7 +6,7 @@ import { AiService } from '../services/AiService';
 const router = express.Router();
 
 // Strict rate limiter for public AI endpoints (10 requests per hour per IP)
-const aiRateLimiter = rateLimit({
+const aiRateLimiter = process.env.NODE_ENV === 'test' ? ((req, res, next) => next()) : rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { error: 'Překročen limit dotazů na umělou inteligenci. Zkuste to prosím znovu za hodinu.' },
@@ -41,38 +41,70 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
     Text podklad: ${rawText}`;
 
     const responseText = await AiService.generateContent(prompt);
-    
+
     // Extract JSON from potential markdown code blocks
     const jsonString = responseText.replace(/```json\n?|\n?```/g, '').trim();
     const parsedData = JSON.parse(jsonString);
 
     res.json(parsedData);
   } catch (err: any) {
-    console.error('AI Page Generation Error:', err);
-    res.status(500).json({ error: 'Chyba při generování stránky pomocí AI.', details: err?.message });
+    console.error('AI Page Generation Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při generování stránky pomocí AI.'
+    });
   }
 });
 
-// Chat endpoint for AiAssistantView
+
+const SERVER_SCENARIOS: Record<string, { title: string, counterpartName: string }> = {
+  'predani-ditete': { title: 'Předávání dítěte u domu matky', counterpartName: 'Matka / Příbuzný' },
+  'vyslech-u-soudu': { title: 'Výslech u opatrovnického soudu', counterpartName: 'Soudce / Advokát matky' },
+  'jednani-ospod': { title: 'Jednání na OSPODu', counterpartName: 'Pracovnice OSPOD' }
+};
+// Chat endpoint for AiAssistantView, AiSimulatorView, AiFormsView
 router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
-    const { messages, systemPrompt, mode } = req.body;
+    const { messages, mode, scenarioId } = req.body;
+
+    // Output length / input limits
+    if (messages && messages.length > 50) return res.status(400).json({ error: 'Příliš dlouhá historie konverzace.' });
+    if (JSON.stringify(messages).length > 50000) return res.status(400).json({ error: 'Překročena maximální velikost zprávy.' });
+
+    // Server-side system instruction resolution (Security Hardening: Never trust client systemPrompt!)
+    let systemInstruction = 'Jsi odborný AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené a konstruktivní rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.';
+
+    if (mode === 'simulator' || scenarioId) {
+      const scenarioConfig = scenarioId ? SERVER_SCENARIOS[scenarioId as string] : null;
+      const cName = scenarioConfig ? scenarioConfig.counterpartName : 'protistrana';
+      const sTitle = scenarioConfig ? scenarioConfig.title : 'opatrovnická komunikace';
+      systemInstruction = `Simuluješ hraní rolí (roleplay) pro opatrovnický trénink otců. Tvoje role je "${cName}" ve scénáři "${sTitle}". Reaguj realisticky, provokuj mírně emočně nebo věcně tak, jak se to stává v reálné opatrovnické praxi v ČR. Odpovídaj v češtině v 2-4 větách.`;
+    } else if (mode === 'forms_refine' || mode === 'forms') {
+      systemInstruction = 'Jsi vysoce kvalifikovaný právní asistent pro české opatrovnické právo, znalý MS ČR formulářů, Občanského zákoníku, z.ř.s. a o.s.ř. Pomáháš uživateli zpřesnit a vylepšit text právního návrhu.';
+    }
+
     const historyText = (messages || [])
       .map((m: any) => `${m.role === 'user' ? 'Uživatel' : 'Asistent'}: ${m.content}`)
       .join('\n\n');
 
-    const prompt = `${systemPrompt || 'Jsi odborný AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené a konstruktivní rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.'}
+    const prompt = `Historie konverzace:\n${historyText}\n\nOdpověz věcně, srozumitelně a strukturovaně v češtině.`;
 
-Historie konverzace:
-${historyText}
-
-Odpověz věcně, srozumitelně a strukturovaně v češtině.`;
-
-    const reply = await AiService.generateContent(prompt);
+    const reply = await AiService.generateContent(prompt, { systemInstruction });
     res.json({ success: true, reply });
   } catch (err: any) {
-    console.error('AI Chat Error:', err);
-    res.status(500).json({ error: 'Chyba při komunikaci s AI.', details: err?.message });
+    console.error('AI Chat Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při komunikaci s AI.'
+    });
   }
 });
 
@@ -83,7 +115,7 @@ router.post('/biff-convert', aiRateLimiter, aiPayloadLimiter, async (req, res) =
     if (!rawMessage) return res.status(400).json({ error: 'Chybí zpráva k převodu.' });
 
     const prompt = `Jsi expert na komunikaci v opatrovnickém právu podle metodiky BIFF (Brief, Informative, Friendly, Firm).
-Převeď následující emotivní nebo konfliktogenní zprávu od rodiče na věcnou, neutrální a právně bezúonnou komunikaci.
+Převeď následující emotivní nebo konfliktogenní zprávu od rodiče na věcnou, neutrální a právně bezúhonnou komunikaci.
 
 Původní zpráva: "${rawMessage}"
 
@@ -94,21 +126,21 @@ Vystup ve formátu JSON:
   "keyAdvice": "1-2 doporučení pro další komunikaci"
 }`;
 
-    const rawResponse = await AiService.generateContent(prompt);
+    const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      res.json({ success: true, ...parsed });
-    } catch {
-      res.json({
-        success: true,
-        convertedMessage: rawResponse,
-        explanation: 'Převedeno do věcného BIFF tónu bez emočního balastu.',
-        keyAdvice: 'Před odesláním si zprávu přečtěte s odstupem.'
-      });
-    }
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.convertedMessage || typeof parsed.convertedMessage !== 'string') throw new Error('Invalid JSON schema returned from AI (missing convertedMessage)');
+    res.json({ success: true, ...parsed });
   } catch (err: any) {
-    res.status(500).json({ error: 'Chyba při BIFF převodu.', details: err?.message });
+    console.error('BIFF Convert Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při BIFF převodu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -132,24 +164,21 @@ Vystup ve formátu JSON:
   "communicationRule": "Základní pravidlo pro komunikaci s druhou stranou a OSPOD"
 }`;
 
-    const rawResponse = await AiService.generateContent(prompt);
+    const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      res.json({ success: true, ...parsed });
-    } catch {
-      res.json({
-        success: true,
-        summary: rawResponse,
-        days1to7: ['Aplikovat BIFF komunikaci', 'Založit deník evidování styku'],
-        days8to14: ['Písemný podnět na OSPOD bez emocí'],
-        days15to30: ['Příprava podání k opatrovnickému soudu'],
-        legalTips: ['Odkaz na nález ÚS II. ÚS 1642/22 (střídavá péče a věk dítěte)'],
-        communicationRule: 'Všechny dohody stvrzovat písemně v e-mailové podobě.'
-      });
-    }
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.summary || !Array.isArray(parsed.days1to7)) throw new Error('Invalid JSON schema returned from AI (Guide Plan)');
+    res.json({ success: true, ...parsed });
   } catch (err: any) {
-    res.status(500).json({ error: 'Chyba při generování akčního plánu.', details: err?.message });
+    console.error('Guide Plan Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při generování akčního plánu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -166,10 +195,10 @@ ${documentText}
 
 Vystup ve formátu JSON:
 {
-  "summary": "Stručné manažerské shrnutí obsahu a hlavních závěrů dokumentu (3-5 vět)",
+  "summary": "Stručné manažerské shrnutí obsahu a hlavních závěrů dokumentu (3-5 vě́t)",
+  "summaryQuotes": ["přesná věta nebo fráze z textu, o kterou se opírá summary", "další přesná citace"],
   "contradictions": [
-    "Identifikovaný rozpor nebo tvrzení bez důkazní opory 1",
-    "Identifikovaný rozpor 2"
+    { "claim": "Identifikovaný rozpor nebo tvrzení bez opory", "exactQuote": "přesná citace z textu dokazující tento rozpor" }
   ],
   "counterArguments": [
     "Doporučený protiargument do vyjádření s odkazem na zákon nebo judikaturu 1",
@@ -179,23 +208,58 @@ Vystup ve formátu JSON:
   "anonymizedCount": 3
 }`;
 
-    const rawResponse = await AiService.generateContent(prompt);
+    const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      res.json({ success: true, ...parsed });
-    } catch {
-      res.json({
-        success: true,
-        summary: rawResponse,
-        contradictions: ['Tvrzení protistrany postrádá věcnou dokumentaci.'],
-        counterArguments: ['Poukázat na stabilní výchovné prostředí u otce a judikaturu ÚS.'],
-        riskLevel: 'Střední',
-        anonymizedCount: 2
-      });
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.summary || !Array.isArray(parsed.contradictions) || !Array.isArray(parsed.summaryQuotes)) {
+      throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
     }
+
+    if (parsed.summaryQuotes.length === 0) {
+      throw new Error('Failsafe trigger: summaryQuotes nesmí být prázdné.');
+    }
+
+    const normalize = (s: string) => s.replace(/\s+/g, ' ').toLowerCase().trim();
+    const normalizedDoc = normalize(documentText);
+
+    for (const q of parsed.summaryQuotes) {
+      if (typeof q !== 'string' || q.trim() === '') {
+        throw new Error('Failsafe trigger: summaryQuote nesmí být prázdný.');
+      }
+      if (!normalizedDoc.includes(normalize(q))) {
+        throw new Error('Failsafe trigger: Odvozený závěr (summary) není podložen zdrojovým textem (citace nebyla nalezena).');
+      }
+    }
+
+    for (const c of parsed.contradictions) {
+      if (!c.claim || typeof c.claim !== 'string' || c.claim.trim() === '') {
+        throw new Error('Failsafe trigger: contradiction claim nesmí být prázdný.');
+      }
+      if (!c.exactQuote || typeof c.exactQuote !== 'string' || c.exactQuote.trim() === '') {
+        throw new Error('Failsafe trigger: contradiction exactQuote nesmí být prázdný.');
+      }
+      if (!normalizedDoc.includes(normalize(c.exactQuote))) {
+         throw new Error('Failsafe trigger: Rozpor (contradiction) není podložen zdrojovým textem (citace nebyla nalezena).');
+      }
+    }
+
+    const out = {
+      ...parsed,
+      contradictions: parsed.contradictions.map((c: any) => `${c.claim} (Citace: "${c.exactQuote}")`)
+    };
+
+    res.json({ success: true, ...out });
   } catch (err: any) {
-    res.status(500).json({ error: 'Chyba při analýze dokumentu.', details: err?.message });
+    console.error('Analyze Document Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při analýze dokumentu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -211,32 +275,29 @@ ${JSON.stringify(history)}
 
 Vystup ve formátu JSON:
 {
-  "emotionalityScore": 15, // 0 až 100 % (nižší je lepší)
-  "objectivityScore": 88, // 0 až 100 % (vyšší je lepší)
-  "legalTacticsScore": 85, // 0 až 100 % (vyšší je lepší)
+  "emotionalityScore": 15,
+  "objectivityScore": 88,
+  "legalTacticsScore": 85,
   "strengths": ["Co uživatel zvládl skvěle 1", "Co zvládl 2"],
   "weaknesses": ["Co vynechat příště 1"],
   "recommendations": "Celková závěrečná zpětná vazba a doporučení pro reálné jednání"
 }`;
 
-    const rawResponse = await AiService.generateContent(prompt);
+    const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      res.json({ success: true, ...parsed });
-    } catch {
-      res.json({
-        success: true,
-        emotionalityScore: 20,
-        objectivityScore: 85,
-        legalTacticsScore: 80,
-        strengths: ['Udržel klidný tón', 'Reagoval bez osobních útoků'],
-        weaknesses: ['Mohl více zdůraznit zájem dítěte'],
-        recommendations: 'Uživateli se dařilo reagovat věcně bez zbytečných emocí.'
-      });
-    }
+    const parsed = JSON.parse(cleaned);
+    if (typeof parsed.emotionalityScore !== 'number' || !Array.isArray(parsed.strengths)) throw new Error('Invalid JSON schema returned from AI (Simulator Evaluate)');
+    res.json({ success: true, ...parsed });
   } catch (err: any) {
-    res.status(500).json({ error: 'Chyba při vyhodnocení simulace.', details: err?.message });
+    console.error('Simulator Evaluate Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při vyhodnocení simulace. Zkuste to prosím znovu.'
+    });
   }
 });
 

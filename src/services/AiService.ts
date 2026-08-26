@@ -4,6 +4,8 @@ export interface AiGenerateOptions {
   timeoutMs?: number;
   jsonMode?: boolean;
   modelOverride?: string;
+  systemInstruction?: string;
+  temperature?: number;
 }
 
 export class AiService {
@@ -15,9 +17,9 @@ export class AiService {
 
   /**
    * Universal AI content generation with multi-provider resilience:
-   * 1. Gemini Primary (gemini-2.5-flash via GEMINI_API_KEY)
-   * 2. Gemini Secondary (gemini-2.5-flash via GEMINI_API_KEY_2)
-   * 3. Grok / xAI (grok-2-latest via XAI_API_KEY or GROK_API_KEY)
+   * 1. Gemini Primary (gemini-3.6-flash via GEMINI_API_KEY)
+   * 2. Gemini Secondary (gemini-3.6-flash via GEMINI_API_KEY_2)
+   * 3. Grok / xAI (grok-2-1212 via XAI_API_KEY or GROK_API_KEY)
    * 4. Groq (llama-3.3-70b-versatile via GROQ_API_KEY)
    */
   static async generateContent(prompt: string, options?: AiGenerateOptions): Promise<string> {
@@ -39,17 +41,43 @@ export class AiService {
       }
     };
 
+    // Prepare Gemini configuration
+    const geminiConfig: Record<string, any> = {};
+    if (options?.systemInstruction && options.systemInstruction.trim().length > 0) {
+      geminiConfig.systemInstruction = options.systemInstruction;
+    }
+    if (options?.jsonMode) {
+      geminiConfig.responseMimeType = 'application/json';
+    }
+    if (typeof options?.temperature === 'number') {
+      geminiConfig.temperature = options.temperature;
+    }
+    const geminiConfigParam = Object.keys(geminiConfig).length > 0 ? geminiConfig : undefined;
+
+    // Prepare OpenAI-compatible messages for Grok and Groq (system + user)
+    const openAiMessages: Array<{ role: string; content: string }> = [];
+    if (options?.systemInstruction && options.systemInstruction.trim().length > 0) {
+      openAiMessages.push({
+        role: 'system',
+        content: options.systemInstruction
+      });
+    }
+    openAiMessages.push({
+      role: 'user',
+      content: prompt
+    });
+
     // 1. Try Primary Gemini Key
     if (process.env.GEMINI_API_KEY) {
       try {
         const start = Date.now();
-        console.log('[AiService] Calling Primary Gemini AI (gemini-2.5-flash)...');
+        console.log('[AiService] Calling Primary Gemini AI (gemini-3.6-flash)...');
         const ai = this.getGeminiClient('GEMINI_API_KEY');
         const call = async () => {
           const response = await ai.models.generateContent({
-            model: options?.modelOverride || 'gemini-2.5-flash',
+            model: options?.modelOverride || 'gemini-3.6-flash',
             contents: prompt,
-            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+            config: geminiConfigParam
           });
           return response.text || '';
         };
@@ -69,13 +97,13 @@ export class AiService {
     if (process.env.GEMINI_API_KEY_2) {
       try {
         const start = Date.now();
-        console.log('[AiService] Calling Secondary Gemini AI (gemini-2.5-flash)...');
+        console.log('[AiService] Calling Secondary Gemini AI (gemini-3.6-flash)...');
         const ai2 = this.getGeminiClient('GEMINI_API_KEY_2');
         const call = async () => {
           const response2 = await ai2.models.generateContent({
-            model: options?.modelOverride || 'gemini-2.5-flash',
+            model: options?.modelOverride || 'gemini-3.6-flash',
             contents: prompt,
-            config: options?.jsonMode ? { responseMimeType: 'application/json' } : undefined
+            config: geminiConfigParam
           });
           return response2.text || '';
         };
@@ -96,7 +124,7 @@ export class AiService {
     if (grokKey) {
       try {
         const start = Date.now();
-        console.log('[AiService] Fallback to Grok AI (grok-2-latest)...');
+        console.log('[AiService] Fallback to Grok AI (grok-2-1212)...');
         const call = async () => {
           const controller = new AbortController();
           const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
@@ -106,18 +134,9 @@ export class AiService {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'grok-2-latest',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ],
-              temperature: 0.1,
+              model: 'grok-2-1212',
+              messages: openAiMessages,
+              temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
             }),
             signal: controller.signal
@@ -157,17 +176,8 @@ export class AiService {
             },
             body: JSON.stringify({
               model: 'llama-3.3-70b-versatile',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Jsi specializovaný právní AI analytik pro rodinné právo. Vracej výhradně validní JSON bez markdownu.'
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ],
-              temperature: 0.1,
+              messages: openAiMessages,
+              temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
             })
           });

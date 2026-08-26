@@ -1114,7 +1114,7 @@ model CookieConsent {
 model LegalAuditLog {
   id           String   @id @default(uuid())
   userId       String?
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   action       String // e.g., "DOCUMENT_CREATED", "DOCUMENT_PUBLISHED", "CONSENT_RECORDED"
   entity       String // e.g., "LegalDocument", "CookieConsent"
   entityId     String?
@@ -1404,8 +1404,8 @@ model CoParentSpace {
 
 model CoParentMember {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   userId    String
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      String        @default("PARENT") // "FATHER", "MOTHER", "MEDIATOR", "LAWYER"
@@ -1418,8 +1418,8 @@ model CoParentMember {
 
 model CoParentChild {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   firstName String
   lastName  String
   birthDate String?
@@ -1478,8 +1478,8 @@ model CoParentMessage {
 
 model CoParentAgreement {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   title     String
   content   String        @db.Text
   status    String        @default("PROPOSED") // "PROPOSED", "ACCEPTED", "REJECTED"
@@ -1523,8 +1523,8 @@ model CoParentDailyUpdate {
 
 model CoParentItem {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   name      String // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
   holderId  String // User ID of who currently has the item
   location  String? // e.g., "U tatínka", "U maminky"
@@ -1551,8 +1551,8 @@ model CoParentRequest {
 
 model CoParentAuditLog {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   userId    String?
   action    String // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
   entity    String // e.g., "CoParentAgreement", "CoParentExpense"
@@ -1578,8 +1578,8 @@ model CoParentDocument {
 
 model CoParentInvite {
   id        String        @id @default(uuid())
-  spaceId   String
-  space     CoParentSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   invitedBy String
   email     String
   code      String        @unique
@@ -2249,7 +2249,7 @@ model UserPreference {
 // ------------------------------------------------------
 model BrandingVersion {
   id             String   @id @default(uuid())
-  version        Int      @default(1)
+  version        Int      @default(1) @unique
   primaryLogoSvg String?  @db.Text
   darkLogoSvg    String?  @db.Text
   faviconType    String?  @default("svg")
@@ -2259,6 +2259,9 @@ model BrandingVersion {
   updatedBy      String?
   updatedAt      DateTime @default(now())
 
+  // NÁVRH MIGRACE DB INVARIANTU:
+  // Pro zajištění "právě jeden aktivní" na úrovni DB je navržen partial unique index:
+  // CREATE UNIQUE INDEX "one_active_branding" ON "BrandingVersion"("isActive") WHERE "isActive" = true;
   @@index([isActive])
 }
 

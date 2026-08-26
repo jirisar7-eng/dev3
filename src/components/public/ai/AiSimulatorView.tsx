@@ -69,6 +69,9 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
   const [evaluating, setEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
 
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [evalError, setEvalError] = useState<string | null>(null);
+
   const activeScenario = SCENARIOS.find(s => s.id === selectedScenarioId) || SCENARIOS[0];
 
   const [chatHistory, setChatHistory] = useState<RoleplayMessage[]>([
@@ -85,6 +88,8 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
     const sc = SCENARIOS.find(s => s.id === scenarioId) || SCENARIOS[0];
     setSelectedScenarioId(scenarioId);
     setEvaluation(null);
+    setChatError(null);
+    setEvalError(null);
     setChatHistory([
       {
         id: `msg-${Date.now()}`,
@@ -96,20 +101,24 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
     ]);
   };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || loading) return;
+  const handleSendMessage = async (customHistory?: RoleplayMessage[]) => {
+    setChatError(null);
+    let historyToSend = customHistory || chatHistory;
 
-    const userMsg: RoleplayMessage = {
-      id: `usr-${Date.now()}`,
-      sender: 'user',
-      senderName: 'Já (Otec)',
-      text: inputMessage,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    if (!customHistory) {
+      if (!inputMessage.trim() || loading) return;
+      const userMsg: RoleplayMessage = {
+        id: `usr-${Date.now()}`,
+        sender: 'user',
+        senderName: 'Já (Otec)',
+        text: inputMessage,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      historyToSend = [...chatHistory, userMsg];
+      setChatHistory(historyToSend);
+      setInputMessage('');
+    }
 
-    const newHistory = [...chatHistory, userMsg];
-    setChatHistory(newHistory);
-    setInputMessage('');
     setLoading(true);
 
     try {
@@ -117,16 +126,26 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newHistory.map(m => ({
+          mode: 'simulator',
+          scenarioId: activeScenario.id,
+          scenarioTitle: activeScenario.title,
+          counterpartName: activeScenario.counterpartName,
+          messages: historyToSend.map(m => ({
             role: m.sender === 'user' ? 'user' : 'assistant',
             content: m.text
-          })),
-          systemPrompt: `Simuluješ hraní rolí (roleplay) pro opatrovnický trénink otců. Tvoje role je "${activeScenario.counterpartName}" ve scénáři "${activeScenario.title}". Reaguj realisticky, provokuj mírně emočně nebo věcně tak, jak se to stává v reálné opatrovnické praxi v ČR. Odpovídaj v češtině v 2-4 větách.`
+          }))
         })
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || (res.status === 429 ? 'Překročen limit dotazů na AI (HTTP 429).' : 'Odpověď simulace se nepodařilo načíst.'));
+      }
+
       const data = await res.json();
-      const replyText = data.reply || getFallbackCounterpartReply(activeScenario.id);
+      if (!data.reply) {
+        throw new Error('Odpověď simulace se nepodařilo načíst.');
+      }
 
       setChatHistory(prev => [
         ...prev,
@@ -134,38 +153,20 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
           id: `cp-${Date.now()}`,
           sender: 'counterpart',
           senderName: activeScenario.counterpartName,
-          text: replyText,
+          text: data.reply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
-    } catch {
-      setChatHistory(prev => [
-        ...prev,
-        {
-          id: `cp-${Date.now()}`,
-          sender: 'counterpart',
-          senderName: activeScenario.counterpartName,
-          text: getFallbackCounterpartReply(activeScenario.id),
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
+    } catch (err: any) {
+      setChatError(err?.message || 'Odpověď simulace se nepodařilo načíst. Zkuste to prosím znovu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getFallbackCounterpartReply = (scenarioId: string) => {
-    if (scenarioId === 'predani-ditete') {
-      return 'Chápu tvůj názor, ale doktor říkal, že dítě má být v klidu domova. Pokud trváš na odjezdu, vezmeš na sebe veškerou odpovědnost, když se jí přitíží.';
-    }
-    if (scenarioId === 'vyslech-u-soudu') {
-      return 'Děkuji za vysvětlení. A jak konkrétně řešíte situace, kdy má dítě náhlou horečku během vašeho pracovního jednání? Máte hlídání?';
-    }
-    return 'Pane otče, Chápu vaše přání, ale OSPOD musí primárně sledovat pocity dítěte. Jaké řešení navrhujete pro přechodné období?';
-  };
-
   const handleEvaluateSimulation = async () => {
     setEvaluating(true);
+    setEvalError(null);
     try {
       const res = await fetch('/api/ai/simulator-evaluate', {
         method: 'POST',
@@ -175,6 +176,11 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
           history: chatHistory
         })
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Vyhodnocení simulace se nepodařilo načíst.');
+      }
 
       const data = await res.json();
       if (data.success && data.emotionalityScore !== undefined) {
@@ -187,24 +193,10 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
           recommendations: data.recommendations || 'Pokračujte v tréninku v tónu BIFF.'
         });
       } else {
-        throw new Error('Fallback needed');
+        throw new Error('Vyhodnocení simulace se nepodařilo načíst.');
       }
-    } catch {
-      setEvaluation({
-        emotionalityScore: 18,
-        objectivityScore: 88,
-        legalTacticsScore: 85,
-        strengths: [
-          'Udržel jste věcný tón bez osobních útoků a výčitek.',
-          'Správné zaměření na potřeby a zájem dítěte.',
-          'Pohotové reagování na provokace protistrany.'
-        ],
-        weaknesses: [
-          'V jedné z odpovědí jste uvedl více emocí, než bylo nutné.',
-          'Můžete ještě více zdůraznit písemný návrh kompromisu.'
-        ],
-        recommendations: 'Váš výkon v simulaci byl velmi dobrý. Zachoval jste klid a metodiku BIFF. Doporučujeme tuto věcnost uplatnit i v reálném jednání u soudu a OSPOD.'
-      });
+    } catch (err: any) {
+      setEvalError(err?.message || 'Vyhodnocení simulace se nepodařilo načíst. Zkuste to prosím znovu.');
     } finally {
       setEvaluating(false);
     }
@@ -331,6 +323,19 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
                 <span>{activeScenario.counterpartName} připravuje odpoved...</span>
               </div>
             )}
+
+            {chatError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
+                <span>{chatError}</span>
+                <button
+                  onClick={() => handleSendMessage(chatHistory)}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Zkusit znovu</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Chat Input */}
@@ -371,6 +376,19 @@ export const AiSimulatorView: React.FC<AiSimulatorViewProps> = ({ onNavigate }) 
               </h3>
               <span className="text-xs text-slate-500 font-semibold">{chatHistory.length} zpráv</span>
             </div>
+
+            {evalError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-2">
+                <p>{evalError}</p>
+                <button
+                  onClick={handleEvaluateSimulation}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Zkusit znovu vyhodnotit</span>
+                </button>
+              </div>
+            )}
 
             {!evaluation ? (
               <div className="py-8 text-center space-y-4">

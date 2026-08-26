@@ -81,19 +81,31 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
     }
   ]);
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = textToSend || inputMessage;
-    if (!text.trim() || loading) return;
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [biffError, setBiffError] = useState<string | null>(null);
 
-    const userMsg: Message = {
-      id: `usr-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+  const handleSendMessage = async (textToSend?: string, isRetry: boolean = false) => {
+    let newMessages = [...messages];
 
-    setMessages(prev => [...prev, userMsg]);
-    setInputMessage('');
+    if (!isRetry) {
+      const text = textToSend || inputMessage;
+      if (!text.trim() || loading) return;
+
+      const userMsg: Message = {
+        id: `usr-${Date.now()}`,
+        role: 'user',
+        content: text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      newMessages = [...messages, userMsg];
+      setMessages(newMessages);
+      if (!textToSend) setInputMessage('');
+    } else {
+      if (newMessages.length === 0 || loading) return;
+    }
+
+    setChatError(null);
     setLoading(true);
 
     try {
@@ -101,49 +113,40 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMsg],
-          systemPrompt: 'Jsi odborný AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.'
+          mode: 'assistant',
+          messages: newMessages
         })
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || (res.status === 429 ? 'Překročen limit dotazů na AI (HTTP 429).' : 'Odpověď AI se nepodařilo načíst.'));
+      }
+
       const data = await res.json();
-      const replyContent = data.reply || getFallbackReply(text);
+      if (!data.reply) {
+        throw new Error('Odpověď AI se nepodařilo načíst.');
+      }
 
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
-        content: replyContent,
+        content: data.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages(prev => [...prev, aiMsg]);
-    } catch {
-      const aiMsg: Message = {
-        id: `ai-${Date.now()}`,
-        role: 'assistant',
-        content: getFallbackReply(text),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiMsg]);
+    } catch (err: any) {
+      setChatError(err?.message || 'Odpověď AI se nepodařilo načíst. Zkuste to prosím znovu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getFallbackReply = (query: string): string => {
-    const q = query.toLowerCase();
-    if (q.includes('judikatur') || q.includes('přespáván') || q.includes('kojenec')) {
-      return `Podle konstantní judikatury Ústavního soudu (např. **nález sp. zn. II. ÚS 1642/22** nebo **I. ÚS 2482/13**) platí:\n\n1. Věk dítěte (včetně kojenců a batolat) není sám o sobě překážkou pro střídavou péči či přespávání u otce.\n2. Rozhodující je schopnost a připravenost otce zajistit péči a citová vazba dítěte.\n3. OSPOD i soudy musí zohledňovat rovná práva obou rodičů podle čl. 32 Listiny základních práv a svobod.\n\nDoporučujeme citovat tyto nálezy přímo ve vašem podání k opatrovnickému soudu.`;
-    }
-    if (q.includes('odepřen') || q.includes('bráněn') || q.includes('styk')) {
-      return `Pokud vám byl odepřen styk s dítětem, doporučený krizový postup je:\n\n1. **Bez emocí a scén:** Na místě pořiďte věcný zápis (datum, čas, přítomné osoby).\n2. **Písemná výzva:** Zašlete matce e-mail v BIFF tónu s dotazem na náhradní termín.\n3. **Informování OSPOD:** Písemně vyrozumějte OSPOD bez očerňování s žádostí o prověření poměrů.\n4. **Právní krok:** Pokud bránění trvá, podejte návrh na předběžné opatření podle § 452 z.ř.s.`;
-    }
-    return `K vašemu dotazu doporučuji zachovat věcný a konstruktivní přístup zaměřený na nejlepší zájem dítěte. Všechny podstatné dohody a výzvy směřujte v písemné podobě. V případě potřeby můžete vygenerovat konkrétní právní podání v sekci **AI Formuláře** nebo se obrátit na naše vrstevnické mentory v sekci **Krizová pomoc**.`;
-  };
-
   const handleConvertBiff = async () => {
     if (!biffInput.trim() || biffLoading) return;
     setBiffLoading(true);
+    setBiffError(null);
 
     try {
       const res = await fetch('/api/ai/biff-convert', {
@@ -151,8 +154,14 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawMessage: biffInput })
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Převod do BIFF tónu selhal.');
+      }
+
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.convertedMessage) {
         setBiffResult({
           original: biffInput,
           converted: data.convertedMessage,
@@ -160,21 +169,10 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
           advice: data.keyAdvice || 'Odešlete zprávu bez dalších úprav.'
         });
       } else {
-        throw new Error('API Error');
+        throw new Error('Převod do BIFF tónu selhal.');
       }
-    } catch {
-      // Fallback client-side BIFF transformation
-      const converted = biffInput
-        .replace(/!!!+/g, '.')
-        .replace(/(zase|pořád|vždycky|nikdy|okamžitě|musíš|koukej)/gi, '')
-        .trim();
-
-      setBiffResult({
-        original: biffInput,
-        converted: `Dobrý den, navrhuji upřesnění termínu předání dítěte podle dohody. Prosím o potvrzení, zda navržený čas vyhovuje. Děkuji. (${converted.slice(0, 100)}...)`,
-        explanation: 'Vymazány hodnotící výrazy, osobní výčitky a vykřičníky. Text upraven do neutrálního formátu BIFF (Brief, Informative, Friendly, Firm).',
-        advice: 'Držte se výhradně časů, míst a potřeb dítěte.'
-      });
+    } catch (err: any) {
+      setBiffError(err?.message || 'Převod do BIFF tónu se nepodařilo provést. Zkuste to prosím znovu.');
     } finally {
       setBiffLoading(false);
     }
@@ -338,6 +336,19 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
                   <span>AI přemýšlí a vyhledává judikaturu...</span>
                 </div>
               )}
+
+              {chatError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
+                  <span>{chatError}</span>
+                  <button
+                    onClick={() => handleSendMessage(undefined, true)}
+                    className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Zkusit znovu</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Input Form */}
@@ -455,6 +466,19 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
                 className="w-full p-4 rounded-2xl border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all font-sans"
               />
             </div>
+
+            {biffError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
+                <span>{biffError}</span>
+                <button
+                  onClick={handleConvertBiff}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Zkusit znovu</span>
+                </button>
+              </div>
+            )}
 
             <button
               onClick={handleConvertBiff}

@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma';
+import { Prisma } from '@prisma/client';
 import { sanitizeSvg } from '../utils/svgSanitizer';
 
 export class BrandingService {
@@ -19,16 +20,19 @@ export class BrandingService {
     const version = await prisma.brandingVersion.findUnique({ where: { id: versionId } });
     if (!version) throw new Error("Version not found");
 
-    // Deactivate all
-    await prisma.brandingVersion.updateMany({
-      where: { isActive: true },
-      data: { isActive: false }
-    });
+    return prisma.$transaction(async (tx) => {
+      // 1. Zámek na úrovni transakce (Advisory Lock) pro zajištění sériovosti operací
+      // To garantuje unikátnost verze i dodržení invariantu jediného aktivního záznamu v případě souběhu.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(20240826)`;
 
-    // Activate selected
-    return prisma.brandingVersion.update({
-      where: { id: versionId },
-      data: { isActive: true, updatedBy, updatedAt: new Date() }
+      await tx.brandingVersion.updateMany({
+        where: { isActive: true },
+        data: { isActive: false }
+      });
+      return tx.brandingVersion.update({
+        where: { id: versionId },
+        data: { isActive: true, updatedBy, updatedAt: new Date() }
+      });
     });
   }
 
@@ -49,28 +53,34 @@ export class BrandingService {
       }
     }
 
-    const latest = await prisma.brandingVersion.findFirst({
-      orderBy: { version: 'desc' }
-    });
-    const nextVersion = (latest?.version || 0) + 1;
+    return prisma.$transaction(async (tx) => {
+      // 1. Zámek na úrovni transakce pro zabránění race conditions
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(20240826)`;
 
-    // Deactivate current
-    await prisma.brandingVersion.updateMany({
-      where: { isActive: true },
-      data: { isActive: false }
-    });
+      // 2. Compute nextVersion safely inside the locked transaction
+      const latest = await tx.brandingVersion.findFirst({
+        orderBy: { version: 'desc' }
+      });
+      const nextVersion = (latest?.version || 0) + 1;
 
-    // Create new
-    return prisma.brandingVersion.create({
-      data: {
-        version: nextVersion,
-        primaryLogoSvg: data.primaryLogoSvg,
-        darkLogoSvg: data.darkLogoSvg,
-        faviconSvg: data.faviconSvg,
-        logoAlt: data.logoAlt || 'Táta má právo',
-        isActive: true,
-        updatedBy
-      }
+      // 3. Deactivate current
+      await tx.brandingVersion.updateMany({
+        where: { isActive: true },
+        data: { isActive: false }
+      });
+
+      // 4. Insert new version
+      return tx.brandingVersion.create({
+        data: {
+          version: nextVersion,
+          primaryLogoSvg: data.primaryLogoSvg,
+          darkLogoSvg: data.darkLogoSvg,
+          faviconSvg: data.faviconSvg,
+          logoAlt: data.logoAlt || 'Táta má právo',
+          isActive: true,
+          updatedBy
+        }
+      });
     });
   }
 

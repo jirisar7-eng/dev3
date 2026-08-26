@@ -1,8 +1,16 @@
+process.env.NODE_ENV = 'test';
 import { spawnSync } from 'child_process';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 
 console.log('--- TÁTA MÁ PRÁVO : TEST RUNNER ---');
+
+// Tests run directly on the host, outside Docker.
+// Never use the production JWT secret for the test suite.
+if (true) {
+  process.env.JWT_SECRET = 'test-only-not-a-production-secret';
+}
+
 
 const tests = [
   { cmd: 'node', args: ['--test', 'test/main.test.cjs'], name: 'Static & Security Integrity (PWA, Disclaimers, Auth, RBAC)' },
@@ -16,6 +24,9 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/analytics-2-user-journey.test.ts'], name: 'Analytics 2.0 (User Journey, Funnels, Search Intelligence & Zero-PII)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/ai-provider-consistency.test.ts'], name: 'AI Provider Consistency & Failover (P0.1 Hardening)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-1-ai-forms-source-fidelity.test.ts'], name: 'AI Forms Source Fidelity (P0.2.1)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-3-model-compatibility.test.ts'], name: 'AI Provider Model Compatibility (P0.2.3)' }
 ];
 
 let failed = false;

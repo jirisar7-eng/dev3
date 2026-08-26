@@ -39,6 +39,7 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
   const [activeTab, setActiveTab] = useState<'summary' | 'contradictions' | 'arguments'>('summary');
   const [copied, setCopied] = useState(false);
 
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   // Analysis State
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
@@ -71,6 +72,7 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
   const handleAnalyze = async () => {
     if (!docText.trim() || loading) return;
     setLoading(true);
+    setAnalysisError(null);
 
     const { text: cleanText, count: anonCount } = anonymizeText(docText);
 
@@ -84,6 +86,11 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
         })
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || (res.status === 429 ? 'Překročen limit dotazů na AI (HTTP 429).' : 'Analýza dokumentu selhala.'));
+      }
+
       const data = await res.json();
       if (data.success && data.summary) {
         setAnalysis({
@@ -94,25 +101,10 @@ export const AiCaseManagerView: React.FC<AiCaseManagerViewProps> = ({ onNavigate
           anonymizedCount: anonCount + (data.anonymizedCount || 0)
         });
       } else {
-        throw new Error('Fallback needed');
+        throw new Error(data.error || 'Analýza dokumentu nevrátila platný výstup.');
       }
-    } catch {
-      // Fallback analyzer
-      setAnalysis({
-        summary: 'Předložený dokument obsahuje tvrzení protistrany k výchovné způsobilosti a uspořádání péče o nezletilé dítě. Text vykazuje nesrovnalosti mezi subjektivními dojmy a věcně doloženými skutečnostmi.',
-        contradictions: [
-          'Rozpor v časové posloupnosti: Tvrdí neochotu k dohodě, avšak v e-mailové komunikaci ze dne 12.5. existuje písemný návrh kompromisu.',
-          'Absence objektivních důkazů: Zpráva staví na jednostranných tvrzeních bez doložení lékařskými či psychologickými zprávami.',
-          'Zpochybňování přespávání bez věcného zdůvodnění (v rozporu s judikaturou ÚS).'
-        ],
-        counterArguments: [
-          'Poukázat na nález Ústavního soudu sp. zn. II. ÚS 1642/22 (zájem dítěte na péči obou rodičů).',
-          'Doložit výpis ze sdíleného kalendáře a e-maily prokazující aktivní součinnost otce.',
-          'Požádat opatrovnický soud o doplnění dokazování a objektivní šetření poměrů.'
-        ],
-        riskLevel: 'Střední',
-        anonymizedCount: anonCount + 2
-      });
+    } catch (err: any) {
+      setAnalysisError(err?.message || 'Analýzu dokumentu se nepodařilo provést. Zkuste to prosím znovu.');
     } finally {
       setLoading(false);
     }
@@ -285,6 +277,19 @@ ${analysis.counterArguments.map((a, i) => `${i + 1}. ${a}`).join('\n')}`;
                 className="w-full p-3.5 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-sans text-xs"
               />
             </div>
+
+            {analysisError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
+                <span>{analysisError}</span>
+                <button
+                  onClick={handleAnalyze}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Zkusit znovu</span>
+                </button>
+              </div>
+            )}
 
             <button
               onClick={handleAnalyze}
