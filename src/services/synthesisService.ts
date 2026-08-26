@@ -20,11 +20,16 @@ export interface CreateSynthesisTicketInput {
   auditDocumentId?: string;
   qaFindingId?: string;
   supportTicketId?: string;
-  commitSha?: string;
+  commitSha?: string | null;
   branch?: string;
+  coderabbitCommentId?: string;
   githubIssueNumber?: number;
+  githubIssueUrl?: string;
+  githubPrNumber?: number;
+  githubPrUrl?: string;
   createdById?: string;
   assignedToId?: string;
+  slaDueDate?: Date | string;
   comment?: {
     authorName?: string;
     content: string;
@@ -44,6 +49,20 @@ export interface AddSynthesisCommentInput {
 }
 
 export class SynthesisService {
+  /**
+   * Validates and normalizes commitSha.
+   * STRICT MANDATE: Only exact 40-character hex SHA strings are allowed.
+   * Placeholders like "main-HEAD", "HEAD", "unknown", "fake", "latest" are converted to null.
+   */
+  public static normalizeCommitSha(sha?: string | null): string | null {
+    if (!sha) return null;
+    const trimmed = String(sha).trim();
+    if (/^[0-9a-fA-F]{40}$/.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  }
+
   /**
    * Computes a deterministic deduplication hash for a ticket proposal.
    */
@@ -208,6 +227,7 @@ export class SynthesisService {
 
       // 2. Create ticket with initial event and comment
       const initialStatus = input.status || 'DISCOVERED';
+      const normalizedCommitSha = SynthesisService.normalizeCommitSha(input.commitSha);
 
       const ticket = await prisma.synthesisTicket.create({
         data: {
@@ -222,11 +242,16 @@ export class SynthesisService {
           auditDocumentId: input.auditDocumentId,
           qaFindingId: input.qaFindingId,
           supportTicketId: input.supportTicketId,
-          commitSha: input.commitSha,
+          commitSha: normalizedCommitSha,
           branch: input.branch,
+          coderabbitCommentId: input.coderabbitCommentId,
           githubIssueNumber: input.githubIssueNumber,
+          githubIssueUrl: input.githubIssueUrl,
+          githubPrNumber: input.githubPrNumber,
+          githubPrUrl: input.githubPrUrl,
           createdById: input.createdById,
           assignedToId: input.assignedToId,
+          slaDueDate: input.slaDueDate ? new Date(input.slaDueDate) : undefined,
           events: {
             create: [
               {
@@ -238,7 +263,7 @@ export class SynthesisService {
                   source: input.source,
                   severity: input.severity,
                   category: input.category,
-                  commitSha: input.commitSha,
+                  commitSha: normalizedCommitSha,
                   branch: input.branch,
                   dedupHash,
                 },

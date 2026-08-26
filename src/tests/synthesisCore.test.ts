@@ -1,9 +1,10 @@
 import assert from 'node:assert';
 import { SynthesisService } from '../services/synthesisService';
 import { isPrismaAvailable, setPrismaDisabled, setPrismaClientForTest } from '../db/prisma';
+import { AuthService } from '../services/authService';
 
 async function runSynthesisCoreTests() {
-  console.log('[Test] Running Synthesis Core & Control Center Tests...');
+  console.log('[Test] Running Synthesis Core & Control Center Conformance Tests...');
 
   // Test 1: Deduplication hash determinism
   console.log('1. Testing computeDedupHash determinism...');
@@ -13,8 +14,19 @@ async function runSynthesisCoreTests() {
   assert.strictEqual(hash1, hash2, 'computeDedupHash should trim whitespace and be deterministic');
   assert.strictEqual(hash1.length, 64, 'computeDedupHash should return a 64-char hex string (SHA256)');
 
-  // Test 2: Fail-closed verification when Prisma is disabled / unavailable
-  console.log('2. Testing fail-closed behavior when DB is unavailable...');
+  // Test 2: Git SHA normalization & integrity (no fake SHAs)
+  console.log('2. Testing commitSha validation and normalization (STRICT SHA)...');
+  const validSha = '40247ac75a3ea02817a80bd20f692ecffa7f41f2';
+  assert.strictEqual(SynthesisService.normalizeCommitSha(validSha), validSha, 'Valid 40-char SHA must be preserved');
+  assert.strictEqual(SynthesisService.normalizeCommitSha('main-HEAD'), null, 'main-HEAD must be converted to null');
+  assert.strictEqual(SynthesisService.normalizeCommitSha('HEAD'), null, 'HEAD must be converted to null');
+  assert.strictEqual(SynthesisService.normalizeCommitSha('unknown'), null, 'unknown must be converted to null');
+  assert.strictEqual(SynthesisService.normalizeCommitSha('fake'), null, 'fake must be converted to null');
+  assert.strictEqual(SynthesisService.normalizeCommitSha(null), null, 'null SHA must return null');
+  assert.strictEqual(SynthesisService.normalizeCommitSha(undefined), null, 'undefined SHA must return null');
+
+  // Test 3: Fail-closed verification when Prisma is disabled / unavailable
+  console.log('3. Testing fail-closed behavior when DB is unavailable...');
 
   try {
     // Force DB disabled
@@ -32,7 +44,7 @@ async function runSynthesisCoreTests() {
       await SynthesisService.createTicket({
         title: 'Test Fail-Closed',
         description: 'Should fail',
-        source: 'MANUAL_ENTRY',
+        source: 'MANUAL_ADMIN',
         severity: 'P3_LOW',
         category: 'FUNCTIONAL',
       });
@@ -72,8 +84,15 @@ async function runSynthesisCoreTests() {
     setPrismaDisabled(false);
   }
 
-  // Test 3: SynthesisService logic validation with mock prisma
-  console.log('3. Testing SynthesisService createTicket, deduplication, and e-Sbírka ingestion logic...');
+  // Test 4: RBAC Role Verification
+  console.log('4. Testing RBAC access controls for Synthesis endpoints...');
+  assert.strictEqual(AuthService.hasPermission('SUPER_ADMIN' as any, 'ADMIN' as any), true, 'SUPER_ADMIN must be ALLOWED');
+  assert.strictEqual(AuthService.hasPermission('ADMIN' as any, 'ADMIN' as any), true, 'ADMIN must be ALLOWED');
+  assert.strictEqual(AuthService.hasPermission('SYSTEM_ADMIN' as any, 'ADMIN' as any), true, 'SYSTEM_ADMIN must be ALLOWED');
+  assert.strictEqual(AuthService.hasPermission('USER' as any, 'ADMIN' as any), false, 'USER must be DENIED (403)');
+
+  // Test 5: SynthesisService logic validation with mock prisma
+  console.log('5. Testing SynthesisService createTicket, deduplication, relations, and e-Sbírka ingestion logic...');
 
   const mockTickets = new Map<string, any>();
   let ticketCounter = 1;
@@ -107,8 +126,17 @@ async function runSynthesisCoreTests() {
           status: data.status,
           dedupHash: data.dedupHash,
           sourcePath: data.sourcePath,
+          auditDocumentId: data.auditDocumentId || null,
+          qaFindingId: data.qaFindingId || null,
+          supportTicketId: data.supportTicketId || null,
           commitSha: data.commitSha,
           branch: data.branch,
+          coderabbitCommentId: data.coderabbitCommentId || null,
+          githubIssueNumber: data.githubIssueNumber || null,
+          githubIssueUrl: data.githubIssueUrl || null,
+          githubPrNumber: data.githubPrNumber || null,
+          githubPrUrl: data.githubPrUrl || null,
+          slaDueDate: data.slaDueDate || null,
           createdAt: new Date(),
           updatedAt: new Date(),
           comments: data.comments?.create?.map((c: any, idx: number) => ({
@@ -179,7 +207,7 @@ async function runSynthesisCoreTests() {
   setPrismaClientForTest(mockPrisma);
 
   try {
-    // 3a. Ingest e-Sbírka finding
+    // 5a. Ingest e-Sbírka finding
     const ingestRes1 = await SynthesisService.ingestEsbirkaRemediationFinding();
     assert.strictEqual(ingestRes1.isDuplicate, false, 'First ingestion should NOT be a duplicate');
     assert.strictEqual(ingestRes1.ticket.severity, 'P2_MEDIUM', 'Severity should be P2_MEDIUM');
@@ -188,12 +216,23 @@ async function runSynthesisCoreTests() {
     assert.strictEqual(ingestRes1.ticket.commitSha, '40247ac75a3ea02817a80bd20f692ecffa7f41f2', 'Commit SHA must match e-Sbírka fix');
     assert.strictEqual(ingestRes1.ticket.branch, 'feature/auth-session-consistency', 'Branch must match feature/auth-session-consistency');
 
-    // 3b. Deduplication check
+    // 5b. Deduplication check
     const ingestRes2 = await SynthesisService.ingestEsbirkaRemediationFinding();
     assert.strictEqual(ingestRes2.isDuplicate, true, 'Second ingestion MUST return isDuplicate: true');
     assert.strictEqual(ingestRes2.ticket.id, ingestRes1.ticket.id);
 
-    // 3c. Add comment test
+    // 5c. Sanitization of fake commitSha check
+    const fakeShaTicketRes = await SynthesisService.createTicket({
+      title: 'Fake SHA Ticket Test',
+      description: 'Testing that fake SHA string is converted to null',
+      source: 'MANUAL_ADMIN',
+      severity: 'P3_LOW',
+      category: 'FUNCTIONAL',
+      commitSha: 'main-HEAD', // Fake placeholder
+    });
+    assert.strictEqual(fakeShaTicketRes.ticket.commitSha, null, 'Fake SHA "main-HEAD" must be sanitized to null');
+
+    // 5d. Add comment test
     const commentRes = await SynthesisService.addComment({
       ticketId: ingestRes1.ticket.id,
       authorName: 'QA Auditor',
@@ -201,7 +240,7 @@ async function runSynthesisCoreTests() {
     });
     assert.strictEqual(commentRes.authorName, 'QA Auditor');
 
-    // 3d. Fetch ticket check
+    // 5e. Fetch ticket check
     const fetched = await SynthesisService.getTicketById(ingestRes1.ticket.id);
     assert.notStrictEqual(fetched, null);
     assert.strictEqual(fetched?.id, ingestRes1.ticket.id);
@@ -210,7 +249,7 @@ async function runSynthesisCoreTests() {
     setPrismaClientForTest(null as any);
   }
 
-  console.log('✅ ALL Synthesis Core & Control Center tests passed successfully!');
+  console.log('✅ ALL Synthesis Core & Control Center Conformance tests passed successfully!');
 }
 
 runSynthesisCoreTests().catch((err) => {
