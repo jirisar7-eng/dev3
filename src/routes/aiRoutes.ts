@@ -41,7 +41,7 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
     Text podklad: ${rawText}`;
 
     const responseText = await AiService.generateContent(prompt);
-    
+
     // Extract JSON from potential markdown code blocks
     const jsonString = responseText.replace(/```json\n?|\n?```/g, '').trim();
     const parsedData = JSON.parse(jsonString);
@@ -51,7 +51,7 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
     console.error('AI Page Generation Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
     res.status(status).json({
-      error: status === 429 
+      error: status === 429
         ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
         : status === 503
         ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
@@ -135,7 +135,7 @@ Vystup ve formátu JSON:
     console.error('BIFF Convert Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
     res.status(status).json({
-      error: status === 429 
+      error: status === 429
         ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
         : status === 503
         ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
@@ -173,7 +173,7 @@ Vystup ve formátu JSON:
     console.error('Guide Plan Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
     res.status(status).json({
-      error: status === 429 
+      error: status === 429
         ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
         : status === 503
         ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
@@ -211,7 +211,7 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
-    
+
     if (!parsed.summary || !Array.isArray(parsed.contradictions) || !Array.isArray(parsed.summaryQuotes)) {
       throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
     }
@@ -241,7 +241,7 @@ Vystup ve formátu JSON:
     console.error('Analyze Document Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
     res.status(status).json({
-      error: status === 429 
+      error: status === 429
         ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
         : status === 503
         ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
@@ -279,7 +279,7 @@ Vystup ve formátu JSON:
     console.error('Simulator Evaluate Error:', err?.message || err);
     const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
     res.status(status).json({
-      error: status === 429 
+      error: status === 429
         ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
         : status === 503
         ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'

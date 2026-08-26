@@ -28,12 +28,12 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     let errorMessage = null;
 
     AiService.generateContent = async () => { throw new Error('AI služba je dočasně nedostupná.'); };
-    
+
     try {
       const res = await request(app)
         .post('/api/ai/chat')
         .send({ mode: 'forms', messages: [{ role: 'user', content: 'hello' }] });
-      
+
       if (res.status >= 400) throw new Error(res.body.error);
     } catch (err: any) {
       errorOccurred = true;
@@ -48,7 +48,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 2: Case Manager does not fabricate date "12.5." when not in source text', async () => {
     const documentTextWithoutDate = 'Matka tvrdí, že otec nekomunikuje. Otec uvádí, že předal návrh dohody.';
-    
+
     AiService.generateContent = async (prompt, opts) => {
       // Mocking provider boundary, returning expected JSON output
       return JSON.stringify({
@@ -68,7 +68,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 3: Case Manager does not fabricate e-mails or unseen communications', async () => {
     const documentTextWithoutEmail = 'Otec žádá o změnu styku z důvodu nástupu dítěte do MŠ.';
-    
+
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Zpráva OSPOD popisuje komplikace při předávání dítěte na veřejném místě.',
@@ -88,7 +88,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 4: Single-sided claim without conflicting evidence in source text is NOT marked as contradiction', async () => {
     const singleClaimDoc = 'Matka do protokolu uvedla, že otec se nepodílí na výchově.';
-    
+
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Jednostranné tvrzení matky v protokolu o nepodílení se na výchově.',
@@ -105,7 +105,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 5: Valid contradiction is generated when source document contains two contradictory claims', async () => {
     const twoClaimsDoc = 'V odst. 2 matka tvrdí, že otec nekomunikuje. V odst. 5 matka uvádí, že otec týdně zasílá e-maily s požadavky na styk.';
-    
+
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Vyhodnocení vyjádření matky s vnitřními rozpory.',
@@ -123,7 +123,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 6: Source fact explicitly present in document is accurately captured', async () => {
     const factDoc = 'Nezletilý Adam (nar. 15.3.2018) navštěvuje MŠ Sluníčko v Praze 4.';
-    
+
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Dokument uvádí, že nezletilý Adam navštěvuje MŠ Sluníčko v Praze 4.',
@@ -141,7 +141,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
 
   test('TEST 7: Unknown information not in document is not fabricated as fact', async () => {
     const briefDoc = 'Soudní jednání je nařízeno na příští měsíc.';
-    
+
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Dokument obsahuje informaci o nařízení soudního jednání na příští měsíc.',
@@ -169,11 +169,11 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     let currentText = originalCompiledText;
-    
+
     const res1 = await request(app).post('/api/ai/chat').send({ mode: 'forms', messages: [{ role: 'user', content: customInstruction }] });
     assert.strictEqual(res1.status, 429, 'First attempt should fail');
     assert.strictEqual(executeCount, 1);
-    
+
     const res2 = await request(app).post('/api/ai/chat').send({ mode: 'forms', messages: [{ role: 'user', content: customInstruction }] });
     assert.strictEqual(res2.status, 200, 'Second attempt should succeed');
     assert.ok(res2.body.reply.includes('flexibilní pracovní dobou'), 'Text updated correctly on Retry');
