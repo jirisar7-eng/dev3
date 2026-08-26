@@ -1,27 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useModules } from '../../context/ModuleContext';
 import { useText } from '../../context/TextContext';
 import {
+  Lock,
   LayoutDashboard,
-  BarChart2,
-  Type,
-  Palette, Image as ImageIcon,
   Sliders,
-  FileText,
-  Users,
-  ShieldCheck,
-  Clock,
-  Settings,
+  Type,
   Server,
   Activity,
   CheckCircle2,
-  Lock,
-  Mail,
   Sparkles,
-  Globe,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 
+import { AdminTabId, ADMIN_NAV_SECTIONS, findSectionByTabId } from '../../config/adminNavigation';
+import { AdminHeader } from './layout/AdminHeader';
+import { AdminSidebar } from './layout/AdminSidebar';
+import { TeamCenterSlot } from './layout/TeamCenterSlot';
 
 import { TextManager } from './TextManager';
 import { ThemeManager } from './ThemeManager';
@@ -34,10 +31,8 @@ import { AuditLogViewer } from './AuditLogViewer';
 import { SettingsManager } from './SettingsManager';
 import { GitHubPublisher } from './GitHubPublisher';
 import { MailcowManager } from './MailcowManager';
-import { GitPullRequest, LayoutTemplate } from 'lucide-react';
 import AdminPagesList from '../../pages/admin/AdminPagesList';
 import AdminPageBuilder from '../../pages/admin/AdminPageBuilder';
-
 import { DnsManagementPage } from '../../pages/admin/DnsManagementPage';
 import { PartnerManager } from './PartnerManager';
 import { TemplateManager } from './TemplateManager';
@@ -48,42 +43,10 @@ import { VpsManagement } from './VpsManagement';
 import { TestRunnerCard } from './TestRunnerCard';
 import { QADashboard } from './qa/QADashboard';
 import { AiContextManager } from './AiContextManager';
-import { Code, Building2, Terminal, FlaskConical, Cpu, Scale, Landmark } from 'lucide-react';
 import { EsbirkaAdminPanel } from './EsbirkaAdminPanel';
 import { StateAdminManager } from './StateAdminManager';
 import { AuditCenter } from './AuditCenter';
 import { AnalyticsManager } from './AnalyticsManager';
-
-type AdminTab =
-  | 'overview'
-  | 'analytics'
-  | 'pages'
-  | 'templates'
-  | 'page-builder'
-  | 'texts'
-  | 'theme'
-  | 'branding'
-  | 'modules'
-  | 'custom-modules'
-  | 'esbirka'
-  | 'state-admin'
-  | 'subjekty'
-  | 'schvalovani-kontaktu'
-  | 'cms'
-  | 'users'
-  | 'mailcow'
-  | 'compliance'
-  | 'audit'
-  | 'audits'
-  | 'qa'
-  | 'ai-context'
-  | 'settings'
-  | 'sponsors'
-  | 'dns'
-  | 'github'
-  | 'vps'
-  | 'tests';
-
 
 interface AdminDashboardProps {
   currentPath?: string;
@@ -94,8 +57,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
   const { currentUser, hasRole } = useAuth();
   const { modules } = useModules();
   const { texts } = useText();
-  
-  const getInitialTab = (): AdminTab => {
+
+  const getInitialTab = (): AdminTabId => {
     const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
     if (path.startsWith('/admin/pages/new') || path.startsWith('/admin/pages/edit')) return 'page-builder';
     if (path.startsWith('/admin/pages')) return 'pages';
@@ -106,10 +69,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
     return 'overview';
   };
 
-  const [activeTab, setActiveTab] = useState<AdminTab>(getInitialTab());
+  const [activeTab, setActiveTab] = useState<AdminTabId>(getInitialTab());
   const [mailcowInitName, setMailcowInitName] = useState('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
     if (path.startsWith('/admin/pages/new') || path.startsWith('/admin/pages/edit')) {
       setActiveTab('page-builder');
@@ -126,6 +90,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
     }
   }, [currentPath]);
 
+  const handleSelectTab = (tabId: AdminTabId, path?: string) => {
+    setActiveTab(tabId);
+    if (path) {
+      if (onNavigate) {
+        onNavigate(path);
+      } else {
+        window.history.pushState({}, '', path);
+        window.dispatchEvent(new Event('popstate'));
+      }
+    }
+  };
+
   if (!currentUser) {
     return (
       <div className="py-20 max-w-md mx-auto text-center px-4">
@@ -134,7 +110,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
         </div>
         <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Přihlášení vyžadováno</h2>
         <p className="text-xs text-slate-600 mb-6">
-          Do administrace maji přístup pouze přihlášení uživatelé s rolí ADMIN nebo SUPER_ADMIN.
+          Do administrace mají přístup pouze přihlášení uživatelé s rolí ADMIN nebo SUPER_ADMIN.
         </p>
         <button
           onClick={() => {
@@ -152,7 +128,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
     );
   }
 
-  if (!hasRole('ADMIN')) {
+  // Check role authorization for admin area
+  const isAuthorized =
+    hasRole('ADMIN') ||
+    currentUser.role === 'SUPER_ADMIN' ||
+    currentUser.role === 'SYSTEM_ADMIN' ||
+    currentUser.role === 'CONTENT_MANAGER' ||
+    currentUser.role === 'LEGAL_EDITOR' ||
+    currentUser.role === 'MODERATOR';
+
+  if (!isAuthorized) {
     return (
       <div className="py-20 max-w-md mx-auto text-center px-4">
         <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-rose-200 shadow-xs">
@@ -163,7 +148,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
         </div>
         <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Přístup odepřen (RBAC 403)</h2>
         <p className="text-xs text-slate-600 mb-6">
-          Do administrátorské sekce mají přístup pouze uživatelé s rolí ADMIN nebo SUPER_ADMIN. Vaše aktuální role je: <strong className="text-slate-900 uppercase">{currentUser.role}</strong>.
+          Do administrátorské sekce mají přístup pouze oprávnění správci. Vaše aktuální role je:{' '}
+          <strong className="text-slate-900 uppercase">{currentUser.role}</strong>.
         </p>
         <button
           onClick={() => {
@@ -184,494 +170,159 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
   const activeModulesCount = modules.filter((m) => m.enabled).length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Admin Header */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold uppercase tracking-wider">
-              ADMIN CMS CONTROL PANEL
-            </span>
-            <span className="text-xs text-slate-400 font-mono">{window.location.host}</span>
-          </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">
-            Administrace: Táta má právo
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Modulární řízení obsahu, textů, barev, uživatelů, modulů a auditu.
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Admin Header with Breadcrumbs & Host Info */}
+      <AdminHeader
+        activeTab={activeTab}
+        onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
+        onNavigate={onNavigate}
+      />
 
-        <div className="flex items-center gap-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700/80 text-xs">
-          <img src={currentUser?.avatar} alt={currentUser?.name} className="w-10 h-10 rounded-xl border border-amber-400" />
-          <div>
-            <span className="font-bold text-white block">{currentUser?.name}</span>
-            <span className="text-[10px] text-amber-400 font-bold uppercase">{currentUser?.role}</span>
-          </div>
-        </div>
-      </div>
+      {/* Mobile Drawer (Slide-over) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Navigation Sidebar */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-3 shadow-xs h-fit space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-3 py-2">
-            Moduly Administrace (Core)
-          </span>
-
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'overview' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4 text-blue-400" />
-            <span>Přehled systému</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('analytics');
-              if (onNavigate) onNavigate('/admin/analytics');
-              else {
-                window.history.pushState({}, '', '/admin/analytics');
-                window.dispatchEvent(new Event('popstate'));
-              }
-            }}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'analytics' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <BarChart2 className="w-4 h-4 text-emerald-400" />
-              <span>Analytika & Návštěvnost</span>
-            </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              0-PII
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('pages');
-              if (onNavigate) onNavigate('/admin/pages');
-              else {
-                window.history.pushState({}, '', '/admin/pages');
-                window.dispatchEvent(new Event('popstate'));
-              }
-            }}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'pages' || activeTab === 'page-builder' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <LayoutTemplate className="w-4 h-4 text-indigo-400" />
-              <span>Správa stránek</span>
-            </span>
-            <span className="text-[10px] bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Puck
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('templates')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'templates' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Šablony stránek</span>
-            </span>
-            <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Engine
-            </span>
-          </button>
-
-
-          <button
-            onClick={() => setActiveTab('texts')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'texts' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Type className="w-4 h-4 text-blue-400" />
-              Text Manager
-            </span>
-            <span className="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              {texts.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('theme')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'theme' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Palette className="w-4 h-4 text-purple-400" />
-            <span>Theme & Colors</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('branding')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'branding' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <ImageIcon className="w-4 h-4 text-pink-400" />
-            <span>Branding / Logo</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('modules')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'modules' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Sliders className="w-4 h-4 text-indigo-400" />
-              Module Manager
-            </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              {activeModulesCount}/{modules.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('custom-modules')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'custom-modules' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Code className="w-4 h-4 text-indigo-400" />
-              <span>JSON Moduly (Schema)</span>
-            </span>
-            <span className="text-[10px] bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Schema UI
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('esbirka')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'esbirka' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Scale className="w-4 h-4 text-emerald-500" />
-              <span>Administrace e-Sbírka</span>
-            </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              MV ČR
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('state-admin')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'state-admin' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Landmark className="w-4 h-4 text-blue-500" />
-              <span>Státní data & API Hub</span>
-            </span>
-            <span className="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              ČSÚ/MSp
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('subjekty')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'subjekty' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Building2 className="w-4 h-4 text-indigo-400" />
-              <span>Registr Subjektů</span>
-            </span>
-            <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Hodnocení
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('schvalovani-kontaktu')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'schvalovani-kontaktu' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Users className="w-4 h-4 text-emerald-400" />
-              <span>Schvalování kontaktů</span>
-            </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Mod
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('cms')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'cms' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>Obsah CMS</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'users' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Users className="w-4 h-4 text-amber-400" />
-            <span>Uživatelé & RBAC</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sponsors')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'sponsors' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>Sponzoři a partneři</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('mailcow')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'mailcow' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Mail className="w-4 h-4 text-blue-500" />
-            <span>Správa E-mailů</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('compliance')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'compliance' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 text-sky-400" />
-            <span>Compliance Docs</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('audit')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'audit' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Clock className="w-4 h-4 text-rose-400" />
-            <span>Audit Log</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('audits');
-              if (onNavigate) onNavigate('/administrace/audity');
-              else {
-                window.history.pushState({}, '', '/administrace/audity');
-                window.dispatchEvent(new Event('popstate'));
-              }
-            }}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'audits' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-blue-400" />
-              <span>Audit Center</span>
-            </span>
-            <span className="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              DEV3
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('qa')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'qa' && !currentPath?.includes('/qa/copilot') ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Activity className="w-4 h-4 text-purple-400" />
-            <span>QA & Audit Syntéza</span>
-          </button>
-
-          {hasRole('ADMIN') && (
-            <button
-              onClick={() => {
-                setActiveTab('qa');
-                const targetUrl = '/administrace/qa/copilot';
-                if (onNavigate) onNavigate(targetUrl);
-                else {
-                  window.history.pushState({}, '', targetUrl);
-                  window.dispatchEvent(new Event('popstate'));
-                }
-              }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-                currentPath?.includes('/qa/copilot') ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>Synthesis Admin Copilot</span>
+          {/* Drawer Panel */}
+          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-2xl z-50 flex flex-col p-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Navigace Administrace
               </span>
-              <span className="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                AI Agent
-              </span>
-            </button>
-          )}
+              <button
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-          <button
-            onClick={() => setActiveTab('ai-context')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'ai-context' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Cpu className="w-4 h-4 text-blue-400" />
-              <span>AI Context & Index</span>
-            </span>
-            <span className="text-[9px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              LLMS
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center gap-2.5 ${
-              activeTab === 'settings' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Settings className="w-4 h-4 text-slate-400" />
-            <span>Systémové Nastavení</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('dns');
-              if (onNavigate) onNavigate('/admin/dns');
-              else {
-                window.history.pushState({}, '', '/admin/dns');
-                window.dispatchEvent(new Event('popstate'));
-              }
-            }}
-            className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-              activeTab === 'dns' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Globe className="w-4 h-4 text-sky-400" />
-              <span>Správa DNS</span>
-            </span>
-            <span className="text-[10px] bg-sky-100 text-sky-900 px-1.5 py-0.5 rounded font-mono font-bold">
-              Vercel
-            </span>
-          </button>
-
-          <div className="pt-2 border-t border-slate-100 my-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-3 py-1">
-              System Operations
-            </span>
-            <button
-              onClick={() => setActiveTab('github')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between ${
-                activeTab === 'github' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <GitPullRequest className="w-4 h-4 text-emerald-500" />
-                GitHub Publisher
-              </span>
-              <span className="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                SUPER_ADMIN
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('vps')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between mt-1 ${
-                activeTab === 'vps' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <Terminal className="w-4 h-4 text-rose-500" />
-                VPS & Systém
-              </span>
-              <span className="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                SUPER_ADMIN
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('tests')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between mt-1 ${
-                activeTab === 'tests' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <FlaskConical className="w-4 h-4 text-indigo-500" />
-                E2E AI Testy
-              </span>
-              <span className="text-[9px] bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                Playwright
-              </span>
-            </button>
+            <div className="flex-1 overflow-y-auto">
+              <AdminSidebar
+                activeTab={activeTab}
+                onSelectTab={handleSelectTab}
+                onCloseMobile={() => setIsMobileSidebarOpen(false)}
+              />
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Content Panel */}
-        <div className="lg:col-span-3">
+      {/* Main Admin Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* Desktop Sidebar (Left Column) */}
+        <div className="hidden lg:block lg:col-span-1 sticky top-6">
+          <AdminSidebar
+            activeTab={activeTab}
+            onSelectTab={handleSelectTab}
+          />
+        </div>
+
+        {/* Content Area (Right Column) */}
+        <div className="lg:col-span-3 min-w-0">
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Stat Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase">Aktivní Moduly</span>
                     <Sliders className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <span className="text-3xl font-black text-slate-900">
-                    {activeModulesCount} <span className="text-sm font-normal text-slate-400">/ {modules.length}</span>
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                    {activeModulesCount}{' '}
+                    <span className="text-sm font-normal text-slate-400">/ {modules.length}</span>
                   </span>
-                  <span className="text-[11px] text-emerald-600 block mt-2 font-semibold">
+                  <span className="text-[11px] text-emerald-600 block mt-1.5 font-semibold">
                     100% Core kompatibilní
                   </span>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase">Slovník Textů</span>
                     <Type className="w-5 h-5 text-blue-600" />
                   </div>
-                  <span className="text-3xl font-black text-slate-900">{texts.length}</span>
-                  <span className="text-[11px] text-blue-600 block mt-2 font-semibold">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">{texts.length}</span>
+                  <span className="text-[11px] text-blue-600 block mt-1.5 font-semibold">
                     Texty uloženy v databázi
                   </span>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase">VPS Prostředí</span>
                     <Server className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <span className="text-lg font-bold text-slate-900 block font-mono">{window.location.host}</span>
-                  <span className="text-[11px] text-emerald-600 block mt-2 font-semibold flex items-center gap-1">
+                  <span className="text-sm sm:text-base font-bold text-slate-900 block font-mono truncate">
+                    {typeof window !== 'undefined' ? window.location.host : 'localhost'}
+                  </span>
+                  <span className="text-[11px] text-emerald-600 block mt-1.5 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     PostgreSQL 16 & Caddy OK
                   </span>
                 </div>
               </div>
 
-              {/* Admin Modules Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 🤖 Synthesis Admin Copilot */}
+              {/* 8 Areas Quick Hub Grid */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <LayoutDashboard className="w-4 h-4 text-blue-900" />
+                    Rychlý přehled sekcí administrace
+                  </h3>
+                  <span className="text-[10px] bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded-full font-bold">
+                    8 OBLASTÍ
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {ADMIN_NAV_SECTIONS.map((sec) => {
+                    const SecIcon = sec.icon;
+                    const firstItem = sec.items[0];
+
+                    return (
+                      <button
+                        key={sec.id}
+                        onClick={() => {
+                          if (firstItem) {
+                            handleSelectTab(firstItem.id, firstItem.path);
+                          }
+                        }}
+                        className="text-left p-4 rounded-2xl border border-slate-200/80 hover:border-blue-900/40 hover:bg-blue-50/30 transition-all group flex flex-col justify-between cursor-pointer"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xl">{sec.emoji}</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold">
+                              {sec.items.length} položek
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-900 transition-colors">
+                            {sec.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                            {sec.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-blue-900 font-bold">
+                          <span>Otevřít sekci</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Copilot & Test Runner Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* 🤖 Synthesis Admin Copilot Card */}
                 {hasRole('ADMIN') && (
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-purple-300 transition-all group">
                     <div>
@@ -692,15 +343,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
                         AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.
                       </p>
                     </div>
-                    
+
                     <button
                       onClick={() => {
-                        const targetUrl = '/administrace/qa/copilot';
-                        if (onNavigate) onNavigate(targetUrl);
-                        else {
-                          window.history.pushState({}, '', targetUrl);
-                          window.dispatchEvent(new Event('popstate'));
-                        }
+                        handleSelectTab('qa', '/administrace/qa/copilot');
                       }}
                       className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group-hover:shadow-lg"
                     >
@@ -716,15 +362,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
 
               {/* System Info Banner */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3 text-xs text-slate-700">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-600" />
-                  Architektonický stav FÁZE 1
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-600" />
+                  Architektonický stav FÁZE 1 & Redesign FÁZE 3B
                 </h3>
                 <p className="leading-relaxed">
-                  Systém je kompletně připraven dle zadání FÁZE 1 (CORE + MODULES).
-                  Byly zprovozněny všechny klíčové subsystémy: <strong>Auth, RBAC, CMS, Text Manager, Theme Manager, Module Manager, Media, SEO, Compliance, Audit a Settings</strong>.
+                  Systém je plně konsolidován do 8 hierarchických oblastí v novém strukturovaném Admin Shellu.
+                  Byly zachovány všechny existující subsystémy: <strong>Auth, RBAC, CMS, Text Manager, Theme Manager, Module Manager, Media, SEO, Compliance, Audit, QA Copilot a Settings</strong>.
                 </p>
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 font-mono text-[11px] space-y-1 text-slate-600">
+                  <p>• Hierarchical Admin Shell with 8 logical clusters & quick search</p>
                   <p>• React 19 + Express API Server running on port 3000</p>
                   <p>• Prisma 7 + PostgreSQL 16 Data Schema generated</p>
                   <p>• Strict Server-Side authorization & RBAC (USER..SUPER_ADMIN)</p>
@@ -733,40 +380,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
             </div>
           )}
 
-          {activeTab === 'analytics' && <AnalyticsManager />}
+          {/* 📝 Obsah & CMS */}
           {activeTab === 'pages' && <AdminPagesList onNavigate={onNavigate} />}
           {activeTab === 'templates' && <TemplateManager onNavigate={onNavigate} />}
           {activeTab === 'page-builder' && <AdminPageBuilder onNavigate={onNavigate} />}
           {activeTab === 'texts' && <TextManager />}
           {activeTab === 'theme' && <ThemeManager />}
-        {activeTab === 'branding' && <BrandingManager />}
-          {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
+          {activeTab === 'branding' && <BrandingManager />}
           {activeTab === 'custom-modules' && <CustomModuleManager />}
-          {activeTab === 'esbirka' && <EsbirkaAdminPanel />}
-          {activeTab === 'state-admin' && <StateAdminManager />}
-          {activeTab === 'subjekty' && <SubjektManager />}
-          {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
           {activeTab === 'cms' && <CmsManager />}
+
+          {/* 👥 Uživatelé & Přístupy */}
           {activeTab === 'users' && (
             <UserManager
               onCreateMailbox={(name) => {
                 setMailcowInitName(name);
-                setActiveTab('mailcow');
+                handleSelectTab('mailcow');
               }}
             />
           )}
-          {activeTab === 'mailcow' && <MailcowManager initialName={mailcowInitName} />}
-          {activeTab === 'compliance' && <ComplianceManager />}
-          {activeTab === 'audit' && <AuditLogViewer />}
-          {activeTab === 'audits' && <AuditCenter />}
+
+          {/* ⚖️ Právo & Státní data */}
+          {activeTab === 'esbirka' && <EsbirkaAdminPanel />}
+          {activeTab === 'state-admin' && <StateAdminManager />}
+          {activeTab === 'subjekty' && <SubjektManager />}
+          {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
+
+          {/* 🤖 AI & Automatizace */}
           {activeTab === 'qa' && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
-          {activeTab === 'settings' && <SettingsManager />}
-          {activeTab === 'dns' && <DnsManagementPage />}
-          {activeTab === 'sponsors' && <PartnerManager />}
-          {activeTab === 'github' && <GitHubPublisher />}
-          {activeTab === 'vps' && <VpsManagement />}
           {activeTab === 'tests' && <TestRunnerCard />}
+
+          {/* 📈 Analytika & Audit */}
+          {activeTab === 'analytics' && <AnalyticsManager />}
+          {activeTab === 'audit' && <AuditLogViewer />}
+          {activeTab === 'audits' && <AuditCenter />}
+          {activeTab === 'compliance' && <ComplianceManager />}
+          {activeTab === 'sponsors' && <PartnerManager />}
+
+          {/* ⚙️ Systém & DevSecOps */}
+          {activeTab === 'settings' && <SettingsManager />}
+          {activeTab === 'modules' && <ModuleManager onNavigate={onNavigate} />}
+          {activeTab === 'mailcow' && <MailcowManager initialName={mailcowInitName} />}
+          {activeTab === 'dns' && <DnsManagementPage />}
+          {activeTab === 'vps' && <VpsManagement />}
+          {activeTab === 'github' && <GitHubPublisher />}
+
+          {/* 🏛️ Team Center Slot */}
+          {activeTab === 'team-center' && <TeamCenterSlot />}
         </div>
       </div>
     </div>

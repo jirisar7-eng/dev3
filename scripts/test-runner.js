@@ -28,6 +28,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-1-ai-forms-source-fidelity.test.ts'], name: 'AI Forms Source Fidelity (P0.2.1)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-3-model-compatibility.test.ts'], name: 'AI Provider Model Compatibility (P0.2.3)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/navigation-consolidation-phase02.test.ts'], name: 'Navigation Consolidation & Visibility (Phase 02)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03b.test.ts'], name: 'Admin Shell Information Architecture & RBAC (Phase 03B)' }
 ];
 
 let failed = false;
