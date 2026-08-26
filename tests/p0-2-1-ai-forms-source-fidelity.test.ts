@@ -53,6 +53,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
       // Mocking provider boundary, returning expected JSON output
       return JSON.stringify({
         summary: 'Rozbor opatrovnické zprávy.',
+        summaryQuotes: [],
         contradictions: [],
         counterArguments: ['Doložit komunikaci otce.'],
         riskLevel: 'Nízké',
@@ -72,6 +73,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Zpráva OSPOD popisuje komplikace při předávání dítěte na veřejném místě.',
+        summaryQuotes: [],
         contradictions: [],
         counterArguments: ['Navrhnout předávání přes mateřskou školu.'],
         riskLevel: 'Střední',
@@ -92,6 +94,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Jednostranné tvrzení matky v protokolu o nepodílení se na výchově.',
+        summaryQuotes: [],
         contradictions: [],
         counterArguments: ['Doložit aktivní účast otce na péči a zájmových kroužcích.'],
         riskLevel: 'Střední',
@@ -109,7 +112,10 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Vyhodnocení vyjádření matky s vnitřními rozpory.',
-        contradictions: ['Rozpor v tvrzení o nekomunikaci otce (odst. 2) a současném přiznání týdenní e-mailové komunikace (odst. 5).'],
+        summaryQuotes: [],
+        contradictions: [
+          { claim: 'Rozpor v tvrzení o nekomunikaci otce (odst. 2) a současném přiznání týdenní e-mailové komunikace (odst. 5).', exactQuote: 'otec nekomunikuje' }
+        ],
         counterArguments: ['Poukázat na vnitřní rozpor v tvrzeních matky.'],
         riskLevel: 'Nízké',
         anonymizedCount: 0
@@ -127,6 +133,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Dokument uvádí, že nezletilý Adam navštěvuje MŠ Sluníčko v Praze 4.',
+        summaryQuotes: ['navštěvuje MŠ Sluníčko v Praze 4'],
         contradictions: [],
         counterArguments: [],
         riskLevel: 'Nízké',
@@ -145,6 +152,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     AiService.generateContent = async () => {
       return JSON.stringify({
         summary: 'Dokument obsahuje informaci o nařízení soudního jednání na příští měsíc.',
+        summaryQuotes: [],
         contradictions: [],
         counterArguments: ['Vyžádat přesný termín a čas jednání od soudu.'],
         riskLevel: 'Nízké',
