@@ -1476,7 +1476,7 @@ PRODUCTION READINESS GATE EXPLANATION:
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Provider / Model</span>
                 <div className="text-xs font-black text-purple-700 mt-1 uppercase">
-                  {latestRun?.aiReport?.providerUsed || 'Grok (grok-2)'}
+                  {latestRun?.aiReport?.providerUsed || 'Gemini (gemini-3.6-flash)'}
                 </div>
               </div>
 

@@ -644,13 +644,13 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
     const prompt = this.getPrompt();
     const base64Data = file.buffer.toString('base64');
 
-    // 1. Try Primary Gemini Key (gemini-2.5-flash)
+    // 1. Try Primary Gemini Key (gemini-3.6-flash)
     if (primaryKey) {
       try {
-        console.log('[JudgmentParserService] Invoking Vision OCR with Primary GEMINI_API_KEY (gemini-2.5-flash)...');
+        console.log('[JudgmentParserService] Invoking Vision OCR with Primary GEMINI_API_KEY (gemini-3.6-flash)...');
         const ai = new GoogleGenAI({ apiKey: primaryKey });
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.6-flash',
           contents: [
             prompt,
             {
@@ -685,10 +685,10 @@ Požadované JSON schéma (vracej POUZE tento JSON, žádný jiný text, žádn�
     // 2. Try Secondary Gemini Key if available
     if (secondaryKey) {
       try {
-        console.log('[JudgmentParserService] Invoking Vision OCR with Secondary GEMINI_API_KEY_2 (gemini-2.5-flash)...');
+        console.log('[JudgmentParserService] Invoking Vision OCR with Secondary GEMINI_API_KEY_2 (gemini-3.6-flash)...');
         const ai2 = new GoogleGenAI({ apiKey: secondaryKey });
         const response2 = await ai2.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.6-flash',
           contents: [
             prompt,
             {

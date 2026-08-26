@@ -104,7 +104,7 @@ export async function runAICouncilConsensusTests() {
   console.log('Test 1: Consensus Engine UNANIMOUS Status...');
   const geminiAnalyst: AICouncilAnalystResult = {
     providerName: 'gemini',
-    modelName: 'gemini-2.5-flash',
+    modelName: 'gemini-3.6-flash',
     timestamp: new Date().toISOString(),
     confidence: 0.95,
     summary: 'Gemini agrees test is clean.',
@@ -114,7 +114,7 @@ export async function runAICouncilConsensusTests() {
 
   const grokAnalyst: AICouncilAnalystResult = {
     providerName: 'grok',
-    modelName: 'grok-2-latest',
+    modelName: 'grok-2-1212',
     timestamp: new Date().toISOString(),
     confidence: 0.90,
     summary: 'Grok agrees test is clean.',
@@ -157,8 +157,8 @@ export async function runAICouncilConsensusTests() {
   const orchestrator = new SynthesisMultiAIOrchestrator();
   orchestrator.clearProviders();
 
-  orchestrator.registerProvider(new MockCouncilProvider('gemini', 'gemini-2.5-flash', 'FAIL'));
-  orchestrator.registerProvider(new MockCouncilProvider('grok', 'grok-2-latest', 'FAIL'));
+  orchestrator.registerProvider(new MockCouncilProvider('gemini', 'gemini-3.6-flash', 'FAIL'));
+  orchestrator.registerProvider(new MockCouncilProvider('grok', 'grok-2-1212', 'FAIL'));
 
   const councilResult = await orchestrator.analyze(baseFailContext, { mode: 'council', forceExecute: true });
 
@@ -208,7 +208,7 @@ export async function runAICouncilConsensusTests() {
 
   const geminiFindingAnalyst: AICouncilAnalystResult = {
     providerName: 'gemini',
-    modelName: 'gemini-2.5-flash',
+    modelName: 'gemini-3.6-flash',
     timestamp: new Date().toISOString(),
     confidence: 0.95,
     summary: 'Gemini found SQL injection.',
@@ -226,7 +226,7 @@ export async function runAICouncilConsensusTests() {
 
   const grokFindingAnalyst: AICouncilAnalystResult = {
     providerName: 'grok',
-    modelName: 'grok-2-latest',
+    modelName: 'grok-2-1212',
     timestamp: new Date().toISOString(),
     confidence: 0.90,
     summary: 'Grok confirms SQL injection.',

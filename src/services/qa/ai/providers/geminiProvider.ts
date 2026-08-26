@@ -3,7 +3,7 @@ import { AIProvider, AIProviderResponse } from '../types';
 
 export class GeminiProvider implements AIProvider {
   public name: 'gemini' = 'gemini';
-  public modelName = 'gemini-2.5-flash';
+  public modelName = 'gemini-3.6-flash';
   private _enabled = true;
 
   public isAvailable(): boolean {
