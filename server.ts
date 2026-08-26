@@ -2136,6 +2136,20 @@ app.post('/api/auth/logout', (req: AuthenticatedRequest, res) => {
     req.session.destroy();
   }
   res.clearCookie('token', getClearCookieOptions(false));
+  res.clearCookie('token', getClearCookieOptions(true));
+  res.clearCookie('pending_mfa_user', getClearCookieOptions(false));
+  res.clearCookie('pending_mfa_user', getClearCookieOptions(true));
+  res.clearCookie('passkey_auth_challenge', getClearCookieOptions(false));
+  res.clearCookie('passkey_auth_challenge', getClearCookieOptions(true));
+  res.clearCookie('passkey_reg_challenge', getClearCookieOptions(false));
+  res.clearCookie('passkey_reg_challenge', getClearCookieOptions(true));
+  res.clearCookie('google_oauth_state', getClearCookieOptions(false));
+  res.clearCookie('google_oauth_state', getClearCookieOptions(true));
+  res.clearCookie('microsoft_oauth_state', getClearCookieOptions(false));
+  res.clearCookie('microsoft_oauth_state', getClearCookieOptions(true));
+  res.clearCookie('oauth_return_url', getClearCookieOptions(false));
+  res.clearCookie('oauth_return_url', getClearCookieOptions(true));
+
   res.json({ success: true, message: 'Uživatel byl úspěšně odhlášen.' });
 });
 
@@ -2263,25 +2277,19 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
 app.post(['/api/auth/2fa/verify', '/api/auth/mfa/verify'], authRateLimiter as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { mfaToken, code } = req.body;
-    let targetUserId: string | null = null;
 
-    if (mfaToken) {
-      const verifiedMfa = AuthService.verifyMfaToken(mfaToken);
-      if (verifiedMfa) {
-        targetUserId = verifiedMfa.userId;
-      }
+    if (!mfaToken) {
+      return res.status(401).json({ error: 'Chybí token pro dvoufázové ověření. Přihlaste se znovu.' });
     }
 
-    // Also check session or cookie if mfaToken wasn't provided or expired
-    if (!targetUserId) {
-      targetUserId = req.body.userId || req.session?.pendingMfaUserId || req.cookies?.pending_mfa_user || req.signedCookies?.pending_mfa_user || null;
+    const verifiedMfa = AuthService.verifyMfaToken(mfaToken);
+    if (!verifiedMfa || !verifiedMfa.userId) {
+      return res.status(401).json({ error: 'Relace ověření vypršela nebo je neplatná. Přihlaste se znovu.' });
     }
+
+    const targetUserId = verifiedMfa.userId;
 
     console.log('[MFA Verify] Ověřuji TOTP kód pro userId:', targetUserId);
-
-    if (!targetUserId) {
-      return res.status(400).json({ error: 'Relace ověření vypršela. Přihlaste se znovu.' });
-    }
 
     if (!code) {
       return res.status(400).json({ error: 'Chybí ověřovací kód.' });

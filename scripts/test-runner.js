@@ -32,6 +32,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03c.test.ts'], name: 'Admin Shell Cleanup, Deep-Linking & Polish (Phase 03C)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04c.test.ts'], name: 'Team Center Foundation & Granular RBAC (Phase 04C)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04e-security-regression.test.ts'], name: 'Team Center Security Regression & Production Readiness (Phase 04E)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/auth-remediation-phase05b.test.ts'], name: 'Auth, Session & MFA Security Remediation & Isolation (Phase 05B)' }
 ];
 
 let failed = false;

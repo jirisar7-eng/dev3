@@ -86,6 +86,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     };
   }, [refreshMe]);
 
+  const resetMfaState = () => {
+    setMfaRequired(false);
+    setMfaToken('');
+    setMfaUserId(undefined);
+    setMfaCode('');
+    setErrorMsg(null);
+    if (typeof window !== 'undefined' && window.history?.replaceState) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('mfa') || url.searchParams.has('token')) {
+        url.searchParams.delete('mfa');
+        url.searchParams.delete('token');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -291,11 +307,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           {/* Back to password link */}
           <div className="pt-4 border-t border-slate-100 text-center">
             <button
-              onClick={() => {
-                setMfaRequired(false);
-                setMfaCode('');
-                setErrorMsg(null);
-              }}
+              onClick={resetMfaState}
               className="text-xs font-bold text-slate-500 hover:text-blue-900 transition-colors cursor-pointer"
             >
               ← Zpět na zadání hesla

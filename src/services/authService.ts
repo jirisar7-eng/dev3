@@ -37,6 +37,8 @@ export class AuthService {
   }
 
   static generateToken(user: { id: string; role: string }, mfaVerified = false): string {
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'SYSTEM_ADMIN';
+    const expiresIn = isAdmin ? '2h' : '24h';
     return jwt.sign(
       {
         sub: user.id,
@@ -44,7 +46,7 @@ export class AuthService {
         mfaVerified,
       },
       JWT_SECRET,
-      { algorithm: 'HS256', expiresIn: '7d' }
+      { algorithm: 'HS256', expiresIn }
     );
   }
 
@@ -345,8 +347,7 @@ export class AuthService {
         }
         return null;
       } catch (err) {
-        console.error('getUserById error:', err);
-        throw new Error('DATABASE_UNAVAILABLE');
+        console.warn('[getUserById] Prisma query failed, falling back to dbStore');
       }
     }
     const found = dbStore.users.find((u) => u.id === id);
