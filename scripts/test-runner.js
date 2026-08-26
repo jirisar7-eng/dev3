@@ -6,7 +6,7 @@ console.log('--- TÁTA MÁ PRÁVO : TEST RUNNER ---');
 
 // Tests run directly on the host, outside Docker.
 // Never use the production JWT secret for the test suite.
-if (!process.env.JWT_SECRET) {
+if (true) {
   process.env.JWT_SECRET = 'test-only-not-a-production-secret';
 }
 

@@ -48,22 +48,40 @@ router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, a
 
     res.json(parsedData);
   } catch (err: any) {
-    console.error('AI Page Generation Error:', err);
-    res.status(500).json({ error: 'Chyba při generování stránky pomocí AI.', details: err?.message });
+    console.error('AI Page Generation Error:', err?.message || err);
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429 
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při generování stránky pomocí AI.'
+    });
   }
 });
 
+
+const SERVER_SCENARIOS: Record<string, { title: string, counterpartName: string }> = {
+  'predani-ditete': { title: 'Předávání dítěte u domu matky', counterpartName: 'Matka / Příbuzný' },
+  'vyslech-u-soudu': { title: 'Výslech u opatrovnického soudu', counterpartName: 'Soudce / Advokát matky' },
+  'jednani-ospod': { title: 'Jednání na OSPODu', counterpartName: 'Pracovnice OSPOD' }
+};
 // Chat endpoint for AiAssistantView, AiSimulatorView, AiFormsView
 router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
   try {
-    const { messages, mode, scenarioId, scenarioTitle, counterpartName } = req.body;
+    const { messages, mode, scenarioId } = req.body;
+
+    // Output length / input limits
+    if (messages && messages.length > 50) return res.status(400).json({ error: 'Příliš dlouhá historie konverzace.' });
+    if (JSON.stringify(messages).length > 50000) return res.status(400).json({ error: 'Překročena maximální velikost zprávy.' });
 
     // Server-side system instruction resolution (Security Hardening: Never trust client systemPrompt!)
     let systemInstruction = 'Jsi odborný AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené a konstruktivní rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.';
 
     if (mode === 'simulator' || scenarioId) {
-      const cName = counterpartName || 'protistrana';
-      const sTitle = scenarioTitle || 'opatrovnická komunikace';
+      const scenarioConfig = scenarioId ? SERVER_SCENARIOS[scenarioId as string] : null;
+      const cName = scenarioConfig ? scenarioConfig.counterpartName : 'protistrana';
+      const sTitle = scenarioConfig ? scenarioConfig.title : 'opatrovnická komunikace';
       systemInstruction = `Simuluješ hraní rolí (roleplay) pro opatrovnický trénink otců. Tvoje role je "${cName}" ve scénáři "${sTitle}". Reaguj realisticky, provokuj mírně emočně nebo věcně tak, jak se to stává v reálné opatrovnické praxi v ČR. Odpovídaj v češtině v 2-4 větách.`;
     } else if (mode === 'forms_refine' || mode === 'forms') {
       systemInstruction = 'Jsi vysoce kvalifikovaný právní asistent pro české opatrovnické právo, znalý MS ČR formulářů, Občanského zákoníku, z.ř.s. a o.s.ř. Pomáháš uživateli zpřesnit a vylepšit text právního návrhu.';
@@ -111,10 +129,18 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
+    if (!parsed.convertedMessage || typeof parsed.convertedMessage !== 'string') throw new Error('Invalid JSON schema returned from AI (missing convertedMessage)');
     res.json({ success: true, ...parsed });
   } catch (err: any) {
     console.error('BIFF Convert Error:', err?.message || err);
-    res.status(500).json({ error: 'Chyba při BIFF převodu. Zkuste to prosím znovu.' });
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429 
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při BIFF převodu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -141,10 +167,18 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
+    if (!parsed.summary || !Array.isArray(parsed.days1to7)) throw new Error('Invalid JSON schema returned from AI (Guide Plan)');
     res.json({ success: true, ...parsed });
   } catch (err: any) {
     console.error('Guide Plan Error:', err?.message || err);
-    res.status(500).json({ error: 'Chyba při generování akčního plánu. Zkuste to prosím znovu.' });
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429 
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při generování akčního plánu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -177,10 +211,18 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
+    if (!parsed.summary || !Array.isArray(parsed.contradictions)) throw new Error('Invalid JSON schema returned from AI (Analyze Document)');
     res.json({ success: true, ...parsed });
   } catch (err: any) {
     console.error('Analyze Document Error:', err?.message || err);
-    res.status(500).json({ error: 'Chyba při analýze dokumentu. Zkuste to prosím znovu.' });
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429 
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při analýze dokumentu. Zkuste to prosím znovu.'
+    });
   }
 });
 
@@ -207,10 +249,18 @@ Vystup ve formátu JSON:
     const rawResponse = await AiService.generateContent(prompt, { jsonMode: true });
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned);
+    if (typeof parsed.emotionalityScore !== 'number' || !Array.isArray(parsed.strengths)) throw new Error('Invalid JSON schema returned from AI (Simulator Evaluate)');
     res.json({ success: true, ...parsed });
   } catch (err: any) {
     console.error('Simulator Evaluate Error:', err?.message || err);
-    res.status(500).json({ error: 'Chyba při vyhodnocení simulace. Zkuste to prosím znovu.' });
+    const status = err?.status || (err?.message?.includes('429') ? 429 : err?.message?.includes('503') ? 503 : 500);
+    res.status(status).json({
+      error: status === 429 
+        ? 'Překročen limit dotazů na AI. Zkuste to prosím znovu za chvíli.'
+        : status === 503
+        ? 'AI služba je dočasně nedostupná. Zkuste to prosím znovu.'
+        : 'Chyba při vyhodnocení simulace. Zkuste to prosím znovu.'
+    });
   }
 });
 

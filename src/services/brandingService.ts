@@ -19,16 +19,15 @@ export class BrandingService {
     const version = await prisma.brandingVersion.findUnique({ where: { id: versionId } });
     if (!version) throw new Error("Version not found");
 
-    // Deactivate all
-    await prisma.brandingVersion.updateMany({
-      where: { isActive: true },
-      data: { isActive: false }
-    });
-
-    // Activate selected
-    return prisma.brandingVersion.update({
-      where: { id: versionId },
-      data: { isActive: true, updatedBy, updatedAt: new Date() }
+    return prisma.$transaction(async (tx) => {
+      await tx.brandingVersion.updateMany({
+        where: { isActive: true },
+        data: { isActive: false }
+      });
+      return tx.brandingVersion.update({
+        where: { id: versionId },
+        data: { isActive: true, updatedBy, updatedAt: new Date() }
+      });
     });
   }
 
@@ -54,23 +53,23 @@ export class BrandingService {
     });
     const nextVersion = (latest?.version || 0) + 1;
 
-    // Deactivate current
-    await prisma.brandingVersion.updateMany({
-      where: { isActive: true },
-      data: { isActive: false }
-    });
+    return prisma.$transaction(async (tx) => {
+      await tx.brandingVersion.updateMany({
+        where: { isActive: true },
+        data: { isActive: false }
+      });
 
-    // Create new
-    return prisma.brandingVersion.create({
-      data: {
-        version: nextVersion,
-        primaryLogoSvg: data.primaryLogoSvg,
-        darkLogoSvg: data.darkLogoSvg,
-        faviconSvg: data.faviconSvg,
-        logoAlt: data.logoAlt || 'Táta má právo',
-        isActive: true,
-        updatedBy
-      }
+      return tx.brandingVersion.create({
+        data: {
+          version: nextVersion,
+          primaryLogoSvg: data.primaryLogoSvg,
+          darkLogoSvg: data.darkLogoSvg,
+          faviconSvg: data.faviconSvg,
+          logoAlt: data.logoAlt || 'Táta má právo',
+          isActive: true,
+          updatedBy
+        }
+      });
     });
   }
 

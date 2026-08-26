@@ -561,19 +561,11 @@ Git diff / změny:
 ${truncatedDiff}`;
 
         let responseText = '';
-        try {
-          const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: prompt,
-          });
-          responseText = response.text || '';
-        } catch (gemini25Err) {
-          const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: prompt,
-          });
-          responseText = response.text || '';
-        }
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.6-flash',
+          contents: prompt,
+        });
+        responseText = response.text || '';
 
         const name = responseText.trim().replace(/^["'`]/, '').replace(/["'`]$/, '').trim();
         if (name.length > 0) {

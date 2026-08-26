@@ -334,7 +334,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 gap-2">
                   <span>{chatError}</span>
                   <button
-                    onClick={() => handleSendMessage()}
+                    onClick={() => handleSendMessage(undefined)}
                     className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs whitespace-nowrap shrink-0 flex items-center gap-1"
                   >
                     <RefreshCw className="w-3 h-3" />
