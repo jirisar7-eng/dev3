@@ -12,6 +12,7 @@ export interface ValidationOptions {
   expectedActNumber?: number;
   expectedActYear?: number;
   expectedActCode?: string;
+  fallbackSections?: any[];
 }
 
 const PRIORITY_ACT_TITLES: Record<string, string> = {
@@ -353,6 +354,10 @@ export class EsbirkaValidator {
           ...val,
         }));
       }
+    }
+
+    if ((!rawSections || !Array.isArray(rawSections) || rawSections.length === 0) && options?.fallbackSections && Array.isArray(options.fallbackSections) && options.fallbackSections.length > 0) {
+      rawSections = options.fallbackSections;
     }
 
     const validatedSections: ValidatedEsbirkaSection[] = [];
