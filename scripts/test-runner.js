@@ -30,6 +30,8 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/navigation-consolidation-phase02.test.ts'], name: 'Navigation Consolidation & Visibility (Phase 02)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03b.test.ts'], name: 'Admin Shell Information Architecture & RBAC (Phase 03B)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03c.test.ts'], name: 'Admin Shell Cleanup, Deep-Linking & Polish (Phase 03C)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04c.test.ts'], name: 'Team Center Foundation & Granular RBAC (Phase 04C)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04e-security-regression.test.ts'], name: 'Team Center Security Regression & Production Readiness (Phase 04E)' }
 ];
 
 let failed = false;

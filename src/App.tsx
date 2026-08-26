@@ -16,10 +16,11 @@ import { ComplianceModal } from './components/public/ComplianceModal';
 
 import { UserDashboard } from './components/private/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { TeamCenterDashboard } from './components/team/TeamCenterDashboard';
 
 import SupportUsPage from './pages/SupportUsPage';
 
-type AppView = 'public' | 'private' | 'admin' | 'login' | 'register';
+type AppView = 'public' | 'private' | 'team' | 'admin' | 'login' | 'register';
 
 function MainApp() {
   const initialPath = typeof window !== 'undefined' ? window.location.pathname : '/';
@@ -28,6 +29,7 @@ function MainApp() {
     if (path === '/login') return 'login';
     if (path === '/registrace' || path === '/register') return 'register';
     if (path === '/logout') return 'public';
+    if (path.startsWith('/team') || path.startsWith('/spolek')) return 'team';
     if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/pece') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
     if (path.startsWith('/administrace') || path.startsWith('/admin')) return 'admin';
     return 'public';
@@ -80,6 +82,10 @@ function MainApp() {
 
         {currentView === 'private' && (
           <UserDashboard currentPath={currentPath} onNavigate={handleNavigate} />
+        )}
+
+        {currentView === 'team' && (
+          <TeamCenterDashboard onNavigate={handleNavigate} />
         )}
 
         {currentView === 'admin' && <AdminDashboard currentPath={currentPath} onNavigate={handleNavigate} />}

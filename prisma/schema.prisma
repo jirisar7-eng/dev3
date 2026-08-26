@@ -31,9 +31,11 @@ enum AccountStatus {
 }
 
 model User {
-  supportTickets     SupportTicket[]
-  supportMessages    SupportTicketMessage[]
-  id                 String                 @id @default(uuid())
+  supportTickets           SupportTicket[]           @relation("UserTickets")
+  assignedTickets          SupportTicket[]           @relation("TicketAssignee")
+  assignedByTickets        SupportTicket[]           @relation("TicketAssigner")
+  supportMessages          SupportTicketMessage[]
+  id                       String                    @id @default(uuid())
   email              String                 @unique
   passwordHash       String?
   name               String
@@ -1895,17 +1897,29 @@ model QAAIStats {
 }
 
 model SupportTicket {
-  id          String                 @id @default(uuid())
-  subject     String
-  category    String
-  status      String                 @default("open") // open, in_progress, resolved
-  priority    String                 @default("normal") // low, normal, high
-  description String                 @db.Text
-  userId      String
-  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  messages    SupportTicketMessage[]
+  id                 String                 @id @default(uuid())
+  subject            String
+  category           String
+  status             String                 @default("open") // open, in_progress, resolved, closed
+  priority           String                 @default("normal") // low, normal, high
+  description        String                 @db.Text
+  userId             String
+  user               User                   @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+  assignedToId       String?
+  assignedTo         User?                  @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedAt         DateTime?
+  assignedById       String?
+  assignedBy         User?                  @relation("TicketAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  internalNotesCount Int                    @default(0)
+  lastActivityAt     DateTime               @default(now())
+  resolvedAt         DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  messages           SupportTicketMessage[]
+
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status, assignedToId])
 }
 
 model SupportTicketMessage {

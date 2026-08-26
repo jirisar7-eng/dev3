@@ -343,14 +343,26 @@ export async function seedDatabaseIfEmpty() {
       });
     }
 
-    // 2. Permissions
+    // 2. Granular Permissions (Phase 04B / 04C)
     const permissionsData = [
-      { key: 'users.manage', name: 'Správa uživatelů', category: 'AUTH', description: 'Změny rolí a správa účtů' },
+      { key: 'users.manage', name: 'Správa uživatelů', category: 'AUTH', description: 'Změny rolí a správa účtů (STRICT ADMIN ONLY)' },
       { key: 'content.publish', name: 'Publikování obsahu', category: 'CMS', description: 'Vytváření a úprava stránek a článků' },
       { key: 'legal.edit', name: 'Úprava právních dokumentů', category: 'COMPLIANCE', description: 'Verzování právních dokumentů a compliance' },
       { key: 'system.logs', name: 'Systémové logy', category: 'SYSTEM', description: 'Sledování technických logů a stavu systému' },
       { key: 'moderator.moderate', name: 'Moderace', category: 'MODERATION', description: 'Moderování komunitního obsahu' },
       { key: 'system.github.publish', name: 'Publikování na GitHub', category: 'SYSTEM', description: 'Nástroj pro přímé publikování zdrojového kódu na GitHub' },
+      // Team Center Granular Permissions
+      { key: 'team.access', name: 'Vstup do Team Centeru', category: 'TEAM', description: 'Základní přístup do spolkového centra pomoci a koordinace' },
+      { key: 'team.tickets.view_assigned', name: 'Čtení přiřazených tiketů', category: 'TICKETS', description: 'Zobrazení a správa vlastních přiřazených klientských požadavků' },
+      { key: 'team.tickets.view_all', name: 'Čtení celé fronty tiketů (Triage)', category: 'TICKETS', description: 'Přehled všech příchozích tiketů pro koordinaci a rozdělování' },
+      { key: 'team.tickets.reply', name: 'Odpovídání a interní poznámky', category: 'TICKETS', description: 'Odesílání odpovědí klientům a vedení interních záznamů' },
+      { key: 'team.tickets.assign', name: 'Přiřazování tiketů', category: 'TICKETS', description: 'Přiřazení a přerozdělení tiketů konkrétním mentorům a dobrovolníkům' },
+      { key: 'team.tickets.close', name: 'Uzavírání tiketů', category: 'TICKETS', description: 'Označení tiketu za vyřešený nebo uzavřený' },
+      { key: 'team.moderation.subjects', name: 'Schvalování institucí a pracovníků', category: 'MODERATION', description: 'Ověřování a schvalování navržených soudů, OSPOD a pracovníků' },
+      { key: 'team.moderation.reviews', name: 'Moderace recenzí', category: 'MODERATION', description: 'Schvalování a správa uživatelských hodnocení' },
+      { key: 'team.volunteers.view', name: 'Přehled dobrovolnické sítě', category: 'VOLUNTEERS', description: 'Zobrazení přihlášek dobrovolníků a ověření kodexů' },
+      { key: 'team.knowledge.view', name: 'Čtení týmové znalostní báze', category: 'KNOWLEDGE', description: 'Přístup k interním metodickým postupům a krizovým manuálům' },
+      { key: 'team.knowledge.edit', name: 'Úprava týmové znalostní báze', category: 'KNOWLEDGE', description: 'Tvorba a aktualizace interních návodů a metodik' },
     ];
 
     for (const p of permissionsData) {
@@ -361,14 +373,38 @@ export async function seedDatabaseIfEmpty() {
       });
     }
 
-    // Link Roles with Permissions
+    // Link Roles with Permissions (Granular Least Privilege Model)
     const rolePermissionMap: Record<string, string[]> = {
-      SUPER_ADMIN: ['users.manage', 'content.publish', 'legal.edit', 'system.logs', 'moderator.moderate', 'system.github.publish'],
-      SYSTEM_ADMIN: ['users.manage', 'content.publish', 'legal.edit', 'system.logs'],
-      CONTENT_MANAGER: ['content.publish'],
-      LEGAL_EDITOR: ['legal.edit'],
-      MODERATOR: ['moderator.moderate'],
-      ADMIN: ['users.manage', 'content.publish', 'legal.edit'],
+      SUPER_ADMIN: [
+        'users.manage', 'content.publish', 'legal.edit', 'system.logs', 'moderator.moderate', 'system.github.publish',
+        'team.access', 'team.tickets.view_assigned', 'team.tickets.view_all', 'team.tickets.reply', 'team.tickets.assign', 'team.tickets.close',
+        'team.moderation.subjects', 'team.moderation.reviews', 'team.volunteers.view', 'team.knowledge.view', 'team.knowledge.edit'
+      ],
+      SYSTEM_ADMIN: [
+        'users.manage', 'content.publish', 'legal.edit', 'system.logs',
+        'team.access', 'team.tickets.view_assigned', 'team.tickets.view_all', 'team.tickets.reply', 'team.tickets.assign', 'team.tickets.close',
+        'team.moderation.subjects', 'team.moderation.reviews', 'team.volunteers.view', 'team.knowledge.view', 'team.knowledge.edit'
+      ],
+      ADMIN: [
+        'users.manage', 'content.publish', 'legal.edit', 'system.logs', 'moderator.moderate',
+        'team.access', 'team.tickets.view_assigned', 'team.tickets.view_all', 'team.tickets.reply', 'team.tickets.assign', 'team.tickets.close',
+        'team.moderation.subjects', 'team.moderation.reviews', 'team.volunteers.view', 'team.knowledge.view', 'team.knowledge.edit'
+      ],
+      CONTENT_MANAGER: [
+        'content.publish', 'team.access', 'team.knowledge.view', 'team.knowledge.edit'
+      ],
+      LEGAL_EDITOR: [
+        'legal.edit', 'content.publish', 'team.access', 'team.knowledge.view', 'team.knowledge.edit'
+      ],
+      MODERATOR: [
+        'moderator.moderate', 'team.access', 'team.moderation.subjects', 'team.moderation.reviews', 'team.knowledge.view'
+      ],
+      VOLUNTEER: [
+        'team.access', 'team.tickets.view_assigned', 'team.tickets.reply', 'team.knowledge.view'
+      ],
+      VERIFIED_CONTRIBUTOR: [
+        'team.access', 'team.knowledge.view'
+      ],
     };
 
     for (const [roleKey, permKeys] of Object.entries(rolePermissionMap)) {

@@ -18,11 +18,12 @@ import {
   LogOut,
   Briefcase,
   Globe,
+  Users,
 } from 'lucide-react';
 
 interface HeaderProps {
-  currentView: 'public' | 'private' | 'admin';
-  setCurrentView: (view: 'public' | 'private' | 'admin') => void;
+  currentView: 'public' | 'private' | 'team' | 'admin';
+  setCurrentView: (view: 'public' | 'private' | 'team' | 'admin') => void;
   currentPath?: string;
   onNavigate?: (path: string) => void;
 }
@@ -66,10 +67,17 @@ export const Header: React.FC<HeaderProps> = ({
   const isAuthorizedAdmin =
     hasRole('ADMIN') ||
     hasRole('SUPER_ADMIN') ||
-    hasRole('SYSTEM_ADMIN') ||
+    hasRole('SYSTEM_ADMIN');
+
+  const isAuthorizedTeam =
+    hasRole('VOLUNTEER') ||
+    hasRole('VERIFIED_CONTRIBUTOR') ||
     hasRole('MODERATOR') ||
     hasRole('LEGAL_EDITOR') ||
-    hasRole('CONTENT_MANAGER');
+    hasRole('CONTENT_MANAGER') ||
+    hasRole('ADMIN') ||
+    hasRole('SUPER_ADMIN') ||
+    hasRole('SYSTEM_ADMIN');
 
   const effectiveNavItems = navItems && navItems.length > 0 ? navItems : FALLBACK_NAV_ITEMS;
 
@@ -447,6 +455,20 @@ export const Header: React.FC<HeaderProps> = ({
                         <UserIcon className="w-4 h-4 text-slate-600" />
                         <span>Můj profil</span>
                       </button>
+                      {isAuthorizedTeam && (
+                        <button
+                          id="header-mobile-user-link-team"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            if (onNavigate) onNavigate('/team');
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-blue-700 cursor-pointer"
+                        >
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <span>Team Center (Spolek)</span>
+                        </button>
+                      )}
                       {isAuthorizedAdmin && (
                         <button
                           id="header-mobile-user-link-admin"
@@ -589,6 +611,24 @@ export const Header: React.FC<HeaderProps> = ({
                     <UserIcon className="w-3.5 h-3.5" />
                     <span>Můj Portál</span>
                   </button>
+                  {isAuthorizedTeam && (
+                    <button
+                      id="header-layer-team-btn"
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('team');
+                        if (onNavigate) onNavigate('/team');
+                      }}
+                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                        currentView === 'team'
+                          ? 'bg-blue-800 text-white font-semibold shadow-xs'
+                          : 'text-blue-700 hover:bg-blue-50'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Team</span>
+                    </button>
+                  )}
                   {isAuthorizedAdmin && (
                     <button
                       id="header-layer-admin-btn"
@@ -668,6 +708,21 @@ export const Header: React.FC<HeaderProps> = ({
                         <UserIcon className="w-4 h-4 text-slate-600" />
                         <span>Můj profil (správa účtu)</span>
                       </button>
+
+                      {isAuthorizedTeam && (
+                        <button
+                          id="header-user-dropdown-team"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            if (onNavigate) onNavigate('/team');
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium text-blue-700 cursor-pointer"
+                        >
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <span>Team Center (Spolek)</span>
+                        </button>
+                      )}
 
                       {isAuthorizedAdmin && (
                         <button
