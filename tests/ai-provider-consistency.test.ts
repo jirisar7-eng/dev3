@@ -243,7 +243,7 @@ describe('P0.1: AI Provider Consistency Hardening & Failover Test Suite', () => 
     globalThis.fetch = async (url: any, init: any): Promise<any> => {
       fetchCallCount++;
       const body = JSON.parse(init.body);
-      if (body.model === 'grok-2-latest') {
+      if (body.model === 'grok-2-1212') {
         // Grok fails too
         return {
           ok: false,
