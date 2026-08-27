@@ -201,6 +201,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     });
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
     assert.ok([500, 429].includes(res.status), `Expected 500 or 429, got ${res.status}`);
+    if (res.status === 500) assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
   });
 
   test('TEST 10: Analyze Document fails if a contradiction exactQuote is empty', async () => {
@@ -213,6 +214,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     });
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
     assert.ok([500, 429].includes(res.status), `Expected 500 or 429, got ${res.status}`);
+    if (res.status === 500) assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
   });
 
   test('TEST 11: Analyze Document fails if summaryQuote contains an empty string', async () => {
@@ -223,5 +225,6 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     });
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: 'Nějaký text.' });
     assert.ok([500, 429].includes(res.status), `Expected 500 or 429, got ${res.status}`);
+    if (res.status === 500) assert.strictEqual(res.body.error, 'Chyba při analýze dokumentu. Zkuste to prosím znovu.');
   });
 });
