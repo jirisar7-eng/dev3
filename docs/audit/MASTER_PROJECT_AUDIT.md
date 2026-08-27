@@ -216,3 +216,14 @@ Těchto 15+ "behind" větví lze nyní považovat za historické artefakty zral�
 - DELETE CANDIDATE: `release/analytics-2026-08-25` (HEAD: 017222f, Behind: 40)
 - KEEP: `test/coderabbit-review` (HEAD: 1140005, Ahead: 1, Behind: 49)
 
+
+---
+## 12. PHASE 18B INTEGRATION (2026-08-27)
+
+- **Phase 18B Integrated**: Secure Storage Foundation
+- **PR Number**: #14 (from `feature/phase-18b-secure-storage` to `main`)
+- **New Main SHA**: `fead624950ae0abdb665c52d840882136240e67b`
+- **Test Results**: PASS (100% pass rate in `offline-security.test.ts` integration and fail-closed scenarios)
+- **Crypto/Security Status**: PASS (AES-GCM 256-bit encryption with PBKDF2 derived in-memory keys, tamper-evident and fail-closed architecture confirmed)
+- **Known Limitations**: PBKDF2 derived from a weak numerical PIN is susceptible to brute force attacks on a compromised full disk image. This is standard and acceptable for offline mode.
+- **Next Steps**: Offline Case Mode UI and server-side snapshot synchronization are NOT yet implemented (to be handled in future phases).
