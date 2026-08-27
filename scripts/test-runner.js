@@ -34,6 +34,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04e-security-regression.test.ts'], name: 'Team Center Security Regression & Production Readiness (Phase 04E)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/auth-remediation-phase05b.test.ts'], name: 'Auth, Session & MFA Security Remediation & Isolation (Phase 05B)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/public-navigation-phase06b.test.ts'], name: 'Public Navigation Unification & Legacy Merge Fix (Phase 06B)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-security.test.ts'], name: 'Secure Offline Storage Foundation (Phase 18B)' }
 ];
 
 let failed = false;
