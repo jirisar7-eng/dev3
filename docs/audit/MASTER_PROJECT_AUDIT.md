@@ -192,3 +192,27 @@ Proces bezpečné Git konsolidace úspěšně dokončen (viz `BRANCH_MERGE_RECOM
 Těchto 15+ "behind" větví lze nyní považovat za historické artefakty zralé ke smazání či archivaci.
 
 ---
+
+## 11. POST-MERGE BRANCH AUDIT (2026-08-27)
+- ARCHIVE CANDIDATE: `backup/pre-security-audit-2026-08-14` (HEAD: a9c3ee6, Ahead: 64, Behind: 262)
+- DELETE CANDIDATE: `feat/ai-provider-consistency` (HEAD: eb4fee9, Behind: 38)
+- DELETE CANDIDATE: `feat/analytics-2-user-journey` (HEAD: 017222f, Behind: 40)
+- DELETE CANDIDATE: `feat/analytics-system` (HEAD: 753d9b5, Behind: 42)
+- KEEP: `feature/careplan-type-idempotent-sync-fix` (HEAD: 158f57e, Ahead: 1, Behind: 72)
+- DELETE CANDIDATE: `feature/central-judgment-case-integration` (HEAD: 1824680, Behind: 73)
+- DELETE CANDIDATE: `feature/dev-personal-themes` (HEAD: 744f1b3, Behind: 64)
+- DELETE CANDIDATE: `feature/judgment-extractor-case-sync` (HEAD: 0dde6d5, Behind: 80)
+- DELETE CANDIDATE: `feature/judgment-extractor-local-fallback` (HEAD: 1bc9d21, Behind: 77)
+- DELETE CANDIDATE: `feature/map-geocoding-fixes` (HEAD: e37456d, Behind: 133)
+- DELETE CANDIDATE: `feature/navigation-reorganization` (HEAD: 3e5da34, Behind: 182)
+- KEEP: `feature/phase-12-reintegrated` (HEAD: 6681080, Ahead: 1, Behind: 146)
+- DELETE CANDIDATE: `feature/puck-adapter-layer` (HEAD: 6899cd9, Behind: 227)
+- DELETE CANDIDATE: `feature/state-admin-ares` (HEAD: d64a015, Behind: 208)
+- DELETE CANDIDATE: `feature/subject-registry-moderation` (HEAD: a9b39c3, Behind: 116)
+- DELETE CANDIDATE: `fix/responsive-tablet-navigation` (HEAD: da81404, Behind: 205)
+- DELETE CANDIDATE: `fix/security-fail-closed-permission` (HEAD: af18b2f, Behind: 43)
+- ARCHIVE CANDIDATE: `fix/security-hardening` (HEAD: 220a444, Ahead: 66, Behind: 262)
+- DELETE CANDIDATE: `migration/missing-functions-2026-08-20` (HEAD: 3df9778, Behind: 185)
+- DELETE CANDIDATE: `release/analytics-2026-08-25` (HEAD: 017222f, Behind: 40)
+- KEEP: `test/coderabbit-review` (HEAD: 1140005, Ahead: 1, Behind: 49)
+
