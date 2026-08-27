@@ -19,6 +19,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { TeamCenterDashboard } from './components/team/TeamCenterDashboard';
 
 import SupportUsPage from './pages/SupportUsPage';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 type AppView = 'public' | 'private' | 'team' | 'admin' | 'login' | 'register';
 
@@ -102,6 +103,7 @@ function MainApp() {
         activeDocKey={activeComplianceDoc}
         onClose={() => setActiveComplianceDoc(null)}
       />
+      <PWAInstallPrompt />
     </div>
   );
 }
