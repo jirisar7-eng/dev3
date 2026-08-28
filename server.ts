@@ -3012,6 +3012,48 @@ app.get('/api/admin/github/suggest-push-name', requireAuth as any, requireGithub
   }
 });
 
+// --- COPILOT CONTROL PLANE GITHUB ENDPOINTS ---
+
+app.post('/api/admin/github/copilot/branch', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName } = req.body;
+    const result = await GithubPublisherService.createCopilotBranch(req.user!, branchName, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/github/copilot/push', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName, commitMessage } = req.body;
+    const result = await GithubPublisherService.publishCopilotBranch(req.user!, branchName, commitMessage, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/github/copilot/pr', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName, title, body } = req.body;
+    const result = await GithubPublisherService.createPullRequest(req.user!, branchName, title, body, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/github/copilot/ci-status', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const branchName = req.query.branchName as string;
+    const result = await GithubPublisherService.getCiStatus(req.user!, branchName, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // --- PRIVATE USER PORTAL API ENDPOINTS ---
 
 // User Profile

@@ -53,7 +53,7 @@ function isForbiddenFile(filePath: string): boolean {
   return FORBIDDEN_SECRET_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
-function redactToken(input: string, token?: string): string {
+export function redactToken(input: string, token?: string): string {
   if (!input) return '';
   let result = input;
   if (token && token.trim().length > 0) {
@@ -508,6 +508,281 @@ export class GithubPublisherService {
       );
 
       throw new Error(`Chyba při spouštění FORCE PUSH na GitHub: ${safeErrorMsg}`);
+    }
+  }
+
+  public static validateCopilotBranch(branch: string) {
+    if (!branch) throw new Error('Zadejte název větve.');
+    if (!/^copilot\/[a-zA-Z0-9\-_]+$/.test(branch)) {
+      throw new Error('Neplatný název větve. Povolený formát: copilot/<nazev> (pouze alfanumerické znaky, pomlčky, podtržítka).');
+    }
+  }
+
+  public static async createCopilotBranch(
+    user: User,
+    branchName: string,
+    ipAddress: string = '127.0.0.1'
+  ): Promise<{ branch: string; baseSha: string; message: string }> {
+    this.validateCopilotBranch(branchName);
+    const workDir = this.resolveWorkDir();
+    await this.ensureGitRepo(workDir);
+
+    const token = this.getToken();
+    if (!token) throw new Error('GITHUB_TOKEN není nastaven v prostředí serveru.');
+
+    try {
+      // 1. Fetch remote main state
+      const remoteUrl = `https://${token}@github.com/${this.getRepo()}.git`;
+      await execFileAsync('git', ['fetch', remoteUrl, 'main'], { cwd: workDir });
+
+      // 2. Get base SHA from origin/main
+      const { stdout: shaOut } = await execFileAsync('git', ['rev-parse', 'FETCH_HEAD'], { cwd: workDir });
+      const baseSha = shaOut.trim();
+
+      // 3. Create branch from baseSha (fail-closed if exists via -b instead of -B)
+      try {
+        await execFileAsync('git', ['checkout', '-b', branchName, baseSha], { cwd: workDir });
+      } catch (checkoutErr: any) {
+        throw new Error(`Nelze vytvořit větev '${branchName}'. Pravděpodobně již existuje nebo je neplatná.`);
+      }
+
+      await AuditService.recordLog(
+        'GITHUB_BRANCH_CREATED',
+        'SYSTEM',
+        `Vytvořena Copilot větev '${branchName}' z base SHA: ${baseSha}`,
+        user,
+        ipAddress
+      );
+
+      return {
+        branch: branchName,
+        baseSha,
+        message: `Izolovaná větev ${branchName} byla úspěšně vytvořena.`,
+      };
+    } catch (err: any) {
+      const rawError = err.stderr || err.message || '';
+      const safeErrorMsg = redactToken(rawError, token);
+      console.error('[GithubPublisherService] createCopilotBranch failed:', safeErrorMsg);
+      throw new Error(`Chyba při vytváření větve: ${safeErrorMsg}`);
+    }
+  }
+
+  public static async publishCopilotBranch(
+    user: User,
+    branchName: string,
+    commitMessage: string,
+    ipAddress: string = '127.0.0.1'
+  ): Promise<PublishResult> {
+    this.validateCopilotBranch(branchName);
+
+    const cleanMsg = (commitMessage || '').trim();
+    if (!cleanMsg) {
+      throw new Error('Zadejte zprávu k commitu.');
+    }
+    if (cleanMsg.length > 500) {
+      throw new Error('Zpráva k commitu je příliš dlouhá (maximálně 500 znaků).');
+    }
+
+    const token = this.getToken();
+    if (!token) throw new Error('GITHUB_TOKEN není nastaven v prostředí serveru.');
+
+    const workDir = this.resolveWorkDir();
+    await this.ensureGitRepo(workDir);
+
+    const statusResult = await this.getStatus();
+    
+    // Prevent push if not on the correct branch
+    if (statusResult.currentBranch !== branchName) {
+      throw new Error(`Pracovní adresář není na větvi '${branchName}'. Aktuální větev: '${statusResult.currentBranch}'.`);
+    }
+
+    if (statusResult.secretRiskDetected) {
+      const forbiddenList = statusResult.forbiddenFiles.join(', ');
+      await AuditService.recordLog(
+        'GITHUB_PUSH_BLOCKED_SECURITY',
+        'SYSTEM',
+        `PUSH ZASTAVEN! Riziko úniku tajných údajů (copilot branch). Soubory: ${forbiddenList}`,
+        user,
+        ipAddress
+      );
+      throw new Error(
+        `BEZPEČNOSTNÍ ZASTAVENÍ PUSH: Detekovány soubory s citlivými údaji (${forbiddenList}).`
+      );
+    }
+
+    if (statusResult.clean) {
+      throw new Error('Pracovní adresář je čistý (žádné změny).');
+    }
+
+    // Get current base SHA before committing (for rollback purposes)
+    const { stdout: baseShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+    const baseSha = baseShaOut.trim();
+
+    try {
+      await execFileAsync('git', ['add', '-A'], { cwd: workDir });
+      await execFileAsync('git', ['commit', '-m', cleanMsg], { cwd: workDir });
+
+      const { stdout: commitShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+      const commitSha = commitShaOut.trim();
+
+      const repo = this.getRepo();
+      const remoteUrl = `https://${token}@github.com/${repo}.git`;
+
+      // Non-force push to specific feature branch only
+      await execFileAsync('git', ['push', remoteUrl, `${branchName}:${branchName}`], { cwd: workDir });
+
+      const auditLog = await AuditService.recordLog(
+        'GITHUB_COMMIT_CREATED', // Combined push and commit success
+        'SYSTEM',
+        `Úspěšný PUSH do větve ${branchName}. Commit: ${commitSha}, Base: ${baseSha}, Zpráva: "${cleanMsg}"`,
+        user,
+        ipAddress
+      );
+
+      return {
+        success: true,
+        commitMessage: cleanMsg,
+        changedFilesCount: statusResult.fileCount,
+        timestamp: new Date().toISOString(),
+        auditId: auditLog.id,
+        message: `Změny byly úspěšně odeslány do větve ${branchName}.`,
+      };
+    } catch (err: any) {
+      const rawError = err.stderr || err.message || '';
+      const safeErrorMsg = redactToken(rawError, token);
+
+      // Rollback to baseSha to keep working directory safe and consistent
+      try {
+        await execFileAsync('git', ['reset', '--soft', baseSha], { cwd: workDir });
+        console.log(`[GithubPublisherService] Rolled back to ${baseSha} successfully.`);
+      } catch (rollbackErr: any) {
+        console.error(`[GithubPublisherService] Rollback to ${baseSha} failed!`, rollbackErr);
+      }
+
+      await AuditService.recordLog(
+        'GITHUB_PUSH_FAILED',
+        'SYSTEM',
+        `Push na větev ${branchName} selhal. Proveden reset na base: ${baseSha}. Chyba: ${safeErrorMsg.substring(0, 300)}`,
+        user,
+        ipAddress
+      );
+
+      throw new Error(`Publikování selhalo. Kód byl bezpečně vrácen před commit. Chyba: ${safeErrorMsg}`);
+    }
+  }
+
+  public static async createPullRequest(
+    user: User,
+    branchName: string,
+    title: string,
+    body: string,
+    ipAddress: string = '127.0.0.1'
+  ): Promise<{ success: boolean; prNumber: number; prUrl: string; message: string }> {
+    this.validateCopilotBranch(branchName);
+    
+    if (!title || !title.trim()) {
+      throw new Error('Zadejte titulek pro Pull Request.');
+    }
+
+    const repo = this.getRepo();
+    const token = this.getToken();
+    
+    if (!token) throw new Error('GITHUB_TOKEN není nastaven v prostředí serveru.');
+
+    try {
+      const response = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'AI-Studio-Admin-Copilot'
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: body ? body.trim() : '',
+          head: branchName,
+          base: 'main'
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        let msg = data.message;
+        if (data.errors && data.errors.length > 0) {
+           msg += ' (' + data.errors.map((e: any) => e.message).join(', ') + ')';
+        }
+        throw new Error(msg);
+      }
+
+      await AuditService.recordLog(
+        'GITHUB_PR_CREATED',
+        'SYSTEM',
+        `Vytvořen Pull Request #${data.number} (head: ${branchName}, base: main). Název: "${title}"`,
+        user,
+        ipAddress
+      );
+
+      return {
+        success: true,
+        prNumber: data.number,
+        prUrl: data.html_url,
+        message: `Pull Request #${data.number} byl úspěšně vytvořen.`
+      };
+    } catch (err: any) {
+      const safeErrorMsg = redactToken(err.message || 'Neznámá chyba REST API', token);
+      await AuditService.recordLog(
+        'GITHUB_PR_FAILED',
+        'SYSTEM',
+        `Selhalo vytvoření PR z ${branchName}. Chyba: ${safeErrorMsg.substring(0, 300)}`,
+        user,
+        ipAddress
+      );
+      throw new Error(`Selhalo vytvoření Pull Requestu: ${safeErrorMsg}`);
+    }
+  }
+
+  public static async getCiStatus(
+    user: User,
+    branchName: string,
+    ipAddress: string = '127.0.0.1'
+  ): Promise<any> {
+    if (!/^copilot\/[a-zA-Z0-9\-_]+$/.test(branchName) && branchName !== 'main') {
+      throw new Error('Neplatný název větve pro kontrolu stavu.');
+    }
+
+    const repo = this.getRepo();
+    const token = this.getToken();
+    if (!token) throw new Error('GITHUB_TOKEN není nastaven v prostředí serveru.');
+
+    try {
+      const response = await fetch(`https://api.github.com/repos/${repo}/commits/${branchName}/check-runs`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'AI-Studio-Admin-Copilot'
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Chyba API');
+      }
+
+      return {
+        success: true,
+        total_count: data.total_count,
+        check_runs: data.check_runs.map((cr: any) => ({
+          name: cr.name,
+          status: cr.status,
+          conclusion: cr.conclusion,
+          html_url: cr.html_url
+        }))
+      };
+    } catch (err: any) {
+      const safeErrorMsg = redactToken(err.message, token);
+      throw new Error(`Chyba při čtení CI stavu: ${safeErrorMsg}`);
     }
   }
 
