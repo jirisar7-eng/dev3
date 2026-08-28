@@ -10,16 +10,16 @@ console.log('--- PUCK P0 /cesta-zakladatele TESTS ---');
 console.log('=============================================================');
 
 const wrapWithProvider = (element: React.ReactElement) => {
-  return <TextProvider>{element}</TextProvider>;
+  return React.createElement(TextProvider, null, element);
 };
 
 async function runFounderStoryTests() {
   // Test 1: Fallback to original FounderStoryPage when Flag is OFF
-  const fallbackHtml = renderToStaticMarkup(wrapWithProvider(<FounderStoryPage />));
-  assert.ok(fallbackHtml.includes('Cesta zakladatele projektu'), 'Should render original FounderStoryPage title');
-  assert.ok(fallbackHtml.includes('Synthesis OS • Osobní příběh &amp; mise') || fallbackHtml.includes('Synthesis OS • Osobní příběh & mise'), 'Should render original banner badge');
-  assert.ok(fallbackHtml.includes('Když se zhroutí jistoty'), 'Should render Section 1');
-  assert.ok(fallbackHtml.includes('Vize Synthesis OS'), 'Should render Section 3');
+  const fallbackHtml = renderToStaticMarkup(wrapWithProvider(React.createElement(FounderStoryPage)));
+  assert.ok(fallbackHtml.includes('Moje cesta zakladatele'), 'Should render original FounderStoryPage title');
+  assert.ok(fallbackHtml.includes('Osobní příběh zakladatele'), 'Should render original banner badge');
+  assert.ok(fallbackHtml.includes('Proč právě Táta má právo'), 'Should render Section 1');
+  assert.ok(fallbackHtml.includes('Od osobního problému k nástroji pro ostatní'), 'Should render Section 3');
   console.log('✅ Test 1 Passed: Original FounderStoryPage fallback renders completely');
 
   // Test 2: Validation of Puck JSON structure for cesta-zakladatele
@@ -95,7 +95,7 @@ async function runFounderStoryTests() {
   console.log('✅ Test 2 Passed: Cesta zakladatele Puck data structure is valid');
 
   // Test 3: Static rendering of Puck blocks via PageRender
-  const puckHtml = renderToStaticMarkup(wrapWithProvider(<PageRender data={founderPuckData} />));
+  const puckHtml = renderToStaticMarkup(wrapWithProvider(React.createElement(PageRender, { data: founderPuckData as any })));
   assert.ok(puckHtml.includes('Cesta zakladatele projektu'), 'Puck render must include hero title');
   assert.ok(puckHtml.includes('Synthesis OS'), 'Puck render must include badge');
   assert.ok(puckHtml.includes('Právní jistota &amp; fakta') || puckHtml.includes('Právní jistota & fakta'), 'Puck render must include columns block');
