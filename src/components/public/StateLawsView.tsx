@@ -104,7 +104,11 @@ interface StateAdminResult<T> {
 
 type WordingMode = 'current' | 'date' | 'history';
 
-export const StateLawsView: React.FC = () => {
+interface StateLawsViewProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const StateLawsView: React.FC<StateLawsViewProps> = ({ onNavigate }) => {
   const [activePortalTab, setActivePortalTab] = useState<'laws' | 'bills'>('laws');
   const [laws, setLaws] = useState<LegalAct[]>([]);
   const [selectedLawCode, setSelectedLawCode] = useState<string | null>(null);
@@ -1047,6 +1051,34 @@ export const StateLawsView: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Bottom Cross-links Banner */}
+      <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+        <div>
+          <h4 className="font-bold text-slate-900 text-sm">Navazující právní nástroje a judikatura</h4>
+          <p className="text-xs text-slate-500 mt-0.5">Využijte paragrafy v judikatuře Ústavního soudu, kalkulačce nebo AI generátoru podání.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/judikatura'); else window.location.href = '/judikatura'; }}
+            className="px-3.5 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Judikatura ÚS ČR
+          </button>
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/kalkulacka-vyzivneho'); else window.location.href = '/kalkulacka-vyzivneho'; }}
+            className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Kalkulačka výživného
+          </button>
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/ai-formulare'); else window.location.href = '/ai-formulare'; }}
+            className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            AI Generátor podání
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

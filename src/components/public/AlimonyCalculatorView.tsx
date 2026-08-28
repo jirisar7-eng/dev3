@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { SeoHead } from './SeoHead';
 import { calculateChildSupport, AlimonyInput, ChildInput, AlimonyResult, AgeGroup } from '../../utils/alimonyCalculator';
-import { Calculator, AlertTriangle, Info, RefreshCw, ChevronRight, User, Plus, Trash2 } from 'lucide-react';
+import { Calculator, AlertTriangle, Info, RefreshCw, ChevronRight, User, Plus, Trash2, FileText, Bot, ArrowRight, BookOpen } from 'lucide-react';
 import { analytics } from '../../lib/analyticsClient';
 
-export const AlimonyCalculatorView: React.FC = () => {
+interface AlimonyCalculatorViewProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const AlimonyCalculatorView: React.FC<AlimonyCalculatorViewProps> = ({ onNavigate }) => {
   useEffect(() => {
     analytics.trackFeature('alimony_calculator', 'feature_open');
   }, []);
+
+  const handleNav = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      window.location.href = path;
+    }
+  };
 
   const [netIncome, setNetIncome] = useState<string>('');
   const [otherObligations, setOtherObligations] = useState<number>(0);
@@ -259,6 +271,57 @@ export const AlimonyCalculatorView: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Next Steps & Interconnections */}
+            <div className="mt-8 pt-6 border-t border-slate-200 space-y-4">
+              <h4 className="font-black text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600" />
+                Navazující kroky a využití výsledku
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem(
+                      'tatovapravo_form_context',
+                      JSON.stringify({
+                        templateId: 'zmena-vyzivneho',
+                        customPrompt: `Požadavek na úpravu výživného podle doporučujících tabulek MS ČR. Můj čistý měsíční příjem činí ${netIncome} Kč, počet dětí: ${result.childrenResults.length}, orientační celková výše výživného: ${result.totalFinalAmount.toLocaleString('cs-CZ')} Kč.`
+                      })
+                    );
+                    handleNav('/ai-formulare');
+                  }}
+                  className="p-4 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-left transition-colors cursor-pointer group"
+                >
+                  <div className="font-bold text-xs text-blue-900 flex items-center justify-between mb-1">
+                    <span>Generovat návrh na změnu výživného</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-blue-600 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <p className="text-[11px] text-blue-700 leading-relaxed">
+                    Předvyplnit vypočtené hodnoty do soudního návrhu s citací § 910 a násl. občanského zákoníku.
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem(
+                      'ai_assistant_initial_prompt',
+                      `Dobrý den, provedl jsem orientační výpočet výživného pro ${result.childrenResults.length} dětí s čistým příjmem ${netIncome} Kč. Vypočtená částka je ${result.totalFinalAmount.toLocaleString('cs-CZ')} Kč. Jaké další okolnosti (např. majetkové poměry druhého rodiče, specifické potřeby dětí) soudy zkoumají?`
+                    );
+                    handleNav('/ai-asistent');
+                  }}
+                  className="p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-left transition-colors cursor-pointer group"
+                >
+                  <div className="font-bold text-xs text-indigo-900 flex items-center justify-between mb-1">
+                    <span>Konzultovat s AI Opatrovnickým asistentem</span>
+                    <Bot className="w-3.5 h-3.5 text-indigo-600" />
+                  </div>
+                  <p className="text-[11px] text-indigo-700 leading-relaxed">
+                    Položit dotaz k výpočtu, kontrolní částce nebo judikatuře Ústavního soudu k výživnému.
+                  </p>
+                </button>
+              </div>
+            </div>
           </div>
           
           <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-center">
@@ -289,6 +352,34 @@ export const AlimonyCalculatorView: React.FC = () => {
           Zdroj: <a href="https://vyzivne.justice.cz/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">vyzivne.justice.cz</a>. 
           Všechny výpočty probíhají bezpečně pouze ve vašem zařízení (offline-first).
         </p>
+      </div>
+
+      {/* Cross links */}
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 className="font-bold text-slate-900 text-sm">Související právní témata</h4>
+          <p className="text-xs text-slate-500 mt-0.5">Vypořádání majetku, judikatura Ústavního soudu a znění zákonů.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleNav('/majetek')}
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Majetek & SJM
+          </button>
+          <button
+            onClick={() => handleNav('/judikatura')}
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Judikatura k výživnému
+          </button>
+          <button
+            onClick={() => handleNav('/state-laws')}
+            className="px-3 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Občanský zákoník (§ 910)
+          </button>
+        </div>
       </div>
     </div>
   );

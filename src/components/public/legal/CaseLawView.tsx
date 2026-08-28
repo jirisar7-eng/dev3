@@ -11,7 +11,11 @@ import {
   Sparkles,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Bot,
+  FileText,
+  ArrowRight,
+  Calculator
 } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
 
@@ -323,7 +327,7 @@ export const CaseLawView: React.FC<CaseLawViewProps> = ({ onNavigate }) => {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-[10px] text-slate-400 font-bold uppercase">Klíčová slova:</span>
                       {ruling.keywords.map((kw, kIdx) => (
@@ -333,23 +337,86 @@ export const CaseLawView: React.FC<CaseLawViewProps> = ({ onNavigate }) => {
                       ))}
                     </div>
 
-                    {ruling.nalusUrl && (
-                      <a
-                        href={ruling.nalusUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'ai_assistant_initial_prompt',
+                            `Dobrý den, potřebuji analyzovat použitelnost nálezu Ústavního soudu ${ruling.spZn} (${ruling.title}) pro mou situaci u opatrovnického soudu a OSPOD. Klíčová právní věta: ${ruling.legalSentence}`
+                          );
+                          if (onNavigate) onNavigate('/ai-asistent');
+                          else window.location.href = '/ai-asistent';
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
-                        <span>Zobrazit v databázi NALUS</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    )}
+                        <Bot className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Konzultovat s AI</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'tatovapravo_form_context',
+                            JSON.stringify({
+                              templateId: ruling.category === 'stridava-pece' ? 'stridava-pece' : 'vyjadreni-ospod',
+                              customPrompt: `Zapracovat judikaturu ${ruling.spZn} (${ruling.title}). Citace: ${ruling.legalSentence}`
+                            })
+                          );
+                          if (onNavigate) onNavigate('/ai-formulare');
+                          else window.location.href = '/ai-formulare';
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Použít v návrhu</span>
+                      </button>
+
+                      {ruling.nalusUrl && (
+                        <a
+                          href={ruling.nalusUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-bold text-slate-600 hover:text-indigo-600 hover:underline flex items-center gap-1 ml-1"
+                        >
+                          <span>NALUS</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           );
         })}
+      </div>
+
+      {/* Bottom Cross-links Banner */}
+      <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+        <div>
+          <h4 className="font-bold text-slate-900 text-sm">Související právní nástroje a obsah</h4>
+          <p className="text-xs text-slate-500 mt-0.5">Vypočítejte výživné, prostudujte e-Sbírku nebo přejděte k článkům.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/kalkulacka-vyzivneho'); else window.location.href = '/kalkulacka-vyzivneho'; }}
+            className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Kalkulačka výživného
+          </button>
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/state-laws'); else window.location.href = '/state-laws'; }}
+            className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Zákony & e-Sbírka
+          </button>
+          <button
+            onClick={() => { if (onNavigate) onNavigate('/clanky'); else window.location.href = '/clanky'; }}
+            className="px-3 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+          >
+            Články & Metodika
+          </button>
+        </div>
       </div>
     </div>
   );

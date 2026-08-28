@@ -1,5 +1,5 @@
 import { apiFetch } from '../../../utils/apiClient';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bot,
   Send,
@@ -84,6 +84,30 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
 
   const [chatError, setChatError] = useState<string | null>(null);
   const [biffError, setBiffError] = useState<string | null>(null);
+
+  // Initialize prompt from URL or sessionStorage (e.g., from CaseLaw or Calculator)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const promptParam = params.get('prompt') || params.get('q');
+      const tabParam = params.get('tab');
+      if (tabParam === 'biff') {
+        setActiveTab('biff');
+      }
+
+      const storedPrompt = sessionStorage.getItem('ai_assistant_initial_prompt');
+      const initialText = promptParam || storedPrompt;
+
+      if (initialText) {
+        setInputMessage(initialText);
+        if (storedPrompt) {
+          sessionStorage.removeItem('ai_assistant_initial_prompt');
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading initial prompt:', e);
+    }
+  }, []);
 
   const handleSendMessage = async (textToSend?: string, isRetry: boolean = false) => {
     let newMessages = [...messages];

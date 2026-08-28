@@ -72,7 +72,9 @@ import {
   WikiView
 } from './academy';
 import { SeoHead } from './SeoHead';
-import { MajetekView, PsychologieView, KalendarView } from '../placeholderViews';
+import { PsychologieView } from './PsychologieView';
+import { MajetekView } from './MajetekView';
+import { KalendarView } from '../placeholderViews';
 import { PortalActivityPanel } from './PortalActivityPanel';
 import { analytics } from '../../lib/analyticsClient';
 
@@ -194,7 +196,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
           description="Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE."
           canonicalPath="/"
         />
-        <Hero />
+        <Hero onNavigate={onNavigate} />
         <PortalActivityPanel variant="compact" onNavigate={onNavigate} className="my-2" />
         <CorePrincipleCard />
         <ArticlesSection onNavigate={onNavigate} />
@@ -514,7 +516,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 3c. State Data Routes: e-Sbírka / Laws (/state-laws, /e-sbirka, /zakony)
   if (slug === 'state-laws' || slug === 'e-sbirka' || slug === 'zakony' || slug === 'e-legislativa') {
-    return <StateLawsView />;
+    return <StateLawsView onNavigate={onNavigate} />;
   }
 
   // 3d. State Data Routes: Statistics (/state-statistics, /statistiky, /statistika)
@@ -524,10 +526,10 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
 
   // 3f. About Project Routes (/o-nas, /kontakt, /sponzori, /partneri)
   if (slug === 'majetek' || slug === 'financni-vyporadani') {
-    return <MajetekView />;
+    return <MajetekView onNavigate={onNavigate} />;
   }
   if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
-    return <PsychologieView />;
+    return <PsychologieView onNavigate={onNavigate} />;
   }
   if (slug === 'kalendar' || slug === 'lhutnik') {
     return <KalendarView />;

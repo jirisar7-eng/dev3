@@ -6,5 +6,5 @@ interface AlimonyCalculatorPageProps {
 }
 
 export const AlimonyCalculatorPage: React.FC<AlimonyCalculatorPageProps> = ({ onNavigate }) => {
-  return <AlimonyCalculatorView />;
+  return <AlimonyCalculatorView onNavigate={onNavigate} />;
 };

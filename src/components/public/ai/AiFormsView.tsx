@@ -86,6 +86,31 @@ export const AiFormsView: React.FC<AiFormsViewProps> = ({ onNavigate }) => {
 
   const selectedTemplate = COURT_TEMPLATES.find((t) => t.id === selectedTemplateId) || COURT_TEMPLATES[0];
 
+  // Initialize from URL params or sessionStorage context
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const templateParam = params.get('template') || params.get('sablon');
+      if (templateParam && COURT_TEMPLATES.some((t) => t.id === templateParam)) {
+        setSelectedTemplateId(templateParam);
+      }
+
+      const stored = sessionStorage.getItem('tatovapravo_form_context');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.templateId && COURT_TEMPLATES.some((t) => t.id === parsed.templateId)) {
+          setSelectedTemplateId(parsed.templateId);
+        }
+        if (parsed.customPrompt) {
+          setCustomPrompt(parsed.customPrompt);
+        }
+        sessionStorage.removeItem('tatovapravo_form_context');
+      }
+    } catch (e) {
+      console.warn('Error reading form prefill context:', e);
+    }
+  }, []);
+
   // Fetch e-Sbírka Status
   const fetchEsbirkaStatus = useCallback(async () => {
     setLoadingEsbirka(true);
