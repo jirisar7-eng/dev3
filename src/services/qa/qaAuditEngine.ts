@@ -7,6 +7,7 @@ import { prisma } from '../../db/prisma';
 import { qaDiscoveryService } from '../qaDiscoveryService';
 import { aiAnalystService, AIAnalystReport } from './aiAnalystService';
 import { qaRegistryService, IncrementalAuditPlan } from './qaRegistryService';
+import { AuditCenterService } from '../auditCenterService';
 
 const API_URL = 'http://127.0.0.1:3000/api';
 
@@ -531,6 +532,67 @@ PRODUCTION READINESS GATE EXPLANATION:
         verdict
       }
     });
+
+    // Step 11: EXPORT TO AUDIT CENTER (Bridging the gap)
+    try {
+      const dateString = new Date().toISOString().split('T')[0];
+      const safeRunId = run.id.replace(/[^a-zA-Z0-9_-]/g, '');
+      const fileName = `AUDIT_${dateString}_LIVE_QA_${safeRunId}.md`;
+      const filePath = path.join(process.cwd(), 'docs', 'audit', fileName);
+
+      // Scrub secrets and sensitive info if any
+      const scrubText = (text: string) => {
+        if (!text) return text;
+        return text.replace(/(password|token|secret|key|authorization|bearer)\s*[:=]\s*["']?[^"'\s]+["']?/gi, '$1: [REDACTED]');
+      };
+
+      const mdContent = `# Live QA Audit Report
+
+- **Datum a čas auditu:** ${new Date().toISOString()}
+- **Název úlohy:** Live QA Audit ${safeRunId}
+- **Run ID:** ${run.id}
+- **Status:** COMPLETED
+- **Verdict:** ${verdict}
+- **Environment:** ${environment}
+- **Branch:** ${branch}
+- **Commit SHA:** ${commitSha}
+- **Type:** ${auditType}
+
+## Overall Scores
+- **Overall Score:** ${scores.overall}%
+- **Functional Score:** ${scores.functional}%
+- **Security Score:** ${scores.security}%
+- **API Score:** ${scores.api}%
+- **Persistence Score:** ${scores.persistence}%
+- **E2E Score:** ${scores.e2e}%
+
+## AI Analysis
+**Executive Summary:**
+${scrubText(aiReport.executiveSummary || 'No summary available.')}
+
+**Detailed AI Verdict:**
+${scrubText(aiReport.productionReadinessAssessment || 'No explanation available.')}
+
+### Recommended Next Steps
+${aiReport.recommendedFixes?.map((step: string) => `- ${scrubText(step)}`).join('\n') || '- None'}
+
+## Findings
+${findingsList.length === 0 ? '- No findings.' : findingsList.map(f => `- **[${f.severity}] [${f.category}]** ${scrubText(f.message)}`).join('\n')}
+
+## Metrics & Raw Report
+\`\`\`text
+${scrubText(rawReportText)}
+\`\`\`
+`;
+
+      fs.writeFileSync(filePath, mdContent, 'utf-8');
+      
+      // Sync audits to database so it immediately shows up in Audit Center
+      await AuditCenterService.syncAudits({ forceResync: true });
+    } catch (err) {
+      console.error('Failed to export Live QA Audit to Audit Center:', err);
+      // We explicitly do not throw here, as failure to write the file should not fail the audit process itself.
+    }
 
     return {
       runId: run.id,
