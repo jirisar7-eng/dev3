@@ -842,4 +842,46 @@ router.delete('/:caseId/submissions/:draftId', async (req: AuthenticatedRequest,
   }
 });
 
+// POST /api/cases/:caseId/submissions/sync -> process offline sync queue item(s)
+router.post('/:caseId/submissions/sync', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    const { item, items } = req.body;
+    const toProcess = items || (item ? [item] : []);
+
+    if (!Array.isArray(toProcess) || toProcess.length === 0) {
+      return res.status(400).json({ success: false, error: 'Chybí operace ke synchronizaci.' });
+    }
+
+    const results = [];
+    for (const op of toProcess) {
+      const resOp = await SubmissionDraftService.processSyncOperation(caseId, req.user!, op);
+      results.push(resOp);
+    }
+
+    const hasConflict = results.some(r => r.status === 'CONFLICT');
+    const statusCode = hasConflict ? 409 : 200;
+    res.status(statusCode).json({ success: true, data: results });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/submissions/:draftId/resolve-conflict -> resolve version conflict (LOCAL vs SERVER)
+router.post('/:caseId/submissions/:draftId/resolve-conflict', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const { resolution, localPayload } = req.body;
+
+    if (!resolution || !['LOCAL', 'SERVER'].includes(resolution)) {
+      return res.status(400).json({ success: false, error: 'Neplatný požadavek na vyřešení konfliktu. Povolené hodnoty: LOCAL, SERVER.' });
+    }
+
+    const resolved = await SubmissionDraftService.resolveConflict(caseId, draftId, req.user!, resolution, localPayload);
+    res.json({ success: true, data: resolved });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
 export default router;

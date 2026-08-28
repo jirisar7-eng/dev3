@@ -3,6 +3,7 @@ import { dbStore } from './dbStore';
 import { ClientCaseService } from './clientCaseService';
 import { AuditService } from './auditService';
 import { User, CaseSubmissionDraft, CaseSubmissionDraftVersion, SubmissionDraftStatus } from '../types';
+import { OfflineSyncItem, SyncProcessResult } from './offline/OfflineSyncService';
 
 export interface CreateDraftInput {
   title: string;
@@ -462,5 +463,173 @@ export class SubmissionDraftService {
       markPrismaUnavailable(err);
       return this.deleteDraft(caseId, draftId, user);
     }
+  }
+
+  /**
+   * Zpracování synchronizační operace z offline fronty (s detekcí konfliktů a idempotencí)
+   */
+  public static async processSyncOperation(
+    caseId: string,
+    user: User,
+    item: OfflineSyncItem
+  ): Promise<SyncProcessResult> {
+    if (!item || !item.operationId || !item.action) {
+      throw new Error('Neplatné parametry synchronizační operace.');
+    }
+
+    // 1. Ověření přístupu ke spisu (IDOR/BOLA check)
+    await ClientCaseService.authorizeCaseAccess(caseId, user);
+
+    if (item.action === 'CREATE') {
+      // Idempotentní kontrola - existuje už koncept s tímto draftId?
+      if (item.draftId) {
+        try {
+          const existing = await this.getDraftById(caseId, item.draftId, user);
+          if (existing) {
+            return {
+              operationId: item.operationId,
+              status: 'ALREADY_SYNCED',
+              draft: existing,
+            };
+          }
+        } catch (e) {
+          // Nenalezen, pokračujeme s vytvořením
+        }
+      }
+
+      const created = await this.createDraft(caseId, user, {
+        title: item.payload.title || 'Offline podání',
+        templateId: item.payload.templateId,
+        formData: item.payload.formData,
+        generatedContent: item.payload.generatedContent,
+        notes: item.payload.notes,
+        status: item.payload.status || 'DRAFT',
+      });
+
+      return {
+        operationId: item.operationId,
+        status: 'SYNCED',
+        draft: created,
+      };
+    }
+
+    if (item.action === 'UPDATE') {
+      if (!item.draftId) {
+        throw new Error('Chybí ID konceptu podání (draftId) pro aktualizaci.');
+      }
+
+      const existing = await this.getDraftById(caseId, item.draftId, user);
+
+      // DETEKCE KONFLIKTU: Pokud klient specifikoval baseVersion a serverová verze se posunula dopředu
+      if (item.baseVersion !== undefined && existing.version !== item.baseVersion) {
+        return {
+          operationId: item.operationId,
+          status: 'CONFLICT',
+          serverDraft: existing,
+          error: `Detekován konflikt: Serverová verze je ${existing.version}, ale lokální úpravy vycházely z verze ${item.baseVersion}.`,
+        };
+      }
+
+      const updated = await this.updateDraft(caseId, item.draftId, user, {
+        title: item.payload.title,
+        templateId: item.payload.templateId,
+        formData: item.payload.formData,
+        generatedContent: item.payload.generatedContent,
+        notes: item.payload.notes,
+        status: item.payload.status,
+        createNewVersion: true,
+        changeSummary: 'Synchronizace z offline fronty',
+      });
+
+      return {
+        operationId: item.operationId,
+        status: 'SYNCED',
+        draft: updated,
+      };
+    }
+
+    if (item.action === 'DELETE') {
+      if (!item.draftId) {
+        throw new Error('Chybí ID konceptu podání (draftId) pro smazání.');
+      }
+
+      try {
+        const existing = await this.getDraftById(caseId, item.draftId, user);
+        if (item.baseVersion !== undefined && existing.version !== item.baseVersion) {
+          return {
+            operationId: item.operationId,
+            status: 'CONFLICT',
+            serverDraft: existing,
+            error: `Detekován konflikt při mazání: Serverová verze je ${existing.version}, lokální byla ${item.baseVersion}.`,
+          };
+        }
+        await this.deleteDraft(caseId, item.draftId, user);
+      } catch (e) {
+        // Již smazáno -> idempotentně úspěšné
+        return {
+          operationId: item.operationId,
+          status: 'ALREADY_SYNCED',
+        };
+      }
+
+      return {
+        operationId: item.operationId,
+        status: 'SYNCED',
+      };
+    }
+
+    throw new Error(`Neznámá akce operace: ${item.action}`);
+  }
+
+  /**
+   * Vyřešení konfliktu verzí (možnosti LOCAL nebo SERVER)
+   */
+  public static async resolveConflict(
+    caseId: string,
+    draftId: string,
+    user: User,
+    resolution: 'LOCAL' | 'SERVER',
+    localPayload?: any
+  ): Promise<CaseSubmissionDraft> {
+    const existing = await this.getDraftById(caseId, draftId, user);
+
+    if (resolution === 'SERVER') {
+      // Ponechat serverovou verzi, odmítnout lokální úpravu
+      await AuditService.recordLog(
+        'SUBMISSION_DRAFT_CONFLICT_RESOLVED',
+        'SUBMISSIONS',
+        `Vyřešen konflikt pro koncept ${draftId}: Ponechána verze SERVER (v${existing.version})`,
+        user
+      );
+      return existing;
+    }
+
+    if (resolution === 'LOCAL') {
+      if (!localPayload) {
+        throw new Error('Chybí lokální dáta (localPayload) pro aplikování změny LOCAL.');
+      }
+
+      const updated = await this.updateDraft(caseId, draftId, user, {
+        title: localPayload.title || existing.title,
+        templateId: localPayload.templateId || existing.templateId,
+        formData: localPayload.formData !== undefined ? localPayload.formData : existing.formData,
+        generatedContent: localPayload.generatedContent !== undefined ? localPayload.generatedContent : existing.generatedContent,
+        notes: localPayload.notes !== undefined ? localPayload.notes : existing.notes,
+        status: localPayload.status || existing.status,
+        createNewVersion: true,
+        changeSummary: 'Vyřešení konfliktu: Aplikována verze LOCAL',
+      });
+
+      await AuditService.recordLog(
+        'SUBMISSION_DRAFT_CONFLICT_RESOLVED',
+        'SUBMISSIONS',
+        `Vyřešen konflikt pro koncept ${draftId}: Aplikována verze LOCAL (vytvořena verze v${updated.version})`,
+        user
+      );
+
+      return updated;
+    }
+
+    throw new Error('Neplatné rozlišení konfliktu. Povolené hodnoty: LOCAL, SERVER.');
   }
 }
