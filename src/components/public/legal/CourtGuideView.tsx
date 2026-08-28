@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Gavel, Scale, FileText, CheckCircle2, AlertTriangle, ChevronRight, Clock, Users, ArrowRight, BrainCircuit, CheckSquare, Square, Calculator, Link as LinkIcon, Download } from 'lucide-react';
+import { Gavel, Scale, FileText, CheckCircle2, AlertTriangle, ChevronRight, Clock, Users, ArrowRight, BrainCircuit, CheckSquare, Square, Calculator, Link as LinkIcon, Download, BookOpen } from 'lucide-react';
 import { SeoHead } from '../SeoHead';
 
 interface CourtGuideViewProps {
@@ -286,6 +286,30 @@ export const CourtGuideView: React.FC<CourtGuideViewProps> = ({ onNavigate }) =>
                 <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Spolurodičovský Hub</h3>
                 <p className="text-xs text-slate-500 mt-1">
                   Elektronická evidence výdajů na dítě, plán péče a komunikační záznamník jako silný listinný důkaz pro soud.
+                </p>
+              </button>
+
+              {/* Judikatura ÚS */}
+              <button 
+                onClick={() => onNavigate('/judikatura')}
+                className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all text-left group"
+              >
+                <Scale className="w-6 h-6 text-indigo-600 mb-3" />
+                <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Judikatura ÚS</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Klíčové nálezy Ústavního soudu k rovné péči, kritériím a přespávání dětí u otce.
+                </p>
+              </button>
+
+              {/* Kvíz soudního řízení */}
+              <button 
+                onClick={() => onNavigate('/kvizy')}
+                className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition-all text-left group"
+              >
+                <BookOpen className="w-6 h-6 text-purple-600 mb-3" />
+                <h3 className="font-bold text-slate-900 group-hover:text-purple-600 transition-colors">Kvízy & Trenažéry</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Otestujte si orientaci v procesních pravidlech opatrovnického soudu a předběžných opatřeních.
                 </p>
               </button>
             </>

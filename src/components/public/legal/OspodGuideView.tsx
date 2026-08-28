@@ -154,6 +154,57 @@ export const OspodGuideView: React.FC<OspodGuideViewProps> = ({ onNavigate }) =>
         </div>
       </section>
 
+      {/* Navazující nástroje a propojení */}
+      {onNavigate && (
+        <section className="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl space-y-4">
+          <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs uppercase tracking-wider">
+            <BookOpen className="w-4 h-4" />
+            <span>Související nástroje na portálu</span>
+          </div>
+          <h3 className="text-xl font-bold text-white">
+            Připravte se na jednání prakticky a s oporou v zákoně
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            <button
+              onClick={() => onNavigate('/kvizy')}
+              className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-left transition-all cursor-pointer group"
+            >
+              <span className="text-[10px] font-mono text-indigo-300 block mb-1">Interaktivní test</span>
+              <strong className="text-xs font-bold text-white block group-hover:text-amber-300">
+                Kvíz práv u OSPODu &rarr;
+              </strong>
+            </button>
+            <button
+              onClick={() => onNavigate('/ai-formulare')}
+              className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-left transition-all cursor-pointer group"
+            >
+              <span className="text-[10px] font-mono text-indigo-300 block mb-1">Vzory podání</span>
+              <strong className="text-xs font-bold text-white block group-hover:text-amber-300">
+                Žádost o nahlížení do spisu &rarr;
+              </strong>
+            </button>
+            <button
+              onClick={() => onNavigate('/judikatura')}
+              className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-left transition-all cursor-pointer group"
+            >
+              <span className="text-[10px] font-mono text-indigo-300 block mb-1">Nálezy ÚS</span>
+              <strong className="text-xs font-bold text-white block group-hover:text-amber-300">
+                Judikatura k roli OSPOD &rarr;
+              </strong>
+            </button>
+            <button
+              onClick={() => onNavigate('/soud')}
+              className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-left transition-all cursor-pointer group"
+            >
+              <span className="text-[10px] font-mono text-indigo-300 block mb-1">Soudní proces</span>
+              <strong className="text-xs font-bold text-white block group-hover:text-amber-300">
+                Průvodce soudním řízením &rarr;
+              </strong>
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Footer zdroje */}
       <div className="pt-4 border-t border-slate-200 text-[10px] text-slate-400">
         Zdroje: Ministerstvo práce a sociálních věcí (MPSV), Metodiky OSPOD. Aktuálnost ověřena k: Srpen 2026.
