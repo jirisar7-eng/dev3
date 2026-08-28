@@ -38,6 +38,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-install-prompt.test.ts'], name: 'PWA Install Experience (Phase 18.5)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/passkey-error-handling.test.ts'], name: 'Passkey & WebAuthn Error Handling (Phase 19)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/alimonyCalculator.test.ts'], name: 'Alimony Calculator Unit Tests (Phase 8/10)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/case-submission-drafts-phase21-1.test.ts'], name: 'Case Submission Drafts & Versioning (Phase 21.1)' }
 ];
 
 let failed = false;

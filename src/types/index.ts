@@ -234,6 +234,36 @@ export interface CareArrangement {
   updatedAt: string;
 }
 
+export type SubmissionDraftStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+
+export interface CaseSubmissionDraftVersion {
+  id: string;
+  draftId: string;
+  version: number;
+  title: string;
+  formData?: any;
+  generatedContent?: string;
+  changeSummary?: string;
+  createdById: string;
+  createdAt: string;
+}
+
+export interface CaseSubmissionDraft {
+  id: string;
+  caseId: string;
+  userId: string;
+  title: string;
+  templateId?: string;
+  status: SubmissionDraftStatus | string;
+  formData?: any;
+  generatedContent?: string;
+  notes?: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  versions?: CaseSubmissionDraftVersion[];
+}
+
 export interface ClientCase {
   id: string;
   ownerId: string;
@@ -258,6 +288,7 @@ export interface ClientCase {
   communications?: CaseCommunication[];
   careArrangements?: CareArrangement[];
   carePlans?: CarePlan[];
+  submissionDrafts?: CaseSubmissionDraft[];
 }
 
 // ------------------------------------------------------

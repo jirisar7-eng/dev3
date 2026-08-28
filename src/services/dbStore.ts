@@ -49,6 +49,8 @@ import {
   CaseEvidence,
   CaseCommunication,
   CareArrangement,
+  CaseSubmissionDraft,
+  CaseSubmissionDraftVersion,
   WikiTerm,
   LegalGuide,
   AcademyVideo,
@@ -2345,6 +2347,8 @@ class MemoryStore {
   userDocuments: UserDocument[] = [...defaultUserDocuments];
   accounts: any[] = [];
   passkeys: any[] = [];
+  submissionDrafts: CaseSubmissionDraft[] = [];
+  submissionDraftVersions: CaseSubmissionDraftVersion[] = [];
 
   // Osobní klientská složka otce (Client cases & sub-entities)
   cases: ClientCase[] = [
