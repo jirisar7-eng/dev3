@@ -76,6 +76,7 @@ model User {
   cookieConsents           CookieConsent[]
   legalAuditLogs           LegalAuditLog[]
   clientCases              Case[]
+  submissionDrafts         CaseSubmissionDraft[]
   coparentSpaces           CoParentSpace[]           @relation("CoParentSpaceOwner")
   coparentMemberships      CoParentMember[]
   coparentMessages         CoParentMessage[]
@@ -1162,9 +1163,49 @@ model Case {
   judgments            Judgment[]
   legalFacts           JudgmentLegalFact[]
   financialObligations FinancialObligation[]
+  submissionDrafts     CaseSubmissionDraft[]
 
   @@index([ownerId])
   @@index([status])
+}
+
+model CaseSubmissionDraft {
+  id               String                        @id @default(uuid())
+  caseId           String
+  case             Case                          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String
+  templateId       String?                       @default("CUSTOM")
+  status           String                        @default("DRAFT") // "DRAFT", "FINAL", "ARCHIVED"
+  formData         Json?
+  generatedContent String?                       @db.Text
+  notes            String?                       @db.Text
+  version          Int                           @default(1)
+  createdAt        DateTime                      @default(now())
+  updatedAt        DateTime                      @updatedAt
+
+  versions         CaseSubmissionDraftVersion[]
+
+  @@index([caseId])
+  @@index([userId])
+  @@index([status])
+}
+
+model CaseSubmissionDraftVersion {
+  id               String              @id @default(uuid())
+  draftId          String
+  draft            CaseSubmissionDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  version          Int
+  title            String
+  formData         Json?
+  generatedContent String?             @db.Text
+  changeSummary    String?             @db.Text
+  createdById      String
+  createdAt        DateTime            @default(now())
+
+  @@index([draftId])
+  @@index([version])
 }
 
 model CaseParticipant {

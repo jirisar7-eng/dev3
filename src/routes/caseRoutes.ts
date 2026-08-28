@@ -10,6 +10,7 @@ import { CarePlanService } from '../services/care/carePlanService';
 import { AgeEngine } from '../services/care/ageEngine';
 import { GeoRoutingService } from '../services/care/geoRoutingService';
 import { AuditService } from '../services/auditService';
+import { SubmissionDraftService } from '../services/submissionDraftService';
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
@@ -754,6 +755,130 @@ router.patch('/:caseId/facts/:factId', async (req: AuthenticatedRequest, res) =>
     }
     const updatedFact = await ClientCaseService.updateLegalFact(caseId, factId, req.user!, String(newValue), reason || '');
     res.json({ success: true, fact: updatedFact });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// ----------------------------------------------------
+// CASE SUBMISSION DRAFTS (FÁZE 21.1)
+// ----------------------------------------------------
+
+// GET /api/cases/:caseId/submissions -> list all drafts for case
+router.get('/:caseId/submissions', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    const drafts = await SubmissionDraftService.getDraftsForCase(caseId, req.user!);
+    res.json({ success: true, data: drafts });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/submissions -> create new draft
+router.post('/:caseId/submissions', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    const draft = await SubmissionDraftService.createDraft(caseId, req.user!, req.body);
+    res.status(201).json({ success: true, data: draft });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// GET /api/cases/:caseId/submissions/:draftId -> get single draft with versions
+router.get('/:caseId/submissions/:draftId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const draft = await SubmissionDraftService.getDraftById(caseId, draftId, req.user!);
+    res.json({ success: true, data: draft });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// PUT /api/cases/:caseId/submissions/:draftId -> update draft (auto-save / create version)
+router.put('/:caseId/submissions/:draftId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const updated = await SubmissionDraftService.updateDraft(caseId, draftId, req.user!, req.body);
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// GET /api/cases/:caseId/submissions/:draftId/versions -> get version history of draft
+router.get('/:caseId/submissions/:draftId/versions', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const versions = await SubmissionDraftService.getDraftVersions(caseId, draftId, req.user!);
+    res.json({ success: true, data: versions });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/submissions/:draftId/rollback -> restore previous version
+router.post('/:caseId/submissions/:draftId/rollback', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const { targetVersion } = req.body;
+    const rolledBack = await SubmissionDraftService.rollbackDraftVersion(caseId, draftId, Number(targetVersion), req.user!);
+    res.json({ success: true, data: rolledBack });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// DELETE /api/cases/:caseId/submissions/:draftId -> delete draft
+router.delete('/:caseId/submissions/:draftId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    await SubmissionDraftService.deleteDraft(caseId, draftId, req.user!);
+    res.json({ success: true, message: 'Koncept podání byl úspěšně smazán.' });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/submissions/sync -> process offline sync queue item(s)
+router.post('/:caseId/submissions/sync', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId } = req.params;
+    const { item, items } = req.body;
+    const toProcess = items || (item ? [item] : []);
+
+    if (!Array.isArray(toProcess) || toProcess.length === 0) {
+      return res.status(400).json({ success: false, error: 'Chybí operace ke synchronizaci.' });
+    }
+
+    const results = [];
+    for (const op of toProcess) {
+      const resOp = await SubmissionDraftService.processSyncOperation(caseId, req.user!, op);
+      results.push(resOp);
+    }
+
+    const hasConflict = results.some(r => r.status === 'CONFLICT');
+    const statusCode = hasConflict ? 409 : 200;
+    res.status(statusCode).json({ success: true, data: results });
+  } catch (err: any) {
+    handleCareError(res, err);
+  }
+});
+
+// POST /api/cases/:caseId/submissions/:draftId/resolve-conflict -> resolve version conflict (LOCAL vs SERVER)
+router.post('/:caseId/submissions/:draftId/resolve-conflict', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { caseId, draftId } = req.params;
+    const { resolution, localPayload } = req.body;
+
+    if (!resolution || !['LOCAL', 'SERVER'].includes(resolution)) {
+      return res.status(400).json({ success: false, error: 'Neplatný požadavek na vyřešení konfliktu. Povolené hodnoty: LOCAL, SERVER.' });
+    }
+
+    const resolved = await SubmissionDraftService.resolveConflict(caseId, draftId, req.user!, resolution, localPayload);
+    res.json({ success: true, data: resolved });
   } catch (err: any) {
     handleCareError(res, err);
   }
