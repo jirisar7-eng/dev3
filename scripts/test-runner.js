@@ -40,6 +40,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/alimonyCalculator.test.ts'], name: 'Alimony Calculator Unit Tests (Phase 8/10)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/case-submission-drafts-phase21-1.test.ts'], name: 'Case Submission Drafts & Versioning (Phase 21.1)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-sync-queue-phase21-2.test.ts'], name: 'Offline Sync Queue & Conflict Resolution (Phase 21.2)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-offline-sync-ui-phase22.test.ts'], name: 'PWA Offline Vault Sync UI & Integration (Phase 22)' }
 ];
 
 let failed = false;

@@ -1,4 +1,4 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import 'fake-indexeddb/auto';
 import { CryptoService } from '../src/services/offline/CryptoService';
@@ -93,6 +93,12 @@ describe('Offline Security - SecureDB', () => {
     db = new SecureDB();
     const salt = CryptoService.generateSalt();
     saltBase64 = CryptoService.bufferToBase64(salt);
+  });
+
+  afterEach(async () => {
+    if (db) {
+      db.lock();
+    }
   });
 
   it('should initialize as locked', () => {

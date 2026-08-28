@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, before } from 'node:test';
+import { describe, it, beforeEach, before, afterEach } from 'node:test';
 import assert from 'node:assert';
 import 'fake-indexeddb/auto';
 import express from 'express';
@@ -94,6 +94,12 @@ describe('Phase 21.2 – Offline Sync Queue & Conflict Resolution', () => {
     const salt = CryptoService.generateSalt();
     saltBase64 = CryptoService.bufferToBase64(salt);
     await db.unlock(pin, saltBase64);
+  });
+
+  afterEach(async () => {
+    if (db) {
+      db.lock();
+    }
   });
 
   it('1. should safely enqueue offline draft changes into SecureDB with encryption', async () => {
