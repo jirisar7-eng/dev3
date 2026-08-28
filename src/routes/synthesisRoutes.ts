@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { SynthesisService } from '../services/synthesisService';
+import { GithubSyncService } from '../services/synthesis/githubSyncService';
 
 const router = Router();
 
@@ -196,6 +197,53 @@ router.post('/ingest-esbirka', requireAuth as any, requireRole('ADMIN') as any, 
     res.status(statusCode).json({
       success: false,
       error: err.message || 'Error ingesting e-Sbírka remediation finding',
+      code: err.code || 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /api/admin/synthesis/tickets/:id/github
+ * Links/synchronizes GitHub metadata (Issue, PR, Commit SHA, Branch) with a Synthesis ticket.
+ * STRICT FAIL-CLOSED & RBAC: Requires ADMIN role, rejects invalid SHA/numbers and cross-repository references.
+ */
+router.post('/tickets/:id/github', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      githubIssueNumber,
+      githubIssueUrl,
+      githubPrNumber,
+      githubPrUrl,
+      commitSha,
+      branch,
+      repository,
+    } = req.body;
+
+    const actorName = req.user?.name || req.user?.email || 'Admin User';
+
+    const updatedTicket = await GithubSyncService.linkGithubMetadata({
+      ticketId: id,
+      githubIssueNumber: githubIssueNumber !== undefined ? Number(githubIssueNumber) : undefined,
+      githubIssueUrl,
+      githubPrNumber: githubPrNumber !== undefined ? Number(githubPrNumber) : undefined,
+      githubPrUrl,
+      commitSha,
+      branch,
+      repository,
+      actorId: req.user?.id,
+      actorName,
+    });
+
+    res.json({
+      success: true,
+      data: updatedTicket,
+    });
+  } catch (err: any) {
+    const statusCode = err.statusCode || (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500);
+    res.status(statusCode).json({
+      success: false,
+      error: err.message || 'Error linking GitHub metadata to synthesis ticket',
       code: err.code || 'INTERNAL_ERROR',
     });
   }

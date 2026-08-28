@@ -36,7 +36,8 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/public-navigation-phase06b.test.ts'], name: 'Public Navigation Unification & Legacy Merge Fix (Phase 06B)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-security.test.ts'], name: 'Secure Offline Storage Foundation (Phase 18B)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-install-prompt.test.ts'], name: 'PWA Install Experience (Phase 18.5)' }
-  , { cmd: 'npx', args: ['tsx', 'tests/phase-8-p0-content-routing.test.ts'], name: 'Phase 8: P0 Content & Routing Integration' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/passkey-error-handling.test.ts'], name: 'Passkey & WebAuthn Error Handling (Phase 19)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/alimonyCalculator.test.ts'], name: 'Alimony Calculator Unit Tests (Phase 8/10)' }
 ];
 
 let failed = false;

@@ -1,7 +1,45 @@
 import { apiFetch } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
+import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+
+const formatPasskeyError = (err: any, action: 'login' | 'register'): string => {
+  const errMsg = String(err?.message || err?.name || err || '');
+  const errName = String(err?.name || '');
+
+  if (
+    errMsg.includes('publickey-credentials') ||
+    errMsg.includes('Permissions Policy') ||
+    errMsg.includes('feature is not enabled') ||
+    errMsg.includes('not enabled in this document') ||
+    errMsg.includes('cross-origin child frames')
+  ) {
+    if (action === 'login') {
+      return 'Přihlášení bezpečnostním klíčem (Passkey) není v tomto vnořeném zobrazení (iframe) povoleno bezpečnostní politikou prohlížeče. Otevřete aplikaci v samostatné záložce prohlížeče nebo se přihlaste e-mailem a heslem.';
+    } else {
+      return 'Registrace bezpečnostního klíče (Passkey) není v tomto vnořeném zobrazení (iframe) povolena bezpečnostní politikou prohlížeče. Otevřete aplikaci v samostatné záložce prohlížeče.';
+    }
+  }
+
+  if (
+    errName === 'NotAllowedError' ||
+    errName === 'AbortError' ||
+    errMsg.includes('timed out') ||
+    errMsg.includes('canceled') ||
+    errMsg.includes('cancelled') ||
+    errMsg.includes('The operation either timed out or was not allowed')
+  ) {
+    return action === 'login'
+      ? 'Přihlášení bezpečnostním klíčem bylo zrušeno uživatelem nebo vypršel časový limit.'
+      : 'Registrace bezpečnostního klíče byla zrušena uživatelem nebo vypršel časový limit.';
+  }
+
+  if (errName === 'InvalidStateError') {
+    return 'Tento bezpečnostní klíč je již v systému zaregistrován.';
+  }
+
+  return err?.message || (action === 'login' ? 'Chyba při přihlašování bezpečnostním klíčem.' : 'Registrace klíče selhala.');
+};
 
 interface AuthResult {
   success: boolean;
@@ -468,6 +506,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerPasskey = async (name: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      if (!browserSupportsWebAuthn()) {
+        return {
+          success: false,
+          error: 'Váš prohlížeč nebo aktuální prostředí nepodporuje bezpečnostní klíče (WebAuthn/Passkeys).'
+        };
+      }
+
       const token = localStorage.getItem('tatovacesta_auth_token');
       const res = await apiFetch('/api/auth/passkey/register/options', {
         method: 'POST',
@@ -479,7 +524,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const options = await res.json();
-      const credential = await startRegistration({ optionsJSON: options });
+      let credential;
+      try {
+        credential = await startRegistration({ optionsJSON: options });
+      } catch (clientErr: any) {
+        return { success: false, error: formatPasskeyError(clientErr, 'register') };
+      }
 
       const verifyRes = await apiFetch('/api/auth/passkey/register/verify', {
         method: 'POST',
@@ -497,13 +547,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: err?.error || 'Ověření klíče selhalo.' };
       }
     } catch (err: any) {
-      console.error('Passkey registration error:', err);
-      return { success: false, error: err.message || 'Registrace klíče selhala.' };
+      return { success: false, error: formatPasskeyError(err, 'register') };
     }
   };
 
   const loginWithPasskey = async (): Promise<AuthResult> => {
     try {
+      if (!browserSupportsWebAuthn()) {
+        return {
+          success: false,
+          error: 'Váš prohlížeč nebo aktuální prostředí nepodporuje bezpečnostní klíče (WebAuthn/Passkeys).'
+        };
+      }
+
       const res = await apiFetch('/api/auth/passkey/login/options', { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
@@ -511,7 +567,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const options = await res.json();
-      const assertion = await startAuthentication({ optionsJSON: options });
+      let assertion;
+      try {
+        assertion = await startAuthentication({ optionsJSON: options });
+      } catch (clientErr: any) {
+        return { success: false, error: formatPasskeyError(clientErr, 'login') };
+      }
 
       const verifyRes = await apiFetch('/api/auth/passkey/login/verify', {
         method: 'POST',
@@ -519,7 +580,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify(assertion),
       });
 
-      const data = await verifyRes.json();
+      const data = await verifyRes.json().catch(() => ({}));
       if (data.mfaRequired) {
         return { success: false, mfaRequired: true, mfaToken: data.mfaToken };
       }
@@ -537,8 +598,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: false, error: data.error || 'Ověření bezpečnostního klíče selhalo.' };
     } catch (err: any) {
-      console.error('Passkey login error:', err);
-      return { success: false, error: err.message || 'Chyba při přihlašování bezpečnostním klíčem.' };
+      return { success: false, error: formatPasskeyError(err, 'login') };
     }
   };
 

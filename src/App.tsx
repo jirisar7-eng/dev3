@@ -25,18 +25,13 @@ type AppView = 'public' | 'private' | 'team' | 'admin' | 'login' | 'register';
 
 function MainApp() {
   const initialPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const { currentUser } = useAuth();
   
   const getViewFromPath = (path: string): AppView => {
     if (path === '/login') return 'login';
     if (path === '/registrace' || path === '/register') return 'register';
     if (path === '/logout') return 'public';
     if (path.startsWith('/team') || path.startsWith('/spolek')) return 'team';
-    if (path.startsWith('/pece')) {
-      return currentUser ? 'private' : 'public';
-    }
-    if (path.startsWith('/coparent')) return 'public';
-    if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
+    if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/pece') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
     if (path.startsWith('/administrace') || path.startsWith('/admin')) return 'admin';
     return 'public';
   };
@@ -56,11 +51,7 @@ function MainApp() {
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [currentUser]);
-
-  useEffect(() => {
-    setCurrentView(getViewFromPath(currentPath));
-  }, [currentUser, currentPath]);
+  }, []);
 
   const handleNavigate = (path: string) => {
     const formattedPath = path.startsWith('/') ? path : '/' + path;

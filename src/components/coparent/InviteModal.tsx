@@ -46,12 +46,18 @@ export const InviteModal: React.FC<InviteModalProps> = ({
     setError(null);
 
     try {
+      const token = localStorage.getItem('tatovacesta_auth_token') || sessionStorage.getItem('tatovacesta_auth_token') || localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await apiFetch('/api/coparent/invite/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ spaceId: spaceId || undefined, email: email.trim() })
       });
 

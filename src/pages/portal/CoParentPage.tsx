@@ -50,10 +50,23 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
   const [handoverLogs, setHandoverLogs] = useState<any[]>([]);
   const [caseFileNotice, setCaseFileNotice] = useState<string | null>(null);
 
+  const getAuthHeaders = (contentType?: string): Record<string, string> => {
+    const token = localStorage.getItem('tatovacesta_auth_token') || sessionStorage.getItem('tatovacesta_auth_token') || localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (contentType) {
+      headers['Content-Type'] = contentType;
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
   const fetchHandoverLogs = async () => {
     try {
       const res = await apiFetch('/api/incidents?category=handover', {
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
       if (res.ok) {
         const body = await res.json();
@@ -81,10 +94,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/incidents', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({
           title,
           description,
@@ -128,7 +139,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       await apiFetch(`/api/incidents/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
     } catch (e) {
       console.error(e);
@@ -140,10 +152,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/case-files', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ title, category, content })
       });
       if (res.ok) {
@@ -162,7 +172,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     if (!space?.id) return;
     try {
       const res = await apiFetch(`/api/coparent/members?spaceId=${space.id}`, {
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -185,10 +196,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/coparent/invite/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ spaceId: space.id, email: inviteEmail })
       });
       const data = await res.json();
@@ -206,10 +215,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/coparent/invite/accept', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ code: pairCodeInput.trim().toUpperCase() })
       });
       const data = await res.json();
@@ -227,7 +234,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       setLoading(true);
       const res = await apiFetch('/api/coparent/dashboard', {
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
       const data = await res.json();
       if (!res.ok || data.success === false) {
@@ -252,10 +260,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
       if (!space) return;
       const res = await apiFetch('/api/coparent/conflict-mode', {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}` 
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ spaceId: space.id, conflictMode: mode })
       });
       if (!res.ok) throw new Error('Chyba při změně režimu konfliktu.');
@@ -271,10 +277,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/coparent/messages', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}` 
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ spaceId: space.id, content: newMessage })
       });
       const data = await res.json();
@@ -292,10 +296,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/coparent/expenses', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}` 
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ 
           spaceId: space.id, 
           title: newExpense.title, 
@@ -317,10 +319,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     try {
       const res = await apiFetch('/api/coparent/requests', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}` 
-        },
+        headers: getAuthHeaders('application/json'),
+        credentials: 'include',
         body: JSON.stringify({ 
           spaceId: space.id, 
           type: newRequest.type, 
@@ -339,7 +339,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     if (!space) return;
     try {
       const res = await apiFetch(`/api/coparent/export?spaceId=${space.id}`, {
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('Chyba při generování exportu.');
       const data = await res.json();
@@ -358,7 +359,8 @@ export const CoParentPage: React.FC<CoParentPageProps> = ({ onNavigate }) => {
     if (!space) return;
     try {
       const res = await apiFetch(`/api/coparent/export?spaceId=${space.id}`, {
-        headers: { 'Authorization': `Bearer jwt_token_user_${Date.now()}` }
+        headers: getAuthHeaders(),
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('Chyba při načítání dat pro audit.');
       const data = await res.json();

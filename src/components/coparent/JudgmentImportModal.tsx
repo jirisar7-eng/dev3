@@ -76,11 +76,16 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
         throw new Error('Musíte nahrát soubor nebo zadat text.');
       }
 
+      const token = localStorage.getItem('tatovacesta_auth_token') || sessionStorage.getItem('tatovacesta_auth_token') || localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await apiFetch('/api/coparent/parse-judgment', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers,
+        credentials: 'include',
         body: formData
       });
 
@@ -105,12 +110,18 @@ export const JudgmentImportModal: React.FC<JudgmentImportModalProps> = ({
       const activeSpaceId = spaceId || null;
       const formData = extractedData;
 
+      const token = localStorage.getItem('tatovacesta_auth_token') || sessionStorage.getItem('tatovacesta_auth_token') || localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await apiFetch('/api/coparent/apply-judgment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer jwt_token_user_${Date.now()}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           spaceId: activeSpaceId || null,
           extractedData: formData

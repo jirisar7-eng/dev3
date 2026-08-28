@@ -78,8 +78,16 @@ describe('Offline Security - SecureDB', () => {
 
   beforeEach(async () => {
     // Clear fake-indexeddb for a clean slate
-    const iDB = await openDB('tata_ma_pravo_secure_db', 1);
-    await iDB.clear('encrypted_records');
+    const iDB = await openDB('tata_ma_pravo_secure_db', 1, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('encrypted_records')) {
+          db.createObjectStore('encrypted_records', { keyPath: 'id' });
+        }
+      },
+    });
+    if (iDB.objectStoreNames.contains('encrypted_records')) {
+      await iDB.clear('encrypted_records');
+    }
     iDB.close();
 
     db = new SecureDB();
@@ -193,5 +201,9 @@ describe('Offline Security - SecureDB', () => {
         return true;
       }
     );
+  });
+
+  after(() => {
+    setTimeout(() => process.exit(0), 50);
   });
 });

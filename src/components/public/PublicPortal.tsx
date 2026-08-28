@@ -29,8 +29,6 @@ import { LegalDocsPage } from '../../pages/LegalDocsPage';
 import { MyCasePage } from '../../pages/MyCasePage';
 import { CoParentHubPage } from '../../pages/CoParentHubPage';
 import { AlimonyCalculatorPage } from '../../pages/AlimonyCalculatorPage';
-import { CareHubPublicLandingView } from './CareHubPublicLandingView';
-import { CoParentPublicLandingView } from './CoParentPublicLandingView';
 import SupportUsPage from "../../pages/SupportUsPage";
 import { AiContextView } from './AiContextView';
 import {
@@ -183,8 +181,8 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
 
   // 0.2 CoParent Hub (/coparent-hub, /coparent)
-  if (slug === 'coparent-hub' || slug === 'coparent' || slug === 'spolurodicovsky-hub' || slug === 'spolurodicovstvi') {
-    return <CoParentPublicLandingView onNavigate={onNavigate} />;
+  if (slug === 'coparent-hub' || slug === 'coparent' || slug === 'spolurodicovsky-hub') {
+    return <CoParentHubPage onNavigate={onNavigate} />;
   }
 
   // 1. Homepage Route
@@ -362,17 +360,14 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'ai-case-manager' || slug === 'case-manager' || slug === 'rozbor-spisu') {
     return <AiCaseManagerView onNavigate={onNavigate} />;
   }
-  if (slug === 'ai-simulator' || slug === 'simulator' || slug === 'simulator-predavani') {
+  if (slug === 'ai-simulator' || slug === 'simulator' || slug === 'plan-pece' || slug === 'simulator-predavani') {
     return <AiSimulatorView onNavigate={onNavigate} />;
   }
   if (slug === 'ai-formulare' || slug === 'centrum-formularu' || slug === 'formulare') {
     return <AiFormsView onNavigate={onNavigate} />;
   }
-  if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne' || slug === 'kalkulacka') {
+  if (slug === 'kalkulacka-vyzivneho' || slug === 'vyzivne') {
     return <AlimonyCalculatorPage onNavigate={onNavigate} />;
-  }
-  if (slug === 'pece' || slug === 'care-hub' || slug === 'plan-pece' || slug === 'modely-pece' || slug === 'pece-o-dite') {
-    return <CareHubPublicLandingView onNavigate={onNavigate} />;
   }
 
   // 3a2. Opatrovnictví & Právo Routes (/agenda, /prava, /judikatura, /dokumenty, /registr-subjektu, /mapa-subjektu)

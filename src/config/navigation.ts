@@ -65,7 +65,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   // Category 3: 👨‍👧 Péče & Spolurodičovství (Public)
   { id: 'cat-3', labelKey: '👨‍👧 Péče & Spolurodičovství', url: '/pece', order: 30, target: '_self', isExternal: false, visibility: 'public' },
   { id: 'sub-3-1', labelKey: 'Péče o dítě / Care Hub', url: '/pece', order: 31, target: '_self', isExternal: false, parentId: 'cat-3', visibility: 'public' },
-  { id: 'sub-3-2', labelKey: 'CoParent Hub (Spolurodičovství)', url: '/coparent', order: 32, target: '_self', isExternal: false, parentId: 'cat-3', visibility: 'public' },
+  { id: 'sub-3-2', labelKey: 'CoParent Hub (Spolurodičovství)', url: '/portal/coparent', order: 32, target: '_self', isExternal: false, parentId: 'cat-3', visibility: 'public' },
   { id: 'sub-3-3', labelKey: 'Kalkulačka výživného a nákladů', url: '/kalkulacka-vyzivneho', order: 33, target: '_self', isExternal: false, parentId: 'cat-3', visibility: 'public' },
   { id: 'sub-3-4', labelKey: 'Psychologická podpora dětí', url: '/psychologie', order: 34, target: '_self', isExternal: false, parentId: 'cat-3', visibility: 'public' },
 

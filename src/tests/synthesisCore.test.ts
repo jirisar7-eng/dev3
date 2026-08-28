@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import { SynthesisService } from '../services/synthesisService';
+import { GithubSyncService } from '../services/synthesis/githubSyncService';
 import { isPrismaAvailable, setPrismaDisabled, setPrismaClientForTest } from '../db/prisma';
 import { AuthService } from '../services/authService';
 
@@ -161,6 +162,15 @@ async function runSynthesisCoreTests() {
         mockTickets.set(data.dedupHash, ticket);
         return ticket;
       },
+      update: async ({ where, data }: any) => {
+        for (const ticket of mockTickets.values()) {
+          if (ticket.id === where.id) {
+            Object.assign(ticket, data);
+            return ticket;
+          }
+        }
+        return null;
+      },
     },
     synthesisTicketComment: {
       create: async ({ data }: any) => {
@@ -244,6 +254,95 @@ async function runSynthesisCoreTests() {
     const fetched = await SynthesisService.getTicketById(ingestRes1.ticket.id);
     assert.notStrictEqual(fetched, null);
     assert.strictEqual(fetched?.id, ingestRes1.ticket.id);
+
+    // 6. Test GithubSyncService validations and linking
+    console.log('6. Testing GithubSyncService validation & linking...');
+    const ticketToSync = ingestRes1.ticket;
+
+    // 6a. Valid Issue link
+    const syncRes1 = await GithubSyncService.linkGithubMetadata({
+      ticketId: ticketToSync.id,
+      githubIssueNumber: 101,
+      actorName: 'Admin Tester',
+    });
+    assert.strictEqual(syncRes1.githubIssueNumber, 101);
+    assert.strictEqual(syncRes1.githubIssueUrl, 'https://github.com/jirisar7-eng/dev3/issues/101');
+    assert.strictEqual(syncRes1.githubSyncStatus, 'ISSUE_CREATED');
+
+    // 6b. Valid PR link
+    const syncRes2 = await GithubSyncService.linkGithubMetadata({
+      ticketId: ticketToSync.id,
+      githubPrNumber: 42,
+      actorName: 'Admin Tester',
+    });
+    assert.strictEqual(syncRes2.githubPrNumber, 42);
+    assert.strictEqual(syncRes2.githubPrUrl, 'https://github.com/jirisar7-eng/dev3/pull/42');
+    assert.strictEqual(syncRes2.githubSyncStatus, 'PR_LINKED');
+
+    // 6c. Valid 40-char commit SHA
+    const valid40Sha = '1234567890abcdef1234567890abcdef12345678';
+    const syncRes3 = await GithubSyncService.linkGithubMetadata({
+      ticketId: ticketToSync.id,
+      commitSha: valid40Sha,
+      actorName: 'Admin Tester',
+    });
+    assert.strictEqual(syncRes3.commitSha, valid40Sha);
+
+    // 6d. Invalid SHA rejected
+    let invalidShaRejected = false;
+    try {
+      await GithubSyncService.linkGithubMetadata({
+        ticketId: ticketToSync.id,
+        commitSha: 'not-a-sha',
+      });
+    } catch (err: any) {
+      invalidShaRejected = true;
+      assert.strictEqual(err.statusCode, 400);
+      assert.strictEqual(err.code, 'INVALID_COMMIT_SHA');
+    }
+    assert.strictEqual(invalidShaRejected, true, 'Invalid SHA must be rejected with 400');
+
+    // 6e. Fake SHA rejected
+    let fakeShaRejected = false;
+    try {
+      await GithubSyncService.linkGithubMetadata({
+        ticketId: ticketToSync.id,
+        commitSha: 'unknown',
+      });
+    } catch (err: any) {
+      fakeShaRejected = true;
+      assert.strictEqual(err.statusCode, 400);
+      assert.strictEqual(err.code, 'INVALID_COMMIT_SHA');
+    }
+    assert.strictEqual(fakeShaRejected, true, 'Fake SHA "unknown" must be rejected with 400');
+
+    // 6f. Invalid Issue/PR numbers rejected
+    let invalidNumberRejected = false;
+    try {
+      await GithubSyncService.linkGithubMetadata({
+        ticketId: ticketToSync.id,
+        githubIssueNumber: -1,
+      });
+    } catch (err: any) {
+      invalidNumberRejected = true;
+      assert.strictEqual(err.statusCode, 400);
+      assert.strictEqual(err.code, 'INVALID_GITHUB_NUMBER');
+    }
+    assert.strictEqual(invalidNumberRejected, true, 'Negative issue number must be rejected with 400');
+
+    // 6g. Cross-repository reference rejected
+    let crossRepoRejected = false;
+    try {
+      await GithubSyncService.linkGithubMetadata({
+        ticketId: ticketToSync.id,
+        repository: 'malicious-user/other-repo',
+      });
+    } catch (err: any) {
+      crossRepoRejected = true;
+      assert.strictEqual(err.statusCode, 400);
+      assert.strictEqual(err.code, 'CROSS_REPOSITORY_REJECTED');
+    }
+    assert.strictEqual(crossRepoRejected, true, 'Cross-repository reference must be rejected with 400');
 
   } finally {
     setPrismaClientForTest(null as any);
