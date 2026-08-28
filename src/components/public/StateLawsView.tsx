@@ -81,16 +81,18 @@ interface LegalAct {
 }
 
 interface LegislativeBill {
-  id: string;
+  id?: string;
   billNumber: string;
   title: string;
   status: string;
   proposedBy: string;
   submittedAt: string;
   summary: string;
-  relatedActCode: string;
-  lifeSituation: string;
-  sourceUrl: string;
+  relatedActCode?: string;
+  actCodeAffected?: string;
+  lifeSituation?: string;
+  sourceUrl?: string;
+  sourceUri?: string;
 }
 
 interface StateAdminResult<T> {
@@ -577,16 +579,18 @@ export const StateLawsView: React.FC<StateLawsViewProps> = ({ onNavigate }) => {
                       <div className="pt-2 space-y-1.5 text-[11px] text-slate-500 border-t border-slate-100">
                         <div>Předkladatel: <strong className="text-slate-800">{bill.proposedBy}</strong></div>
                         <div>Předloženo: <strong className="text-slate-800">{bill.submittedAt}</strong></div>
-                        <div>Dotčený zákon: <strong className="text-indigo-900">č. {bill.relatedActCode} Sb.</strong></div>
-                        <div>
-                          Životní situace: <strong className="text-blue-900 font-bold">{bill.lifeSituation}</strong>
-                        </div>
+                        <div>Dotčený zákon: <strong className="text-indigo-900">{(bill.actCodeAffected || bill.relatedActCode) ? `č. ${bill.actCodeAffected || bill.relatedActCode} Sb.` : 'Neuvedeno'}</strong></div>
+                        {bill.lifeSituation && (
+                          <div>
+                            Životní situace: <strong className="text-blue-900 font-bold">{bill.lifeSituation}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {bill.sourceUrl && (
+                    {(bill.sourceUri || bill.sourceUrl) && (
                       <a
-                        href={bill.sourceUrl}
+                        href={bill.sourceUri || bill.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full py-2.5 bg-indigo-900 text-white font-bold rounded-xl text-xs hover:bg-indigo-950 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer mt-4"
