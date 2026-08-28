@@ -99,13 +99,28 @@ export class ELegislativaConnector {
       const title = item.nazev || item.title || item.cisloSekce || item.iri;
       if (!title) continue;
 
+      let billNumber = 'Neuvedeno';
+      if (item.cisloTisku) {
+        billNumber = String(item.cisloTisku);
+      } else if (item.kod) {
+        billNumber = String(item.kod);
+      } else if (item.iri) {
+        billNumber = String(item.iri).split('/').pop() || 'Neuvedeno';
+      }
+
+      let submittedAt = item.datumPrijeti || item.datumVyhlaseni || 'Neuvedeno';
+      // Basic validation to prevent "Invalid Date" scenarios down the line
+      if (submittedAt !== 'Neuvedeno' && isNaN(Date.parse(submittedAt))) {
+        submittedAt = 'Neuvedeno';
+      }
+
       results.push({
-        billNumber: item.cisloTisku || item.kod || item.iri ? String(item.iri).split('/').pop() || '' : '',
+        billNumber,
         title,
         actCodeAffected,
         status: item.stav === 'SCHVALENO' ? 'PASSED' : item.stav === 'ZAMITNUTO' ? 'REJECTED' : 'READING_2',
-        proposedBy: item.navrhovatel || 'Ministerstvo spravedlnosti ČR',
-        submittedAt: item.datumPrijeti || item.datumVyhlaseni || new Date().toISOString().split('T')[0],
+        proposedBy: item.navrhovatel || 'Neuvedeno',
+        submittedAt,
         summary: item.anotace || item.popis || '',
         sourceUri: item.iri ? `${this.ESBIRKA_BASE}${item.iri}` : `${this.ESBIRKA_BASE}/dokumenty-sbirky`,
       });
