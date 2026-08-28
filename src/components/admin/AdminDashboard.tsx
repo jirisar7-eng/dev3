@@ -47,6 +47,7 @@ import { EsbirkaAdminPanel } from './EsbirkaAdminPanel';
 import { StateAdminManager } from './StateAdminManager';
 import { AuditCenter } from './AuditCenter';
 import { AnalyticsManager } from './AnalyticsManager';
+import { ContentProjectCenter } from './ContentProjectCenter';
 
 interface AdminDashboardProps {
   currentPath?: string;
@@ -357,6 +358,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           )}
 
           {/* 📝 Obsah & CMS */}
+          {activeTab === 'project-control' && <ContentProjectCenter onNavigate={onNavigate} />}
           {activeTab === 'pages' && <AdminPagesList onNavigate={onNavigate} />}
           {activeTab === 'templates' && <TemplateManager onNavigate={onNavigate} />}
           {activeTab === 'page-builder' && <AdminPageBuilder onNavigate={onNavigate} />}
