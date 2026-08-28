@@ -323,7 +323,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
 
                     <button
                       onClick={() => {
-                        handleSelectTab('qa', '/administrace/qa/copilot');
+                        handleSelectTab('copilot', '/administrace/qa/copilot');
                       }}
                       className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group-hover:shadow-lg"
                     >
@@ -385,7 +385,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
 
           {/* 🤖 AI & Automatizace */}
-          {activeTab === 'qa' && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
+          {(activeTab === 'qa' || activeTab === 'copilot') && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'tests' && <TestRunnerCard />}
 
