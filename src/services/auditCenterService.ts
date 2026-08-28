@@ -328,6 +328,7 @@ export class AuditCenterService {
               category: parsed.category,
               status: parsed.status,
               summary: parsed.summary,
+              content: parsed.content,
               auditDate: parsed.auditDate,
               author: parsed.author,
               sourceSha: parsed.sourceSha,
@@ -341,6 +342,7 @@ export class AuditCenterService {
               category: parsed.category,
               status: parsed.status,
               summary: parsed.summary,
+              content: parsed.content,
               auditDate: parsed.auditDate,
               author: parsed.author,
               sourceSha: parsed.sourceSha,
@@ -359,6 +361,7 @@ export class AuditCenterService {
             category: parsed.category,
             status: parsed.status,
             summary: parsed.summary,
+            content: parsed.content,
             auditDate: parsed.auditDate,
             author: parsed.author,
             sourceSha: parsed.sourceSha,
@@ -582,14 +585,18 @@ export class AuditCenterService {
       throw new Error('Auditní dokument nebyl nalezen.');
     }
 
-    // Safely read filesystem content
+    // Prefer content from DB if it exists (survives container restart)
+    if (doc.content) {
+      return doc as AuditDocumentItem & { content: string };
+    }
+
+    // Safely read filesystem content fallback (for old documents or dynamically generated ones not yet pushed to DB)
     const absolutePath = this.validatePath(doc.sourcePath);
     if (!fs.existsSync(absolutePath)) {
-      throw new Error(`Soubor auditního reportu na cestě ${doc.sourcePath} neexistuje.`);
+      throw new Error(`Soubor auditního reportu na cestě ${doc.sourcePath} neexistuje (a nenalezen ani v databázi).`);
     }
 
     const content = fs.readFileSync(absolutePath, 'utf-8');
-
     return {
       ...doc,
       content,

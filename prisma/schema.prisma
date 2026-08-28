@@ -521,6 +521,7 @@ model AuditDocument {
   category     String       @default("OTHER")
   status       String       @default("UNKNOWN")
   summary      String?      @db.Text
+  content      String?      @db.Text
   auditDate    String?
   author       String?
   sourceSha    String?

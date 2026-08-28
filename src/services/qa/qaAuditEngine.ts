@@ -15,6 +15,8 @@ export interface AuditRunResult {
   runId: string;
   status: string;
   runDate: string;
+  exportStatus?: string;
+  exportError?: string | null;
   commitSha: string;
   branch: string;
   environment: string;
@@ -533,18 +535,39 @@ PRODUCTION READINESS GATE EXPLANATION:
       }
     });
 
+    let exportStatus = 'UNKNOWN';
+    let exportError: string | null = null;
+    
+    const scrubText = (text: string) => {
+      if (!text) return text;
+      let scrubbed = text.replace(
+        /(password|passwd|pwd|token|secret|key|authorization|bearer|credentials|jwt)\s*[:=]\s*["']?[^"'\s,;{}]+["']?/gi,
+        '$1: [REDACTED]'
+      );
+      // Scrub query params
+      scrubbed = scrubbed.replace(
+        /([\?&])(password|token|secret|key|api_key)=[^&\s]+/gi,
+        '$1$2=[REDACTED]'
+      );
+      // Scrub JWTs specifically
+      scrubbed = scrubbed.replace(
+        /ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g,
+        '[JWT_REDACTED]'
+      );
+      // Scrub emails as basic PII protection
+      scrubbed = scrubbed.replace(
+        /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+        '[EMAIL_REDACTED]'
+      );
+      return scrubbed;
+    };
+
     // Step 11: EXPORT TO AUDIT CENTER (Bridging the gap)
     try {
       const dateString = new Date().toISOString().split('T')[0];
       const safeRunId = run.id.replace(/[^a-zA-Z0-9_-]/g, '');
       const fileName = `AUDIT_${dateString}_LIVE_QA_${safeRunId}.md`;
       const filePath = path.join(process.cwd(), 'docs', 'audit', fileName);
-
-      // Scrub secrets and sensitive info if any
-      const scrubText = (text: string) => {
-        if (!text) return text;
-        return text.replace(/(password|token|secret|key|authorization|bearer)\s*[:=]\s*["']?[^"'\s]+["']?/gi, '$1: [REDACTED]');
-      };
 
       const mdContent = `# Live QA Audit Report
 
@@ -589,7 +612,10 @@ ${scrubText(rawReportText)}
       
       // Sync audits to database so it immediately shows up in Audit Center
       await AuditCenterService.syncAudits({ forceResync: true });
-    } catch (err) {
+      exportStatus = 'SUCCESS';
+    } catch (err: any) {
+      exportStatus = 'FAILED';
+      exportError = err?.message ? scrubText(err.message) : 'Unknown export error';
       console.error('Failed to export Live QA Audit to Audit Center:', err);
       // We explicitly do not throw here, as failure to write the file should not fail the audit process itself.
     }
@@ -597,6 +623,8 @@ ${scrubText(rawReportText)}
     return {
       runId: run.id,
       status: 'COMPLETED',
+      exportStatus,
+      exportError,
       runDate: new Date().toISOString(),
       commitSha,
       branch,
