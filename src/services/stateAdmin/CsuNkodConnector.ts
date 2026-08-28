@@ -220,11 +220,11 @@ SELECT DISTINCT ?ds ?title ?desc WHERE {
       sparqlFilterTerms.push(rawKw);
     } else {
       // Default broad multi-theme discovery for family & judicial open data
-      sparqlFilterTerms.push('rozvod', 'sňat', 'manžel', 'dět', 'nezletil', 'rodin', 'opatrovn', 'výživn', 'soud');
+      sparqlFilterTerms.push('rozvod', 'sňat', 'opatrovn', 'výživn');
     }
 
     const titleOrDescFilters = sparqlFilterTerms
-      .map((stem) => `CONTAINS(LCASE(?title), "${stem}") || CONTAINS(LCASE(?desc), "${stem}")`)
+      .map((stem) => `CONTAINS(LCASE(?title), "${stem}")`)
       .join(' || ');
 
     const query = `PREFIX dcat: <http://www.w3.org/ns/dcat#>
