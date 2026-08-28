@@ -51,6 +51,7 @@ export type AdminTabId =
   | 'audit'
   | 'audits'
   | 'qa'
+  | 'copilot'
   | 'ai-context'
   | 'settings'
   | 'sponsors'
@@ -235,13 +236,13 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   },
   {
     id: 'sec-ai',
-    title: 'AI & Automatizace',
+    title: 'Synthesis AI & QA Center',
     emoji: '🤖',
     description: 'Synthesis Admin Copilot, AI Context báze, QA orchestrátor a E2E testy',
     icon: Sparkles,
     items: [
       {
-        id: 'qa',
+        id: 'copilot',
         title: 'Synthesis Admin Copilot',
         subtitle: 'Multi-AI agent pro asistovanou správu a QA',
         icon: Sparkles,
@@ -278,8 +279,8 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   },
   {
     id: 'sec-analytics',
-    title: 'Analytika & Audit',
-    emoji: '📈',
+    title: 'Observability & Audit',
+    emoji: '📊',
     description: '0-PII telemetrie, bezpečnostní auditní logy a compliance dokumenty',
     icon: BarChart2,
     items: [
@@ -476,7 +477,7 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
     const params = new URLSearchParams(searchStr);
     const tabParam = params.get('tab') || params.get('subtab') || params.get('sub');
     if (tabParam) {
-      if (tabParam === 'copilot') return 'qa';
+      if (tabParam === 'copilot') return 'copilot';
       if (tabParam === 'audit-center' || tabParam === 'audity') return 'audits';
       if (tabParam === 'audit-log') return 'audit';
       if (tabParam === 'analytika') return 'analytics';
@@ -492,7 +493,7 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
   if (target.startsWith('/admin/pages')) return 'pages';
   if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
   if (target.startsWith('/admin/dns')) return 'dns';
-  if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'qa';
+  if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'copilot';
   if (target.includes('/qa') || target.includes('/administrace/qa') || target.includes('/admin/copilot')) return 'qa';
   if (target.includes('/audity') || target.includes('/administrace/audity') || target.includes('/admin/audit-center')) return 'audits';
   if (target.includes('/audit-log') || target.includes('/administrace/audit-log')) return 'audit';
