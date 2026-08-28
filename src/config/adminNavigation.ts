@@ -30,6 +30,7 @@ import { UserRole } from '../types';
 
 export type AdminTabId =
   | 'overview'
+  | 'project-control'
   | 'analytics'
   | 'pages'
   | 'templates'
@@ -109,6 +110,15 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     description: 'Vizuální správa stránek, šablony, texty, téma a obsahové moduly',
     icon: FileText,
     items: [
+      {
+        id: 'project-control',
+        title: 'Obsah & Projekt',
+        subtitle: 'Centrální přehled stavu, evidovaných stránek, auditů a backlogu',
+        icon: CheckCircle2,
+        badge: { text: 'Control Center', variant: 'emerald' },
+        path: '/admin/project-control',
+        keywords: ['obsah', 'projekt', 'stav', 'hotovo', 'rozpracováno', 'plánováno', 'nápad', 'blokováno', 'archiv', 'backlog', 'roadmapa', 'audity', 'gap'],
+      },
       {
         id: 'pages',
         title: 'Správa stránek',
@@ -478,6 +488,7 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
 
   // 2. Specific Path matches
   if (target.startsWith('/admin/pages/new') || target.startsWith('/admin/pages/edit')) return 'page-builder';
+  if (target.startsWith('/admin/project-control') || target.includes('/obsah-projekt') || target.includes('tab=project-control')) return 'project-control';
   if (target.startsWith('/admin/pages')) return 'pages';
   if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
   if (target.startsWith('/admin/dns')) return 'dns';

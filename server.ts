@@ -68,6 +68,7 @@ import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCen
 import synthesisRoutes from './src/routes/synthesisRoutes';
 import { analyticsRouter } from './src/routes/analyticsRoutes';
 import teamRoutes from './src/routes/teamRoutes';
+import projectControlRoutes from './src/routes/projectControlRoutes';
 
 dotenv.config();
 
@@ -225,6 +226,7 @@ app.use('/api/cases', caseRoutes);
 app.use('/api/coparent', coparentRoutes);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/team', teamRoutes);
+app.use('/api/admin/project-control', projectControlRoutes);
 
 // --- INCIDENTS & HANDOVER LOGS ENDPOINTS ---
 app.get('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, res: express.Response) => {
