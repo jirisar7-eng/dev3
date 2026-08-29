@@ -184,7 +184,7 @@ export const CmsPageRenderer: React.FC<CmsPageRendererProps> = ({ slug, onNaviga
   let puckData: any = null;
   try {
     const raw = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
-    if (raw && typeof raw === 'object' && Array.isArray(raw.content)) {
+    if (raw && typeof raw === 'object' && Array.isArray(raw.content) && raw.root) {
       puckData = normalizePuckData(raw);
     } else if (slug === 'home' || slug === 'domu') {
       puckData = normalizePuckData(DEFAULT_HOMEPAGE_PUCK_DATA);

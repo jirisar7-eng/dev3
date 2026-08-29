@@ -324,7 +324,10 @@ export const VideoManager: React.FC = () => {
                 className="p-5 hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="relative w-24 h-16 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0 group">
+                  <div
+                    onClick={() => handleOpenModal(video)}
+                    className="relative w-24 h-16 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0 group cursor-pointer"
+                  >
                     <img
                       src={video.thumbnailUrl}
                       alt={video.title}

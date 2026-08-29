@@ -12,19 +12,32 @@ import {
   ArrowRight,
   ShieldAlert,
   HelpCircle,
+  BarChart2,
+  Sparkles,
 } from 'lucide-react';
 import { ProjectHealthCard } from './audit/ProjectHealthCard';
 import { AuditFindingsList } from './audit/AuditFindingsList';
 import { OrionAssistantPanel } from './audit/OrionAssistantPanel';
 import { AuditDocumentsCatalog } from './audit/AuditDocumentsCatalog';
+import { AiTelemetryCard } from './audit/AiTelemetryCard';
 import {
   ReleaseGateEvaluationResult,
   AuditFinding,
   RegressionFinding,
 } from '../../services/audit/types';
 
-export const AuditCenter: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'health' | 'findings' | 'orion' | 'catalog'>('health');
+interface AuditCenterProps {
+  initialTab?: 'health' | 'findings' | 'orion' | 'catalog' | 'telemetry';
+  onNavigate?: (path: string) => void;
+}
+
+export const AuditCenter: React.FC<AuditCenterProps> = ({
+  initialTab = 'health',
+  onNavigate,
+}) => {
+  const [activeTab, setActiveTab] = useState<'health' | 'findings' | 'orion' | 'catalog' | 'telemetry'>(
+    initialTab
+  );
 
   // Backend Data State
   const [releaseGate, setReleaseGate] = useState<ReleaseGateEvaluationResult | null>(null);
@@ -118,7 +131,7 @@ export const AuditCenter: React.FC = () => {
           <button
             onClick={handleRefreshAll}
             disabled={loadingGate || loadingFindings}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-xs disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loadingGate || loadingFindings ? 'animate-spin text-indigo-600' : ''}`} />
             <span>Aktualizovat vše</span>
@@ -135,7 +148,7 @@ export const AuditCenter: React.FC = () => {
           </div>
           <button
             onClick={handleRefreshAll}
-            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium"
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium cursor-pointer"
           >
             Zkusit znovu
           </button>
@@ -146,7 +159,7 @@ export const AuditCenter: React.FC = () => {
       <div className="flex items-center gap-2 border-b border-slate-200 pb-px overflow-x-auto">
         <button
           onClick={() => setActiveTab('health')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'health'
               ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
@@ -171,7 +184,7 @@ export const AuditCenter: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('findings')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'findings'
               ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
@@ -188,7 +201,7 @@ export const AuditCenter: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('orion')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'orion'
               ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
@@ -202,8 +215,23 @@ export const AuditCenter: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('telemetry')}
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'telemetry'
+              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+          }`}
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>AI Telemetrie & Modely</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-800 font-bold border border-purple-200">
+            0-PII
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('catalog')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'catalog'
               ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
@@ -242,6 +270,10 @@ export const AuditCenter: React.FC = () => {
             fetchFindings();
           }}
         />
+      )}
+
+      {activeTab === 'telemetry' && (
+        <AiTelemetryCard onNavigate={onNavigate} />
       )}
 
       {activeTab === 'catalog' && (
