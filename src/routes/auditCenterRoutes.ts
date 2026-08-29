@@ -2,8 +2,40 @@ import { Router, Response } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { AuditCenterService } from '../services/auditCenterService';
 import { AuditService } from '../services/auditService';
+import { AuditRegistryEngine } from '../services/audit/auditRegistryEngine';
+import { RegressionEngine } from '../services/audit/regressionEngine';
 
 const router = Router();
+
+/**
+ * GET /api/admin/audits/findings (or /api/admin/audit-center/findings)
+ * Returns normalized Audit Registry summary, findings, regressions, severity counts, and parser warnings.
+ */
+router.get('/findings', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { records, summary, warnings } = AuditRegistryEngine.loadRegistry();
+    const regressions = RegressionEngine.analyzeAuditTimeline(records);
+
+    // Extract all findings across all audits
+    const allFindings = records.flatMap(r => r.findings);
+
+    res.json({
+      success: true,
+      data: {
+        registrySummary: summary,
+        findings: allFindings,
+        regressions,
+        severityCounts: summary.severityCounts,
+        parserWarnings: warnings,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Chyba při načítání auditních zjištění a registru.',
+    });
+  }
+});
 
 /**
  * GET /api/admin/audits

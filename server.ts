@@ -235,7 +235,7 @@ app.get('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest, 
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const category = req.query.category as string | undefined;
 
     const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
@@ -261,7 +261,7 @@ app.post('/api/incidents', requireAuth as any, async (req: AuthenticatedRequest,
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { title, description, date, category } = req.body;
 
     const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
@@ -290,7 +290,7 @@ app.delete('/api/incidents/:id', requireAuth as any, async (req: AuthenticatedRe
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const incidentDelegate = (p as any).incidentRecord || (p as any).IncidentRecord;
@@ -318,7 +318,7 @@ app.get('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest,
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const category = req.query.category as string | undefined;
 
     const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
@@ -344,7 +344,7 @@ app.post('/api/case-files', requireAuth as any, async (req: AuthenticatedRequest
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { title, category, content, fileUrl } = req.body;
 
     if (!title || (!content && !fileUrl)) {
@@ -377,7 +377,7 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
     if (!isPrismaAvailable() || !p) {
       return res.status(503).json({ error: 'Databáze není dostupná.' });
     }
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const caseFileDelegate = (p as any).caseFile || (p as any).CaseFile;
@@ -398,7 +398,7 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
   }
 });
 app.use('/api/admin/vps', adminVpsRoutes);
-app.use('/api/admin/audits', auditCenterRoutes);
+app.use(['/api/admin/audits', '/api/admin/audit-center'], auditCenterRoutes);
 app.use('/api/admin/synthesis', synthesisRoutes);
 app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);
@@ -1716,7 +1716,7 @@ app.post('/api/auth/passkey/register/options', requireAuth as any, async (req: A
     console.log('[Passkey Register] Požadavek přijat pro uživatele:', req.user?.id);
     console.log('[Passkey Register] Generuji options pro host:', req.headers.host);
 
-    const user = req.user!;
+    const user = req.user as any;
     const existingPasskeys = isPrismaAvailable()
       ? await prisma.passkey.findMany({ where: { userId: user.id } })
       : (dbStore.passkeys ? dbStore.passkeys.filter((p: any) => p.userId === user.id) : []);
@@ -1751,7 +1751,7 @@ app.post('/api/auth/passkey/register-options', requireAuth as any, async (req: A
     console.log('[Passkey Register] Požadavek přijat pro uživatele:', req.user?.id);
     console.log('[Passkey Register] Generuji options pro host:', req.headers.host);
 
-    const user = req.user!;
+    const user = req.user as any;
     const existingPasskeys = isPrismaAvailable()
       ? await prisma.passkey.findMany({ where: { userId: user.id } })
       : (dbStore.passkeys ? dbStore.passkeys.filter((p: any) => p.userId === user.id) : []);
@@ -1783,7 +1783,7 @@ app.post('/api/auth/passkey/register-options', requireAuth as any, async (req: A
 app.post('/api/auth/passkey/register/verify', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('[Passkey Register Verify] Požadavek přijat pro uživatele:', req.user?.id);
-    const user = req.user!;
+    const user = req.user as any;
     const expectedChallenge = req.signedCookies.passkey_reg_challenge;
     res.clearCookie('passkey_reg_challenge');
 
@@ -1846,7 +1846,7 @@ app.post('/api/auth/passkey/register/verify', requireAuth as any, async (req: Au
 app.post('/api/auth/passkey/register-verify', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('[Passkey Register Verify] Požadavek přijat pro uživatele:', req.user?.id);
-    const user = req.user!;
+    const user = req.user as any;
     const expectedChallenge = req.signedCookies.passkey_reg_challenge;
     res.clearCookie('passkey_reg_challenge');
 
@@ -2018,11 +2018,11 @@ app.get('/api/auth/passkey/list', requireAuth as any, async (req: AuthenticatedR
     let list: any[] = [];
     if (isPrismaAvailable()) {
       list = await prisma.passkey.findMany({
-        where: { userId: req.user!.id },
+        where: { userId: (req.user as any).id },
         orderBy: { createdAt: 'desc' }
       });
     } else {
-      list = (dbStore.passkeys || []).filter((p: any) => p.userId === req.user!.id);
+      list = (dbStore.passkeys || []).filter((p: any) => p.userId === (req.user as any).id);
     }
 
     const safeList = list.map((pk) => ({
@@ -2045,13 +2045,13 @@ app.delete('/api/auth/passkey/:id', requireAuth as any, async (req: Authenticate
     const { id } = req.params;
     if (isPrismaAvailable()) {
       const existing = await prisma.passkey.findUnique({ where: { id } });
-      if (existing && existing.userId === req.user!.id) {
+      if (existing && existing.userId === (req.user as any).id) {
         await prisma.passkey.delete({ where: { id } });
         dbStore.logAudit('PASSKEY_DELETE_SUCCESS', 'AUTH', `Bezpečnostní klíč byl úspěšně odstraněn.`, req.user);
         return res.json({ success: true });
       }
     } else {
-      const idx = (dbStore.passkeys || []).findIndex((p: any) => p.id === id && p.userId === req.user!.id);
+      const idx = (dbStore.passkeys || []).findIndex((p: any) => p.id === id && p.userId === (req.user as any).id);
       if (idx !== -1) {
         dbStore.passkeys.splice(idx, 1);
         dbStore.logAudit('PASSKEY_DELETE_SUCCESS', 'AUTH', `Bezpečnostní klíč byl úspěšně odstraněn.`, req.user);
@@ -2068,7 +2068,7 @@ app.delete('/api/auth/passkey/:id', requireAuth as any, async (req: Authenticate
 // Endpoint to list linked social accounts
 app.get('/api/auth/accounts', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
-    const list = dbStore.accounts.filter(a => a.userId === req.user!.id);
+    const list = dbStore.accounts.filter(a => a.userId === (req.user as any).id);
     const safeList = list.map((acc: any) => ({
       provider: acc.provider,
       email: acc.email,
@@ -2083,7 +2083,7 @@ app.get('/api/auth/accounts', requireAuth as any, async (req: AuthenticatedReque
 app.delete('/api/auth/accounts/:provider', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { provider } = req.params;
-    const idx = dbStore.accounts.findIndex(a => a.userId === req.user!.id && a.provider === provider);
+    const idx = dbStore.accounts.findIndex(a => a.userId === (req.user as any).id && a.provider === provider);
     if (idx !== -1) {
       dbStore.accounts.splice(idx, 1);
       dbStore.logAudit('OAUTH_ACCOUNT_UNLINKED', 'AUTH', `Účet ${provider} byl úspěšně odpojen.`, req.user);
@@ -2536,7 +2536,7 @@ app.post('/api/admin/users/:id/reset-password', requireAuth as any, requireRole(
     const { id } = req.params;
     const user = await AuthService.getUserById(id);
     if (!user) return res.status(404).json({ error: 'Uživatel nenalezen' });
-    const newPassword = await AuthService.adminResetPassword(id, req.user!);
+    const newPassword = await AuthService.adminResetPassword(id, req.user as any);
     sendPasswordResetEmail(user.email, user.name, newPassword).catch(console.error);
     res.json({ success: true });
   } catch (err: any) {
@@ -2670,7 +2670,7 @@ app.put('/api/users/:id/status', requireAuth as any, requireRole('ADMIN') as any
     if (!status) {
       return res.status(400).json({ error: 'Stav účtu je povinný.' });
     }
-    const updated = await UserDataService.updateUserStatus(id, status, req.user!);
+    const updated = await UserDataService.updateUserStatus(id, status, req.user as any);
     res.json(updated);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -2977,7 +2977,7 @@ app.get('/api/admin/github/status', requireAuth as any, requireGithubPublishAcce
 app.post('/api/admin/github/push', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { commitMessage } = req.body;
-    const result = await GithubPublisherService.publishToGithub(req.user!, commitMessage, req.ip);
+    const result = await GithubPublisherService.publishToGithub(req.user as any, commitMessage, req.ip);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Chyba při publikování na GitHub.' });
@@ -2987,7 +2987,7 @@ app.post('/api/admin/github/push', requireAuth as any, requireGithubPublishAcces
 app.post('/api/admin/github/force-push', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { commitMessage } = req.body;
-    const result = await GithubPublisherService.forcePushToGithub(req.user!, commitMessage, req.ip);
+    const result = await GithubPublisherService.forcePushToGithub(req.user as any, commitMessage, req.ip);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Chyba při spouštění FORCE PUSH na GitHub.' });
@@ -3011,6 +3011,150 @@ app.get('/api/admin/github/suggest-push-name', requireAuth as any, requireGithub
     res.status(500).json({ error: err.message || 'Chyba při generování názvu pushe.' });
   }
 });
+
+// --- COPILOT CONTROL PLANE GITHUB ENDPOINTS ---
+
+app.post('/api/admin/github/copilot/branch', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName } = req.body;
+    const result = await GithubPublisherService.createCopilotBranch(req.user as any, branchName, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/github/copilot/push', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName, commitMessage } = req.body;
+    const result = await GithubPublisherService.publishCopilotBranch(req.user as any, branchName, commitMessage, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/github/copilot/pr', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { branchName, title, body } = req.body;
+    const result = await GithubPublisherService.createPullRequest(req.user as any, branchName, title, body, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/github/copilot/ci-status', requireAuth as any, requireGithubPublishAccess as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const branchName = req.query.branchName as string;
+    const result = await GithubPublisherService.getCiStatus(req.user as any, branchName, req.ip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+// --- CONTROL PLANE FOUNDATION ENDPOINTS ---
+
+import { ControlPlaneService } from './src/services/controlPlaneService';
+
+app.post('/api/admin/control-plane/analyze', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { intent, payload } = req.body;
+    const result = ControlPlaneService.analyzeIntent(intent, payload);
+    res.json({ success: true, analysis: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/control-plane/action', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { intent, payload } = req.body;
+    const action = await ControlPlaneService.createAction(req.user as any, intent, payload, req.ip);
+    res.json({ success: true, action });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/control-plane/action/:id/snapshot', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { originalData } = req.body;
+    await ControlPlaneService.createSnapshot(req.user as any, id, originalData, req.ip);
+    const action = ControlPlaneService.getAction(id);
+    res.json({ success: true, action });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/control-plane/action/:id/approve', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    await ControlPlaneService.approveAction(req.user as any, id, req.ip);
+    const action = ControlPlaneService.getAction(id);
+    res.json({ success: true, action });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/control-plane/action/:id/complete', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { changeReference } = req.body;
+    await ControlPlaneService.completeAction(req.user as any, id, changeReference, req.ip);
+    const action = ControlPlaneService.getAction(id);
+    res.json({ success: true, action });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/control-plane/action/:id/rollback', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const originalData = await ControlPlaneService.rollbackAction(req.user as any, id, req.ip);
+    const action = ControlPlaneService.getAction(id);
+    res.json({ success: true, action, rollbackData: originalData });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/control-plane/actions', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Basic RBAC for viewing all actions
+    if ((req.user as any).role !== 'ADMIN' && (req.user as any).role !== 'SUPER_ADMIN') {
+       return res.status(403).json({ success: false, error: 'Nedostatečná oprávnění' });
+    }
+    const actions = await ControlPlaneService.getAllActions();
+    res.json({ success: true, actions });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/control-plane/action/:id', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const action = await ControlPlaneService.getAction(id);
+    if (!action) return res.status(404).json({ success: false, error: 'Akce nebyla nalezena' });
+    
+    // RBAC for viewing specific action
+    if ((req.user as any).role !== 'ADMIN' && (req.user as any).role !== 'SUPER_ADMIN' && action.actorId !== (req.user as any).id) {
+       return res.status(403).json({ success: false, error: 'Nedostatečná oprávnění' });
+    }
+    
+    res.json({ success: true, action });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // --- PRIVATE USER PORTAL API ENDPOINTS ---
 
@@ -3064,7 +3208,7 @@ app.get('/api/portal/cases/:userId', requireAuth as any, async (req: Authenticat
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění k těmto případům.' });
     }
-    const cases = await UserDataService.getCases(userId, req.user!);
+    const cases = await UserDataService.getCases(userId, req.user as any);
     res.json(cases);
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3077,7 +3221,7 @@ app.post('/api/portal/cases', requireAuth as any, async (req: AuthenticatedReque
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění vytvořit případ pro jiného uživatele.' });
     }
-    const created = await UserDataService.createCase(req.user!, { ...req.body, userId });
+    const created = await UserDataService.createCase(req.user as any, { ...req.body, userId });
     res.json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3091,7 +3235,7 @@ app.get('/api/portal/children/:userId', requireAuth as any, async (req: Authenti
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění k těmto dětem.' });
     }
-    const children = await UserDataService.getChildren(userId, req.user!);
+    const children = await UserDataService.getChildren(userId, req.user as any);
     res.json(children);
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3104,7 +3248,7 @@ app.post('/api/portal/children', requireAuth as any, async (req: AuthenticatedRe
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění vytvořit dítě pro jiného uživatele.' });
     }
-    const created = await UserDataService.createChild(req.user!, { ...req.body, userId });
+    const created = await UserDataService.createChild(req.user as any, { ...req.body, userId });
     res.json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3122,7 +3266,7 @@ app.put('/api/portal/children/:id', requireAuth as any, async (req: Authenticate
         return res.status(403).json({ error: 'Přístup odepřen. Tento záznam vám nepatří.' });
       }
     }
-    const updated = await UserDataService.updateChild(req.user!, id, req.body);
+    const updated = await UserDataService.updateChild(req.user as any, id, req.body);
     res.json(updated);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3140,7 +3284,7 @@ app.delete('/api/portal/children/:id', requireAuth as any, async (req: Authentic
         return res.status(403).json({ error: 'Přístup odepřen. Tento záznam vám nepatří.' });
       }
     }
-    const success = await UserDataService.deleteChild(req.user!, id);
+    const success = await UserDataService.deleteChild(req.user as any, id);
     res.json({ success });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3151,7 +3295,7 @@ app.delete('/api/portal/children/:id', requireAuth as any, async (req: Authentic
 app.post('/api/portal/documents/autofill-preview', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { templateText } = req.body;
-    const preview = await UserDataService.previewFilledDocument(req.user!, templateText || '');
+    const preview = await UserDataService.previewFilledDocument(req.user as any, templateText || '');
     res.json({ previewText: preview });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3165,7 +3309,7 @@ app.get('/api/portal/notes/:userId', requireAuth as any, async (req: Authenticat
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění k těmto poznámkám.' });
     }
-    const notes = await UserDataService.getNotes(userId, req.user!);
+    const notes = await UserDataService.getNotes(userId, req.user as any);
     res.json(notes);
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3178,7 +3322,7 @@ app.post('/api/portal/notes', requireAuth as any, async (req: AuthenticatedReque
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění vytvořit poznámku pro jiného uživatele.' });
     }
-    const created = await UserDataService.createNote(req.user!, { ...req.body, userId });
+    const created = await UserDataService.createNote(req.user as any, { ...req.body, userId });
     res.json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3196,7 +3340,7 @@ app.delete('/api/portal/notes/:id', requireAuth as any, async (req: Authenticate
         return res.status(403).json({ error: 'Přístup odepřen. Tento záznam vám nepatří.' });
       }
     }
-    const deleted = await UserDataService.deleteNote(id, req.user!);
+    const deleted = await UserDataService.deleteNote(id, req.user as any);
     res.json({ success: deleted });
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3210,7 +3354,7 @@ app.get('/api/portal/documents/:userId', requireAuth as any, async (req: Authent
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění k těmto dokumentům.' });
     }
-    const docs = await UserDataService.getDocuments(userId, req.user!);
+    const docs = await UserDataService.getDocuments(userId, req.user as any);
     res.json(docs);
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3223,7 +3367,7 @@ app.post('/api/portal/documents', requireAuth as any, async (req: AuthenticatedR
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění vytvořit dokument pro jiného uživatele.' });
     }
-    const created = await UserDataService.createDocument(req.user!, { ...req.body, userId });
+    const created = await UserDataService.createDocument(req.user as any, { ...req.body, userId });
     res.json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -3237,7 +3381,7 @@ app.get('/api/portal/events/:userId', requireAuth as any, async (req: Authentica
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění k těmto událostem.' });
     }
-    const events = await UserDataService.getEvents(userId, req.user!);
+    const events = await UserDataService.getEvents(userId, req.user as any);
     res.json(events);
   } catch (err: any) {
     res.status(403).json({ error: err.message });
@@ -3250,7 +3394,7 @@ app.post('/api/portal/events', requireAuth as any, async (req: AuthenticatedRequ
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN' && req.user?.id !== userId) {
       return res.status(403).json({ error: 'Nemáte oprávnění vytvořit událost pro jiného uživatele.' });
     }
-    const created = await UserDataService.createEvent(req.user!, { ...req.body, userId });
+    const created = await UserDataService.createEvent(req.user as any, { ...req.body, userId });
     res.json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -5232,7 +5376,7 @@ async function startServer() {
 
   app.put('/api/admin/branding', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
     try {
-      const updated = await BrandingService.saveNewVersion(req.body, req.user!.email || req.user!.id);
+      const updated = await BrandingService.saveNewVersion(req.body, (req.user as any).email || (req.user as any).id);
       await AuditService.recordLog('UPDATE', 'BRANDING', `Vytvořena nová verze brandingu (${updated.version})`, req.user);
       res.json(updated);
     } catch (err: any) {
@@ -5242,7 +5386,7 @@ async function startServer() {
 
   app.post('/api/admin/branding/restore/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
     try {
-      const restored = await BrandingService.restoreVersion(req.params.id, req.user!.email || req.user!.id);
+      const restored = await BrandingService.restoreVersion(req.params.id, (req.user as any).email || (req.user as any).id);
       await AuditService.recordLog('RESTORE', 'BRANDING', `Obnovena verze brandingu (${restored.version})`, req.user);
       res.json(restored);
     } catch (err: any) {
@@ -5252,7 +5396,7 @@ async function startServer() {
 
   app.post('/api/admin/branding/reset', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
     try {
-      const restored = await BrandingService.restoreDefault(req.user!.email || req.user!.id);
+      const restored = await BrandingService.restoreDefault((req.user as any).email || (req.user as any).id);
       await AuditService.recordLog('RESET', 'BRANDING', `Obnoven výchozí branding`, req.user);
       res.json(restored);
     } catch (err: any) {
