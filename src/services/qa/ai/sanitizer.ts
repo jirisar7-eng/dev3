@@ -7,7 +7,7 @@
 const JWT_REGEX = /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g;
 
 // Generic API key patterns (xai-..., AIzaSy..., sk-..., Bearer ...)
-const API_KEY_REGEX = /(?:xai-[a-zA-Z0-9]{20,}|AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9]{20,}|bearer\s+[a-zA-Z0-9._-]{20,}|token[=:]\s*["']?[a-zA-Z0-9._-]{20,}["']?)/gi;
+const API_KEY_REGEX = /(?:xai-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}|bearer\s+[a-zA-Z0-9._-]{20,}|token[=:]\s*["']?[a-zA-Z0-9._-]{20,}["']?)/gi;
 
 // Password / secret fields in JSON or key-value format
 const PASSWORD_SECRET_REGEX = /"(?:password|passwordHash|totpSecret|mfaSecret|secret|token|api_key|apiKey|jwt|accessToken|refreshToken)":\s*"[^"]*"/gi;

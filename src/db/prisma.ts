@@ -128,6 +128,10 @@ export async function waitForDatabase(maxRetries = 5): Promise<boolean> {
 }
 
 export function getPrismaClient(): PrismaClientType | null {
+  if (clientInstance) {
+    return clientInstance;
+  }
+
   if (isPrismaDisabled) {
     if (!isFallbackAllowed()) {
       return null; // Let the caller handle it, or we could throw here
@@ -171,6 +175,7 @@ export function getPrismaClient(): PrismaClientType | null {
 
 export function isPrismaAvailable(): boolean {
   if (isPrismaDisabled) return false;
+  if (clientInstance) return true;
   if (!process.env.DATABASE_URL) return false;
   try {
     return getPrismaClient() !== null;

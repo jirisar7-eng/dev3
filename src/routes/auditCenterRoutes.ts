@@ -2,8 +2,152 @@ import { Router, Response } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { AuditCenterService } from '../services/auditCenterService';
 import { AuditService } from '../services/auditService';
+import { AuditRegistryEngine } from '../services/audit/auditRegistryEngine';
+import { RegressionEngine } from '../services/audit/regressionEngine';
+import { ReleaseGateService } from '../services/audit/releaseGateService';
+import { OrionService } from '../services/audit/orionService';
+import { z } from 'zod';
 
 const router = Router();
+
+const OrionAnalyzeBodySchema = z.object({
+  scope: z.enum(['REGISTRY', 'FINDING', 'REGRESSION', 'HEALTH', 'GENERAL']).optional(),
+  targetCode: z.string().max(50).optional(),
+  userQuery: z.string().max(2000).optional(),
+  contextLimit: z.number().int().min(1).max(100).optional(),
+});
+
+const OrionProposeActionBodySchema = z.object({
+  title: z.string().min(3).max(200),
+  intent: z.string().min(5).max(1000),
+  payload: z.any().optional(),
+  targetResource: z.string().max(100).optional(),
+  findingReference: z.string().max(50).optional(),
+});
+
+/**
+ * POST /api/admin/audits/orion/analyze (and /api/admin/audit-center/orion/analyze)
+ * Runs safe, read-only AI security analysis via Orion Identity (agent-orion-qa-v1).
+ */
+router.post('/orion/analyze', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parseResult = OrionAnalyzeBodySchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Neplatný požadavek pro Orion analýzu.',
+        details: parseResult.error.issues,
+      });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Neautentizovaný uživatel.',
+      });
+    }
+
+    const analysis = await OrionService.analyze(req.user, parseResult.data, undefined, req.ip);
+
+    res.json({
+      success: true,
+      data: analysis,
+    });
+  } catch (error: any) {
+    res.status(error.message?.includes('FAIL CLOSED') ? 403 : 500).json({
+      success: false,
+      error: error.message || 'Chyba při běhu Orion AI analýzy.',
+    });
+  }
+});
+
+/**
+ * POST /api/admin/audits/orion/propose-action (and /api/admin/audit-center/orion/propose-action)
+ * Creates a ControlPlaneAction proposal strictly in DRAFT mode.
+ */
+router.post('/orion/propose-action', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parseResult = OrionProposeActionBodySchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Neplatný požadavek na vytvoření návrhu akce.',
+        details: parseResult.error.issues,
+      });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Neautentizovaný uživatel.',
+      });
+    }
+
+    const proposal = await OrionService.proposeDraftAction(req.user, parseResult.data, req.ip);
+
+    res.json({
+      success: true,
+      data: proposal,
+    });
+  } catch (error: any) {
+    res.status(error.message?.includes('FAIL CLOSED') ? 403 : 500).json({
+      success: false,
+      error: error.message || 'Chyba při vytváření návrhu akce Orionem.',
+    });
+  }
+});
+
+
+/**
+ * GET /api/admin/audits/release-gate (or /api/admin/audit-center/release-gate)
+ * Evaluates Release Gate verdict and Project Health pillars with server-side authority.
+ */
+router.get('/release-gate', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const customEvidence = req.query.evidence ? JSON.parse(req.query.evidence as string) : undefined;
+    const result = await ReleaseGateService.evaluateReleaseGate(customEvidence);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Chyba při vyhodnocování Release Gate.',
+    });
+  }
+});
+
+/**
+ * GET /api/admin/audits/findings (or /api/admin/audit-center/findings)
+ * Returns normalized Audit Registry summary, findings, regressions, severity counts, and parser warnings.
+ */
+router.get('/findings', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { records, summary, warnings } = AuditRegistryEngine.loadRegistry();
+    const regressions = RegressionEngine.analyzeAuditTimeline(records);
+
+    // Extract all findings across all audits
+    const allFindings = records.flatMap(r => r.findings);
+
+    res.json({
+      success: true,
+      data: {
+        registrySummary: summary,
+        findings: allFindings,
+        regressions,
+        severityCounts: summary.severityCounts,
+        parserWarnings: warnings,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Chyba při načítání auditních zjištění a registru.',
+    });
+  }
+});
 
 /**
  * GET /api/admin/audits
