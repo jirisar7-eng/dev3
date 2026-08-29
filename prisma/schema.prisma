@@ -2518,3 +2518,61 @@ model SynthesisTicketEvent {
   @@index([eventType])
 }
 
+
+
+model ControlPlaneAction {
+  id              String   @id @default(uuid())
+  actorId         String
+  actorRole       String
+  request         String   @db.Text
+  intent          String
+  operationId     String?
+  affectedResources String @db.Text // JSON string array
+  riskLevel       String
+  approvalLevel   String
+  
+  currentState    String?  @db.Text // JSON string
+  proposedState   String?  @db.Text // JSON string
+  
+  backupReference String?
+  changeReference String? // e.g. PR URL or Branch
+  branch          String?
+  commitSha       String?
+  prNumber        Int?
+  
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  
+  status          String
+  version         Int      @default(1) // For optimistic concurrency
+  
+  events          ControlPlaneEvent[]
+  snapshots       ControlPlaneSnapshot[]
+}
+
+model ControlPlaneEvent {
+  id              String   @id @default(uuid())
+  actionId        String
+  timestamp       DateTime @default(now())
+  event           String
+  details         String   @db.Text
+  actorId         String?
+
+  action          ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+}
+
+model ControlPlaneSnapshot {
+  id              String   @id @default(uuid())
+  actionId        String
+  actorId         String
+  operation       String
+  target          String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  beforeStateHash String
+  state           String   @db.Text // JSON string
+  approvalRequired Boolean
+  approvalStatus  String // PENDING | APPROVED | REJECTED | NOT_REQUIRED
+
+  action          ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+}
