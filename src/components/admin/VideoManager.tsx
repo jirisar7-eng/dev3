@@ -325,7 +325,7 @@ export const VideoManager: React.FC = () => {
               >
                 <div className="flex items-start gap-4 flex-1">
                   <div
-                    onClick={() => handleOpenModal(video)}
+                    onClick={() => handleOpenPreview(video)}
                     className="relative w-24 h-16 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0 group cursor-pointer"
                   >
                     <img
