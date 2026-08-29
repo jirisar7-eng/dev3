@@ -4,8 +4,30 @@ import { AuditCenterService } from '../services/auditCenterService';
 import { AuditService } from '../services/auditService';
 import { AuditRegistryEngine } from '../services/audit/auditRegistryEngine';
 import { RegressionEngine } from '../services/audit/regressionEngine';
+import { ReleaseGateService } from '../services/audit/releaseGateService';
 
 const router = Router();
+
+/**
+ * GET /api/admin/audits/release-gate (or /api/admin/audit-center/release-gate)
+ * Evaluates Release Gate verdict and Project Health pillars with server-side authority.
+ */
+router.get('/release-gate', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const customEvidence = req.query.evidence ? JSON.parse(req.query.evidence as string) : undefined;
+    const result = await ReleaseGateService.evaluateReleaseGate(customEvidence);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Chyba při vyhodnocování Release Gate.',
+    });
+  }
+});
 
 /**
  * GET /api/admin/audits/findings (or /api/admin/audit-center/findings)

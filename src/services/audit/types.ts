@@ -127,3 +127,65 @@ export interface AuditRegistrySummary {
   latestAuditDate?: string;
   parserWarningsCount: number;
 }
+
+export type EvidenceState = 'VERIFIED' | 'FAILED' | 'UNKNOWN';
+
+export type ReleaseGateVerdict = 'READY_TO_MERGE' | 'DO_NOT_MERGE' | 'UNKNOWN';
+
+export type ProjectHealthStatus = 'VERIFIED' | 'UNKNOWN' | 'FAILED';
+
+export interface ReleaseGateBlocker {
+  code: string;
+  message: string;
+  severity: FindingSeverity | 'BLOCKER';
+  component: string;
+  referenceId?: string;
+}
+
+export interface RuntimeEvidence {
+  tscStatus: EvidenceState;
+  testSuiteStatus: EvidenceState;
+  buildStatus: EvidenceState;
+  migrationStatus: EvidenceState;
+  phase1TestsStatus?: EvidenceState;
+  tscOutput?: string;
+  testSummary?: string;
+  buildOutput?: string;
+  migrationDetails?: string;
+  timestamp?: string;
+}
+
+export interface PillarHealth {
+  status: ProjectHealthStatus;
+  message: string;
+  details?: Record<string, any>;
+}
+
+export interface ProjectHealthPillars {
+  databaseAndMigrations: PillarHealth;
+  securityAndRbac: PillarHealth;
+  controlPlane: PillarHealth;
+  testSuiteAndBuild: PillarHealth;
+  aiSubsystem: PillarHealth;
+}
+
+export interface ReleaseGateEvaluationResult {
+  verdict: ReleaseGateVerdict;
+  isMergeable: boolean;
+  evaluatedAt: string;
+  blockers: ReleaseGateBlocker[];
+  warnings: string[];
+  evidence: RuntimeEvidence;
+  health: ProjectHealthPillars;
+  summary: {
+    openP0: number;
+    openP1: number;
+    openP2: number;
+    openP3: number;
+    criticalRegressions: number;
+    activeControlPlaneActions: number;
+    totalAudits: number;
+    latestAuditDate?: string;
+    latestAuditStatus?: AuditStatusType;
+  };
+}

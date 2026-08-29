@@ -369,11 +369,61 @@ export class AuditRegistryEngine {
         continue;
       }
 
-      // Check if line represents a finding / issue / gap
-      const isFindingLine =
+      // Check if line represents a finding / issue / gap (bullet list or table row)
+      const isTableRow = line.startsWith('|') && !line.includes('---') && !/\|\s*(?:Kód|Code|Závažnost|Severity|Stav|Status|Název|Title)\s*\|/i.test(line);
+      const isFindingBullet =
         /^(?:[-*]|\d+\.)\s*(?:\*\*)?(?:\[?(?:P0|P1|P2|P3|SEC|BUG|GAP|RISK)[^\]\:]*\]?|\b(?:Problém|Chyba|Zranitelnost|Riziko|Gap|Defekt)\b)/i.test(line);
 
-      if (isFindingLine) {
+      if (isTableRow) {
+        const cells = line.split('|').map(c => c.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        if (cells.length >= 3) {
+          let code = '';
+          let title = '';
+          let severity: FindingSeverity = 'P2';
+          let status: FindingStatus = 'OPEN';
+
+          for (const cell of cells) {
+            const cleanCell = cell.replace(/[*_`]/g, '').trim();
+            if (/^P[0-3]$/i.test(cleanCell)) {
+              severity = cleanCell.toUpperCase() as FindingSeverity;
+            } else if (/^(?:OPEN|FIXED|VERIFIED|IN_PROGRESS|ACCEPTED_RISK|VYŘEŠENO|OPRAVENO|ROZPRACOVÁNO)$/i.test(cleanCell)) {
+              if (/FIXED|VYŘEŠENO|OPRAVENO/i.test(cleanCell)) status = 'FIXED';
+              else if (/VERIFIED|OVĚŘENO/i.test(cleanCell)) status = 'VERIFIED';
+              else if (/ACCEPTED/i.test(cleanCell)) status = 'ACCEPTED_RISK';
+              else if (/IN_PROGRESS|ROZPRACOVÁNO/i.test(cleanCell)) status = 'IN_PROGRESS';
+              else status = 'OPEN';
+            } else if (/^[A-Z]{2,6}-[A-Z0-9_-]+$/i.test(cleanCell)) {
+              code = cleanCell;
+            } else if (cleanCell.length > title.length) {
+              title = cleanCell;
+            }
+          }
+
+          if (code || title || severity === 'P0' || severity === 'P1') {
+            if (!code) {
+              code = `FIND-${severity}-${findingIndex}`;
+            }
+            if (!title) {
+              title = `Zjištění ${code}`;
+            }
+
+            const findingId = `${auditId}__${code}__${findingIndex}`;
+            findings.push({
+              id: findingId,
+              auditId,
+              code,
+              title,
+              description: line,
+              severity,
+              status,
+              firstDetectedAt: auditDate,
+              lastSeenAt: auditDate,
+              isDerivedCode: !code.includes('-'),
+            });
+            findingIndex++;
+          }
+        }
+      } else if (isFindingBullet) {
         const rawText = line.replace(/^(?:[-*]|\d+\.)\s*/, '').trim();
         let severity: FindingSeverity = 'P2';
         if (/\bP0\b/i.test(rawText)) severity = 'P0';
