@@ -12,3 +12,8 @@ test-results/
 midscene_run/
 playwright-report/
 blob-report/
+
+# Local runtime / recovery data — NEVER commit
+backups/
+control-plane-actions.json
+control-plane-snapshots/
