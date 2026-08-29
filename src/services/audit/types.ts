@@ -189,3 +189,71 @@ export interface ReleaseGateEvaluationResult {
     latestAuditStatus?: AuditStatusType;
   };
 }
+
+export type OrionTrustLevel = 'AI_RECOMMENDATION';
+
+export interface OrionFindingAnalysis {
+  code: string;
+  title: string;
+  severity: FindingSeverity;
+  status?: FindingStatus;
+  riskEvaluation: string;
+  recommendedRemediation: string;
+}
+
+export interface OrionSuggestedDraftAction {
+  title: string;
+  intent: string;
+  targetResource: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'P0' | 'P1' | 'P2' | 'P3';
+  requiresHumanApproval: true;
+}
+
+export interface OrionAnalysisRequest {
+  scope?: 'REGISTRY' | 'FINDING' | 'REGRESSION' | 'HEALTH' | 'GENERAL';
+  targetCode?: string;
+  userQuery?: string;
+  contextLimit?: number;
+}
+
+export interface OrionAnalysisResponse {
+  agentId: 'agent-orion-qa-v1';
+  role: 'AI_SECURITY_ANALYST';
+  trustLevel: OrionTrustLevel;
+  timestamp: string;
+  summary: string;
+  findingsAnalysis: OrionFindingAnalysis[];
+  regressionAnalysis?: string;
+  safetyWarnings: string[];
+  suggestedDraftActions: OrionSuggestedDraftAction[];
+  metadata: {
+    model: string;
+    latencyMs: number;
+    effectiveCapabilities: string[];
+    tokenUsage?: {
+      promptTokens?: number;
+      completionTokens?: number;
+      totalTokens?: number;
+    };
+  };
+}
+
+export interface OrionProposeActionRequest {
+  title: string;
+  intent: string;
+  payload?: any;
+  targetResource?: string;
+  findingReference?: string;
+}
+
+export interface OrionProposeActionResponse {
+  agentId: 'agent-orion-qa-v1';
+  trustLevel: OrionTrustLevel;
+  actionId: string;
+  status: 'DRAFT' | 'PLAN_CREATED';
+  message: string;
+  requiresHumanApproval: true;
+  requiredApprovalLevel: string;
+  action: any;
+}
+
