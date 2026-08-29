@@ -2548,6 +2548,7 @@ model ControlPlaneAction {
   
   events          ControlPlaneEvent[]
   snapshots       ControlPlaneSnapshot[]
+  auditFindings   AuditFinding[]
 }
 
 model ControlPlaneEvent {
@@ -2575,4 +2576,32 @@ model ControlPlaneSnapshot {
   approvalStatus  String // PENDING | APPROVED | REJECTED | NOT_REQUIRED
 
   action          ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+}
+
+model AuditFinding {
+  id                   String              @id @default(uuid())
+  auditFilename        String
+  code                 String
+  title                String
+  description          String              @db.Text
+  severity             String
+  status               String
+  firstSeenAt          DateTime            @default(now())
+  lastSeenAt           DateTime            @default(now())
+  actionId             String?
+  action               ControlPlaneAction? @relation(fields: [actionId], references: [id], onDelete: SetNull)
+  fixCommitSha         String?
+  prNumber             Int?
+  testReference        String?
+  verifiedBy           String?
+  verificationEvidence String?             @db.Text
+  verifiedAt           DateTime?
+  sourceSha            String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@unique([auditFilename, code])
+  @@index([status, severity])
+  @@index([code])
+  @@index([actionId])
 }

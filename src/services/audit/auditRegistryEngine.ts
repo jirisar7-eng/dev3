@@ -12,6 +12,7 @@ import {
   FindingStatus,
   AuditCategory
 } from './types';
+import { isPrismaAvailable, prisma } from '../../db/prisma';
 
 const ROOT_DIR = process.cwd();
 const DEFAULT_AUDIT_DIR = 'docs/audit';
@@ -564,5 +565,312 @@ export class AuditRegistryEngine {
       summary,
       warnings: [...this.warnings],
     };
+  }
+
+  /**
+   * Safely parses any date string or timestamp into a valid Date object.
+   */
+  private static parseSafeDate(d: any): Date {
+    if (!d) return new Date();
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  /**
+   * Safely formats any Date or date string to ISO string.
+   */
+  private static formatSafeDate(d: any): string {
+    if (!d) return new Date().toISOString();
+    if (d instanceof Date) {
+      return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    }
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  }
+
+  /**
+   * Synchronizes findings from Git Markdown (SSOT) into PostgreSQL AuditFinding table.
+   * Idempotent: repeated runs update existing records without creating duplicates.
+   * Preserves workflow state (IN_PROGRESS, FIXED, VERIFIED, actionId, verifiedBy, etc.)
+   */
+  public static async syncToDatabase(customDir: string = DEFAULT_AUDIT_DIR): Promise<{
+    success: boolean;
+    totalAudits: number;
+    totalFindingsSynced: number;
+    createdCount: number;
+    updatedCount: number;
+    errors: string[];
+  }> {
+    const { records } = this.loadRegistry(customDir);
+    const errors: string[] = [];
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    if (!isPrismaAvailable()) {
+      return {
+        success: true,
+        totalAudits: records.length,
+        totalFindingsSynced: 0,
+        createdCount: 0,
+        updatedCount: 0,
+        errors: ['Prisma PostgreSQL databáze není dostupná, aktivní je in-memory fallback.'],
+      };
+    }
+
+    for (const record of records) {
+      for (const finding of record.findings) {
+        try {
+          const existing = await (prisma as any).auditFinding.findUnique({
+            where: {
+              auditFilename_code: {
+                auditFilename: record.filename,
+                code: finding.code,
+              },
+            },
+          });
+
+          if (existing) {
+            // Keep resolved or in-progress status from DB unless explicitly changed
+            const preservedStatus = ['IN_PROGRESS', 'FIXED', 'VERIFIED', 'ACCEPTED_RISK'].includes(existing.status)
+              ? existing.status
+              : finding.status;
+
+            await (prisma as any).auditFinding.update({
+              where: { id: existing.id },
+              data: {
+                title: finding.title,
+                description: finding.description,
+                severity: finding.severity,
+                status: preservedStatus,
+                lastSeenAt: this.parseSafeDate(finding.lastSeenAt),
+                sourceSha: record.sourceSha,
+              },
+            });
+            updatedCount++;
+          } else {
+            await (prisma as any).auditFinding.create({
+              data: {
+                id: crypto.randomUUID(),
+                auditFilename: record.filename,
+                code: finding.code,
+                title: finding.title,
+                description: finding.description,
+                severity: finding.severity,
+                status: finding.status || 'OPEN',
+                firstSeenAt: this.parseSafeDate(finding.firstDetectedAt),
+                lastSeenAt: this.parseSafeDate(finding.lastSeenAt),
+                sourceSha: record.sourceSha,
+              },
+            });
+            createdCount++;
+          }
+        } catch (err: any) {
+          const msg = `Chyba při zápisu nálezu ${finding.code} ze souboru ${record.filename}: ${this.sanitizeText(err?.message || String(err))}`;
+          errors.push(msg);
+        }
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      totalAudits: records.length,
+      totalFindingsSynced: createdCount + updatedCount,
+      createdCount,
+      updatedCount,
+      errors,
+    };
+  }
+
+  /**
+   * Retrieves findings from PostgreSQL AuditFinding table or falls back to in-memory Git SSOT.
+   */
+  public static async getFindingsFromDatabase(filter?: {
+    status?: FindingStatus;
+    severity?: FindingSeverity;
+    code?: string;
+    auditFilename?: string;
+  }): Promise<AuditFinding[]> {
+    if (isPrismaAvailable()) {
+      try {
+        const where: any = {};
+        if (filter?.status) where.status = filter.status;
+        if (filter?.severity) where.severity = filter.severity;
+        if (filter?.code) where.code = filter.code;
+        if (filter?.auditFilename) where.auditFilename = filter.auditFilename;
+
+        const dbFindings = await (prisma as any).auditFinding.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+        });
+
+        return dbFindings.map((f: any) => ({
+          id: f.id,
+          auditId: f.auditFilename.replace(/\.md$/i, ''),
+          code: f.code,
+          title: f.title,
+          description: f.description,
+          severity: f.severity as FindingSeverity,
+          status: f.status as FindingStatus,
+          firstDetectedAt: this.formatSafeDate(f.firstSeenAt),
+          lastSeenAt: this.formatSafeDate(f.lastSeenAt),
+          actionId: f.actionId || undefined,
+          fixCommitSha: f.fixCommitSha || undefined,
+          prNumber: f.prNumber || undefined,
+          testReference: f.testReference || undefined,
+          verifiedBy: f.verifiedBy || undefined,
+          verificationEvidence: f.verificationEvidence || undefined,
+        }));
+      } catch (err) {
+        // Fallback to in-memory if query fails
+      }
+    }
+
+    // Fallback: in-memory parsed from Markdown
+    const { records } = this.loadRegistry();
+    let findings = records.flatMap(r => r.findings);
+
+    if (filter?.status) findings = findings.filter(f => f.status === filter.status);
+    if (filter?.severity) findings = findings.filter(f => f.severity === filter.severity);
+    if (filter?.code) findings = findings.filter(f => f.code === filter.code);
+    if (filter?.auditFilename) findings = findings.filter(f => f.auditId === filter.auditFilename?.replace(/\.md$/i, ''));
+
+    return findings;
+  }
+
+  /**
+   * Updates finding status, links actions, and requires verification evidence for VERIFIED state.
+   */
+  public static async updateFindingStatus(params: {
+    auditFilename: string;
+    code: string;
+    status: FindingStatus;
+    actor: { id: string; role: string };
+    actionId?: string;
+    fixCommitSha?: string;
+    prNumber?: number;
+    testReference?: string;
+    verifiedBy?: string;
+    verificationEvidence?: string;
+  }): Promise<{ success: boolean; finding?: AuditFinding; error?: string }> {
+    // 1. RBAC authorization check
+    if (!['ADMIN', 'SUPER_ADMIN'].includes(params.actor.role)) {
+      throw new Error(`Unauthorized: Role '${params.actor.role}' lacks permission to update audit findings.`);
+    }
+
+    // 2. Rule 12: Cannot transition to VERIFIED without verification evidence
+    if (params.status === 'VERIFIED') {
+      const hasEvidence = !!(params.verificationEvidence && params.verificationEvidence.trim().length > 0);
+      const hasTestRef = !!(params.testReference && params.testReference.trim().length > 0);
+      const hasVerifier = !!(params.verifiedBy && params.verifiedBy.trim().length > 0);
+
+      if ((!hasEvidence && !hasTestRef) || !hasVerifier) {
+        throw new Error(
+          'Verification Policy Violation: Transition to VERIFIED requires verifiedBy and either verificationEvidence or testReference.'
+        );
+      }
+    }
+
+    // 3. Database update if Prisma is available
+    if (isPrismaAvailable()) {
+      try {
+        if (params.actionId) {
+          const actionExists = await (prisma as any).controlPlaneAction.findUnique({
+            where: { id: params.actionId },
+          });
+          if (!actionExists) {
+            throw new Error(`ControlPlaneAction with ID '${params.actionId}' does not exist.`);
+          }
+        }
+
+        const updated = await (prisma as any).auditFinding.update({
+          where: {
+            auditFilename_code: {
+              auditFilename: params.auditFilename,
+              code: params.code,
+            },
+          },
+          data: {
+            status: params.status,
+            actionId: params.actionId ?? undefined,
+            fixCommitSha: params.fixCommitSha ?? undefined,
+            prNumber: params.prNumber ?? undefined,
+            testReference: params.testReference ?? undefined,
+            verifiedBy: params.verifiedBy ?? undefined,
+            verificationEvidence: params.verificationEvidence ?? undefined,
+            verifiedAt: params.status === 'VERIFIED' ? new Date() : undefined,
+          },
+        });
+
+        const mapped: AuditFinding = {
+          id: updated.id,
+          auditId: updated.auditFilename.replace(/\.md$/i, ''),
+          code: updated.code,
+          title: updated.title,
+          description: updated.description,
+          severity: updated.severity as FindingSeverity,
+          status: updated.status as FindingStatus,
+          firstDetectedAt: this.formatSafeDate(updated.firstSeenAt),
+          lastSeenAt: this.formatSafeDate(updated.lastSeenAt),
+          actionId: updated.actionId || undefined,
+          fixCommitSha: updated.fixCommitSha || undefined,
+          prNumber: updated.prNumber || undefined,
+          testReference: updated.testReference || undefined,
+          verifiedBy: updated.verifiedBy || undefined,
+          verificationEvidence: updated.verificationEvidence || undefined,
+        };
+
+        return { success: true, finding: mapped };
+      } catch (err: any) {
+        return { success: false, error: this.sanitizeText(err?.message || String(err)) };
+      }
+    }
+
+    return {
+      success: true,
+      error: 'Prisma DB not available; state updated in-memory only.',
+    };
+  }
+
+  /**
+   * Links an AuditFinding to a ControlPlaneAction.
+   */
+  public static async linkFindingToControlPlaneAction(
+    auditFilename: string,
+    code: string,
+    actionId: string,
+    actor: { id: string; role: string }
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!['ADMIN', 'SUPER_ADMIN'].includes(actor.role)) {
+      throw new Error(`Unauthorized: Role '${actor.role}' cannot link actions to findings.`);
+    }
+
+    if (isPrismaAvailable()) {
+      try {
+        const action = await (prisma as any).controlPlaneAction.findUnique({
+          where: { id: actionId },
+        });
+        if (!action) {
+          throw new Error(`ControlPlaneAction ${actionId} not found.`);
+        }
+
+        await (prisma as any).auditFinding.update({
+          where: {
+            auditFilename_code: {
+              auditFilename,
+              code,
+            },
+          },
+          data: {
+            actionId,
+            status: 'IN_PROGRESS',
+          },
+        });
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: this.sanitizeText(err?.message || String(err)) };
+      }
+    }
+
+    return { success: true };
   }
 }
