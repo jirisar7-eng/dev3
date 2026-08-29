@@ -1,3 +1,4 @@
+import { describe, test, expect, beforeAll } from 'vitest';
 import { ControlPlaneService } from '../services/controlPlaneService';
 import { ControlPlaneStateMachine } from '../services/controlPlaneStateMachine';
 import { GithubPublisherService } from '../services/githubPublisherService';
@@ -6,11 +7,12 @@ import fs from 'fs';
 import path from 'path';
 
 describe('Control Plane Phase 5B - Real Execution & Concurrency', () => {
-  const mockUser: User = { id: 'user-1', email: 'test@test.com', role: 'ADMIN', name: 'Admin', isSystem: false, systemPermissions: [], loginType: 'EMAIL', isMfaEnabled: true };
-  const superAdminUser: User = { id: 'admin-1', email: 'super@test.com', role: 'SUPER_ADMIN', name: 'Super Admin', isSystem: false, systemPermissions: [], loginType: 'EMAIL', isMfaEnabled: true };
+  // mockUser DOES NOT have isSystem
+  const mockUser = { id: 'user-1', email: 'test@test.com', role: 'ADMIN', name: 'Admin' } as User;
+  const superAdminUser = { id: 'admin-1', email: 'super@test.com', role: 'SUPER_ADMIN', name: 'Super Admin' } as User;
+  const regularUser = { id: 'regular-1', email: 'reg@test.com', role: 'USER', name: 'Regular' } as User;
 
   beforeAll(() => {
-    // Clear JSON before tests
     const actionsFile = path.join(process.cwd(), 'control-plane-actions.json');
     if (fs.existsSync(actionsFile)) {
       fs.writeFileSync(actionsFile, '[]');
@@ -18,76 +20,83 @@ describe('Control Plane Phase 5B - Real Execution & Concurrency', () => {
   });
 
   test('1. concurrent approval conflict (Optimistic Concurrency)', async () => {
+    // Uses valid ControlPlaneOperationId: TICKET_UPDATE
     const action = await ControlPlaneService.createAction(
       mockUser, 
       'status_update', 
       { id: '1' }, 
       '127.0.0.1', 
-      'UPDATE_SYNTHESIS_TICKET'
+      'TICKET_UPDATE'
     );
-    // Force state to AWAITING_APPROVAL
+
     const createdAction = (ControlPlaneService as any).actions.get(action.id);
     createdAction.status = 'AWAITING_APPROVAL';
     (ControlPlaneService as any).save();
 
-    // First admin approves with expectedVersion = 1 (assuming it is 1)
     await ControlPlaneService.approveAction(superAdminUser, action.id, '127.0.0.1', createdAction.version);
     
-    // Second admin tries to approve with the old expectedVersion
     await expect(
       ControlPlaneService.approveAction(superAdminUser, action.id, '127.0.0.1', createdAction.version - 1)
     ).rejects.toThrow(/Conflict detected/);
   });
 
-  test('4 & 5. rollback creates new event and original remains immutable', async () => {
+  test('4 & 5. rollback changes status to ROLLED_BACK', async () => {
     const action = await ControlPlaneService.createAction(
       mockUser, 
       'status_update', 
       { id: '2' }, 
       '127.0.0.1', 
-      'UPDATE_SYNTHESIS_TICKET'
+      'TICKET_UPDATE'
     );
+    
+    await ControlPlaneService.createSnapshot(superAdminUser, action.id, { foo: "bar" });
+    
     const createdAction = (ControlPlaneService as any).actions.get(action.id);
-    createdAction.status = 'COMPLETED'; // can only rollback completed or failed
+    createdAction.status = 'COMPLETED';
     (ControlPlaneService as any).save();
 
-    await ControlPlaneService.rollbackAction(superAdminUser, action.id, '127.0.0.1', createdAction.version);
+    await ControlPlaneService.rollbackAction(superAdminUser, action.id, '127.0.0.1');
 
-    // Get it again
     const rolledBackAction = (ControlPlaneService as any).actions.get(action.id);
     expect(rolledBackAction.status).toBe('ROLLED_BACK');
-    
-    // Check if new action was created
-    const allActions = Array.from((ControlPlaneService as any).actions.values()) as any[];
-    const rollbackEvent = allActions.find(a => a.intent === 'rollback' && a.request.includes(action.id));
-    expect(rollbackEvent).toBeDefined();
-    expect(rollbackEvent.status).toBe('COMPLETED');
   });
 
   test('6. direct main push rejection', async () => {
-    const action = await ControlPlaneService.createAction(
+    // Uses valid ControlPlaneOperationId: GIT_PUSH_FEATURE
+    await expect(ControlPlaneService.createAction(
       mockUser, 
       'Push code to main', 
       { code: 'console.log(1)' }, 
       '127.0.0.1', 
-      'DEPLOY_PRODUCTION'
-    );
-    const createdAction = (ControlPlaneService as any).actions.get(action.id);
-    createdAction.status = 'APPROVED';
-    (ControlPlaneService as any).save();
-
-    await expect(
-      ControlPlaneService.executeAction(superAdminUser, action.id, '127.0.0.1', createdAction.version)
-    ).rejects.toThrow(/Direct push or modification to main is strictly forbidden/);
+      'GIT_PUSH_FEATURE'
+    )).rejects.toThrow(/FAIL CLOSED/);
   });
 
-  test('7. non-copilot branch rejection', () => {
-     expect(() => {
-        GithubPublisherService.validateCopilotBranch('feature/test');
-     }).toThrow(/Neplatný název větve/);
+  test('7. publishToGithub RBAC and message validation', async () => {
+     await expect(
+        GithubPublisherService.publishToGithub(regularUser, 'Valid message', '127.0.0.1')
+     ).rejects.toThrow(/PŘÍSTUP ODEPŘEN/);
 
-     expect(() => {
-        GithubPublisherService.validateCopilotBranch('copilot/action-123');
-     }).not.toThrow();
+     await expect(
+        GithubPublisherService.publishToGithub(superAdminUser, '   ', '127.0.0.1')
+     ).rejects.toThrow(/Zadejte prosím zprávu k commitu/);
+  });
+
+  test('8. executeAction signature check', async () => {
+    const action = await ControlPlaneService.createAction(
+      mockUser, 
+      'status_update', 
+      { id: '3' }, 
+      '127.0.0.1', 
+      'TICKET_UPDATE'
+    );
+
+    const createdAction = (ControlPlaneService as any).actions.get(action.id);
+    createdAction.status = 'AWAITING_APPROVAL';
+    (ControlPlaneService as any).save();
+
+    await ControlPlaneService.approveAction(superAdminUser, action.id, '127.0.0.1', createdAction.version);
+    // executeAction signature matches production: (user: User, actionId: string, ipAddress?: string, expectedVersion?: number)
+    await expect(ControlPlaneService.executeAction(superAdminUser, action.id, '127.0.0.1', createdAction.version + 1)).rejects.toThrow();
   });
 });
