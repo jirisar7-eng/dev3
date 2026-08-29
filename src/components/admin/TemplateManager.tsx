@@ -331,7 +331,10 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
             >
               <div>
                 {/* Thumbnail Header */}
-                <div className="h-40 w-full relative bg-slate-950 overflow-hidden border-b border-slate-800">
+                <div
+                  onClick={() => setPreviewTemplate(tpl)}
+                  className="h-40 w-full relative bg-slate-950 overflow-hidden border-b border-slate-800 cursor-pointer"
+                >
                   {tpl.thumbnailUrl ? (
                     <img
                       src={tpl.thumbnailUrl}
@@ -359,7 +362,10 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
                 {/* Content */}
                 <div className="p-5">
-                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors">
+                  <h3
+                    onClick={() => setPreviewTemplate(tpl)}
+                    className="text-lg font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors cursor-pointer"
+                  >
                     {tpl.name}
                   </h3>
                   {tpl.description && (

@@ -370,7 +370,7 @@ export const GdprComplianceCenterPage: React.FC<GdprComplianceCenterPageProps> =
               <section className="space-y-2">
                 <h3 className="font-black text-blue-950 text-sm uppercase">8. Cookies a analytika</h3>
                 <p>
-                  Používání analytických a technických cookies je detailně popsáno v samostatném dokumentu <span className="text-blue-700 font-bold underline cursor-pointer">Cookie Policy</span>.
+                  Používání analytických a technických cookies je detailně popsáno v samostatném dokumentu <a href="/p/cookies" className="text-blue-700 font-bold underline hover:text-blue-900 transition-colors">Cookie Policy</a>.
                 </p>
               </section>
             </div>

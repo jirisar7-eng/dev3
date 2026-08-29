@@ -30,6 +30,7 @@ import { UserRole } from '../types';
 
 export type AdminTabId =
   | 'overview'
+  | 'operations-overview'
   | 'project-control'
   | 'analytics'
   | 'pages'
@@ -52,7 +53,9 @@ export type AdminTabId =
   | 'audits'
   | 'qa'
   | 'copilot'
+  | 'orion'
   | 'ai-context'
+  | 'ai-telemetry'
   | 'settings'
   | 'sponsors'
   | 'dns'
@@ -238,9 +241,18 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     id: 'sec-ai',
     title: 'Synthesis AI & QA Center',
     emoji: '🤖',
-    description: 'Synthesis Admin Copilot, AI Context báze, QA orchestrátor a E2E testy',
+    description: 'Synthesis Admin Copilot, AI Context báze, QA orchestrátor, E2E testy a telemetrie',
     icon: Sparkles,
     items: [
+      {
+        id: 'operations-overview',
+        title: 'Operations Overview',
+        subtitle: 'Centrální velitelský přehled, Release Gate a KPI',
+        icon: LayoutDashboard,
+        badge: { text: 'Velín', variant: 'indigo' },
+        path: '/administrace/operations',
+        keywords: ['operations', 'overview', 'velín', 'release gate', 'pilíře', 'zdraví', 'kpi'],
+      },
       {
         id: 'copilot',
         title: 'Synthesis Admin Copilot',
@@ -274,6 +286,24 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         icon: FlaskConical,
         badge: { text: 'Playwright', variant: 'indigo' },
         keywords: ['e2e', 'testy', 'playwright', 'automatizace', 'test runner', 'qa runner'],
+      },
+      {
+        id: 'orion',
+        title: 'Orion Trace Center',
+        subtitle: 'Vizuální procesní mind-mapa a observability Oriona',
+        icon: Terminal,
+        badge: { text: 'Trace Graph', variant: 'purple' },
+        path: '/administrace/orion',
+        keywords: ['orion', 'trace', 'mindmap', 'vizualizace', 'process', 'observability', 'graph'],
+      },
+      {
+        id: 'ai-telemetry',
+        title: 'AI Telemetrie & Modely',
+        subtitle: 'Spotřeba tokenů, náklady providerů a 0-PII metriky',
+        icon: BarChart2,
+        badge: { text: 'Telemetrie', variant: 'purple' },
+        path: '/administrace/telemetrie',
+        keywords: ['telemetrie', 'tokeny', 'modely', 'náklady', 'gemini', 'grok', 'groq', 'orchestrator'],
       },
     ],
   },
@@ -490,9 +520,12 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
   // 2. Specific Path matches
   if (target.startsWith('/admin/pages/new') || target.startsWith('/admin/pages/edit')) return 'page-builder';
   if (target.startsWith('/admin/project-control') || target.includes('/obsah-projekt') || target.includes('tab=project-control')) return 'project-control';
+  if (target.startsWith('/admin/operations') || target.startsWith('/administrace/operations') || target.includes('tab=operations') || target.includes('tab=operations-overview')) return 'operations-overview';
+  if (target.startsWith('/admin/telemetry') || target.startsWith('/administrace/telemetrie') || target.includes('tab=telemetry') || target.includes('tab=ai-telemetry')) return 'ai-telemetry';
   if (target.startsWith('/admin/pages')) return 'pages';
   if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
   if (target.startsWith('/admin/dns')) return 'dns';
+  if (target.includes('/administrace/orion') || target.includes('/admin/orion') || target.includes('tab=orion')) return 'orion';
   if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'copilot';
   if (target.includes('/qa') || target.includes('/administrace/qa') || target.includes('/admin/copilot')) return 'qa';
   if (target.includes('/audity') || target.includes('/administrace/audity') || target.includes('/admin/audit-center')) return 'audits';

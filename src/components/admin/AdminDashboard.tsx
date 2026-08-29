@@ -48,6 +48,9 @@ import { StateAdminManager } from './StateAdminManager';
 import { AuditCenter } from './AuditCenter';
 import { AnalyticsManager } from './AnalyticsManager';
 import { ContentProjectCenter } from './ContentProjectCenter';
+import { UnifiedOperationsCenter } from './operations/UnifiedOperationsCenter';
+import { AiTelemetryCard } from './audit/AiTelemetryCard';
+import { OrionTraceCenterPage } from './orion/OrionTraceCenterPage';
 
 interface AdminDashboardProps {
   currentPath?: string;
@@ -301,7 +304,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* 🤖 Synthesis Admin Copilot Card */}
                 {hasRole('ADMIN') && (
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-purple-300 transition-all group">
+                  <div
+                    onClick={() => handleSelectTab('copilot', '/administrace/qa/copilot')}
+                    className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-purple-300 transition-all group cursor-pointer"
+                  >
                     <div>
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center border border-purple-100 group-hover:scale-105 transition-transform duration-200 shadow-xs">
@@ -385,9 +391,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'schvalovani-kontaktu' && <ContactModerationManager />}
 
           {/* 🤖 AI & Automatizace */}
+          {activeTab === 'operations-overview' && <UnifiedOperationsCenter onNavigate={onNavigate} />}
           {(activeTab === 'qa' || activeTab === 'copilot') && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
+          {activeTab === 'orion' && <OrionTraceCenterPage onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'tests' && <TestRunnerCard />}
+          {activeTab === 'ai-telemetry' && <AiTelemetryCard onNavigate={onNavigate} />}
 
           {/* 📈 Analytika & Audit */}
           {activeTab === 'analytics' && <AnalyticsManager />}
