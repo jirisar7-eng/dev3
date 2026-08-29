@@ -252,6 +252,44 @@ export interface SynthesisAIResult extends AIAnalystReport {
   };
 }
 
+export interface ProviderTelemetryStats {
+  provider: string;
+  model: string;
+  requestCount: number;
+  successCount: number;
+  failureCount: number;
+  timeoutCount: number;
+  fallbackCount: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  estimatedCostUsd: number | null;
+  costStatus: 'ESTIMATED' | 'UNKNOWN';
+  status: 'ACTIVE' | 'IDLE' | 'DEGRADED' | 'FALLBACK' | 'ERROR';
+  lastCallAt: string | null;
+  lastErrorMessage?: string | null;
+}
+
+export interface AICallRecord {
+  provider: string;
+  model: string;
+  latencyMs: number;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  success: boolean;
+  isTimeout: boolean;
+  isFallback: boolean;
+  timestamp: string;
+  errorMsg?: string | null;
+}
+
+export interface ModelPricing {
+  promptCostPerToken: number;
+  completionCostPerToken: number;
+}
+
 export interface AIStats {
   totalCalls: number;
   cacheHits: number;
@@ -264,5 +302,16 @@ export interface AIStats {
   estimatedCostUsd: number;
   lastCallAt: string | null;
   skippedReasons: Record<string, number>;
+  providers?: Record<string, ProviderTelemetryStats>;
+  history?: AICallRecord[];
+  activeOperation?: {
+    isWorking: boolean;
+    provider?: string;
+    model?: string;
+    startTime?: string;
+    elapsedMs?: number;
+    estimatedMs?: number | null;
+  } | null;
 }
+
 
