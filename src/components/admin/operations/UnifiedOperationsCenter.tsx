@@ -22,12 +22,14 @@ import {
   Lock,
   ExternalLink,
   ChevronRight,
+  Server,
 } from 'lucide-react';
 import { ProjectHealthCard } from '../audit/ProjectHealthCard';
 import { AuditFindingsList } from '../audit/AuditFindingsList';
 import { OrionAssistantPanel } from '../audit/OrionAssistantPanel';
 import { AuditDocumentsCatalog } from '../audit/AuditDocumentsCatalog';
 import { AiTelemetryCard } from '../audit/AiTelemetryCard';
+import { InfrastructureOverview } from './InfrastructureOverview';
 import {
   ReleaseGateEvaluationResult,
   AuditFinding,
@@ -35,7 +37,7 @@ import {
 } from '../../../services/audit/types';
 
 interface UnifiedOperationsCenterProps {
-  initialSubTab?: 'overview' | 'health' | 'findings' | 'orion' | 'catalog' | 'telemetry' | 'governance_knowledge';
+  initialSubTab?: 'overview' | 'health' | 'findings' | 'orion' | 'catalog' | 'telemetry' | 'governance_knowledge' | 'governance_infra';
   onNavigate?: (path: string) => void;
 }
 
@@ -43,7 +45,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
   initialSubTab = 'overview',
   onNavigate,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'health' | 'findings' | 'orion' | 'catalog' | 'telemetry' | 'governance_knowledge'>(
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'health' | 'findings' | 'orion' | 'catalog' | 'telemetry' | 'governance_knowledge' | 'governance_infra'>(
     initialSubTab
   );
 
@@ -333,6 +335,21 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
           <span>Governance & Knowledge Mirror</span>
           <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
             Notion
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('governance_infra')}
+          className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'governance_infra'
+              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+          }`}
+        >
+          <Server className="w-4 h-4" />
+          <span>INFRASTRUCTURE</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-200">
+            Observability
           </span>
         </button>
       </div>
@@ -764,6 +781,11 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tab Content: INFRASTRUCTURE */}
+      {activeSubTab === 'governance_infra' && (
+        <InfrastructureOverview />
       )}
     </div>
   );
