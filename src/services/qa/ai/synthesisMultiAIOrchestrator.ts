@@ -192,6 +192,15 @@ export class SynthesisMultiAIOrchestrator {
     }
 
     this.recordProviderFailure(state, lastErr);
+    const isTimeout = lastErr?.message?.toLowerCase().includes('timeout') || false;
+    aiStatsManager.recordCallDetails({
+      provider: state.provider.name,
+      model: state.provider.modelName,
+      latencyMs: timeoutMs,
+      success: false,
+      isTimeout,
+      errorMsg: lastErr?.message || String(lastErr)
+    });
     throw lastErr;
   }
 
@@ -445,7 +454,14 @@ Odpověz VÝHRADNĚ jako platný JSON objekt s následující přesnou strukturo
           summary: val.analystResult.summary
         };
 
-        aiStatsManager.recordCall(val.providerName, val.response.promptTokens, val.response.completionTokens);
+        aiStatsManager.recordCallDetails({
+          provider: val.providerName,
+          model: val.modelName,
+          promptTokens: val.response.promptTokens,
+          completionTokens: val.response.completionTokens,
+          latencyMs: val.latencyMs,
+          success: true
+        });
       }
     }
 
