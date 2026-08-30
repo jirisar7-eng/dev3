@@ -9,6 +9,7 @@ import { AdminCopilotService } from '../services/qa/adminCopilot';
 import { NotionAuditMirrorService } from '../services/notionAuditMirror';
 import { KnowledgeMirrorService } from '../services/audit/knowledgeMirrorService';
 import { KnowledgeSyncOptionsSchema } from '../services/audit/knowledgeTypes';
+import { InfrastructureAuditService } from '../services/audit/infrastructureAuditService';
 
 const router = Router();
 
@@ -266,6 +267,26 @@ router.get('/knowledge', requireAuth as any, requireRole('ADMIN') as any, async 
   try {
     const records = await KnowledgeMirrorService.collectKnowledgeRecords();
     res.json({ success: true, records, count: records.length });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/admin/qa/infrastructure-audit
+router.get('/infrastructure-audit', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await InfrastructureAuditService.runFullInfrastructureAudit();
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/admin/qa/infrastructure-audit/run
+router.post('/infrastructure-audit/run', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await InfrastructureAuditService.runFullInfrastructureAudit();
+    res.json({ success: true, result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
