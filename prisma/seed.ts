@@ -464,7 +464,65 @@ export async function runSeed() {
 
       await runHelpNewsSeed();
       await runWikiGuidesSeed();
-      console.log('[Prisma Seed] Úspěšně naseedován výchozí CMS i Registr Subjektů v PostgreSQL!');
+
+      // 6. VĚDECKÉ STUDIE (Knihovna studií)
+      console.log('[Prisma Seed] Seedování vědeckých studií do PostgreSQL...');
+      for (const study of dbStore.studies) {
+        await prisma.study.upsert({
+          where: { slug: study.slug },
+          update: {
+            title: study.title,
+            originalTitle: study.originalTitle || null,
+            authors: study.authors,
+            publicationYear: study.publicationYear || null,
+            publisher: study.publisher || null,
+            doi: study.doi || null,
+            sourceUrl: study.sourceUrl || null,
+            abstract: study.abstract || null,
+            summary: study.summary || null,
+            methodology: study.methodology || null,
+            findings: study.findings || null,
+            limitations: study.limitations || null,
+            relevance: study.relevance || null,
+            keywords: study.keywords || null,
+            category: study.category,
+            status: study.status as any,
+            featured: study.featured,
+            pdfUrl: study.pdfUrl || null,
+            pdfMediaId: study.pdfMediaId || null,
+            pdfSize: study.pdfSize || 0,
+            createdBy: study.createdBy || null,
+            updatedBy: study.updatedBy || null,
+          },
+          create: {
+            slug: study.slug,
+            title: study.title,
+            originalTitle: study.originalTitle || null,
+            authors: study.authors,
+            publicationYear: study.publicationYear || null,
+            publisher: study.publisher || null,
+            doi: study.doi || null,
+            sourceUrl: study.sourceUrl || null,
+            abstract: study.abstract || null,
+            summary: study.summary || null,
+            methodology: study.methodology || null,
+            findings: study.findings || null,
+            limitations: study.limitations || null,
+            relevance: study.relevance || null,
+            keywords: study.keywords || null,
+            category: study.category,
+            status: study.status as any,
+            featured: study.featured,
+            pdfUrl: study.pdfUrl || null,
+            pdfMediaId: study.pdfMediaId || null,
+            pdfSize: study.pdfSize || 0,
+            createdBy: study.createdBy || null,
+            updatedBy: study.updatedBy || null,
+          },
+        });
+      }
+
+      console.log('[Prisma Seed] Úspěšně naseedován výchozí CMS, Registr Subjektů i Knihovna Studií v PostgreSQL!');
     } else {
       console.log('[Prisma Seed] Databáze není připojena, plním in-memory dbStore.');
     }
