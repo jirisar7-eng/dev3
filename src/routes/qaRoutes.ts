@@ -6,6 +6,9 @@ import { qaRegistryService } from '../services/qa/qaRegistryService';
 import { aiStatsManager, aiAnalystService } from '../services/qa/aiAnalystService';
 import { synthesisMultiAIOrchestrator } from '../services/qa/ai/synthesisMultiAIOrchestrator';
 import { AdminCopilotService } from '../services/qa/adminCopilot';
+import { NotionAuditMirrorService } from '../services/notionAuditMirror';
+import { KnowledgeMirrorService } from '../services/audit/knowledgeMirrorService';
+import { KnowledgeSyncOptionsSchema } from '../services/audit/knowledgeTypes';
 
 const router = Router();
 
@@ -229,6 +232,40 @@ router.post('/copilot/execute-step', requireAuth as any, requireRole('ADMIN') as
     const execution = await AdminCopilotService.executeStep(stepType, payload, req.user, ipAddress);
 
     res.json(execution);
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/admin/qa/knowledge-mirror/status
+router.get('/knowledge-mirror/status', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const status = NotionAuditMirrorService.getStatus();
+    res.json({ success: true, status });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/admin/qa/knowledge-mirror/sync
+router.post('/knowledge-mirror/sync', requireAuth as any, requireRole('SUPER_ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = KnowledgeSyncOptionsSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Neplatné parametry pro sync.', details: parsed.error.issues });
+    }
+    const result = await KnowledgeMirrorService.syncToNotion(parsed.data);
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/admin/qa/knowledge
+router.get('/knowledge', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const records = await KnowledgeMirrorService.collectKnowledgeRecords();
+    res.json({ success: true, records, count: records.length });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
