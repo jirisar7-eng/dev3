@@ -898,6 +898,10 @@ export interface Study {
   limitations?: string;
   relevance?: string;
   keywords?: string;
+  evidenceLevel: string;
+  evidenceDirection: string;
+  causality: string;
+  sourceType: string;
   category: string;
   status: StudyStatus;
   featured: boolean;
