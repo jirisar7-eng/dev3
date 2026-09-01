@@ -176,46 +176,98 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
   {
     id: 'guide-spis',
     slug: 'spis',
-    title: 'Nahlížení do spisu & Příprava',
-    subtitle: 'Jak nahlížet do spisu Nc na soudu a spisu Om na OSPODu.',
-    excerpt: 'Praktický manuál, jak si vyžádat nahlížení do spisu, jak si vyfotit důkazy a jak odhalit nová tvrzení protistrany včas.',
+    title: 'Nahlížení do spisu OSPOD a soudu',
+    subtitle: 'Procesní postup nahlížení do spisu Om na OSPOD a spisu Nc u soudu, zákonné právo na bezplatné kopie a obrana proti obstrukcím.',
+    excerpt: 'Komplexní právní průvodce pro rodiče: Rozdíl mezi soudním a úředním spisem, uplatnění § 38 správního řádu a § 55 ZSPOD, judikatura NSS k fotodokumentaci a postup při nezákonném odepření nahlédnutí.',
     category: 'soud',
-    categoryLabel: 'Soudní řízení',
+    categoryLabel: 'Soudní řízení & OSPOD',
     order: 4,
     status: 'PUBLISHED',
-    badgeText: 'Důkazní příprava',
-    badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    disclaimer: 'Nahlížení do spisu je zákonné právo každého účastníka řízení zaručené občanským soudním řádem.',
+    badgeText: 'Důkazní příprava & OSPOD',
+    badgeBg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    disclaimer: 'Informace mají metodický charakter a vycházejí ze zákonných norem a judikatury soudů ČR. Nenahrazují individuální právní poradenství advokáta.',
     sources: [
-      '§ 44 zákona č. 99/1963 Sb., občanský soudní řád',
-      '§ 38 zákona č. 500/2004 Sb., správní řád'
+      '§ 38 zákona č. 500/2004 Sb., správní řád (nahlížení do spisu a pořizování kopií)',
+      '§ 55 zákona č. 359/1999 Sb., o sociálně-právní ochraně dětí (spisová dokumentace Om a evidence)',
+      '§ 44 zákona č. 99/1963 Sb., občanský soudní řád (nahlížení účastníka do soudního spisu)',
+      'Rozsudek NSS sp. zn. 1 As 7/2010 (právo na bezplatné pořízení fotodokumentace spisu vlastním zařízením)',
+      'Rozsudek NSS sp. zn. 6 As 242/2014 (nepřípustnost zpoplatnění vlastní fotodokumentace správního spisu)',
+      'Nález Ústavního soudu sp. zn. II. ÚS 866/12 (zákaz zatajování důkazních listin a rovnost zbraní)'
     ],
     chapters: [
       {
         id: 'spis-ch-1',
-        title: '1. Kde a jak žádat o nahlédnutí',
-        content: 'Na soudu se nahlížení provádí v informačním centru nebo opatrovnické kanceláři po předchozím objednání s uvedením spisové značky (např. 12 Nc 34/2026). Na OSPODu podáváte písemnou žádost o nahlédnutí do spisu Om.',
+        title: '1. Dva různé spisy: Soudní spis (Nc / P a Nc) vs. spis Om na OSPOD',
+        content: 'V opatrovnických věcech existují dvě zcela oddělené složky:\n\n1. **Soudní spis (sp. zn. Nc nebo P a Nc):** Vedený u okresního soudu. Obsahuje veškerá písemná podání rodičů, vyjádření kolizního opatrovníka (zprávy OSPOD), znalecké posudky, protokoly ze soudních jednání a doručenky. Nahlížení se řídí **§ 44 občanského soudního řádu (o.s.ř.)**.\n\n2. **Spis Om (a spis Nom) na OSPOD:** Vedený u příslušného orgánu sociálně-právní ochrany dětí (městský/obecní úřad). Obsahuje úřední záznamy z rozhovorů s oběma rodiči, záznamy z návštěv v rodině (sociální šetření), zprávy od dětského lékaře, ze školy a školky a interní záznamy. Nahlížení se řídí **§ 38 správního řádu** ve spojení s **§ 55 zákona č. 359/1999 Sb. (ZSPOD)**.\n\nZatímco soudní spis zachycuje formální procesní dění, spis OSPOD často obsahuje bezprostřední záznamy úředníků, které se do soudu dostanou až ve formě shrnující zprávy.',
         order: 1,
-        type: 'steps'
+        type: 'info'
       },
       {
         id: 'spis-ch-2',
-        title: '2. Pořizování kopií a fotodokumentace',
-        content: 'Máte plné právo si celý spis vyfotografovat vlastním telefonem nebo fotoaparátem zcela zdarma. Zkontrolujte zejména: zprávu OSPOD, vyjádření pediatra, zprávu ze školy a nová podání matky.',
+        title: '2. Zákonné právo na bezplatnou fotodokumentaci a judikatura NSS',
+        content: 'Jako rodič máte nezadatelné právo pořídit si kopie veškerých listin ve spisu vlastním technickým zařízením (chytrým telefonem, fotoaparátem, přenosným skenerem).\n\n- **Bezplatnost:** Dle konstantní judikatury Nejvyššího správního soudu (**rozsudek NSS sp. zn. 1 As 7/2010 a 6 As 242/2014**) je pořizování kopií vlastním zařízením bezplatné. Úřad ani soud nesmí za použití vlastního telefonu účtovat žádné poplatky ani jej podmiňovat souhlasem druhého rodiče.\n- **Zákaz obstrukcí:** Úředník vám nesmí bránit ve focení spisu argumentem, že „kopírování je zakázáno“ nebo „musíte si zažádat o placené úřední kopie“. Máte právo nafotit celý spis list po listu včetně úředních záznamů a doručenek.',
         order: 2,
+        type: 'warning'
+      },
+      {
+        id: 'spis-ch-3',
+        title: '3. Spis Om na OSPOD a limity oddělené části spisu (§ 55 odst. 5 ZSPOD)',
+        content: 'Zákon o SPOD v **§ 55 odst. 5** stanoví, že do spisové dokumentace Om má právo nahlížet rodič, kterému náleží rodičovská odpovědnost, nebo jiná osoba odpovědná za výchovu dítěte.\n\n- **Oddělená část spisu:** OSPOD může do oddělené části vložit pouze údaje, jejichž prozrazení by mohlo ohrozit život nebo zdraví dítěte, oznamovatele nebo fyzické osoby, která upozornila na porušování péče.\n- **Zneužívání oddělené části:** OSPOD nesmí do oddělené části schovávat běžná vyjádření matky/otce, pedagogické zprávy ze školy či běžnou korespondenci. Pokud OSPOD předloží soudu zprávu, která vychází z podkladů v oddělené části, porušuje právo na spravedlivý proces (**nález Ústavního soudu sp. zn. II. ÚS 866/12**). Vše, o co se opírá soudní zpráva, musí mít rodič právo znát a vyjádřit se k tomu.',
+        order: 3,
         type: 'info'
+      },
+      {
+        id: 'spis-ch-4',
+        title: '4. Procesní obrana: Odmítnutí nahlížení a usnesení dle § 38 odst. 5 SŘ',
+        content: 'Pokud sociální pracovník OSPOD odmítá nahlédnutí umožnit (např. argumentuje nedostatkem času, nepřítomností vedoucího nebo nepravdivě tvrdí, že nemáte právo nahlížet):\n\n1. **Trvejte na vydání formálního usnesení:** Dle **§ 38 odst. 5 správního řádu** platí: *„Odepřít nahlížet do spisu nebo jeho části lze pouze usnesením.“* Ústní odmítnutí je procesně neplatné.\n2. **Upozorněte úředníka na povinnost vydat usnesení:** Vyžádejte si písemné usnesení s odůvodněním, proč vám nahlížení odpírají.\n3. **Podání odvolání:** Proti usnesení o odepření nahlížení do spisu lze podat odvolání ke krajskému úřadu (lhůta 15 dnů). Krajský úřad nezákonné odepření zpravidla obratem zruší.\n4. **Podnět k nápravě a stížnost dle § 175 SŘ:** Proti nevhodnému chování úředníka nebo průtahům podejte písemnou stížnost vedoucímu odboru sociálních věcí.',
+        order: 4,
+        type: 'steps'
+      },
+      {
+        id: 'spis-ch-5',
+        title: '5. Metodika analýzy spisu a záznam námitek do protokolu (§ 18 SŘ)',
+        content: 'Při nahlížení postupujte systematicky:\n\n1. **Žádejte protokol o nahlížení:** Dle **§ 18 správního řádu** má být o nahlížení sepsán protokol, v němž můžete uvést své námitky k obsahu spisu.\n2. **Fotografujte v chronologickém pořadí:** Nafoťte sběrný arch (soupis listin), jednotlivá podání a obálky/doručenky.\n3. **Hledejte asymetrie v záznamech:** Zkontrolujte, zda úředník OSPOD zaznamenal vaše telefonáty a schůzky stejně podrobně jako kontakty s druhým rodičem.\n4. **Zkontrolujte zprávu pro soud:** Pokud OSPOD odeslal soudu zprávu s doporučením, porovnejte, zda zpráva odpovídá listinným důkazům ve spisu, nebo zda některé příznivé skutečnosti zamlčela.',
+        order: 5,
+        type: 'steps'
+      },
+      {
+        id: 'spis-ch-6',
+        title: '6. Klíčové listiny ke kontrole před soudním jednáním',
+        content: 'Před každým opatrovnickým soudem ověřte přítomnost těchto konkrétních dokumentů ve spisu:\n\n- **Vyjádření dětského lékaře (pediatra):** Zda obsahuje objektivní záznamy o zdravotním stavu dítěte a zda je v kartě evidován i otec.\n- **Zprávy ze školy a školky:** Zda škola poskytla vyvážené informace a zda nepopisuje vliv konfliktu jednostranně.\n- **Písemná podání druhého rodiče:** Včasné odhalení nepravdivých obvinění vám umožní připravit listinné protidůkazy ještě před zahájením výslechu.\n- **Úřední záznamy OSPOD o rozhovoru s dítětem:** Jakým způsobem byl rozhovor veden a zda nebyl na dítě vyvíjen sugestivní nátlak.',
+        order: 6,
+        type: 'checklist'
       }
     ],
     checklist: [
-      { id: 'spis-c1', label: 'Zapsat si přesnou spisovou značku řízení (Nc)' },
-      { id: 'spis-c2', label: 'Objednat termín v infocentru soudu s předstihem před jednáním' },
-      { id: 'spis-c3', label: 'Nabitý mobilní telefon s dostatkem paměti na fotografie' },
-      { id: 'spis-c4', label: 'Platný doklad totožnosti' }
+      { id: 'spis-c1', label: 'Zjistit a zapsat přesnou spisovou značku řízení (Nc na soudu, spis Om na OSPOD)' },
+      { id: 'spis-c2', label: 'Objednat se v infocentru soudu či u sociální pracovnice OSPOD písemně/telefonicky 7–10 dnů před jednáním' },
+      { id: 'spis-c3', label: 'Vzít s sebou platný doklad totožnosti (OP/pas) a plně nabitý mobilní telefon s dostatkem volné paměti' },
+      { id: 'spis-c4', label: 'Nafoťte spis kompletně od první do poslední strany včetně sběrného archu a doručenek' },
+      { id: 'spis-c5', label: 'Pokud úředník odpírá nahlédnutí, trvat na vydání písemného usnesení o odepření dle § 38 odst. 5 správního řádu' },
+      { id: 'spis-c6', label: 'Založit pořízené fotografie do klientské složky Můj případ a provést časovou osu tvrzení protistrany' }
     ],
-    seoTitle: 'Nahlížení do soudního spisu a spisu OSPOD • Návod pro rodiče',
-    seoDescription: 'Jak si sjednat nahlédnutí do opatrovnického spisu, na co máte právo a jak si bezplatně pořídit kopie všech listin.',
+    faqs: [
+      {
+        question: 'Může mi pracovník OSPOD zakázat fotografování spisu Om vlastním telefonem?',
+        answer: 'Nikoliv. Nejvyšší správní soud opakovaně judikoval (např. rozsudek sp. zn. 1 As 7/2010 a 6 As 242/2014), že právo na nahlížení zahrnuje i právo pořizovat si kopie a výpisy vlastními technickými prostředky bezplatně. Zákaz focení nebo požadavek na platbu za vlastní fotky je nezákonný.'
+      },
+      {
+        question: 'Co dělat, pokud OSPOD tvrdí, že podklady jsou v „tajné / oddělené části spisu“?',
+        answer: 'Dle § 55 odst. 5 ZSPOD smí být v oddělené části pouze údaje ohrožující život, zdraví či bezpečí oznamovatele. Běžné zprávy školy, vyjádření matky či lékařské zprávy v oddělené části být nesmí. Ústavní soud (II. ÚS 866/12) potvrdil, že soud ani OSPOD nesmí rozhodovat na základě důkazů, se kterými se účastník nemohl seznámit.'
+      },
+      {
+        question: 'Jak postupovat, pokud úředník OSPOD odmítá spis zpřístupnit nebo tvrdí, že nemá čas?',
+        answer: 'Požádejte o vydání písemného usnesení o odepření nahlížení dle § 38 odst. 5 správního řádu. Samotná hrozba nutnosti vydat formální usnesení většinou vede k okamžitému zpřístupnění spisu. Pokud usnesení vydají, podejte do 15 dnů odvolání ke krajskému úřadu.'
+      },
+      {
+        question: 'Kdy je nejvhodnější do soudního spisu nahlížet?',
+        answer: 'Ideálně 7 až 10 kalendářních dnů před nařízeným soudním jednáním. V této době jsou již ve spise založena vyjádření kolizního opatrovníka i protistrany a máte dostatek času na přípravu písemné repliky a protidůkazů.'
+      }
+    ],
+    seoTitle: 'Nahlížení do spisu OSPOD a soudního spisu • Průvodce a fotodokumentace',
+    seoDescription: 'Právní manuál pro rodiče: Nahlížení do spisu Om na OSPOD a spisu Nc u soudu dle § 38 SŘ a § 55 ZSPOD. Bezplatné kopie a judikatura NSS.',
     createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-08-22T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
   },
   {
     id: 'guide-vykon-rozhodnuti',

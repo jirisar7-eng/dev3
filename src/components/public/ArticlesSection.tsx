@@ -21,14 +21,14 @@ export const ArticlesSection: React.FC<{ onNavigate?: (path: string) => void }> 
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
         <div>
           <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">
-            Metodické články & Judikatura
+            Praktické články & Rady
           </span>
           <h2 className="text-3xl font-extrabold text-[var(--color-heading,#0f172a)] tracking-tight">
-            Opatrovnické právo v praxi
+            Články a průvodce pro rodiče
           </h2>
         </div>
         <p className="text-sm text-slate-600 max-w-md mt-2 md:mt-0">
-          Odborné články, judikáty Ústavního soudu a osvědčené postupy pro otce.
+          Praktické rady pro každodenní rodičovství, komunikaci s druhým rodičem a zvládání náročných situací.
         </p>
       </div>
 

@@ -326,4 +326,55 @@ Fáze 1 (Content Inventory, Rights Classification & Gap Analysis) byla úspěšn
 - **Push Status:** `SUCCESS / VERIFIED`
 - **Remote HEAD:** `b561824159e82b13562b48ee9b5f3cbfd224c68d`
 
+---
+
+## 10. IMPLEMENTACE FÁZE 2B — TAXONOMIE & TOPIC EXPANSION (Nahlížení do spisu OSPOD a soudu)
+
+**Datum:** 2026-09-01  
+**Oblast:** Kontrolované rozšiřování obsahu (Fáze 2B)  
+**Téma:** Nahlížení do spisu OSPOD (spis Om) a soudního spisu (sp. zn. Nc / P a Nc)  
+**Kategorie:** Metodické články & Judikatura (`LEGAL_METHODOLOGY` / `LEGAL_GUIDE`)  
+**Typ zásahu:** `IMPROVE` & `EXPAND` (rozšíření z 2 na 6 kapitol, checklist, FAQs a přesná primární judikatura)  
+
+### A. Povinné rozdělení obsahu (Taxonomie)
+1. **Klasické články (`/clanky`):**
+   - Vlastní praktický informační obsah, rady pro rodiče, rodinná dynamika a komunikace.
+   - Routování: `ArticlesSection.tsx` + `ArticleDetailView.tsx`.
+2. **Novinky & Aktuality (`/novinky`):**
+   - Časově citlivé legislativní změny, nové metodiky, systémové aktuality.
+   - Routování: `NewsHubView.tsx`.
+3. **Metodické články & Judikatura (`/metodika`, `/pruvodce`, `/judikatura`):**
+   - Samostatná odborná vrstva: procesní návody, paragrafové rozbory, judikatura ÚS a NSS, checklisty.
+   - Routování: `LegalHubPage.tsx` + `LegalGuideDynamicView.tsx`.
+
+### B. Právní zdroje (Primary Sources)
+1. **Zákon č. 500/2004 Sb., správní řád (§ 38):**
+   - Nahlížení do správního spisu, pořizování výpisů a kopií, povinné vydání usnesení o odepření (§ 38 odst. 5 SŘ).
+2. **Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí (§ 55):**
+   - Vedení spisové dokumentace Om a evidence; zákonné limity oddělené části spisu (§ 55 odst. 5 ZSPOD).
+3. **Zákon č. 99/1963 Sb., občanský soudní řád (§ 44):**
+   - Nahlížení účastníka do soudního spisu na infocentru/kanceláři soudu.
+4. **Judikatura NSS ČR k fotodokumentaci vlastním zařízením:**
+   - *Rozsudek NSS sp. zn. 1 As 7/2010 a 6 As 242/2014:* Právo na bezplatné pořízení fotodokumentace spisu vlastním technickým prostředkem (telefon, fotoaparát) bez poplatků a bez nutnosti souhlasu protistrany.
+5. **Nález Ústavního soudu ČR:**
+   - *Nález sp. zn. II. ÚS 866/12:* Zákaz zatajování důkazních materiálů před účastníkem a princip rovnosti zbraní.
+
+### C. Struktura implementovaného průvodce (`guide-spis`)
+1. **Kapitola 1:** Dva různé spisy: Soudní spis (Nc / P a Nc) vs. spis Om na OSPOD (info)
+2. **Kapitola 2:** Zákonné právo na bezplatnou fotodokumentaci a judikatura NSS (warning)
+3. **Kapitola 3:** Spis Om na OSPOD a limity oddělené části spisu (§ 55 odst. 5 ZSPOD) (info)
+4. **Kapitola 4:** Procesní obrana: Odmítnutí nahlížení a usnesení dle § 38 odst. 5 SŘ (steps)
+5. **Kapitola 5:** Metodika analýzy spisu a záznam námitek do protokolu (§ 18 SŘ) (steps)
+6. **Kapitola 6:** Klíčové listiny ke kontrole před soudním jednáním (checklist)
+7. **Praktický checklist (6 položek):** Spisová značka, včasné objednání, doklad totožnosti + telefon, kompletní nafocení, usnesení dle § 38 odst. 5 SŘ, založení do spisu.
+8. **FAQs (4 otázky):** Zákaz focení úředníkem, oddělená část spisu, postup při odmítnutí, optimální načasování nahlížení před soudem.
+
+### D. Změněné a ověřené soubory
+- `src/data/legalGuidesSeed.ts` (rozšířen `guide-spis` o 6 kapitol, checklist, FAQs a judikaturu NSS/ÚS)
+- `src/data/wikiSeed.ts` (aktualizováno heslo `nahliceni-do-spisu` s odkazem na § 38 SŘ, § 55 ZSPOD a judikaturu)
+- `src/components/public/ArticlesSection.tsx` (aktualizován nadpis a popis na Klasické články & Rady)
+- `src/components/public/PublicPortal.tsx` (čisté oddělení rout `/clanky` a `/metodika`)
+- `docs/audit/CONTENT-SOURCE-GAP-AUDIT-LOM-UNIE-OTCU-APERIO.md` (tento audit)
+
+
 

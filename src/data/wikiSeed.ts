@@ -286,24 +286,30 @@ export const DEFAULT_WIKI_TERMS: WikiTerm[] = [
   {
     id: 'nahliceni-do-spisu',
     slug: 'nahliceni-do-spisu',
-    term: 'Nahlížení do soudního spisu',
+    term: 'Nahlížení do spisu (soud i OSPOD)',
     firstLetter: 'N',
     category: 'soud',
-    categoryLabel: 'Soudní řízení',
-    citation: '§ 44 o.s.ř.',
-    definition: 'Zákonné právo každého účastníka řízení (rodiče) prostudovat celý soudní spis vedený ve věci jeho dětí (spisová značka „Nc“), pořizovat si z něj výpisky a fotokopie.',
+    categoryLabel: 'Soudní řízení & OSPOD',
+    citation: '§ 44 o.s.ř. / § 38 správního řádu / § 55 ZSPOD',
+    definition: 'Zákonné procesní právo každého rodiče prostudovat celý soudní spis (sp. zn. Nc) i spisovou dokumentaci Om vedenou na OSPODu, pořizovat si z nich výpisky a bezplatnou fotodokumentaci vlastním telefonem (dle rozsudků NSS 1 As 7/2010 a 6 As 242/2014).',
     practicalTips: [
-      'Před každým soudním jednáním doporučujeme nahlédnout do spisu na infocentru soudu, zda protistrana či OSPOD nezaslali nová vyjádření.',
-      'S sebou si vezměte mobilní telefon a veškeré nově vložené listy si vyfoťte.'
+      'Před každým soudním jednáním nahlédněte do soudního spisu cca 7–10 dnů předem, zda protistrana či OSPOD nezaslali nová vyjádření.',
+      'Na OSPODu žádejte nahlédnutí do spisu Om; odmítnutí lze učinit pouze písemným usnesením dle § 38 odst. 5 správního řádu s možností odvolání.',
+      'Máte právo si celý spis kompletně vyfotografovat vlastním telefonem zcela zdarma bez jakýchkoliv poplatků úřadu.',
+      'Podrobný procesní manuál naleznete v sekci Metodické články & Judikatura: Nahlížení do spisu OSPOD a soudu.'
     ],
-    relatedTerms: ['Doložka právní moci', 'Soudní řízení'],
+    relatedTerms: ['Doložka právní moci', 'Soudní řízení', 'Předběžné opatření'],
     order: 14,
     status: 'PUBLISHED',
-    seoTitle: 'Nahlížení do soudního spisu dle § 44 o.s.ř.',
-    seoDescription: 'Jak požádat o nahlédnutí do spisu, fotografování podkladů a kontrola vyjádření protistrany.',
-    sources: ['Zákon č. 99/1963 Sb., občanský soudní řád'],
+    seoTitle: 'Nahlížení do soudního spisu a spisu OSPOD dle § 44 o.s.ř. a § 38 SŘ',
+    seoDescription: 'Právo rodiče na nahlížení do spisu Nc na soudu a spisu Om na OSPOD, bezplatné kopie a judikatura NSS.',
+    sources: [
+      'Zákon č. 99/1963 Sb., občanský soudní řád (§ 44)',
+      'Zákon č. 500/2004 Sb., správní řád (§ 38)',
+      'Zákon č. 359/1999 Sb., o sociálně-právní ochraně dětí (§ 55)'
+    ],
     createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-08-22T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
   },
   {
     id: 'nestrannost-ospod',
