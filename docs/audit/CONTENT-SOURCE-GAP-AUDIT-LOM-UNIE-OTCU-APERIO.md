@@ -437,11 +437,57 @@ Fáze 1 (Content Inventory, Rights Classification & Gap Analysis) byla úspěšn
 - Žádné změny v Prisma DB schématu ani migracích.
 - Plně kompatibilní se stávajícím rendererem `LegalGuideDynamicView.tsx` a rozcestníkem `PublicPortal.tsx`.
 
-### F. Git Reconciliation & Verification Status
+### F. Validace § 877 OZ (Významné záležitosti dítěte)
+1. **Oficiální text zákona (§ 877 odst. 1 a 2 OZ):**
+   - *(1) Nedohodnou-li se rodiče v záležitosti, která je pro dítě významná zejména se zřetelem k jeho zájmu, rozhodne soud na návrh rodiče; to platí i tehdy, vyloučil-li jeden rodič z rozhodování o významné záležitosti dítěte druhého rodiče.*
+   - *(2) Za významnou záležitost se považují zejména nikoli běžné léčebné a obdobné zákroky, určení místa bydliště a volba vzdělání nebo pracovního uplatnění dítěte.*
+2. **Korektní právní interpretace v projektu:**
+   - Termín byl sjednocen na zákonný pojem **„významná záležitost pro dítě (§ 877 OZ)“**.
+   - § 877 OZ upravuje rozhodování o podstatných otázkách života dítěte (např. volba školy, významný lékařský zákrok, stěhování), nikoli mechanické placení libovolných výdajů.
+   - Pravidelné měsíční výživné kryje standardní a předvídatelné potřeby. Pokud jeden rodič zvolí významnou záležitost (např. placenou školu) bez dohody s druhým, nemůže tyto náklady jednostranně přenést na druhého nad rámec výživného, ledaže by soud rozhodl v řízení o neshodě rodičů (§ 877 OZ) či o změně poměrů (§ 923 OZ).
+
+### G. Child Lifecycle Architecture (0 až 26+ let)
+Master Content Map pokrývá celý životní cyklus dítěte a zamezuje jednostrannému zúžení pouze na raný věk:
+
+1. **0–3 roky (Rané dětství & vazba):**
+   - Raná péče, kojení, citová vazba (attachment), frekvence kontaktu a přespávání (I. ÚS 2482/13, II. ÚS 169/16, Warshak 2017).
+2. **3–6 let (Předškolní věk):**
+   - Nástup do MŠ, adaptace, stabilita režimu, předávání, komunikace a rodičovská kooperace.
+3. **6–15 let (Školní věk — 1. a 2. stupeň ZŠ):**
+   - Výběr a změna ZŠ, přístup obou rodičů k informacím o vzdělání a zdraví dítěte, zájmové kroužky, rovnoměrná i asymetrická střídavá péče, podíl na školních pomůckách.
+4. **15–18 let (Dospívání & autonomie):**
+   - Rostoucí autonomie dítěte, zjišťování a respektování názoru dítěte soudem dle § 867 OZ, volba SŠ/učiliště a budoucího povolání, příprava na samostatnost.
+5. **18+ let (Zletilé dítě & VŠ/VOŠ studium):**
+   - Přímá výplata výživného k rukám zletilého dítěte, procesní samostatnost dítěte před soudem, soustavná příprava na budoucí povolání, posuzování smysluplnosti studia.
+6. **26+ let (Právní princip trvání vyživovací povinnosti):**
+   - **Klíčová právní zásada (§ 911 OZ):** Vyživovací povinnost rodičů **není omezena věkem 18 ani 26 let**. Trvá do doby, dokud dítě není schopno se samo živit.
+   - Věk 26 let představuje pouze statutární hranici pro statut nezaopatřeného dítěte ve veřejném právu (zákon o státní sociální podpoře, zákon o daních z příjmů, zákon o veřejném zdravotním pojištění). V občanskoprávní rovině může trvat i po 26. roce věku (např. při prezenčním doktorském studiu či při závažném zdravotním postižení).
+
+### H. Architektura cesty uživatele (Life Situations Flow)
+```
+ROZCHOD 
+  → DÍTĚ 
+  → PÉČE 
+  → ŠKOLA 
+  → ZDRAVÍ 
+  → VÝŽIVNÉ 
+  → KOMUNIKACE 
+  → OSPOD 
+  → SOUD 
+  → ROZHODNUTÍ 
+  → VÝKON 
+  → ZLETILOST 
+  → STUDIUM 
+  → SAMOSTATNOST
+```
+
+### I. Git Reconciliation & Verification Status
 - **Branch:** `feat/faze-6a-unified-ai-audit-operations`
 - **Initial Implementation SHA:** `e0b6ddb66f26621befd0fc1e3c9b14b35bb3a7e4`
-- **Fact-Check Refinement SHA:** Připraveno k ověřenému commitu a pushi.
-- **Legal Fact-Check Status:** `PASS` (všechny primární zdroje a judikáty ověřeny přímo proti e-Sbírce, webu MS ČR a NALUS ÚS ČR).
+- **Fact-Check Refinement SHA:** `17130b7067ffc71a439a058775b9f6595075267e`
+- **Final Validation & Precision SHA:** Hotovo k finálnímu ověření.
+- **Legal Fact-Check Status:** `PASS`
+
 
 
 

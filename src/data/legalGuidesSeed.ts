@@ -657,7 +657,7 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     disclaimer: 'Tento metodický průvodce vychází z platného znění zákona č. 89/2012 Sb. (občanský zákoník), metodického materiálu Ministerstva spravedlnosti ČR k určování výživného a ustálené judikatury Ústavního a Nejvyššího soudu ČR. Jedná se o odborný metodický a edukační rozbor (AI_DERIVED / METHODOLOGY) s orientačním charakterem výpočtů a nenahrazuje individuální právní pomoc advokáta v konkrétní věci.',
     sources: [
-      'Zákon č. 89/2012 Sb., občanský zákoník (§ 910–§ 923, § 877)',
+      'Zákon č. 89/2012 Sb., občanský zákoník (§ 910–§ 923, § 877, § 911)',
       'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních (§ 466–§ 477)',
       'Zákon č. 120/2001 Sb., exekuční řád (§ 71a)',
       'Zákon č. 588/2020 Sb., o náhradním výživném pro nezaopatřené dítě',
@@ -669,8 +669,8 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     chapters: [
       {
         id: 'vyz-ch-1',
-        title: '1. Základy vyživovací povinnosti a princip shodné životní úrovně (§ 910–§ 923 OZ)',
-        content: 'Vyživovací povinnost rodičů k dětem je primárním zákonným institutem rodinného práva (§ 910 a násl. občanského zákoníku). Základním východiskem je **princip shodné životní úrovně dítěte a rodičů** (§ 915 odst. 1 OZ). Tento princip má přednost před pouhým mechanickým hodnocením minimálních odůvodněných potřeb dítěte – dítě má nezadatelné právo podílet se na reálné životní a ekonomické úrovni obou svých rodičů. Zároveň platí, že oba rodiče přispívají na výživu podle svých schopností, možností a majetkových poměrů (§ 913 odst. 1 OZ), přičemž soud zkoumá nejen faktické příjmy, ale i to, zda se rodič bez vážného důvodu nevzdal výhodnějšího zaměstnání či majetkového prospěchu (§ 913 odst. 2 OZ).',
+        title: '1. Základy vyživovací povinnosti, princip shodné životní úrovně a trvání do schopnosti samostatné obživy (§ 910–§ 923 OZ)',
+        content: 'Vyživovací povinnost rodičů k dětem je primárním zákonným institutem rodinného práva (§ 910 a násl. občanského zákoníku). Základním východiskem je **princip shodné životní úrovně dítěte a rodičů** (§ 915 odst. 1 OZ). Tento princip má přednost před pouhým mechanickým hodnocením minimálních odůvodněných potřeb dítěte – dítě má nezadatelné právo podílet se na reálné životní a ekonomické úrovni obou svých rodičů. Vyživovací povinnost **není zákonem omezena věkem 18 ani 26 let** – podle **§ 911 OZ** trvá do doby, dokud dítě není schopno se samo živit (zejména po dobu řádné soustavné přípravy na budoucí povolání studiem či při zdravotním hendikepu). Věk 26 let je pouze statutární hranicí pro status studenta a daňové úlevy ve veřejném právu, nikoliv automatickým zánikem vyživovací povinnosti. Zároveň platí, že oba rodiče přispívají na výživu podle svých schopností, možností a majetkových poměrů (§ 913 odst. 1 OZ), přičemž soud zkoumá i to, zda se rodič bez vážného důvodu nevzdal výhodnějšího zaměstnání či prospěchu (§ 913 odst. 2 OZ).',
         order: 1,
         type: 'info'
       },
@@ -697,8 +697,8 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
       },
       {
         id: 'vyz-ch-5',
-        title: '5. Mimořádné a nahodilé výdaje (§ 877 a § 917 OZ)',
-        content: 'Pravidelné měsíční výživné stanovené soudem slouží k úhradě všech běžných, předvídatelných a opakujících se nákladů na dítě (strava, běžné ošacení, hygiena, standardní školní pomůcky a běžné zájmy). Výdaje většího rozsahu, které vznikají jednorázově či nahodile (např. ortodontická léčba/rovnátka, zahraniční studijní pobyt, nákladné kroužky), představují podstatné záležitosti dítěte ve smyslu **§ 877 OZ**, o kterých jsou rodiče povinni se předem dohodnout. Nelze je bez předchozí dohody jednostranně naúčtovat druhému rodiči nad rámec výživného. Soud může pro tyto účely stanovit tvorbu zvláštních úspor pro dítě podle **§ 917 OZ**.',
+        title: '5. Mimořádné a nahodilé výdaje vs. rozhodování o významných záležitostech dítěte (§ 877 a § 917 OZ)',
+        content: 'Pravidelné měsíční výživné stanovené soudem slouží k úhradě všech běžných, předvídatelných a opakujících se nákladů na dítě (strava, běžné ošacení, hygiena, standardní školní pomůcky a běžné zájmy). Významné volby v životě dítěte (např. volba nestátní placené školy, volba budoucího povolání či nikoli běžné léčebné a obdobné zákroky) představují **významné záležitosti pro dítě ve smyslu § 877 OZ**, o kterých jsou rodiče povinni se předem dohodnout; nedohodnou-li se, rozhoduje na návrh rodiče soud. Náklady spojené s takovými kroky nelze bez předchozí dohody či rozhodnutí soudu jednostranně naúčtovat druhému rodiči nad rámec pravomocně stanoveného výživného. Pro mimořádné budoucí výdaje může soud podle **§ 917 OZ** stanovit povinnost ukládat část výživného na účet dítěte za účelem tvorby úspor.',
         order: 5,
         type: 'checklist'
       },
@@ -725,7 +725,7 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
       },
       {
         question: 'Musí rodič platit nad rámec stanoveného výživného drahé mimořádné kroužky či soukromou školu, pokud s tím nesouhlasil?',
-        answer: 'Ne, nikoliv automaticky. Běžné měsíční výživné stanovené rozsudkem pokrývá veškeré standardní potřeby dítěte. Výběr nákladné soukromé školy či mimořádně drahých kroužků představuje podstatnou záležitost dítěte ve smyslu § 877 občanského zákoníku, o které musí rozhodnout oba rodiče ve shodě. Pokud jeden rodič přihlásí dítě na nákladnou aktivitu bez souhlasu druhého rodiče, nemůže po něm jednostranně požadovat doplácení nad rámec rozsudku, ledaže by o tom rozhodl soud nebo se rodiče dohodli.'
+        answer: 'Ne, nikoliv automaticky. Běžné měsíční výživné stanovené rozsudkem pokrývá veškeré standardní a předvídatelné potřeby dítěte. Volba placené školy nebo nákladného zdravotního zákroku představuje významnou záležitost pro dítě ve smyslu § 877 občanského zákoníku, o které mají rodiče rozhodnout ve vzájemné shodě. Pokud jeden rodič přihlásí dítě na nákladnou aktivitu jednostranně bez dohody, nemůže po druhém rodiči svévolně vymáhat příplatky nad rámec stanoveného výživného, ledaže by soud v řízení o neshodě rodičů či o změně výživného rozhodl jinak.'
       },
       {
         question: 'Platí se výživné i při rovnoměrné střídavé péči v poměru 50/50?',
