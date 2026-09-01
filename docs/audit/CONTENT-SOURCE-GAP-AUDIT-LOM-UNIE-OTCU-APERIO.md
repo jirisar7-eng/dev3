@@ -404,30 +404,32 @@ Fáze 1 (Content Inventory, Rights Classification & Gap Analysis) byla úspěšn
 4. **Zákon č. 120/2001 Sb., exekuční řád (§ 71a):**
    - Pozastavení řidičského oprávnění při vymáhání dlužného výživného pro nezletilé dítě a zákonné výjimky.
 
-### B. Judikatura ÚS a NS (Judicial Sources Verified)
-1. **Nález Ústavního soudu sp. zn. I. ÚS 2482/13 ze dne 24. 7. 2014:**
-   - Posuzování potenciality příjmů a daňové optimalizace OSVČ; zákaz mechanického vycházení z formálních daňových přiznání při zřejmém disproporčním majetku.
-2. **Nález Ústavního soudu sp. zn. II. ÚS 1619/20 ze dne 30. 3. 2021:**
-   - Určování výživného a kompenzace životní úrovně při střídavé péči 50/50, zákaz znevýhodnění dítěte v jedné z domácností.
-3. **Nález Ústavního soudu sp. zn. IV. ÚS 650/15 ze dne 16. 12. 2015:**
-   - Povinnost stanovit výživné v souladu s reálnými majetkovými poměry a zákaz likvidačního výživného ohrožujícího existenci rodiče.
-4. **Rozsudek Nejvyššího soudu sp. zn. 21 Cdo 1912/2017 ze dne 18. 1. 2018:**
-   - Vymezení mimořádných vs. běžných nákladů na dítě; mimořádné nákladné zájmy vyžadují předchozí dohodu obou rodičů dle § 877 OZ.
+### B. Judikatura ÚS a NS (Judicial Sources Fact-Checked & Corrected)
+1. **Zákonná opora pro potencialitu příjmů OSVČ (§ 913 odst. 2 a § 916 OZ):**
+   - Soud hodnotí reálný potenciál rodiče a majetkové toky, nikoliv pouze optimalizované daňové přiznání. Při svévolném odmítnutí doložení příjmů nastupuje fikce 25násobku životního minima.
+2. **Nález Ústavního soudu sp. zn. IV. ÚS 650/15 ze dne 16. 12. 2015:**
+   - Stanovení výživného v souladu s reálnými majetkovými poměry a principem shodné životní úrovně (§ 915 odst. 1 OZ); odmítnutí mechanického přístupu u nadstandardních příjmů a možnost tvorby úspor (§ 917 OZ).
+3. **Nález Ústavního soudu sp. zn. I. ÚS 3065/21 ze dne 3. 5. 2022:**
+   - Určování výživného a kompenzace životní úrovně při střídavé péči, zajištění srovnatelného standardu dítěte v obou domácnostech.
+4. **Nález Ústavního soudu sp. zn. I. ÚS 2482/13 ze dne 26. 5. 2014:**
+   - Stanovení ústavních kritérií pro svěření dítěte do střídavé péče a významu obou rodičů.
+5. **Zákonná opora pro mimořádné výdaje (§ 877 OZ):**
+   - Podstatné záležitosti dítěte (nákladná škola, mimořádné lékařské zákroky, nákladné kroužky) vyžadují předchozí shodu obou rodičů a nelze je bez dohody či rozhodnutí soudu jednostranně účtovat nad rámec stanoveného výživného.
 
 ### C. Struktura implementovaného průvodce (`guide-vyzivne`)
 1. **Kapitola 1:** Základy vyživovací povinnosti a princip shodné životní úrovně (§ 910–§ 923 OZ) [info]
 2. **Kapitola 2:** Doporučující tabulka Ministerstva spravedlnosti ČR a algoritmus výpočtu [steps]
-3. **Kapitola 3:** Potencialita příjmů a dokazování u podnikatelů a OSVČ (§ 916 OZ) [warning]
-4. **Kapitola 4:** Výživné při střídavé a rovnocenné péči (II. ÚS 1619/20) [info]
-5. **Kapitola 5:** Mimořádné a nahodilé výdaje (rovnátka, lyžařské výcviky, kroužky) [checklist]
+3. **Kapitola 3:** Potencialita příjmů a dokazování u podnikatelů a OSVČ (§ 913 odst. 2 a § 916 OZ) [warning]
+4. **Kapitola 4:** Výživné při střídavé a rovnocenné péči (I. ÚS 3065/21 a IV. ÚS 650/15) [info]
+5. **Kapitola 5:** Mimořádné a nahodilé výdaje (§ 877 a § 917 OZ) [checklist]
 6. **Kapitola 6:** Změna poměrů a zpětné přiznání či snížení výživného (§ 923 OZ) [warning]
 7. **Procesní checklist (6 položek):** Doložení čistých příjmů za 12 měsíců, rozpis odůvodněných potřeb dítěte, evidence reálné péče v dnech, další vyživovací povinnosti, návrhy na bankovní účty u OSVČ, petit dle tabulek MS ČR.
-8. **FAQs (4 otázky):** Fikce příjmu dle § 916 OZ, mimořádné kroužky a školy bez souhlasu, výživné při střídavé péči 50/50, ztráta práce a nemoc jako důvod pro návrh dle § 923 OZ.
+8. **FAQs (4 otázky):** Fikce příjmu dle § 916 OZ a § 913 odst. 2 OZ, mimořádné kroužky a školy bez souhlasu dle § 877 OZ, výživné při střídavé péči 50/50 dle I. ÚS 3065/21 a IV. ÚS 650/15, ztráta práce a nemoc jako důvod pro návrh dle § 923 OZ.
 
 ### D. Změněné a ověřené soubory
-- `src/data/legalGuidesSeed.ts` (přidán kompletní `LegalGuide` `guide-vyzivne`)
-- `src/data/wikiSeed.ts` (přidána hesla `vyzivne`, `doporucujici-tabulka-ms-cr`, `potencialita-prijmu`, `nahradni-vyzivne`, `exekuce-vyzivneho`)
-- `src/components/public/AlimonyCalculatorView.tsx` (propojení kalkulačky s novým průvodcem `/metodika/vyzivne`)
+- `src/data/legalGuidesSeed.ts` (průvodce `guide-vyzivne` s přesnými citacemi a disclaimery)
+- `src/data/wikiSeed.ts` (hesla `vyzivne`, `doporucujici-tabulka-ms-cr`, `potencialita-prijmu`, `nahradni-vyzivne`, `exekuce-vyzivneho`)
+- `src/components/public/AlimonyCalculatorView.tsx` (propojení kalkulačky s průvodcem `/metodika/vyzivne`)
 - `docs/audit/CONTENT-SOURCE-GAP-AUDIT-LOM-UNIE-OTCU-APERIO.md` (tento audit)
 
 ### E. Bezpečnostní a architektonická kontrola
@@ -437,10 +439,10 @@ Fáze 1 (Content Inventory, Rights Classification & Gap Analysis) byla úspěšn
 
 ### F. Git Reconciliation & Verification Status
 - **Branch:** `feat/faze-6a-unified-ai-audit-operations`
-- **Previous HEAD:** `d2267e87d02df16205cb01c27790406d3a1ae125`
-- **New HEAD Commit SHA:** `e0b6ddb66f26621befd0fc1e3c9b14b35bb3a7e4`
-- **Commit Message:** `feat(content): Implement Phase 3A Child Support (Vyzivne) methodology and MS CR tables`
-- **Remote Push Status:** `VERIFIED PASS` (Remote HEAD matches local HEAD `e0b6ddb66f26621befd0fc1e3c9b14b35bb3a7e4`)
+- **Initial Implementation SHA:** `e0b6ddb66f26621befd0fc1e3c9b14b35bb3a7e4`
+- **Fact-Check Refinement SHA:** Připraveno k ověřenému commitu a pushi.
+- **Legal Fact-Check Status:** `PASS` (všechny primární zdroje a judikáty ověřeny přímo proti e-Sbírce, webu MS ČR a NALUS ÚS ČR).
+
 
 
 

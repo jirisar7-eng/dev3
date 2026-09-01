@@ -655,49 +655,50 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     status: 'PUBLISHED',
     badgeText: 'Metodika & Judikatura',
     badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    disclaimer: 'Tento metodický průvodce vychází z platného znění zákona č. 89/2012 Sb. (občanský zákoník), metodického materiálu Ministerstva spravedlnosti ČR k určování výživného a ustálené judikatury Ústavního a Nejvyššího soudu ČR. Jedná se o odborný metodický a edukační rozbor (AI_DERIVED / METHODOLOGY) a nenahrazuje individuální právní pomoc advokáta v konkrétní věci.',
+    disclaimer: 'Tento metodický průvodce vychází z platného znění zákona č. 89/2012 Sb. (občanský zákoník), metodického materiálu Ministerstva spravedlnosti ČR k určování výživného a ustálené judikatury Ústavního a Nejvyššího soudu ČR. Jedná se o odborný metodický a edukační rozbor (AI_DERIVED / METHODOLOGY) s orientačním charakterem výpočtů a nenahrazuje individuální právní pomoc advokáta v konkrétní věci.',
     sources: [
-      'Zákon č. 89/2012 Sb., občanský zákoník (§ 910–§ 923)',
+      'Zákon č. 89/2012 Sb., občanský zákoník (§ 910–§ 923, § 877)',
       'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních (§ 466–§ 477)',
-      'Doporučující tabulky a metodika Ministerstva spravedlnosti ČR pro určování výživného (2022/2023)',
-      'Nález Ústavního soudu sp. zn. I. ÚS 2482/13 ze dne 24. 7. 2014 (K posuzování potenciality příjmů a daňové optimalizace OSVČ)',
-      'Nález Ústavního soudu sp. zn. II. ÚS 1619/20 ze dne 30. 3. 2021 (K určování výživného a kompenzaci životní úrovně při střídavé péči)',
-      'Nález Ústavního soudu sp. zn. IV. ÚS 650/15 ze dne 16. 12. 2015 (K povinnosti stanovit výživné v souladu s majetkovými poměry a principem shodné životní úrovně)',
-      'Rozsudek Nejvyššího soudu sp. zn. 21 Cdo 1912/2017 ze dne 18. 1. 2018 (K posouzení mimořádných a běžných nákladů na výživu a výchovu dítěte)'
+      'Zákon č. 120/2001 Sb., exekuční řád (§ 71a)',
+      'Zákon č. 588/2020 Sb., o náhradním výživném pro nezaopatřené dítě',
+      'Doporučující tabulka a metodika Ministerstva spravedlnosti ČR pro určování výživného (verze 2022/2023, vyzivne.justice.cz)',
+      'Nález Ústavního soudu sp. zn. IV. ÚS 650/15 ze dne 16. 12. 2015 (K principu shodné životní úrovně a výživnému z nadstandardních příjmů)',
+      'Nález Ústavního soudu sp. zn. I. ÚS 3065/21 ze dne 3. 5. 2022 (K výživnému a kompenzaci životní úrovně při střídavé péči)',
+      'Nález Ústavního soudu sp. zn. I. ÚS 2482/13 ze dne 26. 5. 2014 (Ke kritériím střídavé péče a rodičovské odpovědnosti)'
     ],
     chapters: [
       {
         id: 'vyz-ch-1',
         title: '1. Základy vyživovací povinnosti a princip shodné životní úrovně (§ 910–§ 923 OZ)',
-        content: 'Vyživovací povinnost rodičů k dětem je primárním zákonným institutem rodinného práva (§ 910 a násl. občanského zákoníku). Základním východiskem je **princip shodné životní úrovně dítěte a rodičů** (§ 915 odst. 1 OZ). Tento princip má přednost před pouhým mechanickým hodnocením minimálních odůvodněných potřeb dítěte – dítě má nezadatelné právo podílet se na reálné životní a ekonomické úrovni obou svých rodičů. Zároveň platí, že oba rodiče přispívají na výživu podle svých schopností, možností a majetkových poměrů (§ 913 odst. 1 OZ), přičemž soud zkoumá nejen faktické příjmy, ale i to, zda se rodič bez vážného důvodu nevzdal výhodnějšího zaměstnání či majetkového prospěchu.',
+        content: 'Vyživovací povinnost rodičů k dětem je primárním zákonným institutem rodinného práva (§ 910 a násl. občanského zákoníku). Základním východiskem je **princip shodné životní úrovně dítěte a rodičů** (§ 915 odst. 1 OZ). Tento princip má přednost před pouhým mechanickým hodnocením minimálních odůvodněných potřeb dítěte – dítě má nezadatelné právo podílet se na reálné životní a ekonomické úrovni obou svých rodičů. Zároveň platí, že oba rodiče přispívají na výživu podle svých schopností, možností a majetkových poměrů (§ 913 odst. 1 OZ), přičemž soud zkoumá nejen faktické příjmy, ale i to, zda se rodič bez vážného důvodu nevzdal výhodnějšího zaměstnání či majetkového prospěchu (§ 913 odst. 2 OZ).',
         order: 1,
         type: 'info'
       },
       {
         id: 'vyz-ch-2',
         title: '2. Doporučující tabulka Ministerstva spravedlnosti ČR a algoritmus výpočtu',
-        content: 'Ministerstvo spravedlnosti ČR vydalo aktualizovanou metodiku s doporučujícími tabulkami (verze 2022/2023), která rozděluje vývoj dítěte do **4 životních etap**: 1. etapa (0–5 let), 2. etapa (6–10 let, 1. stupeň ZŠ), 3. etapa (11–15 let, 2. stupeň ZŠ) a 4. etapa (16+ let, SŠ a VŠ). Výchozí procentní podíl z čistého příjmu klesá s celkovým počtem vyživovacích povinností (např. při 1 dítěti činí 14–20 %, při 2 dětech 12–16 %, při 3 dětech 10–14 %). Klíčovým ochranným prvkem metodiky je tzv. **kontrolní částka** (zpravidla 55–66 % čistého příjmu), která musí povinnému rodiči zůstat pro zachování vlastní důstojné obživy a pracovní motivace. Při stanovení výživného se navíc provádí matematický **odečet za rozsah osobní péče**, kdy je vypočtená částka poměrně redukována podle počtu dnů v měsíci, kdy má dítě v osobní péči povinný rodič. Pro okamžitý orientační propočet můžete využít naši [Kalkulačku výživného](/kalkulacka-vyzivneho).',
+        content: 'Ministerstvo spravedlnosti ČR vydalo aktualizovanou metodiku s doporučujícími tabulkami (verze 2022/2023, účinná od 1. 9. 2022), která rozděluje vývoj dítěte do **4 životních etap**: 1. etapa (0–5 let), 2. etapa (6–10 let, 1. stupeň ZŠ), 3. etapa (11–15 let, 2. stupeň ZŠ) a 4. etapa (16+ let, SŠ a VŠ). Výchozí procentní podíl z čistého příjmu klesá s celkovým počtem vyživovacích povinností (např. při 1 dítěti činí 14–20 %, při 2 dětech 12–16 %, při 3 dětech 10–14 %). Klíčovým ochranným prvkem metodiky je tzv. **kontrolní částka** (zpravidla 55–66 % čistého příjmu), která musí povinnému rodiči zůstat pro zachování vlastní důstojné obživy a pracovní motivace. Při stanovení výživného se navíc provádí matematický **odečet za rozsah osobní péče**, kdy je vypočtená částka poměrně redukována podle počtu dnů v měsíci, kdy má dítě v osobní péči povinný rodič. Pro okamžitý orientační propočet můžete využít naši [Kalkulačku výživného](/kalkulacka-vyzivneho).',
         order: 2,
         type: 'steps'
       },
       {
         id: 'vyz-ch-3',
-        title: '3. Potencialita příjmů a dokazování u podnikatelů a OSVČ (§ 916 OZ)',
-        content: 'U rodičů podnikajících jako OSVČ nelze vycházet pouze z daňového přiznání. Využití daňové optimalizace, paušálních výdajů či účetních odpisů často vede k vykázání nízkého základu daně nebo daňové ztráty, což však neodráží skutečné majetkové toky a disponsibilní příjem. Opatrovnické soudy jsou povinny zkoumat reálnou **potencialitu příjmů** – tedy jakých výdělků by rodič mohl dosahovat s ohledem na své vzdělání, praxi, situaci na trhu práce a obraty firmy (srov. nález Ústavního soudu sp. zn. **I. ÚS 2482/13**). Pokud povinný rodič odmítá doložit své kompletní účetnictví a bankovní výpisy, uplatní soud zákonnou fikci podle **§ 916 OZ**, podle níž se má za to, že měsíční příjem rodiče činí 25násobek životního minima jednotlivce.',
+        title: '3. Potencialita příjmů a dokazování u podnikatelů a OSVČ (§ 913 odst. 2 a § 916 OZ)',
+        content: 'U rodičů podnikajících jako OSVČ nelze vycházet pouze z daňového přiznání. Využití daňové optimalizace, paušálních výdajů či účetních odpisů často vede k vykázání minimálního základu daně nebo ztráty, což neodráží skutečné majetkové toky a disponibilní příjem. Opatrovnické soudy jsou podle **§ 913 odst. 2 OZ** povinny zkoumat reálnou **potencialitu příjmů** – tedy jakých výdělků by rodič mohl dosahovat s ohledem na své vzdělání, praxi, situaci na trhu práce a celkové majetkové zázemí (srov. nález Ústavního soudu sp. zn. **IV. ÚS 650/15**). Pokud povinný rodič odmítá doložit své kompletní účetnictví a bankovní výpisy, uplatní soud zákonnou domněnku podle **§ 916 OZ**, podle níž se má za to, že měsíční příjem rodiče činí 25násobek životního minima jednotlivce.',
         order: 3,
         type: 'warning'
       },
       {
         id: 'vyz-ch-4',
-        title: '4. Výživné při střídavé a rovnocenné péči (II. ÚS 1619/20)',
-        content: 'Častým mýtem je představa, že při rovnoměrném rozdělení péče 50/50 se výživné nikdy neplatí. Ústavní soud v přelomovém nálezu sp. zn. **II. ÚS 1619/20** a **IV. ÚS 650/15** jednoznačně judikoval, že i při střídavé péči je nutné kompenzovat podstatný rozdíl v životní úrovni obou rodičů. Cílem je, aby dítě při přechodu mezi domácnostmi nezažívalo v jedné materiální deprivaci a ve druhé přepych. Soud může: 1) určit výživné oběma rodičům vzájemně, 2) určit výživné pouze lépe situovanému rodiči k rukám druhého, nebo 3) schválit dohodu o nulovém výživném s přesným určením, kdo hradí společné fixní náklady (školné, kroužky, rovnátka).',
+        title: '4. Výživné při střídavé a rovnocenné péči (I. ÚS 3065/21 a IV. ÚS 650/15)',
+        content: 'Častým mýtem je představa, že při rovnoměrném rozdělení péče 50/50 se výživné nikdy neplatí. Ústavní soud v nálezech sp. zn. **I. ÚS 3065/21** a **IV. ÚS 650/15** zdůraznil, že i při střídavé péči je nutné v odůvodněných případech kompenzovat podstatný rozdíl v životní úrovni obou rodičů. Cílem je, aby dítě při přechodu mezi domácnostmi nezažívalo v jedné materiální deprivaci a ve druhé přepych. Soud může: 1) určit výživné oběma rodičům vzájemně, 2) určit výživné pouze lépe situovanému rodiči k rukám druhého, nebo 3) schválit dohodu o nulovém výživném s přesným určením, kdo hradí společné fixní náklady (školné, kroužky, rovnátka).',
         order: 4,
         type: 'info'
       },
       {
         id: 'vyz-ch-5',
-        title: '5. Mimořádné a nahodilé výdaje (rovnátka, lyžařské výcviky, kroužky)',
-        content: 'Pravidelné měsíční výživné stanovené soudem slouží k úhradě všech běžných, předvídatelných a opakujících se nákladů na dítě (strava, běžné ošacení, hygiena, běžné školní pomůcky a standardní zájmy). Výdaje většího rozsahu, které vznikají jednorázově či nahodile (např. ortodontická léčba/rovnátka, zahraniční studijní pobyt, lyžařský kurz, nový notebook pro studium), nelze bez předchozí dohody jednostranně vymáhat po druhém rodiči nad rámec výživného (srov. rozsudek Nejvyššího soudu sp. zn. **21 Cdo 1912/2017**). O těchto nákladech se rodiče musí předem dohodnout v rámci podstatných záležitostí dítěte (§ 877 OZ), popřípadě může soud rozhodnout o tvorbě zvláštního fondu či úspor pro dítě (§ 917 OZ).',
+        title: '5. Mimořádné a nahodilé výdaje (§ 877 a § 917 OZ)',
+        content: 'Pravidelné měsíční výživné stanovené soudem slouží k úhradě všech běžných, předvídatelných a opakujících se nákladů na dítě (strava, běžné ošacení, hygiena, standardní školní pomůcky a běžné zájmy). Výdaje většího rozsahu, které vznikají jednorázově či nahodile (např. ortodontická léčba/rovnátka, zahraniční studijní pobyt, nákladné kroužky), představují podstatné záležitosti dítěte ve smyslu **§ 877 OZ**, o kterých jsou rodiče povinni se předem dohodnout. Nelze je bez předchozí dohody jednostranně naúčtovat druhému rodiči nad rámec výživného. Soud může pro tyto účely stanovit tvorbu zvláštních úspor pro dítě podle **§ 917 OZ**.',
         order: 5,
         type: 'checklist'
       },
@@ -720,19 +721,19 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     faqs: [
       {
         question: 'Může soud stanovit výživné z fiktivního příjmu, pokud rodič tají skutečné výdělky nebo vykazuje nulový zisk v daňovém přiznání?',
-        answer: 'Ano. Pokud povinný rodič nepředloží soudu úplné a věrohodné podklady o svých příjmech a majetkových poměrech (daňová přiznání, výpisy z účtů, účetnictví), uplatní soud zákonnou domněnku podle § 916 občanského zákoníku. V takovém případě se má za to, že jeho měsíční příjem činí 25násobek částky životního minima jednotlivce. Zároveň Ústavní soud (sp. zn. I. ÚS 2482/13) judikoval, že soudy musí zkoumat celkovou životní úroveň a potencialitu výdělku, nikoli pouze formální položky optimalizovaného daňového přiznání.'
+        answer: 'Ano. Pokud povinný rodič nepředloží soudu úplné a věrohodné podklady o svých příjmech a majetkových poměrech (daňová přiznání, výpisy z účtů, účetnictví), uplatní soud zákonnou domněnku podle § 916 občanského zákoníku. V takovém případě se má za to, že jeho měsíční příjem činí 25násobek částky životního minima jednotlivce. Zároveň soudy podle § 913 odst. 2 OZ zkoumají celkovou životní úroveň a potencialitu výdělku, nikoli pouze formální položky optimalizovaného daňového přiznání.'
       },
       {
         question: 'Musí rodič platit nad rámec stanoveného výživného drahé mimořádné kroužky či soukromou školu, pokud s tím nesouhlasil?',
-        answer: 'Ne, nikoliv automaticky. Běžné měsíční výživné stanovené rozsudkem pokrývá veškeré standardní potřeby dítěte. Výběr nákladné soukromé školy či mimořádně drahých kroužků představuje podstatnou záležitost dítěte ve smyslu § 877 občanského zákoníku, o které musí rozhodnout oba rodiče ve shodě. Pokud jeden rodič přihlásí dítě na nákladnou aktivitu bez souhlasu druhého rodiče, nemůže po něm jednostranně požadovat doplácení nad rámec rozsudku, pokud to neodpovídá nadstandardním majetkovým poměrům a shodě rodičů (srov. NS 21 Cdo 1912/2017).'
+        answer: 'Ne, nikoliv automaticky. Běžné měsíční výživné stanovené rozsudkem pokrývá veškeré standardní potřeby dítěte. Výběr nákladné soukromé školy či mimořádně drahých kroužků představuje podstatnou záležitost dítěte ve smyslu § 877 občanského zákoníku, o které musí rozhodnout oba rodiče ve shodě. Pokud jeden rodič přihlásí dítě na nákladnou aktivitu bez souhlasu druhého rodiče, nemůže po něm jednostranně požadovat doplácení nad rámec rozsudku, ledaže by o tom rozhodl soud nebo se rodiče dohodli.'
       },
       {
         question: 'Platí se výživné i při rovnoměrné střídavé péči v poměru 50/50?',
-        answer: 'Ano, je to poměrně časté. Podle ustálené judikatury Ústavního soudu (např. sp. zn. II. ÚS 1619/20 a IV. ÚS 650/15) má dítě právo na shodnou životní úroveň s oběma rodiči. Pokud jeden z rodičů vydělává výrazně více než druhý (např. 80 000 Kč vs. 25 000 Kč), soud stanoví lépe vydělávajícímu rodiči povinnost platit výživné i při rovnoměrném střídání, aby dítě nezažívalo v jedné domácnosti materiální nouzi a ve druhé přepych.'
+        answer: 'Ano, je to v praxi běžné. Podle ustálené judikatury Ústavního soudu (např. sp. zn. I. ÚS 3065/21 a IV. ÚS 650/15) má dítě právo na shodnou životní úroveň s oběma rodiči (§ 915 odst. 1 OZ). Pokud jeden z rodičů vydělává výrazně více než druhý (např. 80 000 Kč vs. 25 000 Kč), soud stanoví lépe vydělávajícímu rodiči povinnost platit výživné i při rovnoměrném střídání, aby dítě nezažívalo v jedné domácnosti materiální nouzi a ve druhé přepych.'
       },
       {
         question: 'Co se stane, když přijdu o práci nebo onemocním – zaniká vyživovací povinnost automaticky?',
-        answer: 'Ne. Vyživovací povinnost stanovená pravomocným rozsudkem trvá v nezměněné výši bez ohledu na ztrátu zaměstnání či nemoc, dokud o její změně nerozhodne soud. Pokud rodič přestane platit nebo začne svévolně posílat méně, vzniká dluh na výživném, který může být vymáhán exekucí s rizikem exekučního pozastavení řidičského průkazu. Při podstatné změně příjmů je proto nutné okamžitě podat k soudu návrh na snížení výživného podle § 923 občanského zákoníku.'
+        answer: 'Ne. Vyživovací povinnost stanovená pravomocným rozsudkem trvá v nezměněné výši bez ohledu na ztrátu zaměstnání či nemoc, dokud o její změně nerozhodne soud. Pokud rodič přestane platit nebo začne svévolně posílat méně, vzniká dluh na výživném, který může být vymáhán exekucí s rizikem exekučního pozastavení řidičského průkazu (§ 71a exekučního řádu). Při podstatné změně příjmů je proto nutné okamžitě podat k soudu návrh na snížení výživného podle § 923 občanského zákoníku.'
       }
     ],
     seoTitle: 'Výživné na dítě & Metodika dokazování příjmů • Zákon a Tabulky MS ČR',

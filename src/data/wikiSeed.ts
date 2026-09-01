@@ -850,15 +850,15 @@ export const DEFAULT_WIKI_TERMS: WikiTerm[] = [
     citation: '§ 913 odst. 2 a § 916 o.z.',
     definition: 'Právní institut, na jehož základě soud při určování výživného nehodnotí pouze formálně vykázaný příjem (např. daňové přiznání OSVČ s minimálním ziskem), ale skutečné možnosti a výdělečný potenciál rodiče s ohledem na jeho vzdělání, praxi, majetek a situaci na trhu práce.',
     practicalTips: [
-      'Pokud rodič bez vážného důvodu odmítne doložit účetnictví, platí zákonná domněnka příjmu ve výši 25násobku životního minima (§ 916 o.z.).',
-      'Ústavní soud v nálezu I. ÚS 2482/13 potvrdil posuzování potenciality, avšak zakázal vyměřování likvidačního výživného z nereálných částek.'
+      'Pokud rodič bez vážného důvodu odmítne doložit své příjmy a účetnictví, uplatní soud zákonnou domněnku příjmu ve výši 25násobku životního minima (§ 916 o.z.).',
+      'Podle judikatury Ústavního soudu (např. IV. ÚS 650/15) musí soudy hodnotit reálnou životní úroveň a potenciál, nikoliv mechanicky přistupovat k daňovým optimalizacím.'
     ],
     relatedTerms: ['Výživné na dítě (Zákonná vyživovací povinnost)', 'Doporučující tabulka MS ČR'],
     order: 39,
     status: 'PUBLISHED',
-    seoTitle: 'Potencialita příjmů u výživného (§ 913 a § 916 o.z.) • Judikatura OSVČ',
+    seoTitle: 'Potencialita příjmů u výživného (§ 913 a § 916 o.z.) • Dokazování OSVČ',
     seoDescription: 'Jak soudy posuzují reálný výdělečný potenciál podnikatelů a zaměstnanců při stanovení výživného.',
-    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Nález Ústavního soudu sp. zn. I. ÚS 2482/13'],
+    sources: ['Zákon č. 89/2012 Sb., občanský zákoník', 'Nález Ústavního soudu sp. zn. IV. ÚS 650/15'],
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
   },
