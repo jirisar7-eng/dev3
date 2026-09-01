@@ -376,5 +376,65 @@ Fáze 1 (Content Inventory, Rights Classification & Gap Analysis) byla úspěšn
 - `src/components/public/PublicPortal.tsx` (čisté oddělení rout `/clanky` a `/metodika`)
 - `docs/audit/CONTENT-SOURCE-GAP-AUDIT-LOM-UNIE-OTCU-APERIO.md` (tento audit)
 
+---
+
+## 11. IMPLEMENTACE FÁZE 3A — VÝŽIVNÉ & METODIKA DOKAZOVÁNÍ PŘÍJMŮ
+
+**Datum:** 2026-09-01  
+**Oblast:** Kontrolované rozšiřování obsahu (Fáze 3A — Master Content Map Oblast 7)  
+**Téma:** Výživné na dítě, doporučující tabulky MS ČR, dokazování u OSVČ a střídavá péče  
+**Kategorie:** Metodické články & Judikatura (`LEGAL_METHODOLOGY` / `LEGAL_GUIDE`)  
+**Typ zásahu:** `CREATE` (`guide-vyzivne` s 6 kapitolami, checklistem, 4 FAQs a ověřenou judikaturou) + `EXPAND` Wiki hesel  
+
+### A. Právní a metodické zdroje (Primary Sources Verified)
+1. **Zákon č. 89/2012 Sb., občanský zákoník (§ 910–§ 923):**
+   - § 910–912: Základní pravidla vyživovací povinnosti.
+   - § 913: Kritéria schopností, možností a majetkových poměrů povinného i oprávněného rodiče.
+   - § 915 odst. 1: Princip shodné životní úrovně dítěte a rodičů.
+   - § 916: Zákonná domněnka příjmu ve výši 25násobku životního minima jednotlivce při nedoložení podkladů.
+   - § 921 odst. 1: Možnost přiznat/zvýšit výživné až 3 roky zpětně u nezletilých.
+   - § 923: Změna a zrušení výživného při změně poměrů; zákaz vracení spotřebovaného výživného u nezletilých.
+2. **Doporučující tabulka pro stanovení výživného Ministerstva spravedlnosti ČR (verze 2022/2023):**
+   - 4 životní etapy (0–5, 6–10, 11–15, 16+ let).
+   - Procentní pásma z čistého příjmu dle počtu vyživovacích povinností.
+   - Kontrolní částka (reziduální příjem rodiče pro zachování motivace a obživy).
+   - Poměrný odečet za rozsah osobní péče.
+3. **Zákon č. 588/2020 Sb., o náhradním výživném:**
+   - Podmínky výplaty dávky Úřadem práce ČR při neúspěšném vymáhání dlužného výživného v exekuci.
+4. **Zákon č. 120/2001 Sb., exekuční řád (§ 71a):**
+   - Pozastavení řidičského oprávnění při vymáhání dlužného výživného pro nezletilé dítě a zákonné výjimky.
+
+### B. Judikatura ÚS a NS (Judicial Sources Verified)
+1. **Nález Ústavního soudu sp. zn. I. ÚS 2482/13 ze dne 24. 7. 2014:**
+   - Posuzování potenciality příjmů a daňové optimalizace OSVČ; zákaz mechanického vycházení z formálních daňových přiznání při zřejmém disproporčním majetku.
+2. **Nález Ústavního soudu sp. zn. II. ÚS 1619/20 ze dne 30. 3. 2021:**
+   - Určování výživného a kompenzace životní úrovně při střídavé péči 50/50, zákaz znevýhodnění dítěte v jedné z domácností.
+3. **Nález Ústavního soudu sp. zn. IV. ÚS 650/15 ze dne 16. 12. 2015:**
+   - Povinnost stanovit výživné v souladu s reálnými majetkovými poměry a zákaz likvidačního výživného ohrožujícího existenci rodiče.
+4. **Rozsudek Nejvyššího soudu sp. zn. 21 Cdo 1912/2017 ze dne 18. 1. 2018:**
+   - Vymezení mimořádných vs. běžných nákladů na dítě; mimořádné nákladné zájmy vyžadují předchozí dohodu obou rodičů dle § 877 OZ.
+
+### C. Struktura implementovaného průvodce (`guide-vyzivne`)
+1. **Kapitola 1:** Základy vyživovací povinnosti a princip shodné životní úrovně (§ 910–§ 923 OZ) [info]
+2. **Kapitola 2:** Doporučující tabulka Ministerstva spravedlnosti ČR a algoritmus výpočtu [steps]
+3. **Kapitola 3:** Potencialita příjmů a dokazování u podnikatelů a OSVČ (§ 916 OZ) [warning]
+4. **Kapitola 4:** Výživné při střídavé a rovnocenné péči (II. ÚS 1619/20) [info]
+5. **Kapitola 5:** Mimořádné a nahodilé výdaje (rovnátka, lyžařské výcviky, kroužky) [checklist]
+6. **Kapitola 6:** Změna poměrů a zpětné přiznání či snížení výživného (§ 923 OZ) [warning]
+7. **Procesní checklist (6 položek):** Doložení čistých příjmů za 12 měsíců, rozpis odůvodněných potřeb dítěte, evidence reálné péče v dnech, další vyživovací povinnosti, návrhy na bankovní účty u OSVČ, petit dle tabulek MS ČR.
+8. **FAQs (4 otázky):** Fikce příjmu dle § 916 OZ, mimořádné kroužky a školy bez souhlasu, výživné při střídavé péči 50/50, ztráta práce a nemoc jako důvod pro návrh dle § 923 OZ.
+
+### D. Změněné a ověřené soubory
+- `src/data/legalGuidesSeed.ts` (přidán kompletní `LegalGuide` `guide-vyzivne`)
+- `src/data/wikiSeed.ts` (přidána hesla `vyzivne`, `doporucujici-tabulka-ms-cr`, `potencialita-prijmu`, `nahradni-vyzivne`, `exekuce-vyzivneho`)
+- `src/components/public/AlimonyCalculatorView.tsx` (propojení kalkulačky s novým průvodcem `/metodika/vyzivne`)
+- `docs/audit/CONTENT-SOURCE-GAP-AUDIT-LOM-UNIE-OTCU-APERIO.md` (tento audit)
+
+### E. Bezpečnostní a architektonická kontrola
+- Žádné credentials, API keys ani secrets nebyly dotčeny.
+- Žádné změny v Prisma DB schématu ani migracích.
+- Plně kompatibilní se stávajícím rendererem `LegalGuideDynamicView.tsx` a rozcestníkem `PublicPortal.tsx`.
+
+
 
 
