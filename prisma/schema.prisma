@@ -653,6 +653,10 @@ model Study {
   limitations     String?
   relevance       String?
   keywords        String?
+  evidenceLevel     String   @default("B")
+  evidenceDirection String   @default("SUPPORTIVE")
+  causality         String   @default("NOT_ESTABLISHED")
+  sourceType        String   @default("PEER_REVIEWED_EMPIRICAL")
   category        String   @default("stridava_pece")
   status          String   @default("DRAFT") // "DRAFT", "PUBLISHED", "ARCHIVED"
   featured        Boolean  @default(false)
@@ -2426,6 +2430,12 @@ enum SynthesisStatus {
   VERIFIED_LOCAL
   IN_PR
   RELEASED
+  NEW
+  TRIAGED
+  PLANNED
+  IMPLEMENTED
+  VERIFICATION
+  REOPENED
 }
 
 enum GitHubSyncStatus {
@@ -2442,6 +2452,7 @@ enum GitHubSyncStatus {
 model SynthesisTicket {
   id                  String                 @id @default(uuid())
   ticketNumber        Int                    @unique @default(autoincrement())
+  publicId            String?                @unique
   title               String
   description         String                 @db.Text
   source              SynthesisSource
@@ -2450,6 +2461,11 @@ model SynthesisTicket {
   status              SynthesisStatus        @default(DISCOVERED)
   dedupHash           String                 @unique
   sourcePath          String?
+  auditId             String?
+  audit               Audit?                 @relation(fields: [auditId], references: [id], onDelete: SetNull)
+  findingId           String?
+  finding             AuditFinding?          @relation(fields: [findingId], references: [id], onDelete: SetNull)
+  priority            String?
   auditDocumentId     String?
   auditDocument       AuditDocument?         @relation(fields: [auditDocumentId], references: [id], onDelete: SetNull)
   qaFindingId         String?
@@ -2477,12 +2493,15 @@ model SynthesisTicket {
   updatedAt           DateTime               @updatedAt
   comments            SynthesisTicketComment[]
   events              SynthesisTicketEvent[]
+  verifications       Verification[]
 
   @@index([source])
   @@index([severity])
   @@index([category])
   @@index([status])
   @@index([dedupHash])
+  @@index([auditId])
+  @@index([findingId])
 }
 
 model SynthesisTicketComment {
@@ -2580,12 +2599,18 @@ model ControlPlaneSnapshot {
 
 model AuditFinding {
   id                   String              @id @default(uuid())
+  publicId             String?             @unique
+  auditId              String?
+  audit                Audit?              @relation(fields: [auditId], references: [id], onDelete: Cascade)
   auditFilename        String
   code                 String
   title                String
   description          String              @db.Text
   severity             String
   status               String
+  evidence             String?             @db.Text
+  recommendation       String?             @db.Text
+  verificationStatus   String?             @default("PENDING")
   firstSeenAt          DateTime            @default(now())
   lastSeenAt           DateTime            @default(now())
   actionId             String?
@@ -2599,9 +2624,60 @@ model AuditFinding {
   sourceSha            String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
+  synthesisTickets     SynthesisTicket[]
 
   @@unique([auditFilename, code])
   @@index([status, severity])
   @@index([code])
   @@index([actionId])
+  @@index([auditId])
+}
+
+model Audit {
+  id          String   @id @default(uuid())
+  publicId    String   @unique
+  title       String
+  scope       String
+  source      String
+  status      String   @default("COMPLETED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   @default("SYSTEM")
+
+  findings    AuditFinding[]
+  tickets     SynthesisTicket[]
+}
+
+model Verification {
+  id          String   @id @default(uuid())
+  ticketId    String
+  ticket      SynthesisTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  status      String   @default("COMPLETED")
+  result      String   // "PASS" or "FAIL"
+  evidence    String?  @db.Text
+  verifiedBy  String
+  verifiedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ticketId])
+}
+
+model OutboxEvent {
+  id            String   @id @default(uuid())
+  eventId       String   @unique
+  eventType     String
+  aggregateType String
+  aggregateId   String
+  actorId       String?
+  timestamp     DateTime @default(now())
+  payload       Json
+  status        String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  attempts      Int      @default(0)
+  lastError     String?  @db.Text
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
 }
