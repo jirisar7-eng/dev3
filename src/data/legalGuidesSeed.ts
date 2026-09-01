@@ -507,5 +507,88 @@ export const DEFAULT_LEGAL_GUIDES: LegalGuide[] = [
     seoDescription: 'Kompletní přehled rolí soudů, OSPODu, soudních znalců, advokátů a rodinných poraden v opatrovnickém řízení v České republice.',
     createdAt: '2026-08-22T00:00:00.000Z',
     updatedAt: '2026-08-22T00:00:00.000Z',
+  },
+  {
+    id: 'guide-predbezne-opatreni-452',
+    slug: 'predbezne-opatreni-452-zrs',
+    title: 'Předběžné opatření ve věcech péče a styku (§ 452 ZŘS)',
+    subtitle: 'Metodický procesní průvodce pro urgentní situace: zamezení styku, svévolné odstěhování a ochrana vazeb s dítětem.',
+    excerpt: 'Komplexní rozbor podmínek pro vydání předběžného opatření podle § 452 ZŘS a § 74 an. OSŘ, lhůty pro rozhodnutí, formulace petitu a judikatura Ústavního soudu.',
+    category: 'soud',
+    categoryLabel: 'Soudní řízení & Judikatura',
+    order: 11,
+    status: 'PUBLISHED',
+    badgeText: 'Urgentní právní ochrana',
+    badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    disclaimer: 'Tento metodický průvodce vychází z platného znění zákona č. 292/2013 Sb. (ZŘS), zákona č. 99/1963 Sb. (OSŘ) a ustálené judikatury Ústavního soudu ČR. Jedná se o edukační a metodický rozbor procesních postupů (AI_DERIVED / METHODOLOGY) a nenahrazuje individuální právní pomoc advokáta v konkrétní věci.',
+    sources: [
+      'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních (§ 452–§ 465)',
+      'Zákon č. 99/1963 Sb., občanský soudní řád (§ 74–§ 77b, § 102)',
+      'Nález Ústavního soudu sp. zn. II. ÚS 3436/14 ze dne 14. 4. 2015 (K povinnosti soudu zatímně upravit styk při svévolném odepření kontaktu)',
+      'Nález Ústavního soudu sp. zn. I. ÚS 615/17 ze dne 21. 6. 2017 (K ochraně práva dítěte na oba rodiče prostřednictvím předběžného opatření)',
+      'Nález Ústavního soudu sp. zn. II. ÚS 3765/17 ze dne 19. 12. 2017 (K nepřípustnosti pasivity soudu při postupném odcizování dítěte)'
+    ],
+    chapters: [
+      {
+        id: 'po-ch-1',
+        title: '1. Účel předběžného opatření a rozdíl mezi § 452 ZŘS a obecným § 74 OSŘ',
+        content: 'Předběžné opatření v rodinněprávních věcech slouží k **rychlé a zatímní úpravě poměrů dítěte** v situacích, kdy je nutný okamžitý zásah soudu předtím, než může proběhnout plnohodnotné a časově náročné dokazování v hlavním řízení. Zvláštní předběžné opatření podle **§ 452 zákona o zvláštních řízeních soudních (ZŘS)** řeší urgentní situaci, kdy se dítě ocitlo bez jakékoliv péče nebo je jeho život, zdraví či příznivý vývoj vážně ohrožen (rozhoduje se do 24 hodin na návrh OSPODu). Naopak běžné předběžné opatření o úpravě styku či péče podávané rodičem se řídí **§ 74 a násl. občanského soudního řádu (OSŘ)** ve spojení s ustanoveními ZŘS, kde má soud lhůtu pro rozhodnutí **7 dnů** od podání návrhu.',
+        order: 1,
+        type: 'info'
+      },
+      {
+        id: 'po-ch-2',
+        title: '2. Kdy má návrh šanci na úspěch: Zamezení styku a svévolná změna poměrů',
+        content: 'Ústavní soud opakovaně judikoval (zejména v nálezu **II. ÚS 3436/14** a **I. ÚS 615/17**), že pokud jeden z rodičů jednostranně a bez legitimního důvodu zcela odstřihne druhého rodiče od kontaktu s dítětem, vzniká **akutní nebezpečí nevratného přetrhání citových vazeb**. V takovém případě je soud **povinen** poměry zatímně upravit předběžným opatřením. Důvody pro nařízení jsou zejména: 1) úplné odepření fyzického i telefonického kontaktu, 2) pokus o svévolné přestěhování dítěte do jiného okresu/státu bez souhlasu druhého rodiče, 3) hrubé manipulativní jednání a izolace dítěte. Pouhá obava bez doložených důkazů však k nařízení nestačí.',
+        order: 2,
+        type: 'warning'
+      },
+      {
+        id: 'po-ch-3',
+        title: '3. Lhůty soudu pro rozhodnutí, vykonatelnost doručením a odvolání',
+        content: 'Soud rozhoduje o návrhu rodiče na předběžné opatření ve lhůtě **7 kalendářních dnů** ode dne doručení návrhu (§ 102 odst. 1 OSŘ). Rozhodnutí je **vykonatelné okamžikem jeho doručení** povinnému rodiči (resp. vyhlášením či vyvěšením, pokud to stanoví zákon). Proti usnesení o nařízení či zamítnutí předběžného opatření lze podat **odvolání do 15 dnů** od doručení k příslušnému krajskému soudu. Důležité: **Odvolání nemá odkladný účinek!** Nařízené předběžné opatření je druhý rodič povinen respektovat ihned po doručení.',
+        order: 3,
+        type: 'steps'
+      },
+      {
+        id: 'po-ch-4',
+        title: '4. Náležitosti návrhu, precizní formulace petitu a povinné důkazy',
+        content: 'Nejčastějším důvodem zamítnutí návrhu na předběžné opatření je vágní formulace nebo nedostatek osvědčených skutečností. V návrhu musíte: **1) Jednoznačně identifikovat účastníky** (otec, matka, nezletilé dítě včetně RČ a bydliště), **2) Osvědčit naléhavost situace** (proč věc nesnese odkladu do konečného rozsudku), **3) Přesně formulovat žalobní návrh (petit)** – např. přesné vymezení lichých/sudých týdnů od pátku 16:00 do neděle 18:00, místo předání a předávající osoby, **4) Přiložit listinné důkazy** (rodný list dítěte, printscreeny odmítavých SMS zpráv, e-mailů, záznamy o marných pokusech o kontakt či zprávy OSPODu).',
+        order: 4,
+        type: 'checklist'
+      },
+      {
+        id: 'po-ch-5',
+        title: '5. Úloha OSPODu, kolizního opatrovníka a souběžné řízení ve věci samé',
+        content: 'Předběžné opatření je svou povahou dočasné. Soud při jeho nařízení zpravidla stanoví navrhovateli lhůtu k podání **návrhu na zahájení řízení ve věci samé** (pokud již řízení o úpravě péče a styku neběží podle § 459 ZŘS). OSPOD je soudem neprodleně vyrozuměn a je ustanoven kolizním opatrovníkem nezletilého. Je klíčové informovat sociální pracovnici OSPODu o podaném návrhu ještě před rozhodnutím soudu a předat jí veškeré důkazy o obstrukcích druhého rodiče, aby mohla soudu poskytnout součinnost.',
+        order: 5,
+        type: 'info'
+      }
+    ],
+    checklist: [
+      { id: 'po-c1', label: 'Jednoznačně a detailně formulovaný návrh výroku (petit) s konkrétními dny, časy a místem předání' },
+      { id: 'po-c2', label: 'Prokázání a doložení naléhavé potřeby zatímní úpravy (akutní hrozba odcizení dítěte)' },
+      { id: 'po-c3', label: 'Přiložené listinné důkazy (rodný list, písemná komunikace dokládající odmítání styku)' },
+      { id: 'po-c4', label: 'Podání k místně příslušnému okresnímu soudu podle trvalého bydliště nezletilého dítěte' },
+      { id: 'po-c5', label: 'Souběžně podaný nebo běžící návrh na úpravu péče a styku ve věci samé' }
+    ],
+    faqs: [
+      {
+        question: 'Platí se za návrh na předběžné opatření v opatrovnické věci soudní poplatek?',
+        answer: 'Ne. Řízení ve věcech péče soudu o nezletilé, včetně návrhů na předběžná opatření týkajících se péče a styku s dětmi, je ze zákona osvobozeno od soudních poplatků podle zákona č. 549/1991 Sb., o soudních poplatcích. Neskládá se ani jistota (kauce 10 000 Kč), která se jinak skládá u majetkových předběžných opatření.'
+      },
+      {
+        question: 'Co dělat, když matka/otec nerespektuje nařízené předběžné opatření?',
+        answer: 'Předběžné opatření je vykonatelným titulem. Pokud druhý rodič brání styku navzdory doručenému usnesení soudu, neprodleně podejte k opatrovnickému soudu Návrh na výkon rozhodnutí (§ 500 ZŘS) a požádejte o uložení pokuty až do výše 50 000 Kč.'
+      },
+      {
+        question: 'Jak dlouho předběžné opatření platí?',
+        answer: 'Předběžné opatření platí do doby, než nabude právní moci konečný rozsudek soudu ve věci samé, pokud jej soud v průběhu řízení nezruší nebo nezmění na základě změny poměrů.'
+      }
+    ],
+    seoTitle: 'Předběžné opatření na péči a styk s dítětem (§ 452 ZŘS) • Kompletní manuál',
+    seoDescription: 'Podrobný právní návod jak podat návrh na předběžné opatření při zamezení styku s dítětem, vzor petitu, lhůty soudu 7 dnů a judikatura Ústavního soudu ČR.',
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
   }
 ];

@@ -485,20 +485,25 @@ export const DEFAULT_WIKI_TERMS: WikiTerm[] = [
     firstLetter: 'P',
     category: 'pravo',
     categoryLabel: 'Právní pojmy',
-    citation: '§ 452 z.ř.s.',
-    definition: 'Krizové rozhodnutí soudu vydávané ve zrychleném režimu (do 24 hodin u zvláštního nebo do 7 dnů u obecného), které zatímně upravuje poměry dítěte v situacích bezprostředního ohrožení nebo zamezení styku.',
+    citation: '§ 452 z.ř.s., § 74 an. o.s.ř.',
+    definition: 'Krizové rozhodnutí soudu vydávané ve zrychleném režimu (do 24 hodin u zvláštního nebo do 7 dnů u obecného o péči/styku), které zatímně upravuje poměry dítěte v situacích bezprostředního ohrožení nebo zamezení styku.',
     practicalTips: [
-      'Slouží k okamžitému obnovení zamezeného styku s dítětem.',
-      'Rozhodnutí je vykonatelné okamžikem doručení.'
+      'Slouží k okamžitému obnovení zamezeného styku s dítětem a ochraně citových vazeb.',
+      'Rozhodnutí je vykonatelné okamžikem doručení – odvolání nemá odkladný účinek.',
+      'Kompletní metodický postup naleznete v našem Průvodci: Předběžné opatření ve věcech péče a styku (§ 452 ZŘS).'
     ],
-    relatedTerms: ['Exekuce styku', 'Petit'],
+    relatedTerms: ['Exekuce styku', 'Petit', 'Předběžná vykonatelnost rozsudku'],
     order: 23,
     status: 'PUBLISHED',
     seoTitle: 'Předběžné opatření na úpravu styku (§ 452 z.ř.s.)',
     seoDescription: 'Rychlý zásah soudu při zamezení kontaktu s dítětem a podmínky nařízení.',
-    sources: ['Zákon č. 292/2013 Sb., o zvláštních řízeních soudních'],
+    sources: [
+      'Zákon č. 292/2013 Sb., o zvláštních řízeních soudních (§ 452–§ 465)',
+      'Zákon č. 99/1963 Sb., občanský soudní řád (§ 74 an.)',
+      'Nález Ústavního soudu sp. zn. II. ÚS 3436/14'
+    ],
     createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-08-22T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
   },
   {
     id: 'rodinna-mediace',
