@@ -3363,7 +3363,7 @@ class MemoryStore {
     },
     {
       id: 'evt-seed-2',
-      timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
       sessionId: 'sess-seed-anon-2',
       userId: null,
       eventType: 'feature_open',
@@ -3371,11 +3371,11 @@ class MemoryStore {
       featureId: 'alimony_calculator',
       metadata: {},
       isAnonymous: true,
-      createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
     },
     {
       id: 'evt-seed-3',
-      timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
       sessionId: 'sess-seed-anon-2',
       userId: null,
       eventType: 'feature_complete',
@@ -3383,7 +3383,7 @@ class MemoryStore {
       featureId: 'alimony_calculator',
       metadata: { durationSeconds: 120 },
       isAnonymous: true,
-      createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
     },
     {
       id: 'evt-seed-4',
@@ -3435,16 +3435,30 @@ class MemoryStore {
     };
     this.auditLogs.unshift(newLog);
     if (isPrismaAvailable()) {
-      prisma.auditLog.create({
-        data: {
-          userId: user?.id || 'system',
-          userEmail: user?.email || 'system@tatovacesta.cz',
-          action,
-          module,
-          details,
-          ipAddress: '127.0.0.1',
+      const userIdToVerify = user?.id;
+      const saveAuditLog = async () => {
+        let dbUserId: string | null = null;
+        if (userIdToVerify) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userIdToVerify },
+            select: { id: true }
+          });
+          if (dbUser) {
+            dbUserId = dbUser.id;
+          }
         }
-      }).catch(err => console.warn('Prisma logAudit error:', err));
+        await prisma.auditLog.create({
+          data: {
+            userId: dbUserId,
+            userEmail: user?.email || 'system@tatovacesta.cz',
+            action,
+            module,
+            details,
+            ipAddress: '127.0.0.1',
+          }
+        });
+      };
+      saveAuditLog().catch(err => console.warn('Prisma logAudit error:', err));
     }
   }
 }
