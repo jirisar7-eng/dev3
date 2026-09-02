@@ -21,8 +21,8 @@ function runTest(name, fn) {
 // 1. Navigation items test
 runTest('Navigation: "Mapa subjektů" exists directly below "Registr subjektů"', () => {
   const navContent = fs.readFileSync(path.join(__dirname, '../src/config/navigation.ts'), 'utf8');
-  assert(navContent.includes("labelKey: 'Registr subjektů'"), 'Must contain Registr subjektů');
-  assert(navContent.includes("labelKey: 'Mapa subjektů'"), 'Must contain Mapa subjektů');
+  assert(navContent.includes("labelKey: 'Registr & Hodnocení subjektů'"), 'Must contain Registr & Hodnocení subjektů');
+  assert(navContent.includes("labelKey: 'Mapa institucí a poraden'"), 'Must contain Mapa institucí a poraden');
   assert(navContent.includes("url: '/mapa-subjektu'"), 'Must link to /mapa-subjektu');
 });
 

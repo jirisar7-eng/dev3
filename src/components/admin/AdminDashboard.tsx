@@ -50,6 +50,7 @@ import { AnalyticsManager } from './AnalyticsManager';
 import { ContentProjectCenter } from './ContentProjectCenter';
 import { UnifiedOperationsCenter } from './operations/UnifiedOperationsCenter';
 import { AiTelemetryCard } from './audit/AiTelemetryCard';
+import { OrionTraceCenterPage } from './orion/OrionTraceCenterPage';
 
 interface AdminDashboardProps {
   currentPath?: string;
@@ -392,6 +393,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {/* 🤖 AI & Automatizace */}
           {activeTab === 'operations-overview' && <UnifiedOperationsCenter onNavigate={onNavigate} />}
           {(activeTab === 'qa' || activeTab === 'copilot') && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
+          {activeTab === 'orion' && <OrionTraceCenterPage onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'tests' && <TestRunnerCard />}
           {activeTab === 'ai-telemetry' && <AiTelemetryCard onNavigate={onNavigate} />}

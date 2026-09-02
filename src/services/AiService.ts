@@ -1,5 +1,6 @@
 import { apiFetch } from '../utils/apiClient';
 import { GoogleGenAI } from '@google/genai';
+import { aiStatsManager } from './qa/ai/aiStats';
 
 export interface AiGenerateOptions {
   timeoutMs?: number;
@@ -70,61 +71,119 @@ export class AiService {
 
     // 1. Try Primary Gemini Key
     if (process.env.GEMINI_API_KEY) {
+      const model = options?.modelOverride || 'gemini-3.6-flash';
+      const start = Date.now();
+      aiStatsManager.startOperation('gemini', model);
       try {
-        const start = Date.now();
-        console.log('[AiService] Calling Primary Gemini AI (gemini-3.6-flash)...');
+        console.log(`[AiService] Calling Primary Gemini AI (${model})...`);
         const ai = this.getGeminiClient('GEMINI_API_KEY');
         const call = async () => {
           const response = await ai.models.generateContent({
-            model: options?.modelOverride || 'gemini-3.6-flash',
+            model,
             contents: prompt,
             config: geminiConfigParam
           });
-          return response.text || '';
+          return response;
         };
 
-        const text = await withTimeout(call(), 'Gemini Primary');
+        const responseObj = await withTimeout(call(), 'Gemini Primary');
+        const text = responseObj?.text || '';
+        const latencyMs = Date.now() - start;
+
         if (text && text.trim().length > 0) {
-          console.log(`[AiService] Primary Gemini AI completed successfully in ${Date.now() - start}ms (${text.length} chars output).`);
+          console.log(`[AiService] Primary Gemini AI completed successfully in ${latencyMs}ms (${text.length} chars output).`);
+          const usage = responseObj?.usageMetadata;
+          aiStatsManager.recordCallDetails({
+            provider: 'gemini',
+            model,
+            promptTokens: usage?.promptTokenCount || null,
+            completionTokens: usage?.candidatesTokenCount || null,
+            latencyMs,
+            success: true
+          });
+          aiStatsManager.endOperation();
           return text;
         }
       } catch (err: any) {
+        const latencyMs = Date.now() - start;
+        const isTimeout = err?.message?.toLowerCase().includes('timeout') || false;
         console.warn('[AiService] Primary Gemini AI failed:', err?.message || err);
         errors.push({ provider: 'Gemini Primary', error: err?.message || String(err) });
+        aiStatsManager.recordCallDetails({
+          provider: 'gemini',
+          model,
+          latencyMs,
+          success: false,
+          isTimeout,
+          errorMsg: err?.message || String(err)
+        });
+      } finally {
+        aiStatsManager.endOperation();
       }
     }
 
     // 2. Try Secondary Gemini Key
     if (process.env.GEMINI_API_KEY_2) {
+      const model = options?.modelOverride || 'gemini-3.6-flash';
+      const start = Date.now();
+      aiStatsManager.startOperation('gemini', model);
       try {
-        const start = Date.now();
-        console.log('[AiService] Calling Secondary Gemini AI (gemini-3.6-flash)...');
+        console.log(`[AiService] Calling Secondary Gemini AI (${model})...`);
         const ai2 = this.getGeminiClient('GEMINI_API_KEY_2');
         const call = async () => {
           const response2 = await ai2.models.generateContent({
-            model: options?.modelOverride || 'gemini-3.6-flash',
+            model,
             contents: prompt,
             config: geminiConfigParam
           });
-          return response2.text || '';
+          return response2;
         };
 
-        const text = await withTimeout(call(), 'Gemini Secondary');
+        const responseObj2 = await withTimeout(call(), 'Gemini Secondary');
+        const text = responseObj2?.text || '';
+        const latencyMs = Date.now() - start;
+
         if (text && text.trim().length > 0) {
-          console.log(`[AiService] Secondary Gemini AI completed successfully in ${Date.now() - start}ms.`);
+          console.log(`[AiService] Secondary Gemini AI completed successfully in ${latencyMs}ms.`);
+          const usage = responseObj2?.usageMetadata;
+          aiStatsManager.recordCallDetails({
+            provider: 'gemini',
+            model,
+            promptTokens: usage?.promptTokenCount || null,
+            completionTokens: usage?.candidatesTokenCount || null,
+            latencyMs,
+            success: true,
+            isFallback: true
+          });
+          aiStatsManager.endOperation();
           return text;
         }
       } catch (err: any) {
+        const latencyMs = Date.now() - start;
+        const isTimeout = err?.message?.toLowerCase().includes('timeout') || false;
         console.warn('[AiService] Secondary Gemini AI failed:', err?.message || err);
         errors.push({ provider: 'Gemini Secondary', error: err?.message || String(err) });
+        aiStatsManager.recordCallDetails({
+          provider: 'gemini',
+          model,
+          latencyMs,
+          success: false,
+          isTimeout,
+          isFallback: true,
+          errorMsg: err?.message || String(err)
+        });
+      } finally {
+        aiStatsManager.endOperation();
       }
     }
 
     // 3. Fallback to Grok (xAI API)
     const grokKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
     if (grokKey) {
+      const model = 'grok-2-1212';
+      const start = Date.now();
+      aiStatsManager.startOperation('grok', model);
       try {
-        const start = Date.now();
         console.log('[AiService] Fallback to Grok AI (grok-2-1212)...');
         const call = async () => {
           const controller = new AbortController();
@@ -135,7 +194,7 @@ export class AiService {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'grok-2-1212',
+              model,
               messages: openAiMessages,
               temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
@@ -149,24 +208,52 @@ export class AiService {
           }
 
           const data: any = await grokResponse.json();
-          return data.choices?.[0]?.message?.content || '';
+          return data;
         };
 
-        const text = await withTimeout(call(), 'Grok AI');
+        const data = await withTimeout(call(), 'Grok AI');
+        const text = data.choices?.[0]?.message?.content || '';
+        const latencyMs = Date.now() - start;
+
         if (text && text.trim().length > 0) {
-          console.log(`[AiService] Grok AI fallback succeeded in ${Date.now() - start}ms.`);
+          console.log(`[AiService] Grok AI fallback succeeded in ${latencyMs}ms.`);
+          aiStatsManager.recordCallDetails({
+            provider: 'grok',
+            model,
+            promptTokens: data.usage?.prompt_tokens || null,
+            completionTokens: data.usage?.completion_tokens || null,
+            latencyMs,
+            success: true,
+            isFallback: true
+          });
+          aiStatsManager.endOperation();
           return text;
         }
       } catch (err: any) {
+        const latencyMs = Date.now() - start;
+        const isTimeout = err?.message?.toLowerCase().includes('timeout') || false;
         console.warn('[AiService] Grok AI fallback failed:', err?.message || err);
         errors.push({ provider: 'Grok AI', error: err?.message || String(err) });
+        aiStatsManager.recordCallDetails({
+          provider: 'grok',
+          model,
+          latencyMs,
+          success: false,
+          isTimeout,
+          isFallback: true,
+          errorMsg: err?.message || String(err)
+        });
+      } finally {
+        aiStatsManager.endOperation();
       }
     }
 
     // 4. Fallback to Groq API (llama-3.3-70b-versatile)
     if (process.env.GROQ_API_KEY) {
+      const model = 'llama-3.3-70b-versatile';
+      const start = Date.now();
+      aiStatsManager.startOperation('groq', model);
       try {
-        const start = Date.now();
         console.log('[AiService] Fallback to Groq AI (llama-3.3-70b-versatile)...');
         const call = async () => {
           const groqResponse = await apiFetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -176,7 +263,7 @@ export class AiService {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'llama-3.3-70b-versatile',
+              model,
               messages: openAiMessages,
               temperature: typeof options?.temperature === 'number' ? options.temperature : 0.1,
               response_format: options?.jsonMode ? { type: 'json_object' } : undefined
@@ -189,17 +276,43 @@ export class AiService {
           }
 
           const data: any = await groqResponse.json();
-          return data.choices?.[0]?.message?.content || '';
+          return data;
         };
 
-        const text = await withTimeout(call(), 'Groq AI');
+        const data = await withTimeout(call(), 'Groq AI');
+        const text = data.choices?.[0]?.message?.content || '';
+        const latencyMs = Date.now() - start;
+
         if (text && text.trim().length > 0) {
-          console.log(`[AiService] Groq AI fallback succeeded in ${Date.now() - start}ms.`);
+          console.log(`[AiService] Groq AI fallback succeeded in ${latencyMs}ms.`);
+          aiStatsManager.recordCallDetails({
+            provider: 'groq',
+            model,
+            promptTokens: data.usage?.prompt_tokens || null,
+            completionTokens: data.usage?.completion_tokens || null,
+            latencyMs,
+            success: true,
+            isFallback: true
+          });
+          aiStatsManager.endOperation();
           return text;
         }
       } catch (err: any) {
+        const latencyMs = Date.now() - start;
+        const isTimeout = err?.message?.toLowerCase().includes('timeout') || false;
         console.warn('[AiService] Groq AI fallback failed:', err?.message || err);
         errors.push({ provider: 'Groq AI', error: err?.message || String(err) });
+        aiStatsManager.recordCallDetails({
+          provider: 'groq',
+          model,
+          latencyMs,
+          success: false,
+          isTimeout,
+          isFallback: true,
+          errorMsg: err?.message || String(err)
+        });
+      } finally {
+        aiStatsManager.endOperation();
       }
     }
 
@@ -221,3 +334,4 @@ export class AiService {
     throw new Error(`AI_PROVIDER_ERROR: Selhali všichni dostupní AI poskytovatelé (${errors.map(e => `${e.provider}: ${e.error}`).join('; ')})`);
   }
 }
+

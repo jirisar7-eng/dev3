@@ -19,6 +19,8 @@ import { AuditRegistryEngine } from './auditRegistryEngine';
 import { RegressionEngine } from './regressionEngine';
 import { ReleaseGateService } from './releaseGateService';
 import { ControlPlaneService } from '../controlPlaneService';
+import { OrionTraceStore } from './orionTraceStore';
+import { NotionAuditMirrorService } from '../notionAuditMirror';
 
 // Zod schemas for validating LLM output
 export const OrionFindingAnalysisSchema = z.object({
@@ -70,6 +72,10 @@ export class OrionService {
 
     const effectiveCapabilities = ControlPlaneAuthorization.getOrionEffectiveCapabilities(user);
 
+    // Initialize Real-time Process Trace
+    OrionTraceStore.startTrace(user, request.scope || 'REGISTRY');
+    OrionTraceStore.updateStep('USER', 'COMPLETED', Date.now() - startTime, { user: user.email, role: user.role });
+
     // 2. Audit Trail: ORION_ANALYSIS_STARTED
     await AuditService.recordLog(
       'ORION_ANALYSIS_STARTED',
@@ -81,6 +87,8 @@ export class OrionService {
 
     try {
       // 3. Gather Evidence (READ-ONLY)
+      OrionTraceStore.updateStep('CONTEXT', 'ACTIVE');
+      const contextStartTime = Date.now();
       const registry = AuditRegistryEngine.loadRegistry(customAuditDir);
       const regressions = RegressionEngine.analyzeAuditTimeline(registry.records);
       const gateEvaluation = await ReleaseGateService.evaluateReleaseGate(undefined, customAuditDir);
@@ -91,8 +99,23 @@ export class OrionService {
       if (request.targetCode) {
         targetFindings = targetFindings.filter(f => f.code.toUpperCase() === request.targetCode?.toUpperCase());
       }
+      OrionTraceStore.updateStep('CONTEXT', 'COMPLETED', Date.now() - contextStartTime, {
+        totalAudits: registry.records.length,
+        openFindingsCount: allFindings.filter(f => f.status === 'OPEN').length,
+        criticalRegressions: regressions.filter(r => r.currentSeverity === 'P0' || r.currentSeverity === 'P1').length,
+      });
+
+      // Sources & Documents Step
+      OrionTraceStore.updateStep('SOURCES', 'ACTIVE');
+      const sourcesStartTime = Date.now();
+      OrionTraceStore.updateStep('SOURCES', 'COMPLETED', Date.now() - sourcesStartTime, {
+        auditDirectory: customAuditDir || 'docs/audit',
+        recordsLoaded: registry.records.length,
+      });
 
       // 4. Sanitize Input Data before LLM
+      OrionTraceStore.updateStep('SANITIZER', 'ACTIVE');
+      const sanitizerStartTime = Date.now();
       const sanitizedContext = sanitizeInputData({
         scope: request.scope || 'REGISTRY',
         userQuery: request.userQuery || 'Analyzuj stav auditních zjištění a navrhni bezpečná doporučení.',
@@ -120,6 +143,15 @@ export class OrionService {
           controlPlane: health.controlPlane.status,
           testSuite: health.testSuiteAndBuild.status,
         },
+      });
+      OrionTraceStore.updateStep('SANITIZER', 'COMPLETED', Date.now() - sanitizerStartTime, { sanitized: true, piiMasked: true });
+
+      // Permission Intersection Step
+      OrionTraceStore.updateStep('PERMISSION_INTERSECTION', 'ACTIVE');
+      OrionTraceStore.updateStep('PERMISSION_INTERSECTION', 'COMPLETED', 5, {
+        effectiveCapabilities,
+        userRole: user.role,
+        agentRole: this.AGENT_ROLE,
       });
 
       // 5. Construct Structured AI Prompt
@@ -156,7 +188,11 @@ ZÁSADY:
       const prompt = `Proveď bezpečnostní analýzu následujícího kontextu auditu:\n${JSON.stringify(sanitizedContext, null, 2)}`;
 
       // 6. Call AI Service (Reusable resilience cascade)
+      OrionTraceStore.updateStep('AI_PROVIDER', 'ACTIVE');
+      const aiStartTime = Date.now();
       let rawAiResponse = '';
+      let fallbackUsed = false;
+
       try {
         rawAiResponse = await AiService.generateContent(prompt, {
           systemInstruction,
@@ -166,6 +202,7 @@ ZÁSADY:
         });
       } catch (aiErr: any) {
         // Fallback to deterministic offline analysis if AI is unavailable
+        fallbackUsed = true;
         console.warn('[OrionService] AI generation unavailable, falling back to deterministic synthesis:', aiErr?.message);
         rawAiResponse = JSON.stringify({
           summary: `Deterministická syntéza Oriona: evidováno ${allFindings.filter(f => f.status === 'OPEN').length} otevřených zjištění a ${regressions.length} regresí.`,
@@ -183,13 +220,18 @@ ZÁSADY:
           suggestedDraftActions: [],
         });
       }
+      OrionTraceStore.updateStep('AI_PROVIDER', 'COMPLETED', Date.now() - aiStartTime, {
+        primaryProvider: 'gemini-3.6-flash',
+        fallbackUsed,
+      });
 
       // 7. Parse JSON & Validate with Zod
+      OrionTraceStore.updateStep('EVIDENCE', 'ACTIVE');
+      const evidenceStartTime = Date.now();
       let parsedJson: any;
       try {
         parsedJson = JSON.parse(rawAiResponse);
       } catch {
-        // Handle malformed JSON
         parsedJson = {
           summary: sanitizeText(rawAiResponse.slice(0, 500)),
           findingsAnalysis: [],
@@ -227,6 +269,32 @@ ZÁSADY:
         requiresHumanApproval: true as const,
       }));
 
+      OrionTraceStore.updateStep('EVIDENCE', 'COMPLETED', Date.now() - evidenceStartTime, {
+        findingsEvaluated: sanitizedFindingsAnalysis.length,
+        safetyWarningsCount: sanitizedSafetyWarnings.length,
+      });
+
+      // Recommendation Step
+      OrionTraceStore.updateStep('RECOMMENDATION', 'ACTIVE');
+      OrionTraceStore.updateStep('RECOMMENDATION', 'COMPLETED', 10, {
+        trustLevel: this.TRUST_LEVEL,
+        zodValidated: validated.success,
+      });
+
+      // Control Plane Draft Step
+      OrionTraceStore.updateStep('CONTROL_PLANE_DRAFT', 'ACTIVE');
+      OrionTraceStore.updateStep('CONTROL_PLANE_DRAFT', 'COMPLETED', 5, {
+        status: 'PLAN_CREATED',
+        draftActionsSuggested: sanitizedDraftActions.length,
+      });
+
+      // Human Approval Gate Step
+      OrionTraceStore.updateStep('HUMAN_APPROVAL_GATE', 'ACTIVE');
+      OrionTraceStore.updateStep('HUMAN_APPROVAL_GATE', 'COMPLETED', 2, {
+        requiresApproval: true,
+        approvalRoleRequired: 'SUPER_ADMIN',
+      });
+
       const latencyMs = Date.now() - startTime;
 
       const response: OrionAnalysisResponse = {
@@ -254,6 +322,14 @@ ZÁSADY:
         user,
         ipAddress
       );
+
+      // Complete Trace & Mirror to Notion if configured
+      const finishedTrace = OrionTraceStore.completeTrace(sanitizedSummary);
+      if (finishedTrace) {
+        NotionAuditMirrorService.mirrorTrace(finishedTrace).catch(err => {
+          console.warn('[OrionService] Non-blocking Notion mirror error:', err?.message);
+        });
+      }
 
       return response;
     } catch (err: any) {

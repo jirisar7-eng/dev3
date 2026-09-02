@@ -29,6 +29,50 @@ interface ProviderStatusItem {
   cooldownUntil: string | null;
 }
 
+interface ProviderTelemetryStats {
+  provider: string;
+  model: string;
+  requestCount: number;
+  successCount: number;
+  failureCount: number;
+  timeoutCount: number;
+  fallbackCount: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  costStatus: 'ESTIMATED' | 'UNKNOWN';
+  status: 'ACTIVE' | 'IDLE' | 'DEGRADED' | 'ERROR' | 'FALLBACK';
+  lastCallAt: string | null;
+  lastErrorMessage: string | null;
+}
+
+interface AICallRecord {
+  id: string;
+  provider: string;
+  model: string;
+  timestamp: string;
+  latencyMs: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  success: boolean;
+  isTimeout: boolean;
+  isFallback: boolean;
+  errorMsg?: string;
+}
+
+interface ActiveOperationInfo {
+  isWorking: boolean;
+  startedAt: string | null;
+  elapsedMs: number;
+  provider: string | null;
+  model: string | null;
+}
+
 interface AIStatsData {
   totalCalls: number;
   cacheHits: number;
@@ -41,6 +85,9 @@ interface AIStatsData {
   estimatedCostUsd: number;
   lastCallAt: string | null;
   skippedReasons: Record<string, number>;
+  providers?: Record<string, ProviderTelemetryStats>;
+  history?: AICallRecord[];
+  activeOperation?: ActiveOperationInfo;
 }
 
 interface AiContextStatusData {
@@ -189,6 +236,21 @@ export const AiTelemetryCard: React.FC<{ onNavigate?: (path: string) => void }> 
           >
             Zavřít
           </button>
+        </div>
+      )}
+
+      {/* Active Operation Live Banner if running */}
+      {stats?.activeOperation?.isWorking && (
+        <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center justify-between shadow-xs animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <RefreshCw className="w-4 h-4 text-purple-600 animate-spin" />
+            <span className="font-bold">
+              AI Operace probíhá: {stats.activeOperation.provider || 'AI Orchestrator'} ({stats.activeOperation.model || 'In-Progress'})
+            </span>
+          </div>
+          <span className="font-mono text-[11px] bg-purple-100 px-2 py-0.5 rounded text-purple-800 font-semibold">
+            Běží {Math.round((stats.activeOperation.elapsedMs || 0) / 1000)}s
+          </span>
         </div>
       )}
 
@@ -374,6 +436,172 @@ export const AiTelemetryCard: React.FC<{ onNavigate?: (path: string) => void }> 
           )}
         </div>
       </div>
+
+      {/* Provider Detailed Telemetry Table */}
+      {stats?.providers && Object.keys(stats.providers).length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-indigo-600" />
+                Podrobné Metriky Providerů (Latence, Tokeny, Náklady)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Statistiky volání a kalkulace na základě oficiálních ceníků modelů.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-700">
+              <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Provider / Model</th>
+                  <th className="px-4 py-3 text-center">Požadavek (S / F / TO)</th>
+                  <th className="px-4 py-3 text-right">Prům. Latence (p95)</th>
+                  <th className="px-4 py-3 text-right">Tokeny (Prompt / Compl)</th>
+                  <th className="px-4 py-3 text-right">Odhad. Náklady (USD)</th>
+                  <th className="px-4 py-3 text-center">Stav</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {Object.values(stats.providers).map((prov) => {
+                  return (
+                    <tr key={prov.provider} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-slate-900 capitalize">{prov.provider}</div>
+                        <div className="text-[10px] font-mono text-slate-500">{prov.model}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="font-bold text-slate-800">{prov.requestCount}</span>
+                        <div className="text-[10px] text-slate-500">
+                          <span className="text-emerald-600 font-semibold">{prov.successCount} ok</span>
+                          {' • '}
+                          <span className={prov.failureCount > 0 ? 'text-rose-600 font-semibold' : ''}>
+                            {prov.failureCount} err
+                          </span>
+                          {prov.timeoutCount > 0 && (
+                            <>
+                              {' • '}
+                              <span className="text-amber-600 font-semibold">{prov.timeoutCount} to</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        <span className="font-bold text-slate-900">{prov.avgLatencyMs} ms</span>
+                        <div className="text-[10px] text-slate-400">p95: {prov.p95LatencyMs} ms</div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        <span className="font-bold text-slate-800">{prov.totalTokens.toLocaleString('cs-CZ')}</span>
+                        <div className="text-[10px] text-slate-400">
+                          {prov.promptTokens} in / {prov.completionTokens} out
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        <span className="font-bold text-slate-900">
+                          ${prov.estimatedCostUsd.toFixed(6)}
+                        </span>
+                        <div className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1 py-0.2 rounded inline-block mt-0.5">
+                          {prov.costStatus}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                            prov.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : prov.status === 'DEGRADED' || prov.status === 'FALLBACK'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : prov.status === 'ERROR'
+                              ? 'bg-rose-50 text-rose-800 border-rose-200'
+                              : 'bg-slate-100 text-slate-600 border-slate-200'
+                          }`}
+                        >
+                          {prov.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Call History Table */}
+      {stats?.history && stats.history.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-600" />
+                Historie Posledních AI Volání (Max 200 In-Memory)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Detailní 0-PII záznamy o latenci, tokenové náročnosti a vybraných modelech.
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-500">
+              Zobrazeno {Math.min(10, stats.history.length)} z {stats.history.length}
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-700">
+              <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Čas</th>
+                  <th className="px-4 py-3">Provider & Model</th>
+                  <th className="px-4 py-3 text-right">Latence</th>
+                  <th className="px-4 py-3 text-right">Tokeny (Celkem)</th>
+                  <th className="px-4 py-3 text-right">Odhad. Cena</th>
+                  <th className="px-4 py-3 text-center">Výsledek</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                {stats.history.slice(0, 10).map((record) => (
+                  <tr key={record.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-4 py-2.5 text-slate-600">
+                      {new Date(record.timestamp).toLocaleTimeString('cs-CZ')}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className="font-bold text-slate-900 capitalize">{record.provider}</span>
+                      <span className="text-slate-500 text-[10px] ml-1">({record.model})</span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-slate-900 font-bold">
+                      {record.latencyMs} ms
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-slate-800">
+                      {record.totalTokens.toLocaleString('cs-CZ')}
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-slate-900 font-bold">
+                      ${record.estimatedCostUsd.toFixed(6)}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      {record.success ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Úspěch
+                        </span>
+                      ) : record.isTimeout ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-bold border border-amber-200">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          Timeout
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-800 font-bold border border-rose-200">
+                          <XCircle className="w-3 h-3 text-rose-600" />
+                          Chyba
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* AI Context & Index Card */}
       <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-xs">

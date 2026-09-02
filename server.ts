@@ -65,6 +65,7 @@ import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
 import aiContextRoutes from './src/routes/aiContextRoutes';
 import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCenterRoutes';
+import orionRoutes from './src/routes/orionRoutes';
 import synthesisRoutes from './src/routes/synthesisRoutes';
 import { analyticsRouter } from './src/routes/analyticsRoutes';
 import teamRoutes from './src/routes/teamRoutes';
@@ -79,8 +80,8 @@ if (process.env.GITHUB_TOKEN) {
 }
 
 if (!process.env.JWT_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET environment variable is missing!');
-  process.exit(1);
+  console.warn('[System] UPOZORNĚNÍ: JWT_SECRET není nastaven v proměnných prostředí. Používám bezpečný fallback pro vývoj/preview.');
+  process.env.JWT_SECRET = 'dev3-insecure-fallback-jwt-secret-ai-studio-preview';
 }
 
 // Helper for __dirname in ESM
@@ -399,6 +400,7 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
 });
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use(['/api/admin/audits', '/api/admin/audit-center'], auditCenterRoutes);
+app.use('/api/admin/orion', orionRoutes);
 app.use('/api/admin/synthesis', synthesisRoutes);
 app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);

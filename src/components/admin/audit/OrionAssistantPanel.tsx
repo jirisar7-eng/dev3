@@ -140,6 +140,19 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
               </p>
             </div>
           </div>
+
+          <a
+            href="/administrace/orion"
+            onClick={(e) => {
+              e.preventDefault();
+              window.history.pushState({}, '', '/administrace/orion');
+              window.dispatchEvent(new Event('popstate'));
+            }}
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-purple-200" />
+            Vizuální Trace Mind-Map →
+          </a>
         </div>
       </div>
 
