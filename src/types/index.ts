@@ -1489,4 +1489,5 @@ export interface AnalyticsAiInsightsData {
 }
 
 export * from './databaseAudit';
+export * from './handoffTypes';
 
