@@ -74,6 +74,8 @@ import {
 import { SeoHead } from './SeoHead';
 import { PsychologieView } from './PsychologieView';
 import { MajetekView } from './MajetekView';
+import { BiffCommunicationView } from './BiffCommunicationView';
+import { KalendarLhutView } from './KalendarLhutView';
 import { KalendarView } from '../placeholderViews';
 import { PortalActivityPanel } from './PortalActivityPanel';
 import { analytics } from '../../lib/analyticsClient';
@@ -555,8 +557,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
     return <PsychologieView onNavigate={onNavigate} />;
   }
-  if (slug === 'kalendar' || slug === 'lhutnik') {
-    return <KalendarView />;
+  if (slug === 'komunikace-biff' || slug === 'biff' || slug === 'deeskalace') {
+    return <BiffCommunicationView onNavigate={onNavigate} />;
+  }
+  if (slug === 'kalendar' || slug === 'lhutnik' || slug === 'procesni-lhuty') {
+    return <KalendarLhutView onNavigate={onNavigate} />;
   }
 
   if (slug === 'o-nas' || slug === 'o-projektu') {
