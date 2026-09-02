@@ -898,10 +898,10 @@ export interface Study {
   limitations?: string;
   relevance?: string;
   keywords?: string;
-  evidenceLevel: string;
-  evidenceDirection: string;
-  causality: string;
-  sourceType: string;
+  evidenceLevel?: string;
+  evidenceDirection?: string;
+  causality?: string;
+  sourceType?: string;
   category: string;
   status: StudyStatus;
   featured: boolean;
@@ -1487,4 +1487,6 @@ export interface AnalyticsAiInsightsData {
   underutilizedFeatures: { featureId: string; label: string; useCount: number }[];
   highEngagementFeatures: { featureId: string; label: string; completeCount: number; completionRate: number }[];
 }
+
+export * from './databaseAudit';
 
