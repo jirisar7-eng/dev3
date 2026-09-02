@@ -323,8 +323,25 @@ export class GithubPublisherService {
         // If fetch fails (e.g. initial empty remote repo), proceed to push attempt
       }
 
+      const { stdout: localShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+      const localSha = localShaOut.trim();
+
       // Step D: Push to GitHub using server-side auth URL in command argument
       await execFileAsync('git', ['push', remoteUrl, `HEAD:${branch}`], { cwd: workDir });
+
+      // Run mandatory post-push verification gate
+      const filesToVerify = statusResult.files.map(f => f.file);
+      const verificationResult = await this.verifyRemoteCommitViaApi(
+        repo,
+        branch,
+        localSha,
+        filesToVerify,
+        token
+      );
+
+      if (!verificationResult.success) {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.message}`);
+      }
 
       const timestamp = new Date().toISOString();
       const changedCount = statusResult.fileCount;
@@ -470,8 +487,25 @@ export class GithubPublisherService {
         await execFileAsync('git', ['commit', '-m', cleanMsg], { cwd: workDir });
       }
 
+      const { stdout: localShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+      const localSha = localShaOut.trim();
+
       // Step C: Execute git push --force origin HEAD:main
       await execFileAsync('git', ['push', '--force', remoteUrl, `HEAD:${branch}`], { cwd: workDir });
+
+      // Run mandatory post-push verification gate
+      const filesToVerify = statusResult.files.map(f => f.file);
+      const verificationResult = await this.verifyRemoteCommitViaApi(
+        repo,
+        branch,
+        localSha,
+        filesToVerify,
+        token
+      );
+
+      if (!verificationResult.success) {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.message}`);
+      }
 
       const timestamp = new Date().toISOString();
       const changedCount = statusResult.fileCount;
@@ -655,5 +689,97 @@ ${truncatedDiff}`;
   public static async getCiStatus(user: User, branchName: string, ip?: string): Promise<any> {
     const safeBranch = (branchName || 'main').replace(/[^a-zA-Z0-9_\-\/]/g, '_');
     return { success: true, branch: safeBranch, ciStatus: 'SUCCESS', checks: [] };
+  }
+
+  private static async verifyRemoteCommitViaApi(
+    repo: string,
+    branch: string,
+    localSha: string,
+    expectedFiles: string[],
+    token: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}`;
+      const commitRes = await fetch(commitUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+
+      if (!commitRes.ok) {
+        return {
+          success: false,
+          message: `GitHub API vrátil neúspěšný kód při ověření commitu: ${commitRes.status} ${commitRes.statusText}`
+        };
+      }
+
+      const commitData: any = await commitRes.json();
+      const remoteFiles = (commitData.files || []).map((f: any) => f.filename);
+      const missingFiles = expectedFiles.filter(f => !remoteFiles.includes(f));
+      if (missingFiles.length > 0) {
+        return {
+          success: false,
+          message: `Očekávané změněné soubory chybí v remote commitu: ${missingFiles.join(', ')}`
+        };
+      }
+
+      const branchUrl = `https://api.github.com/repos/${repo}/branches/${branch}`;
+      const branchRes = await fetch(branchUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+
+      if (!branchRes.ok) {
+        return {
+          success: false,
+          message: `GitHub API vrátil neúspěšný kód při ověření větve: ${branchRes.status}`
+        };
+      }
+
+      const branchData: any = await branchRes.json();
+      const branchHeadSha = branchData.commit?.sha;
+
+      if (branchHeadSha === localSha) {
+        return {
+          success: true,
+          message: `Úspěšně ověřeno: Commit ${localSha} je HEAD větve ${branch} a obsahuje všechny očekávané změny.`
+        };
+      }
+
+      const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=20`;
+      const listCommitsRes = await fetch(listCommitsUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+
+      if (listCommitsRes.ok) {
+        const listCommits: any[] = await listCommitsRes.json();
+        const isInHistory = listCommits.some((c: any) => c.sha === localSha);
+        if (isInHistory) {
+          return {
+            success: true,
+            message: `Úspěšně ověřeno: Commit ${localSha} se nachází v historii větve ${branch} a obsahuje všechny očekávané změny.`
+          };
+        }
+      }
+
+      return {
+        success: false,
+        message: `Commit ${localSha} nebyl nalezen v historii nebo jako HEAD větve ${branch} na vzdáleném serveru.`
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Chyba při ověřování commitu přes GitHub API: ${error.message || error}`
+      };
+    }
   }
 }
