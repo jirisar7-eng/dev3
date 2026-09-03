@@ -545,24 +545,45 @@ export class AnalyticsService {
         e.route.includes(funnelId.replace(/_/g, '-'))
     );
 
-    // Group by session to see maximum step reached per session
-    const sessionStepMap = new Map<string, number>();
+    // Group events by session and sort chronologically for sequence tracking
+    const sessionEventsMap = new Map<string, AnalyticsEvent[]>();
     for (const evt of relevantEvents) {
-      let stepNum = 1;
-      if (evt.metadata?.step !== undefined) {
-        stepNum = Number(evt.metadata.step);
-      } else if (evt.eventType === 'feature_open' || evt.eventType === 'form_start') {
-        stepNum = 1;
-      } else if (evt.eventType === 'feature_complete' || evt.eventType === 'form_complete') {
-        stepNum = registered.defaultSteps.length;
-      } else if (evt.eventType === 'feature_use') {
-        stepNum = 2;
+      if (!sessionEventsMap.has(evt.sessionId)) {
+        sessionEventsMap.set(evt.sessionId, []);
       }
+      sessionEventsMap.get(evt.sessionId)!.push(evt);
+    }
 
-      const currentMax = sessionStepMap.get(evt.sessionId) || 0;
-      if (stepNum > currentMax) {
-        sessionStepMap.set(evt.sessionId, stepNum);
+    const sessionStepMap = new Map<string, number>();
+
+    for (const [sessionId, evts] of sessionEventsMap.entries()) {
+      // Sort chronologically by timestamp
+      evts.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+      let maxStep = 0;
+      for (const evt of evts) {
+        let stepNum = 1;
+        if (evt.metadata?.step !== undefined) {
+          stepNum = Number(evt.metadata.step);
+        } else if (evt.eventType === 'feature_open' || evt.eventType === 'form_start') {
+          stepNum = 1;
+        } else if (evt.eventType === 'feature_complete' || evt.eventType === 'form_complete') {
+          stepNum = registered.defaultSteps.length;
+        } else if (evt.eventType === 'feature_use') {
+          stepNum = 2;
+        }
+
+        if (stepNum === 1) {
+          maxStep = Math.max(maxStep, 1);
+        } else if (stepNum > 1 && maxStep > 0) {
+          // Progress chronologically only if the user has started (maxStep >= 1)
+          // and the step is strictly progressive
+          if (stepNum > maxStep) {
+            maxStep = stepNum;
+          }
+        }
       }
+      sessionStepMap.set(sessionId, maxStep);
     }
 
     const stepCounts: number[] = new Array(registered.defaultSteps.length).fill(0);
@@ -781,6 +802,14 @@ export class AnalyticsService {
       };
     }
 
+    // Map of sessionId to associated userId (for identity merging)
+    const sessionIdToUserId = new Map<string, string>();
+    for (const evt of filteredEvents) {
+      if (evt.userId && evt.sessionId) {
+        sessionIdToUserId.set(evt.sessionId, evt.userId);
+      }
+    }
+
     for (const evt of filteredEvents) {
       if (!evt.featureId) continue;
       const fId = evt.featureId;
@@ -805,7 +834,12 @@ export class AnalyticsService {
         }
       }
 
-      const userIdentifier = evt.userId || evt.sessionId;
+      let userIdentifier = evt.userId;
+      if (!userIdentifier && evt.sessionId) {
+        userIdentifier = sessionIdToUserId.get(evt.sessionId) || evt.sessionId;
+      } else if (!userIdentifier) {
+        userIdentifier = 'anonymous_unknown';
+      }
       featureStatsMap[fId].users.add(userIdentifier);
     }
 
@@ -991,12 +1025,13 @@ export class AnalyticsService {
    */
   async cleanOldEvents(days: number = 90): Promise<{ deletedCount: number }> {
     const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    let deletedCount = 0;
+    let deletedMemoryCount = 0;
+    let deletedDbCount = 0;
 
     // Clean memory store
     const initialLen = dbStore.analyticsEvents.length;
     dbStore.analyticsEvents = dbStore.analyticsEvents.filter((e) => new Date(e.timestamp) >= cutoffDate);
-    deletedCount = initialLen - dbStore.analyticsEvents.length;
+    deletedMemoryCount = initialLen - dbStore.analyticsEvents.length;
 
     // Clean Prisma DB if available
     if (isPrismaAvailable()) {
@@ -1008,13 +1043,13 @@ export class AnalyticsService {
             },
           },
         });
-        deletedCount = res.count;
+        deletedDbCount = res.count;
       } catch (err) {
         console.warn('[AnalyticsService] Error cleaning old events from Prisma:', err);
       }
     }
 
-    return { deletedCount };
+    return { deletedCount: Math.max(deletedMemoryCount, deletedDbCount) };
   }
 
   /**
@@ -1086,6 +1121,14 @@ export class AnalyticsService {
     const sevenDaysAgo = startOfToday - 7 * 24 * 60 * 60 * 1000;
     const thirtyDaysAgo = startOfToday - 30 * 24 * 60 * 60 * 1000;
 
+    // Map of sessionId to associated userId (for identity merging)
+    const sessionIdToUserId = new Map<string, string>();
+    for (const evt of events) {
+      if (evt.userId && evt.sessionId) {
+        sessionIdToUserId.set(evt.sessionId, evt.userId);
+      }
+    }
+
     const activeSessions = new Set<string>();
     const todaySessions = new Set<string>();
     const todayUniqueUsers = new Set<string>();
@@ -1121,11 +1164,17 @@ export class AnalyticsService {
 
       if (evtTime >= startOfToday) {
         todaySessions.add(evt.sessionId);
+        let userIdentifier = evt.userId;
+        if (!userIdentifier && evt.sessionId) {
+          userIdentifier = sessionIdToUserId.get(evt.sessionId) || evt.sessionId;
+        } else if (!userIdentifier) {
+          userIdentifier = 'anonymous_unknown';
+        }
+        todayUniqueUsers.add(userIdentifier);
+
         if (evt.userId) {
-          todayUniqueUsers.add(evt.userId);
           registeredVisitsToday++;
         } else {
-          todayUniqueUsers.add(evt.sessionId);
           anonymousVisitsToday++;
         }
 

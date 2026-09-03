@@ -653,6 +653,10 @@ model Study {
   limitations     String?
   relevance       String?
   keywords        String?
+  evidenceLevel   String?  @default("B")
+  evidenceDirection String? @default("SUPPORTIVE")
+  causality       String?  @default("NOT_ESTABLISHED")
+  sourceType      String?  @default("PEER_REVIEWED_EMPIRICAL")
   category        String   @default("stridava_pece")
   status          String   @default("DRAFT") // "DRAFT", "PUBLISHED", "ARCHIVED"
   featured        Boolean  @default(false)

@@ -9,6 +9,24 @@ import { AuditService } from './auditService';
 
 const execFileAsync = promisify(execFile);
 
+export interface CommitData {
+  sha: string;
+  changedFiles: string[];
+}
+
+export interface VerificationResult {
+  repository: string;
+  branch: string;
+  remoteHeadSha: string | null;
+  implementationCommits: CommitData[];
+  auditCommits: CommitData[];
+  verifiedFiles: string[];
+  verificationStatus: 'VERIFIED' | 'FAILED' | 'NOT VERIFIED';
+  verifiedAt: string;
+  verificationMethod: string;
+  reason?: string;
+}
+
 export interface GitFileChange {
   status: string; // e.g. "M", "A", "D", "??"
   statusDescription: string;
@@ -36,6 +54,7 @@ export interface PublishResult {
   timestamp: string;
   auditId?: string;
   message: string;
+  verificationResult?: VerificationResult;
 }
 
 const FORBIDDEN_SECRET_PATTERNS = [
@@ -195,7 +214,14 @@ export class GithubPublisherService {
 
     for (const line of lines) {
       const statusCode = line.substring(0, 2).trim() || line.substring(0, 2);
-      const filePath = line.substring(3).trim();
+      let filePath = line.substring(3).trim();
+      if (filePath.includes(" -> ")) {
+        const parts = filePath.split(" -> ");
+        filePath = parts[parts.length - 1];
+      }
+      if (filePath.startsWith("\"") && filePath.endsWith("\"")) {
+        filePath = filePath.slice(1, -1);
+      }
       const isRisk = isForbiddenFile(filePath);
 
       if (isRisk) {
@@ -323,8 +349,26 @@ export class GithubPublisherService {
         // If fetch fails (e.g. initial empty remote repo), proceed to push attempt
       }
 
+      const { stdout: localShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+      const localSha = localShaOut.trim();
+
       // Step D: Push to GitHub using server-side auth URL in command argument
       await execFileAsync('git', ['push', remoteUrl, `HEAD:${branch}`], { cwd: workDir });
+
+      // Run mandatory post-push verification gate
+      const filesToVerify = statusResult.files.map(f => f.file);
+      const verificationResult = await this.verifyRemoteCommitViaApi(
+        repo,
+        branch,
+        localSha,
+        filesToVerify,
+        token,
+        false
+      );
+
+      if (verificationResult.verificationStatus !== 'VERIFIED') {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.reason}`);
+      }
 
       const timestamp = new Date().toISOString();
       const changedCount = statusResult.fileCount;
@@ -345,6 +389,7 @@ export class GithubPublisherService {
         timestamp,
         auditId: auditLog.id,
         message: `Projekt byl úspěšně publikován na GitHub (repo: ${repo}, branch: ${branch}).`,
+        verificationResult
       };
     } catch (err: any) {
       const rawError = err.stderr || err.stdout || err.message || 'Neznámá chyba při spouštění Git příkazů.';
@@ -470,8 +515,26 @@ export class GithubPublisherService {
         await execFileAsync('git', ['commit', '-m', cleanMsg], { cwd: workDir });
       }
 
+      const { stdout: localShaOut } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workDir });
+      const localSha = localShaOut.trim();
+
       // Step C: Execute git push --force origin HEAD:main
       await execFileAsync('git', ['push', '--force', remoteUrl, `HEAD:${branch}`], { cwd: workDir });
+
+      // Run mandatory post-push verification gate
+      const filesToVerify = statusResult.files.map(f => f.file);
+      const verificationResult = await this.verifyRemoteCommitViaApi(
+        repo,
+        branch,
+        localSha,
+        filesToVerify,
+        token,
+        false
+      );
+
+      if (verificationResult.verificationStatus !== 'VERIFIED') {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.reason}`);
+      }
 
       const timestamp = new Date().toISOString();
       const changedCount = statusResult.fileCount;
@@ -492,6 +555,7 @@ export class GithubPublisherService {
         timestamp,
         auditId: auditLog.id,
         message: `FORCE PUSH byl úspěšně proveden na repozitář ${repo}:${branch} pomocí --force.`,
+        verificationResult
       };
     } catch (err: any) {
       const rawError = err.stderr || err.stdout || err.message || 'Neznámá chyba při spouštění FORCE PUSH.';
@@ -655,5 +719,145 @@ ${truncatedDiff}`;
   public static async getCiStatus(user: User, branchName: string, ip?: string): Promise<any> {
     const safeBranch = (branchName || 'main').replace(/[^a-zA-Z0-9_\-\/]/g, '_');
     return { success: true, branch: safeBranch, ciStatus: 'SUCCESS', checks: [] };
+  }
+
+  private static async fetchAllPages(url: string, token: string): Promise<any[]> {
+    const results: any[] = [];
+    let nextUrl: string | null = url;
+
+    while (nextUrl) {
+      const res = await fetch(nextUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`GitHub API error: ${res.status}`);
+      }
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        results.push(...data);
+      } else if (data && Array.isArray(data.files)) {
+        results.push(...data.files);
+      } else {
+        results.push(data);
+      }
+      
+      const linkHeader = res.headers && typeof res.headers.get === 'function' ? res.headers.get('Link') : null;
+      nextUrl = null;
+      if (linkHeader) {
+        const links = linkHeader.split(',');
+        for (const link of links) {
+          const match = link.match(/<([^>]+)>;\s*rel="next"/);
+          if (match) {
+            nextUrl = match[1];
+            break;
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  private static async verifyRemoteCommitViaApi(
+    repo: string,
+    branch: string,
+    localSha: string,
+    expectedFiles: string[],
+    token: string,
+    isAudit: boolean = false
+  ): Promise<VerificationResult> {
+    const timestamp = new Date().toISOString();
+    const result: VerificationResult = {
+      repository: repo,
+      branch,
+      remoteHeadSha: null,
+      implementationCommits: [],
+      auditCommits: [],
+      verifiedFiles: [],
+      verificationStatus: 'FAILED',
+      verifiedAt: timestamp,
+      verificationMethod: 'GITHUB_API_TOKEN',
+      reason: 'Unknown error',
+    };
+
+    if (!token) {
+      result.reason = 'GITHUB_TOKEN_UNAVAILABLE';
+      return result;
+    }
+
+    try {
+      const branchUrl = `https://api.github.com/repos/${repo}/branches/${branch}`;
+      const branchRes = await fetch(branchUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+
+      if (!branchRes.ok) {
+        result.reason = `Branch verification failed: ${branchRes.status}`;
+        return result;
+      }
+
+      const branchData: any = await branchRes.json();
+      result.remoteHeadSha = branchData.commit?.sha || null;
+
+      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}?per_page=100`;
+      let remoteFiles: string[] = [];
+      try {
+        const commitFiles = await GithubPublisherService.fetchAllPages(commitUrl, token);
+        commitFiles.forEach((f: any) => {
+          if (!f) return;
+          if (f.filename) remoteFiles.push(f.filename);
+          if (f.previous_filename) remoteFiles.push(f.previous_filename);
+        });
+      } catch (err: any) {
+        result.reason = `Commit verification failed: ${err.message}`;
+        return result;
+      }
+      
+      const missingFiles = expectedFiles.filter(f => !remoteFiles.includes(f));
+      if (missingFiles.length > 0) {
+        result.reason = `Missing expected files in remote commit: ${missingFiles.join(', ')}`;
+        return result;
+      }
+
+      const commitRecord = { sha: localSha, changedFiles: remoteFiles };
+      if (isAudit) {
+        result.auditCommits.push(commitRecord);
+      } else {
+        result.implementationCommits.push(commitRecord);
+      }
+      result.verifiedFiles = expectedFiles;
+
+      let isReachable = false;
+      if (result.remoteHeadSha === localSha) {
+        isReachable = true;
+      } else {
+        const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=100`;
+        try {
+          const listCommits = await GithubPublisherService.fetchAllPages(listCommitsUrl, token);
+          isReachable = listCommits.some((c: any) => c.sha === localSha);
+        } catch (err: any) {
+        }
+      }
+
+      if (!isReachable) {
+        result.reason = `Commit ${localSha} not reachable from branch ${branch} HEAD (${result.remoteHeadSha})`;
+        return result;
+      }
+
+      result.verificationStatus = 'VERIFIED';
+      result.reason = undefined;
+      return result;
+    } catch (error: any) {
+      result.reason = redactToken(`API verification error: ${error.message || error}`, token);
+      return result;
+    }
   }
 }

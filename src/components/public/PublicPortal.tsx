@@ -74,6 +74,8 @@ import {
 import { SeoHead } from './SeoHead';
 import { PsychologieView } from './PsychologieView';
 import { MajetekView } from './MajetekView';
+import { BiffCommunicationView } from './BiffCommunicationView';
+import { KalendarLhutView } from './KalendarLhutView';
 import { KalendarView } from '../placeholderViews';
 import { PortalActivityPanel } from './PortalActivityPanel';
 import { analytics } from '../../lib/analyticsClient';
@@ -208,18 +210,18 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <CmsPageRenderer slug="home" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
   }
 
-  // 2. Articles Route (/clanky, /clanky/:slug, /metodika, /metodika/:slug)
-  if (slug === 'clanky' || slug.startsWith('clanky/') || slug === 'metodika' || slug.startsWith('metodika/')) {
-    if (slug.startsWith('clanky/') || slug.startsWith('metodika/')) {
-      const articleSlug = slug.replace(/^clanky\//, '').replace(/^metodika\//, '');
+  // 2. Classic Articles Route (/clanky, /clanky/:slug)
+  if (slug === 'clanky' || slug.startsWith('clanky/')) {
+    if (slug.startsWith('clanky/')) {
+      const articleSlug = slug.replace(/^clanky\//, '');
       return <ArticleDetailView slug={articleSlug} onNavigate={onNavigate} />;
     }
     
     const fallbackComponent = (
       <div className="space-y-4 pt-4">
         <SeoHead
-          title="Články & Judikatura"
-          description="Odborné články, rozbory soudních rozhodnutí a praktická doporučení pro otce v opatrovnické praxi."
+          title="Články & Rady pro rodiče"
+          description="Praktické články, rady a doporučení pro otce a rodiče v každodenních i náročných rodinných situacích."
           canonicalPath="/clanky"
         />
         <ArticlesSection onNavigate={onNavigate} />
@@ -234,6 +236,30 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
       return <CmsPageRenderer slug="clanky" onNavigate={onNavigate} fallbackComponent={fallbackComponent} />;
     }
     return fallbackComponent;
+  }
+
+  // 2b. Legal Methodology & Case Law Route (/metodika, /metodika/:slug)
+  if (slug === 'metodika' || slug.startsWith('metodika/')) {
+    if (slug.startsWith('metodika/')) {
+      const guideSlug = slug.replace(/^metodika\//, '');
+      return (
+        <LegalGuideDynamicView 
+          slug={guideSlug} 
+          fallbackComponent={<ArticleDetailView slug={guideSlug} onNavigate={onNavigate} />} 
+          onNavigate={onNavigate} 
+        />
+      );
+    }
+    return (
+      <div className="space-y-4 pt-4">
+        <SeoHead
+          title="Metodické články & Judikatura"
+          description="Odborná metodika opatrovnického práva, procesní průvodci a přelomová judikatura Ústavního a Nejvyššího soudu."
+          canonicalPath="/metodika"
+        />
+        <LegalHubPage onNavigate={onNavigate} onOpenCookieSettings={onOpenCookieSettings || (() => {})} />
+      </div>
+    );
   }
 
   // 3. FAQ Route (/faq)
@@ -531,8 +557,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
     return <PsychologieView onNavigate={onNavigate} />;
   }
-  if (slug === 'kalendar' || slug === 'lhutnik') {
-    return <KalendarView />;
+  if (slug === 'komunikace-biff' || slug === 'biff' || slug === 'deeskalace') {
+    return <BiffCommunicationView onNavigate={onNavigate} />;
+  }
+  if (slug === 'kalendar' || slug === 'lhutnik' || slug === 'procesni-lhuty') {
+    return <KalendarLhutView onNavigate={onNavigate} />;
   }
 
   if (slug === 'o-nas' || slug === 'o-projektu') {

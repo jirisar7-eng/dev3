@@ -21,7 +21,7 @@ router.post('/agreements', CoParentController.createAgreement);
 router.post('/invite/create', CoParentController.createInvite);
 router.post('/invite/accept', CoParentController.acceptInvite);
 router.get('/members', CoParentController.getMembers);
-router.post('/parse-judgment', upload.single('document'), CoParentController.parseJudgment);
+router.post('/parse-judgment', upload.single('document') as any, CoParentController.parseJudgment);
 router.post('/apply-judgment', CoParentController.applyJudgmentSetup);
 
 export default router;

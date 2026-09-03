@@ -348,9 +348,19 @@ export const AlimonyCalculatorView: React.FC<AlimonyCalculatorViewProps> = ({ on
           <li>Věk (životní etapu) dítěte.</li>
           <li>Rozsah osobní péče – vypočtená částka je proporcionálně ponížena podle počtu dní, kdy o dítě pečujete vy.</li>
         </ul>
-        <p className="text-xs text-slate-500 border-t border-slate-200 pt-3">
-          Zdroj: <a href="https://vyzivne.justice.cz/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">vyzivne.justice.cz</a>. 
-          Všechny výpočty probíhají bezpečně pouze ve vašem zařízení (offline-first).
+        <p className="text-xs text-slate-500 border-t border-slate-200 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span>
+            Zdroj: <a href="https://vyzivne.justice.cz/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">vyzivne.justice.cz</a>. 
+            Všechny výpočty probíhají bezpečně pouze ve vašem zařízení (offline-first).
+          </span>
+          <button
+            onClick={() => handleNav('/metodika/vyzivne')}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Číst metodického průvodce výživným</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
         </p>
       </div>
 
@@ -358,9 +368,16 @@ export const AlimonyCalculatorView: React.FC<AlimonyCalculatorViewProps> = ({ on
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <h4 className="font-bold text-slate-900 text-sm">Související právní témata</h4>
-          <p className="text-xs text-slate-500 mt-0.5">Vypořádání majetku, judikatura Ústavního soudu a znění zákonů.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Metodika dokazování, judikatura Ústavního soudu a znění zákonů.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleNav('/metodika/vyzivne')}
+            className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Průvodce výživným
+          </button>
           <button
             onClick={() => handleNav('/majetek')}
             className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"

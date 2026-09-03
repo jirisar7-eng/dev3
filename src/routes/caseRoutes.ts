@@ -670,7 +670,7 @@ router.get('/:caseId/care/history', async (req: AuthenticatedRequest, res) => {
 });
 
 // POST /api/cases/:caseId/parse-judgment -> parse judgment file or text for central case data
-router.post('/:caseId/parse-judgment', upload.single('document'), async (req: AuthenticatedRequest, res) => {
+router.post('/:caseId/parse-judgment', upload.single('document') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { caseId } = req.params;
     await ClientCaseService.authorizeCaseAccess(caseId, req.user!);
