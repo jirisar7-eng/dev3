@@ -9,6 +9,24 @@ import { AuditService } from './auditService';
 
 const execFileAsync = promisify(execFile);
 
+export interface CommitData {
+  sha: string;
+  changedFiles: string[];
+}
+
+export interface VerificationResult {
+  repository: string;
+  branch: string;
+  remoteHeadSha: string | null;
+  implementationCommits: CommitData[];
+  auditCommits: CommitData[];
+  verifiedFiles: string[];
+  verificationStatus: 'VERIFIED' | 'FAILED' | 'NOT VERIFIED';
+  verifiedAt: string;
+  verificationMethod: string;
+  reason?: string;
+}
+
 export interface GitFileChange {
   status: string; // e.g. "M", "A", "D", "??"
   statusDescription: string;
@@ -36,6 +54,7 @@ export interface PublishResult {
   timestamp: string;
   auditId?: string;
   message: string;
+  verificationResult?: VerificationResult;
 }
 
 const FORBIDDEN_SECRET_PATTERNS = [
@@ -336,11 +355,12 @@ export class GithubPublisherService {
         branch,
         localSha,
         filesToVerify,
-        token
+        token,
+        false
       );
 
-      if (!verificationResult.success) {
-        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.message}`);
+      if (verificationResult.verificationStatus !== 'VERIFIED') {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.reason}`);
       }
 
       const timestamp = new Date().toISOString();
@@ -362,6 +382,7 @@ export class GithubPublisherService {
         timestamp,
         auditId: auditLog.id,
         message: `Projekt byl úspěšně publikován na GitHub (repo: ${repo}, branch: ${branch}).`,
+        verificationResult
       };
     } catch (err: any) {
       const rawError = err.stderr || err.stdout || err.message || 'Neznámá chyba při spouštění Git příkazů.';
@@ -500,11 +521,12 @@ export class GithubPublisherService {
         branch,
         localSha,
         filesToVerify,
-        token
+        token,
+        false
       );
 
-      if (!verificationResult.success) {
-        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.message}`);
+      if (verificationResult.verificationStatus !== 'VERIFIED') {
+        throw new Error(`PO-PUSH VERIFIKACE SELHALA: ${verificationResult.reason}`);
       }
 
       const timestamp = new Date().toISOString();
@@ -526,6 +548,7 @@ export class GithubPublisherService {
         timestamp,
         auditId: auditLog.id,
         message: `FORCE PUSH byl úspěšně proveden na repozitář ${repo}:${branch} pomocí --force.`,
+        verificationResult
       };
     } catch (err: any) {
       const rawError = err.stderr || err.stdout || err.message || 'Neznámá chyba při spouštění FORCE PUSH.';
@@ -696,35 +719,29 @@ ${truncatedDiff}`;
     branch: string,
     localSha: string,
     expectedFiles: string[],
-    token: string
-  ): Promise<{ success: boolean; message: string }> {
+    token: string,
+    isAudit: boolean = false
+  ): Promise<VerificationResult> {
+    const timestamp = new Date().toISOString();
+    const result: VerificationResult = {
+      repository: repo,
+      branch,
+      remoteHeadSha: null,
+      implementationCommits: [],
+      auditCommits: [],
+      verifiedFiles: [],
+      verificationStatus: 'FAILED',
+      verifiedAt: timestamp,
+      verificationMethod: 'GITHUB_API_TOKEN',
+      reason: 'Unknown error',
+    };
+
+    if (!token) {
+      result.reason = 'GITHUB_TOKEN_UNAVAILABLE';
+      return result;
+    }
+
     try {
-      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}`;
-      const commitRes = await fetch(commitUrl, {
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'aistudio-build'
-        }
-      });
-
-      if (!commitRes.ok) {
-        return {
-          success: false,
-          message: `GitHub API vrátil neúspěšný kód při ověření commitu: ${commitRes.status} ${commitRes.statusText}`
-        };
-      }
-
-      const commitData: any = await commitRes.json();
-      const remoteFiles = (commitData.files || []).map((f: any) => f.filename);
-      const missingFiles = expectedFiles.filter(f => !remoteFiles.includes(f));
-      if (missingFiles.length > 0) {
-        return {
-          success: false,
-          message: `Očekávané změněné soubory chybí v remote commitu: ${missingFiles.join(', ')}`
-        };
-      }
-
       const branchUrl = `https://api.github.com/repos/${repo}/branches/${branch}`;
       const branchRes = await fetch(branchUrl, {
         headers: {
@@ -735,24 +752,15 @@ ${truncatedDiff}`;
       });
 
       if (!branchRes.ok) {
-        return {
-          success: false,
-          message: `GitHub API vrátil neúspěšný kód při ověření větve: ${branchRes.status}`
-        };
+        result.reason = `Branch verification failed: ${branchRes.status}`;
+        return result;
       }
 
       const branchData: any = await branchRes.json();
-      const branchHeadSha = branchData.commit?.sha;
+      result.remoteHeadSha = branchData.commit?.sha || null;
 
-      if (branchHeadSha === localSha) {
-        return {
-          success: true,
-          message: `Úspěšně ověřeno: Commit ${localSha} je HEAD větve ${branch} a obsahuje všechny očekávané změny.`
-        };
-      }
-
-      const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=20`;
-      const listCommitsRes = await fetch(listCommitsUrl, {
+      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}`;
+      const commitRes = await fetch(commitUrl, {
         headers: {
           'Authorization': `token ${token}`,
           'Accept': 'application/vnd.github.v3+json',
@@ -760,26 +768,57 @@ ${truncatedDiff}`;
         }
       });
 
-      if (listCommitsRes.ok) {
-        const listCommits: any[] = await listCommitsRes.json();
-        const isInHistory = listCommits.some((c: any) => c.sha === localSha);
-        if (isInHistory) {
-          return {
-            success: true,
-            message: `Úspěšně ověřeno: Commit ${localSha} se nachází v historii větve ${branch} a obsahuje všechny očekávané změny.`
-          };
+      if (!commitRes.ok) {
+        result.reason = `Commit verification failed: ${commitRes.status}`;
+        return result;
+      }
+
+      const commitData: any = await commitRes.json();
+      const remoteFiles = (commitData.files || []).map((f: any) => f.filename);
+      
+      const missingFiles = expectedFiles.filter(f => !remoteFiles.includes(f));
+      if (missingFiles.length > 0) {
+        result.reason = `Missing expected files in remote commit: ${missingFiles.join(', ')}`;
+        return result;
+      }
+
+      const commitRecord = { sha: localSha, changedFiles: remoteFiles };
+      if (isAudit) {
+        result.auditCommits.push(commitRecord);
+      } else {
+        result.implementationCommits.push(commitRecord);
+      }
+      result.verifiedFiles = expectedFiles;
+
+      let isReachable = false;
+      if (result.remoteHeadSha === localSha) {
+        isReachable = true;
+      } else {
+        const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=50`;
+        const listCommitsRes = await fetch(listCommitsUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'aistudio-build'
+          }
+        });
+        if (listCommitsRes.ok) {
+          const listCommits: any[] = await listCommitsRes.json();
+          isReachable = listCommits.some((c: any) => c.sha === localSha);
         }
       }
 
-      return {
-        success: false,
-        message: `Commit ${localSha} nebyl nalezen v historii nebo jako HEAD větve ${branch} na vzdáleném serveru.`
-      };
+      if (!isReachable) {
+        result.reason = `Commit ${localSha} not reachable from branch ${branch} HEAD (${result.remoteHeadSha})`;
+        return result;
+      }
+
+      result.verificationStatus = 'VERIFIED';
+      result.reason = undefined;
+      return result;
     } catch (error: any) {
-      return {
-        success: false,
-        message: `Chyba při ověřování commitu přes GitHub API: ${error.message || error}`
-      };
+      result.reason = redactToken(`API verification error: ${error.message || error}`, token);
+      return result;
     }
   }
 }
