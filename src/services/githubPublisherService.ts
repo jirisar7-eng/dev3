@@ -214,7 +214,14 @@ export class GithubPublisherService {
 
     for (const line of lines) {
       const statusCode = line.substring(0, 2).trim() || line.substring(0, 2);
-      const filePath = line.substring(3).trim();
+      let filePath = line.substring(3).trim();
+      if (filePath.includes(" -> ")) {
+        const parts = filePath.split(" -> ");
+        filePath = parts[parts.length - 1];
+      }
+      if (filePath.startsWith("\"") && filePath.endsWith("\"")) {
+        filePath = filePath.slice(1, -1);
+      }
       const isRisk = isForbiddenFile(filePath);
 
       if (isRisk) {
@@ -714,6 +721,47 @@ ${truncatedDiff}`;
     return { success: true, branch: safeBranch, ciStatus: 'SUCCESS', checks: [] };
   }
 
+  private static async fetchAllPages(url: string, token: string): Promise<any[]> {
+    const results: any[] = [];
+    let nextUrl: string | null = url;
+
+    while (nextUrl) {
+      const res = await fetch(nextUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'aistudio-build'
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`GitHub API error: ${res.status}`);
+      }
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        results.push(...data);
+      } else if (data && Array.isArray(data.files)) {
+        results.push(...data.files);
+      } else {
+        results.push(data);
+      }
+      
+      const linkHeader = res.headers && typeof res.headers.get === 'function' ? res.headers.get('Link') : null;
+      nextUrl = null;
+      if (linkHeader) {
+        const links = linkHeader.split(',');
+        for (const link of links) {
+          const match = link.match(/<([^>]+)>;\s*rel="next"/);
+          if (match) {
+            nextUrl = match[1];
+            break;
+          }
+        }
+      }
+    }
+    return results;
+  }
+
   private static async verifyRemoteCommitViaApi(
     repo: string,
     branch: string,
@@ -759,22 +807,19 @@ ${truncatedDiff}`;
       const branchData: any = await branchRes.json();
       result.remoteHeadSha = branchData.commit?.sha || null;
 
-      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}`;
-      const commitRes = await fetch(commitUrl, {
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'aistudio-build'
-        }
-      });
-
-      if (!commitRes.ok) {
-        result.reason = `Commit verification failed: ${commitRes.status}`;
+      const commitUrl = `https://api.github.com/repos/${repo}/commits/${localSha}?per_page=100`;
+      let remoteFiles: string[] = [];
+      try {
+        const commitFiles = await GithubPublisherService.fetchAllPages(commitUrl, token);
+        commitFiles.forEach((f: any) => {
+          if (!f) return;
+          if (f.filename) remoteFiles.push(f.filename);
+          if (f.previous_filename) remoteFiles.push(f.previous_filename);
+        });
+      } catch (err: any) {
+        result.reason = `Commit verification failed: ${err.message}`;
         return result;
       }
-
-      const commitData: any = await commitRes.json();
-      const remoteFiles = (commitData.files || []).map((f: any) => f.filename);
       
       const missingFiles = expectedFiles.filter(f => !remoteFiles.includes(f));
       if (missingFiles.length > 0) {
@@ -794,17 +839,11 @@ ${truncatedDiff}`;
       if (result.remoteHeadSha === localSha) {
         isReachable = true;
       } else {
-        const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=50`;
-        const listCommitsRes = await fetch(listCommitsUrl, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'aistudio-build'
-          }
-        });
-        if (listCommitsRes.ok) {
-          const listCommits: any[] = await listCommitsRes.json();
+        const listCommitsUrl = `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=100`;
+        try {
+          const listCommits = await GithubPublisherService.fetchAllPages(listCommitsUrl, token);
           isReachable = listCommits.some((c: any) => c.sha === localSha);
+        } catch (err: any) {
         }
       }
 

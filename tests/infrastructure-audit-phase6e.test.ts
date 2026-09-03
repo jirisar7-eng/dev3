@@ -1,57 +1,89 @@
+import * as http from 'http';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { InfrastructureAuditService } from '../src/services/audit/infrastructureAuditService';
 import { ReleaseGateService } from '../src/services/audit/releaseGateService';
 import { KnowledgeMirrorService } from '../src/services/audit/knowledgeMirrorService';
 import { sanitizeText } from '../src/services/qa/ai/sanitizer';
 
-describe('Phase 6E: Infrastructure Observability & Audit Test Suite', () => {
-  let dockerSpy: any;
 
-  beforeAll(() => {
-    dockerSpy = vi.spyOn(InfrastructureAuditService, 'callDockerApiReadOnly').mockImplementation(async (path: string) => {
-      const pathLower = path.toLowerCase();
-      const mutatingKeywords = [
-        'restart', 'exec', 'prune', 'remove', 'delete', 'kill',
-        'stop', 'start', 'create', 'update', 'rename', 'pause', 'unpause'
-      ];
-      if (mutatingKeywords.some(kw => pathLower.includes(kw))) {
-        throw new Error(`[SECURITY DENIAL] Mutating Docker API endpoint requested in read-only audit service: ${path}`);
+vi.mock('http', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  
+  const mockRequest = (urlOrOptions: any, optionsOrCallback?: any, maybeCallback?: any) => {
+    const EventEmitter = require('events');
+    const req = new EventEmitter();
+    req.end = vi.fn();
+    req.destroy = vi.fn();
+    
+    let callback: any;
+    let reqPath = '';
+    
+    if (typeof urlOrOptions === 'string') {
+      reqPath = urlOrOptions;
+      if (typeof optionsOrCallback === 'function') {
+        callback = optionsOrCallback;
+      } else if (typeof maybeCallback === 'function') {
+        callback = maybeCallback;
       }
-
-      if (path.includes('/containers/json')) {
-        return {
-          status: 200,
-          data: [
-            {
-              Id: '1234567890abcdef',
-              Names: ['/test-container'],
-              Image: 'node:20',
-              Status: 'Up 2 hours',
-              State: 'running',
-              RestartCount: 0,
-            }
-          ]
-        };
+    } else {
+      reqPath = (urlOrOptions && urlOrOptions.path) || '';
+      if (typeof optionsOrCallback === 'function') {
+        callback = optionsOrCallback;
       }
-
-      if (path.includes('/system/df')) {
-        return {
-          status: 200,
-          data: {
-            Containers: [],
-            Volumes: [],
-            Images: [],
+    }
+    
+    setTimeout(() => {
+      const res = new EventEmitter();
+      res.statusCode = 200;
+      res.headers = {
+        'strict-transport-security': 'max-age=31536000',
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'self'",
+        'referrer-policy': 'no-referrer',
+      };
+      
+      let responseData = "{}";
+      if (reqPath.includes('/containers/json')) {
+        responseData = JSON.stringify([
+          {
+            Id: '1234567890abcdef',
+            Names: ['/test-container'],
+            Image: 'node:20',
+            Status: 'Up 2 hours',
+            State: 'running',
+            RestartCount: 0,
           }
-        };
+        ]);
+      } else if (reqPath.includes('/system/df')) {
+        responseData = JSON.stringify({
+          Containers: [],
+          Volumes: [],
+          Images: [],
+        });
       }
+      
+      if (typeof callback === 'function') {
+        callback(res);
+      }
+      res.emit('data', Buffer.from(responseData));
+      res.emit('end');
+    }, 10);
+    
+    return req as any;
+  };
 
-      return { status: 200, data: {} };
-    });
-  });
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      request: vi.fn().mockImplementation(mockRequest)
+    },
+    request: vi.fn().mockImplementation(mockRequest)
+  };
+});
 
-  afterAll(() => {
-    dockerSpy.mockRestore();
-  });
+describe('Phase 6E: Infrastructure Observability & Audit Test Suite', () => {
   it('1. Read-Only Guarantee: Rejects mutating Docker API endpoints', async () => {
     const mutatingEndpoints = [
       '/containers/123/restart',
