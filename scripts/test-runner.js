@@ -1,0 +1,73 @@
+process.env.NODE_ENV = 'test';
+import { spawnSync } from 'child_process';
+import { readdirSync } from 'fs';
+import { join } from 'path';
+
+console.log('--- TÁTA MÁ PRÁVO : TEST RUNNER ---');
+
+// Tests run directly on the host, outside Docker.
+// Never use the production JWT secret for the test suite.
+if (true) {
+  process.env.JWT_SECRET = 'test-only-not-a-production-secret';
+}
+
+
+const tests = [
+  { cmd: 'node', args: ['--test', 'test/main.test.cjs'], name: 'Static & Security Integrity (PWA, Disclaimers, Auth, RBAC)' },
+  { cmd: 'node', args: ['run_security_tests.cjs'], name: 'Security & Audit Integrations' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/state-admin-p1-p2.test.js'], name: 'State Administration API Hub (P1 & P2 Connectors)' },
+  { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-case-sync.test.ts'], name: 'Judgment AI Extractor -> Case Persistence Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/care-occurrence-engine.test.ts'], name: 'Care Occurrence Engine & Calendar Integration' },
+  { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-ai-extractor-fallback.test.ts'], name: 'AI Extractor Local PDF Fallback & Deterministic Extraction (20 Tests)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-and-svg.test.ts'], name: 'Branding API & Secure SVG Sanitization' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/startup-db-safety.test.ts'], name: 'Startup & Deployment DB Safety (Zero Schema Mutation on Startup)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/analytics-2-user-journey.test.ts'], name: 'Analytics 2.0 (User Journey, Funnels, Search Intelligence & Zero-PII)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/ai-provider-consistency.test.ts'], name: 'AI Provider Consistency & Failover (P0.1 Hardening)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-1-ai-forms-source-fidelity.test.ts'], name: 'AI Forms Source Fidelity (P0.2.1)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-3-model-compatibility.test.ts'], name: 'AI Provider Model Compatibility (P0.2.3)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/navigation-consolidation-phase02.test.ts'], name: 'Navigation Consolidation & Visibility (Phase 02)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03b.test.ts'], name: 'Admin Shell Information Architecture & RBAC (Phase 03B)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/admin-shell-phase03c.test.ts'], name: 'Admin Shell Cleanup, Deep-Linking & Polish (Phase 03C)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04c.test.ts'], name: 'Team Center Foundation & Granular RBAC (Phase 04C)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/team-center-phase04e-security-regression.test.ts'], name: 'Team Center Security Regression & Production Readiness (Phase 04E)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/auth-remediation-phase05b.test.ts'], name: 'Auth, Session & MFA Security Remediation & Isolation (Phase 05B)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/public-navigation-phase06b.test.ts'], name: 'Public Navigation Unification & Legacy Merge Fix (Phase 06B)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-security.test.ts'], name: 'Secure Offline Storage Foundation (Phase 18B)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-install-prompt.test.ts'], name: 'PWA Install Experience (Phase 18.5)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/passkey-error-handling.test.ts'], name: 'Passkey & WebAuthn Error Handling (Phase 19)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/alimonyCalculator.test.ts'], name: 'Alimony Calculator Unit Tests (Phase 8/10)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/case-submission-drafts-phase21-1.test.ts'], name: 'Case Submission Drafts & Versioning (Phase 21.1)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-sync-queue-phase21-2.test.ts'], name: 'Offline Sync Queue & Conflict Resolution (Phase 21.2)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-offline-sync-ui-phase22.test.ts'], name: 'PWA Offline Vault Sync UI & Integration (Phase 22)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/unified-agent-registry-phase1a.test.ts'], name: 'Unified Agent Registry & Capability Catalog (Phase 1A)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/agent-authorization-contract-phase1b.test.ts'], name: 'Agent Authorization Contract & Single Authority (Phase 1B)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/agent-documentation-phase1b0.test.ts'], name: 'Agent Documentation Contract & Catalog Verification (Phase 1B-0)' }
+];
+
+let failed = false;
+
+for (const t of tests) {
+  console.log(`\n=============================================================`);
+  console.log(`>>> RUNNING: ${t.name}`);
+  console.log(`=============================================================`);
+  
+  const res = spawnSync(t.cmd, t.args, { stdio: 'inherit' });
+  
+  if (res.status !== 0) {
+    console.error(`\n❌ [FAILED] ${t.name}`);
+    failed = true;
+  } else {
+    console.log(`\n✅ [PASS] ${t.name}`);
+  }
+}
+
+if (failed) {
+  console.error('\n🚨 SOME TESTS FAILED.');
+  process.exit(1);
+} else {
+  console.log('\n🎉 ALL TESTS PASSED SUCCESSFULLY.');
+  process.exit(0);
+}
