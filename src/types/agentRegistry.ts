@@ -63,11 +63,11 @@ export type AgentDecision = 'ALLOW' | 'DENY' | 'REQUIRE_HUMAN_APPROVAL';
 export interface AgentAuthorizationRequest {
   agentId: string;
   capabilityId: string;
-  user?: any; // User type context
+  user?: any;
   requestedOperation?: string; // ControlPlaneOperationId
   targetResource?: string;
   scope?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface AgentAuthorizationResult {
