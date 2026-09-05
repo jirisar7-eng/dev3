@@ -1,4 +1,5 @@
 import { apiFetch } from '../../../utils/apiClient';
+import { dispatchAgent } from '../../../services/agent/agentDispatchClient';
 import React, { useState } from 'react';
 import { CarePlan, CaseChild } from '../../../types';
 import {
@@ -52,6 +53,26 @@ export const CareJudgmentImportModal: React.FC<CareJudgmentImportModalProps> = (
     setConflictData(null);
 
     try {
+      // If parsing text, dispatch directly via Unified Agent Layer (Phase 2C migration)
+      if (!file && judgmentText.trim()) {
+        const response = await dispatchAgent<any>({
+          agentId: 'DOCUMENT_PROCESSOR',
+          capabilityId: 'document.parse',
+          payload: { text: judgmentText.trim(), caseId },
+        });
+
+        if (response.decision === 'SUCCESS' && response.data) {
+          const resData = response.data;
+          setExtractedData(resData.parsed || resData);
+          return;
+        } else if (response.decision === 'DENY') {
+          throw new Error('Přístup k analýze dokumentu byl zamítnut (nedostatečná oprávnění).');
+        } else {
+          throw new Error(response.error || response.message || 'Chyba při AI analýze dokumentu.');
+        }
+      }
+
+      // If uploading a binary file, keep the existing multipart endpoint
       const formData = new FormData();
       if (file) {
         formData.append('document', file);

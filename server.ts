@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -31,7 +30,6 @@ import { BrandingService } from './src/services/brandingService.ts';
 import { sanitizeSvg } from './src/utils/svgSanitizer.ts';
 import { SettingsService } from './src/services/settingsService.ts';
 import { seedDatabaseIfEmpty, ensureSuperAdminAccount } from './src/services/seedService.ts';
-import { runSeed } from './prisma/seed';
 import { ensureAllModulePagesExist, convertAllPagesToPuck } from './src/services/PageService.ts';
 import { seedSystemTemplates } from './src/services/templateService';
 import { UserDataService } from './src/services/userDataService.ts';
@@ -63,6 +61,7 @@ import coparentRoutes from './src/routes/coparentRoutes';
 import adminVpsRoutes from './src/routes/adminVpsRoutes';
 import adminRoutes from './src/routes/adminRoutes';
 import qaRoutes from './src/routes/qaRoutes';
+import agentRoutes from './src/routes/agentRoutes';
 import aiContextRoutes from './src/routes/aiContextRoutes';
 import auditCenterRoutes, { publicAuditShareRouter } from './src/routes/auditCenterRoutes';
 import orionRoutes from './src/routes/orionRoutes';
@@ -182,25 +181,15 @@ app.get('/api/health', async (_req, res) => {
   });
 });
 
-// Initialize DB seeding asynchronously depending on database availability
+// Initialize DB connectivity check without automatic startup schema/seed mutations (P0 Containment)
 async function initializeApp() {
   const isProd = process.env.NODE_ENV === 'production';
   const dbConnected = await waitForDatabase(isProd ? 10 : 5);
 
   if (dbConnected) {
-    try {
-      await seedDatabaseIfEmpty();
-      await ensureAllModulePagesExist();
-      await convertAllPagesToPuck();
-      await seedSystemTemplates();
-      console.log('[System] Databáze byla úspěšně inicializována.');
-    } catch (err) {
-      console.error('[System] Chyba při inicializaci databáze po připojení:', err);
-    }
+    console.log('[System] Databáze je dostupná. Automatické DB mutace při spuštění jsou zakázány (P0 Containment).');
   } else {
     console.warn('[System] Databáze není dostupná po všech pokusech. Aplikace běží v omezeném režimu.');
-    // Optional: seed in-memory if needed
-    seedSystemTemplates().catch(() => {});
   }
 }
 
@@ -405,6 +394,7 @@ app.use('/api/admin/synthesis', synthesisRoutes);
 app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qa', qaRoutes);
+app.use('/api/admin/agent', agentRoutes);
 app.use(aiContextRoutes);
 
 // Pracovnici community proposal & moderation endpoints
@@ -5434,31 +5424,22 @@ async function startServer() {
     console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);
   });
 
-  // Background DB sync and seed - performed non-blockingly so app.listen opens port 3000 immediately
+  // Background DB health check - performed non-blockingly so app.listen opens port 3000 immediately
   setTimeout(async () => {
     try {
       if (process.env.DATABASE_URL) {
         const isDbReachable = await checkDatabaseReachable();
         if (isDbReachable) {
-          console.log('[System] Synchonizuji Prisma schéma s databází...');
-          try {
-            execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit', timeout: 5000 });
-            console.log('[System] Prisma schéma úspěšně synchronizováno.');
-          } catch (pushErr) {
-            console.warn('[System] Prisma db push přeskočen nebo selhal:', pushErr);
-          }
+          console.log('[System] PostgreSQL databáze je dostupná.');
         } else {
-          console.info('[System] PostgreSQL databáze na DATABASE_URL není dostupná. Přeskakuji Prisma synchronizaci.');
+          console.info('[System] PostgreSQL databáze na DATABASE_URL není dostupná.');
         }
       } else {
-        console.log('[System] DATABASE_URL chybí, přeskakuji Prisma synchronizaci.');
+        console.log('[System] DATABASE_URL chybí, přeskakuji Prisma inicializaci.');
         markPrismaUnavailable('DATABASE_URL is missing');
       }
-
-      // Safe background seeding with automatic fallback to dbStore
-      await runSeed();
     } catch (error) {
-      console.warn('[System] Upozornění při inicializaci databáze/seedu:', error);
+      console.warn('[System] Upozornění při kontrole databáze:', error);
       markPrismaUnavailable(error);
     }
   }, 100);
