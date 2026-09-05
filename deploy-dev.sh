@@ -42,15 +42,9 @@ else
   echo "[DEV DEPLOYMENT] Warning: Could not validate prisma schema inside container."
 fi
 
-# 5. Synchronize Prisma database schema
-echo "[5/6] Synchronizing Prisma DB schema..."
-if docker compose exec -T app npx prisma db push; then
-  echo "[DEV DEPLOYMENT] DB schema push completed successfully via Compose app."
-elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev3'; then
-  docker exec -i tatovacesta_app_dev3 npx prisma db push
-elif docker ps --format '{{.Names}}' | grep -q 'tatovacesta_app_dev'; then
-  docker exec -i tatovacesta_app_dev npx prisma db push
-fi
+# 5. Database Schema Status
+echo "[5/6] Automatic schema mutations are disabled during P0 containment."
+echo "[DEV DEPLOYMENT] Database migrations are executed separately via controlled migration workflows."
 
 # 6. Verify Health Check
 echo "[6/6] Verifying application health..."
