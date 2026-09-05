@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { exec } from 'child_process';
 import { prisma } from '../db/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -107,34 +106,13 @@ router.post(['/webhook-deploy', '/deploy', '/', '/github'], (req: Request, res: 
       });
     }
 
-    // 1. Zaloguj událost
-    console.log('[Webhook Deploy] Přijat požadavek na automatický redeploy...');
+    // 1. Zaloguj událost a zablokuj automatické DB mutace/redeploy během P0 containmentu
+    console.log('[Webhook Deploy] Přijat požadavek na automatický redeploy. Automatické změny schématu a restarty jsou během P0 containmentu deaktivovány.');
 
-    // 2. Bezpečný příkaz pro databázi bez git pull
-    const deployCommand = 'sh -c "npx prisma db push && npx prisma generate"';
-
-    console.log('[Webhook Deploy] Příkaz pro automatickou aktualizaci databáze spuštěn na pozadí.');
-
-    exec(deployCommand, (error, stdout, stderr) => {
-      if (stdout) console.log('[Webhook Deploy STDOUT]:\n' + stdout);
-      if (stderr) console.error('[Webhook Deploy STDERR]:\n' + stderr);
-
-      if (error) {
-        console.error('[Webhook Deploy ERROR]:', error);
-        return;
-      }
-
-      console.log('[Webhook Deploy] Aktualizace databáze úspěšně dokončena. Restartuji proces pro reload kontejneru...');
-      // Čisté ukončení procesu s prodlevou, aby Docker (restart: always / unless-stopped) nastartoval nový kontejner
-      setTimeout(() => {
-        process.exit(0);
-      }, 1000);
-    });
-
-    // 3. Okamžitě vrať odpověď JSON
-    return res.json({
-      success: true,
-      message: 'Deploy skript byl spuštěn na pozadí.',
+    return res.status(503).json({
+      success: false,
+      error: '503 Service Unavailable',
+      message: 'Automatický redeploy a databázové mutace přes legacy webhook jsou během P0 containmentu deaktivovány. Nasazení a migrace musí probíhat přes řízený CD/deployment pipeline.',
     });
   } catch (err: any) {
     console.error('[Webhook Deploy CATCH]:', err);
