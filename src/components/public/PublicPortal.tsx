@@ -82,6 +82,7 @@ import { BiffCommunicationView } from './BiffCommunicationView';
 import { KalendarLhutView } from './KalendarLhutView';
 import { KalendarView } from '../placeholderViews';
 import { PortalActivityPanel } from './PortalActivityPanel';
+import { CareHubPublicLandingView } from './CareHubPublicLandingView';
 import { analytics } from '../../lib/analyticsClient';
 
 import { useText } from '../../context/TextContext';
@@ -186,6 +187,11 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   // 0.3 AI Context & Machine Index (/ai-context)
   if (slug === 'ai-context') {
     return <AiContextView onNavigate={onNavigate} />;
+  }
+
+  // 0.1B Care Hub / Péče o dítě
+  if (slug === 'pece' || slug === 'moje-dite') {
+    return <CareHubPublicLandingView onNavigate={onNavigate} />;
   }
 
   // 0.2 CoParent Hub (/coparent-hub, /coparent)
