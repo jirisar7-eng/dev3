@@ -189,6 +189,9 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
 
   // 0.1B Care Hub / Péče o dítě
+  if (slug === "pece" || slug === "moje-dite") {
+    return <CareHubPublicLandingView onNavigate={onNavigate} />;
+  }
   // 0.2 CoParent Hub (/coparent-hub, /coparent)
   if (slug === 'coparent-hub' || slug === 'coparent' || slug === 'spolurodicovsky-hub') {
     return <CoParentHubPage onNavigate={onNavigate} />;
@@ -572,23 +575,6 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
   if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
     return <PsychologieView onNavigate={onNavigate} />;
-  }
-  if (slug === 'pece' || slug === 'care-hub' || slug === 'pece-o-dite') {
-    const isPuckEnabled =
-      typeof window !== 'undefined' &&
-      (localStorage.getItem('PUCK_PECE_RENDERER_ENABLED') === 'true' ||
-       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
-
-    if (isPuckEnabled) {
-      return (
-        <CmsPageRenderer
-          slug="pece"
-          onNavigate={onNavigate}
-          fallbackComponent={<CareHubPublicLandingView onNavigate={onNavigate} />}
-        />
-      );
-    }
-    return <CareHubPublicLandingView onNavigate={onNavigate} />;
   }
   if (slug === 'komunikace-biff' || slug === 'biff' || slug === 'deeskalace') {
     return <BiffCommunicationView onNavigate={onNavigate} />;
