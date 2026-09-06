@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { requireAuth, requireRole, requireExperimentalAccess, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { SynthesisService } from '../services/synthesisService';
 import { GithubSyncService } from '../services/synthesis/githubSyncService';
+import { ControlPlaneAuthorization } from '../services/controlPlaneAuthorization';
 
 const router = Router();
 
@@ -101,6 +102,8 @@ router.post('/tickets', requireAuth as any, requireExperimentalAccess() as any, 
       return;
     }
 
+    ControlPlaneAuthorization.authorizeOperation(req.user, 'TICKET_CREATE', 'synthesis/tickets');
+
     const result = await SynthesisService.createTicket({
       title,
       description,
@@ -126,7 +129,8 @@ router.post('/tickets', requireAuth as any, requireExperimentalAccess() as any, 
       isDuplicate: result.isDuplicate,
     });
   } catch (err: any) {
-    const statusCode = err.statusCode || (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500);
+    const isAuthError = err.message?.includes('FAIL CLOSED');
+    const statusCode = err.statusCode || (isAuthError ? 403 : (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500));
     res.status(statusCode).json({
       success: false,
       error: err.message || 'Error creating synthesis ticket',
@@ -155,6 +159,8 @@ router.post('/tickets/:id/comments', requireAuth as any, requireExperimentalAcce
 
     const authorName = req.user?.name || req.user?.email || 'Admin User';
 
+    ControlPlaneAuthorization.authorizeOperation(req.user, 'TICKET_UPDATE', `synthesis/tickets/${id}/comments`);
+
     const comment = await SynthesisService.addComment({
       ticketId: id,
       authorId: req.user?.id,
@@ -169,7 +175,8 @@ router.post('/tickets/:id/comments', requireAuth as any, requireExperimentalAcce
       data: comment,
     });
   } catch (err: any) {
-    const statusCode = err.statusCode || (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500);
+    const isAuthError = err.message?.includes('FAIL CLOSED');
+    const statusCode = err.statusCode || (isAuthError ? 403 : (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500));
     res.status(statusCode).json({
       success: false,
       error: err.message || 'Error adding comment to synthesis ticket',
@@ -183,8 +190,10 @@ router.post('/tickets/:id/comments', requireAuth as any, requireExperimentalAcce
  * Ingests the e-Sbírka finding as first real Synthesis ticket.
  * FAIL-CLOSED: Returns 503 if DB is unavailable.
  */
-router.post('/ingest-esbirka', requireAuth as any, requireExperimentalAccess() as any, async (_req: AuthenticatedRequest, res: Response) => {
+router.post('/ingest-esbirka', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    ControlPlaneAuthorization.authorizeOperation(req.user, 'TICKET_CREATE', 'synthesis/ingest-esbirka');
+
     const result = await SynthesisService.ingestEsbirkaRemediationFinding();
 
     res.status(result.isDuplicate ? 200 : 201).json({
@@ -193,7 +202,8 @@ router.post('/ingest-esbirka', requireAuth as any, requireExperimentalAccess() a
       isDuplicate: result.isDuplicate,
     });
   } catch (err: any) {
-    const statusCode = err.statusCode || (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500);
+    const isAuthError = err.message?.includes('FAIL CLOSED');
+    const statusCode = err.statusCode || (isAuthError ? 403 : (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500));
     res.status(statusCode).json({
       success: false,
       error: err.message || 'Error ingesting e-Sbírka remediation finding',
@@ -222,6 +232,8 @@ router.post('/tickets/:id/github', requireAuth as any, requireExperimentalAccess
 
     const actorName = req.user?.name || req.user?.email || 'Admin User';
 
+    ControlPlaneAuthorization.authorizeOperation(req.user, 'TICKET_UPDATE', `synthesis/tickets/${id}/github`);
+
     const updatedTicket = await GithubSyncService.linkGithubMetadata({
       ticketId: id,
       githubIssueNumber: githubIssueNumber !== undefined ? Number(githubIssueNumber) : undefined,
@@ -240,7 +252,8 @@ router.post('/tickets/:id/github', requireAuth as any, requireExperimentalAccess
       data: updatedTicket,
     });
   } catch (err: any) {
-    const statusCode = err.statusCode || (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500);
+    const isAuthError = err.message?.includes('FAIL CLOSED');
+    const statusCode = err.statusCode || (isAuthError ? 403 : (err.code === 'DATABASE_UNAVAILABLE' ? 503 : 500));
     res.status(statusCode).json({
       success: false,
       error: err.message || 'Error linking GitHub metadata to synthesis ticket',
