@@ -417,14 +417,14 @@ export const DEFAULT_MEMENTO_PUCK_DATA = {
       type: 'HeroBlock',
       props: {
         id: 'hero-memento',
-        title: 'Memento: 4 Osudové Procesní Chyby Otců u Soudu',
-        description: 'Poučení z chyb. Jak se vyhnout zprávám v afektu, zbytečnému ustupování, pomstě a útokům na internetu.',
-        buttonText: 'Studovat chyby',
+        title: 'Memento otců: Procesní chyby, kterým je dobré se vyhnout',
+        description: 'Poučení z častých chyb v komunikaci, péči o dítě a opatrovnickém řízení. Zásady BIFF, deeskalace a praktické vzory.',
+        buttonText: 'Studovat Memento',
         buttonUrl: '/memento',
       },
     },
   ],
-  root: { props: { title: 'Memento procesních chyb' } },
+  root: { props: { title: 'Memento otců — Procesní chyby' } },
 };
 
 export const DEFAULT_LEGAL_HELP_PUCK_DATA = {

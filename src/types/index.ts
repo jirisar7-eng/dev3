@@ -1105,6 +1105,8 @@ export interface Subjekt {
   createdAt?: string | Date;
   reviews?: Review[];
   pracovnici?: Pracovnik[];
+  verifiedProfile?: any | null;
+  pendingSourcesCount?: number;
 }
 
 export type WikiCategory = 'pravo' | 'ospod' | 'soud' | 'finance' | 'psychologie' | 'ostatni';
@@ -1490,4 +1492,6 @@ export interface AnalyticsAiInsightsData {
 
 export * from './databaseAudit';
 export * from './handoffTypes';
+export * from './agentRegistry';
+export * from './verifiedSubjectInfo';
 

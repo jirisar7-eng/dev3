@@ -146,6 +146,7 @@ export const BrandingManager: React.FC = () => {
         setMessage({ text: 'Branding byl úspěšně uložen (Nová verze v' + data.version + ')', type: 'success' });
         fetchBranding();
         fetchHistory();
+        window.dispatchEvent(new CustomEvent('branding-updated'));
       } else {
         setMessage({ text: data.error || 'Chyba při ukládání', type: 'error' });
       }
@@ -170,6 +171,7 @@ export const BrandingManager: React.FC = () => {
         fetchBranding();
         fetchHistory();
         setActiveTab('editor');
+        window.dispatchEvent(new CustomEvent('branding-updated'));
       }
     } catch (e) {
       setMessage({ text: 'Chyba při obnově.', type: 'error' });
@@ -189,6 +191,7 @@ export const BrandingManager: React.FC = () => {
         setMessage({ text: 'Branding byl resetován na výchozí hodnoty.', type: 'success' });
         fetchBranding();
         fetchHistory();
+        window.dispatchEvent(new CustomEvent('branding-updated'));
       }
     } catch (e) {
       setMessage({ text: 'Chyba při resetu.', type: 'error' });

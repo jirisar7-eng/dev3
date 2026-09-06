@@ -1,4 +1,5 @@
 import { apiFetch } from '../../utils/apiClient';
+import { dispatchAgent } from '../../services/agent/agentDispatchClient';
 import React, { useEffect, useState } from 'react';
 import {
   AdminAnalyticsStats,
@@ -83,9 +84,14 @@ export const AnalyticsManager: React.FC = () => {
   const fetchOverviewStats = async () => {
     try {
       setLoading(true);
-      const res = await apiFetch('/api/analytics/admin-stats');
-      if (res.ok) {
-        const json: AdminAnalyticsStats = await res.json();
+      const response = await dispatchAgent<AdminAnalyticsStats>({
+        agentId: 'DATA_ANALYST',
+        capabilityId: 'analytics.read',
+        payload: { timeRange: '30d' },
+      });
+
+      if (response.decision === 'SUCCESS' && response.data) {
+        const json: AdminAnalyticsStats = response.data;
         setOverviewData(json);
         if (json.settings) {
           setFormSettings({
@@ -97,8 +103,10 @@ export const AnalyticsManager: React.FC = () => {
             simulationTimeWindow: json.settings.simulationTimeWindow,
           });
         }
+      } else if (response.decision === 'DENY') {
+        setErrorMessage('Přístup k analytice byl zamítnut (nedostatečná oprávnění).');
       } else {
-        setErrorMessage('Chyba při načítání základních analytických dat.');
+        setErrorMessage(response.error || 'Chyba při načítání základních analytických dat.');
       }
     } catch {
       setErrorMessage('Nepodařilo se připojit k analytickému backendu.');
@@ -157,10 +165,16 @@ export const AnalyticsManager: React.FC = () => {
 
   const fetchAiInsights = async () => {
     try {
-      const res = await apiFetch(`/api/analytics/admin/ai-insights-data?timeRange=${timeRange}`);
-      if (res.ok) {
-        const json: AnalyticsAiInsightsData = await res.json();
-        setAiInsights(json);
+      const response = await dispatchAgent<AnalyticsAiInsightsData>({
+        agentId: 'DATA_ANALYST',
+        capabilityId: 'metrics.query',
+        payload: { timeRange },
+      });
+
+      if (response.decision === 'SUCCESS' && response.data) {
+        setAiInsights(response.data);
+      } else {
+        console.warn('Failed to load AI insights data via agent dispatch:', response.error);
       }
     } catch {
       console.warn('Failed to load AI insights data');

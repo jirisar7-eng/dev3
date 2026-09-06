@@ -20,7 +20,7 @@ describe('Phase 03C — Admin Shell Cleanup, Deep-Linking & UX Polish Tests', ()
       assert.strictEqual(resolveAdminTabFromUrl('/administrace/analytika'), 'analytics');
       assert.strictEqual(resolveAdminTabFromUrl('/admin/dns'), 'dns');
       assert.strictEqual(resolveAdminTabFromUrl('/administrace/qa'), 'qa');
-      assert.strictEqual(resolveAdminTabFromUrl('/administrace/qa/copilot'), 'qa');
+      assert.strictEqual(resolveAdminTabFromUrl('/administrace/qa/copilot'), 'copilot');
       assert.strictEqual(resolveAdminTabFromUrl('/admin/copilot'), 'qa');
       assert.strictEqual(resolveAdminTabFromUrl('/administrace/audity'), 'audits');
       assert.strictEqual(resolveAdminTabFromUrl('/admin/audit-center'), 'audits');
@@ -29,7 +29,7 @@ describe('Phase 03C — Admin Shell Cleanup, Deep-Linking & UX Polish Tests', ()
     });
 
     it('should resolve query parameter ?tab= to the correct AdminTabId', () => {
-      assert.strictEqual(resolveAdminTabFromUrl('/admin?tab=copilot'), 'qa');
+      assert.strictEqual(resolveAdminTabFromUrl('/admin?tab=copilot'), 'copilot');
       assert.strictEqual(resolveAdminTabFromUrl('/administrace?tab=users'), 'users');
       assert.strictEqual(resolveAdminTabFromUrl('/administrace?tab=esbirka'), 'esbirka');
       assert.strictEqual(resolveAdminTabFromUrl('/administrace?tab=audit-log'), 'audit');
@@ -65,7 +65,11 @@ describe('Phase 03C — Admin Shell Cleanup, Deep-Linking & UX Polish Tests', ()
       const qaItem = findItemByTabId('qa');
       assert.ok(qaItem);
       assert.ok(qaItem?.title.includes('Copilot') || qaItem?.title.includes('QA'));
-      assert.ok(qaItem?.keywords.includes('copilot'));
+      assert.ok(qaItem?.keywords.includes('qa') || qaItem?.keywords.includes('copilot'));
+
+      const copilotItem = findItemByTabId('copilot');
+      assert.ok(copilotItem);
+      assert.ok(copilotItem?.keywords.includes('copilot'));
 
       const auditDbItem = findItemByTabId('audit');
       assert.ok(auditDbItem);

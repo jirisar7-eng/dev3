@@ -17,6 +17,14 @@ export interface AuthenticatedRequest extends Request {
   tokenMfaVerified?: boolean;
 }
 
+export function isAiStudioPreview(): boolean {
+  return (
+    process.env.AI_STUDIO_PREVIEW_MODE === 'true' &&
+    process.env.NODE_ENV === 'development' &&
+    process.env.APPLET_ID === '193ad124-a5f6-4252-9655-797fec9c6873'
+  );
+}
+
 export async function parseAuthToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   let userId: string | undefined = undefined;
   let tokenMfaVerified = false;
@@ -55,6 +63,11 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
     }
   }
 
+  // 3. Fallback for AI Studio Preview Mode
+  if (!userId && isAiStudioPreview()) {
+    userId = 'preview-actor';
+  }
+
   // NOTE: x-user-id header and raw userId cookies are explicitly IGNORED for identity resolution.
 
   const pendingMfaCookie = (req.cookies && req.cookies.pending_mfa_user) || (req.signedCookies && req.signedCookies.pending_mfa_user);
@@ -79,13 +92,25 @@ export async function parseAuthToken(req: AuthenticatedRequest, res: Response, n
   req.tokenMfaVerified = tokenMfaVerified;
 
   if (userId) {
-    try {
-      const user = await AuthService.getUserById(userId);
-      if (user) {
-        req.user = user;
+    if (userId === 'preview-actor') {
+      req.user = {
+        id: 'preview-actor',
+        email: 'preview-actor@ai-studio.local',
+        name: 'AI Studio Preview',
+        role: 'PREVIEW_ACTOR' as any,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      try {
+        const user = await AuthService.getUserById(userId);
+        if (user) {
+          req.user = user;
+        }
+      } catch (err) {
+        console.error('Error in parseAuthToken database query:', err);
       }
-    } catch (err) {
-      console.error('Error in parseAuthToken database query:', err);
     }
   }
   next();
@@ -219,3 +244,62 @@ export function requirePermission(permissionKey: string) {
     }
   };
 }
+
+export function requireExperimentalAccess() {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const userId = req.session?.userId;
+    if (!userId || !req.user) {
+      return res.status(401).json({ error: 'Neautorizovaný přístup. Přihlaste se prosím.' });
+    }
+
+    // 0. AI Studio Preview Mode Actor bypass
+    if (req.user.role === ('PREVIEW_ACTOR' as any)) {
+      return next();
+    }
+
+    try {
+      const dbUser = await AuthService.getUserById(userId);
+      if (!dbUser) {
+        return res.status(401).json({ error: 'Uživatel nebyl nalezen v databázi.' });
+      }
+
+      // 1. SUPER_ADMIN always has access
+      if (dbUser.role === 'SUPER_ADMIN') {
+        req.user = dbUser;
+        return next();
+      }
+
+      // 2. Check if user's email is explicitly approved in SystemSetting
+      if (prisma) {
+        const approvedSetting = await (prisma as any).systemSetting.findUnique({
+          where: { key: 'experimental.approved_users' }
+        });
+
+        if (approvedSetting) {
+          try {
+            const approvedList = JSON.parse(approvedSetting.value);
+            const isApproved = Array.isArray(approvedList) && approvedList.some((item: any) => {
+              const email = typeof item === 'string' ? item : item?.email;
+              return email && email.toLowerCase() === dbUser.email.toLowerCase();
+            });
+
+            if (isApproved) {
+              req.user = dbUser;
+              return next();
+            }
+          } catch (e) {
+            console.error('Error parsing experimental.approved_users setting:', e);
+          }
+        }
+      }
+
+      return res.status(403).json({
+        error: 'Přístup odepřen. Nemáte oprávnění ke vstupu do Experimentální laboratoře.',
+      });
+    } catch (err) {
+      console.error('Error in requireExperimentalAccess:', err);
+      return res.status(500).json({ error: 'Chyba při ověřování oprávnění k experimentálním funkcím.' });
+    }
+  };
+}
+

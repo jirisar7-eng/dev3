@@ -31,8 +31,8 @@ function MainApp() {
     if (path === '/registrace' || path === '/register') return 'register';
     if (path === '/logout') return 'public';
     if (path.startsWith('/team') || path.startsWith('/spolek')) return 'team';
-    if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/pece') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
-    if (path.startsWith('/administrace') || path.startsWith('/admin')) return 'admin';
+    if (path.startsWith('/portal') || path.startsWith('/muj-pripad') || path.startsWith('/user-portal') || path.startsWith('/dashboard') || path.startsWith('/nastenka')) return 'private';
+    if (path.startsWith('/administrace') || path.startsWith('/admin') || path.startsWith('/experimenty')) return 'admin';
     return 'public';
   };
 

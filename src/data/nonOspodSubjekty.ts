@@ -14,7 +14,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "svobodova.znalec@praha-psychologie.cz",
     "phone": "+420 603 123 456",
     "website": "https://www.psychologie-praha.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -28,7 +28,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "dvorak.psychiatr@fnv.cz",
     "phone": "+420 224 965 300",
     "website": "https://www.lf1.cuni.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -42,7 +42,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "tomas.novotny@ak-novotny.cz",
     "phone": "+420 224 235 678",
     "website": "https://www.ak-novotny.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -56,7 +56,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "info@centrumlocika.cz",
     "phone": "+420 734 441 233",
     "website": "https://www.centrumlocika.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -70,7 +70,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "vesela.znalec@psychologie-kladno.cz",
     "phone": "+420 312 234 567",
     "website": "https://www.psychologie-kladno.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -84,7 +84,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "martin.prochazka@ak-mb.cz",
     "phone": "+420 326 732 111",
     "website": "https://www.ak-mb.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -98,7 +98,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna.kladno@sck.cz",
     "phone": "+420 312 245 889",
     "website": "https://www.poradna-stredoceska.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -112,7 +112,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "mala.znalec@cb-psychologie.cz",
     "phone": "+420 387 222 333",
     "website": "https://www.cb-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -126,7 +126,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "petr.havlicek@ak-cb.cz",
     "phone": "+420 387 311 444",
     "website": "https://www.ak-cb.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -140,7 +140,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "krizovecentrum@krizovecentrumcb.cz",
     "phone": "+420 387 313 013",
     "website": "https://www.krizovecentrumcb.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -154,7 +154,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "simunek.znalec@plzen-psychologie.cz",
     "phone": "+420 377 234 888",
     "website": "https://www.plzen-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -168,7 +168,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "lenka.kucerova@ak-plzen.cz",
     "phone": "+420 377 456 789",
     "website": "https://www.ak-plzen.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -182,7 +182,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@dchp.cz",
     "phone": "+420 377 444 555",
     "website": "https://www.dchp.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -196,7 +196,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "novakova.znalec@kv-psychologie.cz",
     "phone": "+420 353 222 111",
     "website": "https://www.kv-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -210,7 +210,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "jan.svoboda@ak-kv.cz",
     "phone": "+420 353 587 999",
     "website": "https://www.ak-kv.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -224,7 +224,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "info@karlovyvary.charita.cz",
     "phone": "+420 353 311 222",
     "website": "https://www.karlovyvary.charita.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -238,7 +238,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "kucerova.znalec@ul-psychologie.cz",
     "phone": "+420 475 512 345",
     "website": "https://www.ul-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -252,7 +252,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "radek.vesely@ak-ul.cz",
     "phone": "+420 475 210 987",
     "website": "https://www.ak-ul.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -266,7 +266,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna.ul@volny.cz",
     "phone": "+420 475 600 400",
     "website": "https://www.poradna-ul.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -280,7 +280,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "horakova.znalec@liberec-psychologie.cz",
     "phone": "+420 485 311 222",
     "website": "https://www.liberec-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -294,7 +294,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "david.kral@ak-liberec.cz",
     "phone": "+420 485 100 333",
     "website": "https://www.ak-liberec.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -308,7 +308,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "cisp@liberec-pomoc.cz",
     "phone": "+420 485 456 789",
     "website": "https://www.liberec-pomoc.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -322,7 +322,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "ticha.znalec@hk-psychologie.cz",
     "phone": "+420 495 511 223",
     "website": "https://www.hk-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -336,7 +336,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "pavel.soukup@ak-hk.cz",
     "phone": "+420 495 822 111",
     "website": "https://www.ak-hk.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -350,7 +350,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@hk.charita.cz",
     "phone": "+420 495 512 789",
     "website": "https://www.hk.charita.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -364,7 +364,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "benes.znalec@pce-psychologie.cz",
     "phone": "+420 466 512 333",
     "website": "https://www.pce-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -378,7 +378,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "roman.kovar@ak-pardubice.cz",
     "phone": "+420 466 312 456",
     "website": "https://www.ak-pardubice.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -392,7 +392,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "krizovecentrum@skpcentrum.cz",
     "phone": "+420 466 303 123",
     "website": "https://www.skpcentrum.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -406,7 +406,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "prochazkova.znalec@vysočina-psychologie.cz",
     "phone": "+420 567 222 555",
     "website": "https://www.vysočina-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -420,7 +420,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "ales.novak@ak-jihlava.cz",
     "phone": "+420 567 333 777",
     "website": "https://www.ak-jihlava.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -434,7 +434,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@poradnavysocina.cz",
     "phone": "+420 567 444 888",
     "website": "https://www.poradnavysocina.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -448,7 +448,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "rican.znalec@brno-znalci.cz",
     "phone": "+420 542 321 987",
     "website": "https://www.brno-znalci.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -462,7 +462,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "hana.dvorakova@ak-brno.cz",
     "phone": "+420 542 222 111",
     "website": "https://www.ak-brno.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -476,7 +476,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "crsp@crsp.cz",
     "phone": "+420 542 211 860",
     "website": "https://www.crsp.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -490,7 +490,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "svobodova.znalec@olomouc-psychologie.cz",
     "phone": "+420 585 223 444",
     "website": "https://www.olomouc-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -504,7 +504,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "kamil.benes@ak-olomouc.cz",
     "phone": "+420 585 200 111",
     "website": "https://www.ak-olomouc.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -518,7 +518,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@olomouc.charita.cz",
     "phone": "+420 585 225 333",
     "website": "https://www.olomouc.charita.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -532,7 +532,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "vlkova.znalec@zlin-psychologie.cz",
     "phone": "+420 577 211 444",
     "website": "https://www.zlin-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -546,7 +546,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "stanislav.valenta@ak-zlin.cz",
     "phone": "+420 577 321 555",
     "website": "https://www.ak-zlin.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -560,7 +560,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@poradnazlin.cz",
     "phone": "+420 577 433 222",
     "website": "https://www.poradnazlin.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -574,7 +574,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "ruzickova.znalec@ostrava-psychologie.cz",
     "phone": "+420 596 112 333",
     "website": "https://www.ostrava-psychologie.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ZNALEC",
@@ -588,7 +588,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "horak.znalec@detska-psychiatrie-ova.cz",
     "phone": "+420 597 456 123",
     "website": "https://www.detska-psychiatrie-ova.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "ADVOKAT",
@@ -602,7 +602,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "vit.cerny@ak-ostrava.cz",
     "phone": "+420 596 222 111",
     "website": "https://www.ak-ostrava.cz",
-    "isVerified": true
+    "isVerified": false
   },
   {
     "type": "PORADNA_CHARITA",
@@ -616,7 +616,7 @@ const otherSubjekty: Omit<Subjekt, 'id' | 'avgRating' | 'reviewCount'>[] = [
     "email": "poradna@poradna-ostrava.cz",
     "phone": "+420 596 133 444",
     "website": "https://www.poradna-ostrava.cz",
-    "isVerified": true
+    "isVerified": false
   }
 ];
 

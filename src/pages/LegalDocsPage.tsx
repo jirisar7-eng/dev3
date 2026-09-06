@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiClient';
+import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { 
   ShieldCheck, 
@@ -37,12 +37,17 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
   // Fetch registered compliance documents from backend
   useEffect(() => {
     apiFetch('/api/compliance/docs')
-      .then((res) => {
-        if (res.ok) return res.json();
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await safeJsonResponse(res);
+          if (data) return data;
+        }
         throw new Error('Chyba při načítání dokumentů');
       })
       .then((data) => {
-        setDocs(data);
+        if (Array.isArray(data)) {
+          setDocs(data);
+        }
       })
       .catch((err) => {
         console.warn('[LegalDocsPage] Nepodařilo se načíst dynamické dokumenty z DB, používám in-memory fallback:', err);
@@ -53,8 +58,11 @@ export const LegalDocsPage: React.FC<LegalDocsPageProps> = ({ onNavigate, initia
   useEffect(() => {
     if (currentUser) {
       apiFetch(`/api/compliance/consent/${currentUser.id}`)
-        .then((res) => {
-          if (res.ok) return res.json();
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await safeJsonResponse(res);
+            if (data && Array.isArray(data)) return data;
+          }
           return [];
         })
         .then((consents: any[]) => {

@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiClient';
+import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
@@ -136,8 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
+        const data = await safeJsonResponse(res);
+        if (data && data.user) {
           setCurrentUser(data.user);
           if (canFetchUsers(data.user)) {
             await fetchUsers(); // Fetch users after successful auth if permitted

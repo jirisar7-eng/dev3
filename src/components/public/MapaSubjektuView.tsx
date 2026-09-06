@@ -30,7 +30,14 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
+  Clock,
+  Copy,
+  Check,
+  Accessibility,
+  CalendarOff,
+  RotateCcw,
 } from 'lucide-react';
+import { matchesAdvancedFilters } from '../../utils/mapFilters';
 
 const CZECH_REGIONS = [
   'Všechny kraje',
@@ -70,6 +77,11 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
 
+  // Advanced verified filters (GAP-02 FÁZE A)
+  const [onlyAccessible, setOnlyAccessible] = useState<boolean>(false);
+  const [noAppointmentNeeded, setNoAppointmentNeeded] = useState<boolean>(false);
+  const [openToday, setOpenToday] = useState<boolean>(false);
+
   // Selected subject for map highlighting & detail modal
   const [selectedSubjektId, setSelectedSubjektId] = useState<string | null>(null);
   const [detailSubjekt, setDetailSubjekt] = useState<Subjekt | null>(null);
@@ -97,6 +109,153 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
   const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [copiedDataBox, setCopiedDataBox] = useState<boolean>(false);
+
+  // Fetch verified profile if detailSubjekt is loaded without verifiedProfile (e.g. from direct modal open)
+  useEffect(() => {
+    if (!detailSubjekt?.id) return;
+    if (detailSubjekt.verifiedProfile === undefined) {
+      let isMounted = true;
+      apiFetch(`/api/subjekty/${detailSubjekt.id}/verified-profile`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((profile) => {
+          if (isMounted && profile) {
+            setDetailSubjekt((prev) =>
+              prev && prev.id === detailSubjekt.id ? { ...prev, verifiedProfile: profile } : prev
+            );
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [detailSubjekt?.id]);
+
+  // Validated safe external booking URL (must be http/https, no javascript: or HTML)
+  const safeBookingUrl = useMemo(() => {
+    const url = detailSubjekt?.verifiedProfile?.bookingUrl;
+    if (!url || typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  }, [detailSubjekt?.verifiedProfile?.bookingUrl]);
+
+  // Human-readable submission methods mapping
+  const formattedSubmissionMethods = useMemo(() => {
+    const raw = detailSubjekt?.verifiedProfile?.submissionMethods;
+    if (!raw) return [];
+    let list: string[] = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+        else list = [raw];
+      } catch {
+        list = raw.split(',').map((s) => s.trim()).filter(Boolean);
+      }
+    }
+    return list.map((m) => {
+      switch (m) {
+        case 'DATA_BOX':
+          return 'Datová schránka';
+        case 'POST':
+          return 'Pošta';
+        case 'IN_PERSON':
+          return 'Osobně na podatelně';
+        case 'EMAIL_SIGNED':
+          return 'E-mail s uznávaným el. podpisem';
+        default:
+          return m;
+      }
+    });
+  }, [detailSubjekt?.verifiedProfile?.submissionMethods]);
+
+  // Structured rendering of opening hours
+  const renderedOpeningHours = useMemo(() => {
+    const vp = detailSubjekt?.verifiedProfile;
+    if (!vp) return null;
+    const hoursData = vp.openingHours;
+    const rawData = vp.openingHoursRaw;
+    if (!hoursData && !rawData) return null;
+
+    let parsed = hoursData;
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        // keep as string
+      }
+    }
+
+    const DAY_CONFIG = [
+      { key: 'monday', label: 'Pondělí' },
+      { key: 'tuesday', label: 'Úterý' },
+      { key: 'wednesday', label: 'Středa' },
+      { key: 'thursday', label: 'Čtvrtek' },
+      { key: 'friday', label: 'Pátek' },
+      { key: 'saturday', label: 'Sobota' },
+      { key: 'sunday', label: 'Neděle' },
+    ];
+
+    if (parsed && typeof parsed === 'object' && ('monday' in parsed || 'tuesday' in parsed)) {
+      return (
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            {DAY_CONFIG.map(({ key, label }) => {
+              const day = (parsed as any)[key];
+              if (!day) return null;
+              return (
+                <div key={key} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0 text-slate-700">
+                  <span className="font-semibold text-slate-800">{label}</span>
+                  <span className="text-right">
+                    {day.isOpen && Array.isArray(day.intervals) && day.intervals.length > 0 ? (
+                      <span className="font-medium">
+                        {day.intervals.map((iv: any, i: number) => (
+                          <span key={i} className="inline-block ml-1.5 first:ml-0">
+                            {iv.from}–{iv.to}
+                            {iv.type === 'APPOINTMENT_ONLY' && (
+                              <span className="text-[10px] text-amber-700 ml-1 font-normal">(pouze pro objednané)</span>
+                            )}
+                            {iv.type === 'FILING_OFFICE' && (
+                              <span className="text-[10px] text-indigo-700 ml-1 font-normal">(podatelna)</span>
+                            )}
+                          </span>
+                        ))}
+                        {day.note && <span className="text-[10px] text-slate-400 block sm:inline sm:ml-1 font-normal">({day.note})</span>}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 italic">Zavřeno</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {parsed.irregularScheduleNote && (
+            <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-100">
+              Poznámka: {parsed.irregularScheduleNote}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    const textVal = typeof hoursData === 'string' ? hoursData : rawData;
+    if (textVal) {
+      return (
+        <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          {textVal}
+        </pre>
+      );
+    }
+
+    return null;
+  }, [detailSubjekt?.verifiedProfile]);
 
   // Extract query parameter on mount or path change
   useEffect(() => {
@@ -113,6 +272,19 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
 
     if (targetSubjectId) {
       setSelectedSubjektId(targetSubjectId);
+    }
+
+    const accessibleParam = params.get('bezbarierove') || params.get('accessible');
+    if (accessibleParam === '1' || accessibleParam === 'true') {
+      setOnlyAccessible(true);
+    }
+    const noAppointmentParam = params.get('bez-objednani') || params.get('no-appointment');
+    if (noAppointmentParam === '1' || noAppointmentParam === 'true') {
+      setNoAppointmentNeeded(true);
+    }
+    const openTodayParam = params.get('otevreno-dnes') || params.get('open-today');
+    if (openTodayParam === '1' || openTodayParam === 'true') {
+      setOpenToday(true);
     }
   }, [currentPath]);
 
@@ -162,16 +334,37 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
     );
   }, [targetedSubject]);
 
+  // Check if any advanced verified filter is active
+  const hasActiveAdvancedFilters = onlyAccessible || noAppointmentNeeded || openToday;
+
+  const resetAdvancedFilters = () => {
+    setOnlyAccessible(false);
+    setNoAppointmentNeeded(false);
+    setOpenToday(false);
+  };
+
+  // Subjekty filtered by advanced verified attributes (fail-closed)
+  const filteredSubjekty = useMemo(() => {
+    if (!hasActiveAdvancedFilters) return subjekty;
+    return subjekty.filter((s) =>
+      matchesAdvancedFilters(s, {
+        onlyAccessible,
+        noAppointmentNeeded,
+        openToday,
+      })
+    );
+  }, [subjekty, onlyAccessible, noAppointmentNeeded, openToday, hasActiveAdvancedFilters]);
+
   // Subjekty with valid coordinates for the map
   const mapSubjekty = useMemo(() => {
-    return subjekty.filter(
+    return filteredSubjekty.filter(
       (s) =>
         typeof s.lat === 'number' &&
         typeof s.lng === 'number' &&
         !isNaN(s.lat) &&
         !isNaN(s.lng)
     );
-  }, [subjekty]);
+  }, [filteredSubjekty]);
 
   const handleSelectSubjektFromMap = (s: Subjekt) => {
     setSelectedSubjektId(s.id);
@@ -340,13 +533,13 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Všechny subjekty ({subjekty.length})
+                Všechny subjekty ({filteredSubjekty.length})
               </button>
 
               {(Object.keys(ENTITY_CONFIG) as EntityType[]).map((typeKey) => {
                 const cfg = ENTITY_CONFIG[typeKey];
                 const Icon = cfg.icon;
-                const count = subjekty.filter((s) => s.type === typeKey).length;
+                const count = filteredSubjekty.filter((s) => s.type === typeKey).length;
                 return (
                   <button
                     key={typeKey}
@@ -414,6 +607,72 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                   <option value={2}>2.0+ ★★★☆☆</option>
                 </select>
               </div>
+            </div>
+
+            {/* ADVANCED VERIFIED FILTERS (GAP-02) */}
+            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3 text-slate-400" />
+                <span>Ověřené filtry:</span>
+              </span>
+
+              <button
+                type="button"
+                id="filter-only-accessible"
+                onClick={() => setOnlyAccessible(!onlyAccessible)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  onlyAccessible
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Filtrovat pouze subjekty s ověřeným bezbariérovým přístupem"
+              >
+                <Accessibility className="w-3.5 h-3.5" />
+                <span>Pouze bezbariérové</span>
+              </button>
+
+              <button
+                type="button"
+                id="filter-no-appointment"
+                onClick={() => setNoAppointmentNeeded(!noAppointmentNeeded)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  noAppointmentNeeded
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Filtrovat instituce, kde není nutné se předem objednávat"
+              >
+                <CalendarOff className="w-3.5 h-3.5" />
+                <span>Bez nutnosti objednání</span>
+              </button>
+
+              <button
+                type="button"
+                id="filter-open-today"
+                onClick={() => setOpenToday(!openToday)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  openToday
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Filtrovat instituce, které mají dnes úřední hodiny (dle času v ČR)"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Otevřeno dnes</span>
+              </button>
+
+              {hasActiveAdvancedFilters && (
+                <button
+                  type="button"
+                  id="filter-reset-advanced"
+                  onClick={resetAdvancedFilters}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer ml-auto sm:ml-2"
+                  title="Resetovat pokročilé filtry"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Resetovat filtry</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -521,7 +780,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
               <span>
                 Zobrazeno <strong>{mapSubjekty.length}</strong> z celkem{' '}
-                <strong>{subjekty.length}</strong> subjektů se souřadnicemi
+                <strong>{filteredSubjekty.length}</strong> subjektů se souřadnicemi
               </span>
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-flex items-center gap-1.5 text-slate-400 text-[11px]">
@@ -546,7 +805,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 </div>
               ) : (
                 <SubjektyMap
-                  subjekty={subjekty}
+                  subjekty={filteredSubjekty}
                   selectedSubjektId={selectedSubjektId}
                   onSelectSubjekt={handleSelectSubjektFromMap}
                   height="h-full min-h-[480px]"
@@ -564,7 +823,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-indigo-600" />
-                <span>Seznam subjektů ({subjekty.length})</span>
+                <span>Seznam subjektů ({filteredSubjekty.length})</span>
               </h3>
               <span className="text-[11px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                 {selectedRegion !== 'Všechny kraje' ? selectedRegion : 'Celá ČR'}
@@ -572,12 +831,12 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 mt-3 scrollbar-thin">
-              {subjekty.length === 0 ? (
+              {filteredSubjekty.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 text-xs">
                   Nenalezeny žádné subjekty podle zadaných kritérií.
                 </div>
               ) : (
-                subjekty.map((s) => {
+                filteredSubjekty.map((s) => {
                   const isSelected = s.id === selectedSubjektId;
                   const cfg = ENTITY_CONFIG[s.type] || ENTITY_CONFIG.SOUD;
                   const Icon = cfg.icon;
@@ -626,6 +885,24 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                           {s.position}
                         </p>
                       )}
+
+                      {s.verifiedProfile &&
+                        (s.verifiedProfile.status === 'VERIFIED' || s.verifiedProfile.status === 'STALE') && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {s.verifiedProfile.accessibility && s.verifiedProfile.accessibility.trim().length > 0 && (
+                              <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 inline-flex items-center gap-0.5">
+                                <Accessibility className="w-2.5 h-2.5" />
+                                <span>Bezbariérové</span>
+                              </span>
+                            )}
+                            {s.verifiedProfile.appointmentRequired === false && (
+                              <span className="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 inline-flex items-center gap-0.5">
+                                <CalendarOff className="w-2.5 h-2.5" />
+                                <span>Bez objednání</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                       <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-1 text-slate-600 text-[11px] truncate">
@@ -685,7 +962,7 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 >
                   {(ENTITY_CONFIG[detailSubjekt.type] || ENTITY_CONFIG.SOUD).badgeText}
                 </span>
-                {detailSubjekt.isVerified && (
+                {detailSubjekt.verifiedProfile?.status === 'VERIFIED' && (
                   <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-bold">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Ověřený subjekt</span>
@@ -801,6 +1078,152 @@ export const MapaSubjektuView: React.FC<MapaSubjektuViewProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Verified Profile Section (GAP-01) */}
+            {detailSubjekt.verifiedProfile &&
+              (detailSubjekt.verifiedProfile.status === 'VERIFIED' || detailSubjekt.verifiedProfile.status === 'STALE') && (
+                <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+                  {/* Header of verified info */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+                        Ověřené úřední informace
+                      </h3>
+                      {detailSubjekt.verifiedProfile.status === 'STALE' ? (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                          K přezkoumání
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          Aktivně ověřeno
+                        </span>
+                      )}
+                    </div>
+
+                    {(detailSubjekt.verifiedProfile.verifiedAt || detailSubjekt.verifiedProfile.lastCheckedAt) && (
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Naposledy ověřeno:{' '}
+                        <strong className="text-slate-700 font-bold">
+                          {new Date(
+                            detailSubjekt.verifiedProfile.verifiedAt || detailSubjekt.verifiedProfile.lastCheckedAt
+                          ).toLocaleDateString('cs-CZ')}
+                        </strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Key administrative facts grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    {/* Datová schránka */}
+                    {detailSubjekt.verifiedProfile.dataBoxId && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          ID datové schránky
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <code className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-xs">
+                            {detailSubjekt.verifiedProfile.dataBoxId}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (detailSubjekt.verifiedProfile?.dataBoxId) {
+                                navigator.clipboard.writeText(detailSubjekt.verifiedProfile.dataBoxId);
+                                setCopiedDataBox(true);
+                                setTimeout(() => setCopiedDataBox(false), 2000);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                            title="Zkopírovat ID schránky"
+                          >
+                            {copiedDataBox ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Zkopírováno</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Kopírovat</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nutnost objednání & Rezervace */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1">
+                      <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Objednání předem
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span
+                          className={`font-bold text-xs ${
+                            detailSubjekt.verifiedProfile.appointmentRequired ? 'text-amber-800' : 'text-slate-800'
+                          }`}
+                        >
+                          {detailSubjekt.verifiedProfile.appointmentRequired ? 'Vyžadováno předem' : 'Není vyžadováno'}
+                        </span>
+                        {safeBookingUrl && (
+                          <a
+                            href={safeBookingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors"
+                          >
+                            <span>Online rezervace</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bezbariérovost */}
+                    {detailSubjekt.verifiedProfile.accessibility && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1 sm:col-span-2">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          Bezbariérový přístup
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          {detailSubjekt.verifiedProfile.accessibility}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Způsoby podání */}
+                    {formattedSubmissionMethods.length > 0 && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1.5 sm:col-span-2">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          Akceptované způsoby podání
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {formattedSubmissionMethods.map((method, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200"
+                            >
+                              {method}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Úřední / otevírací hodiny */}
+                  {renderedOpeningHours && (
+                    <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold uppercase text-slate-700 tracking-wider">
+                        <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Úřední / otevírací hodiny</span>
+                      </div>
+                      {renderedOpeningHours}
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Workers / Contact Persons Section */}
             <div className="space-y-4 pt-2">

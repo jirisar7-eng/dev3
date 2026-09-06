@@ -168,9 +168,20 @@ app.get('/api/health', async (_req, res) => {
     }
   }
 
+  // Safe file read of release-metadata.json
+  let fileMetadata: any = {};
+  try {
+    const metadataPath = path.join(process.cwd(), 'release-metadata.json');
+    if (fs.existsSync(metadataPath)) {
+      fileMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Failed to read release-metadata.json:', err);
+  }
+
   res.json({
     status: dbStatus === 'connected' ? 'ok' : 'degraded',
-    app: 'tatovacesta_dev',
+    app: process.env.APP_NAME || 'tatovacesta_dev',
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     database: {
@@ -178,6 +189,12 @@ app.get('/api/health', async (_req, res) => {
       prisma: prismaStatus,
     },
     uptime: process.uptime(),
+    release: {
+      version: process.env.RELEASE_VERSION || fileMetadata.version || '0.0.0',
+      gitSha: process.env.GIT_SHA || fileMetadata.gitSha || 'unknown',
+      dockerImage: process.env.DOCKER_IMAGE || fileMetadata.dockerImage || 'tatovacesta_app_dev3',
+      dockerImageDigest: process.env.DOCKER_IMAGE_DIGEST || fileMetadata.dockerImageDigest || 'unknown',
+    }
   });
 });
 

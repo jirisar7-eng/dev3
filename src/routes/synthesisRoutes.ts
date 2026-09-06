@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
+import { requireAuth, requireRole, requireExperimentalAccess, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { SynthesisService } from '../services/synthesisService';
 import { GithubSyncService } from '../services/synthesis/githubSyncService';
 
@@ -9,7 +9,7 @@ const router = Router();
  * GET /api/admin/synthesis/tickets
  * Lists synthesis tickets with optional filtering.
  */
-router.get('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/tickets', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { source, severity, category, status, search, limit, offset } = req.query;
 
@@ -42,7 +42,7 @@ router.get('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (r
  * GET /api/admin/synthesis/tickets/:id
  * Fetches a single synthesis ticket by ID or ticketNumber.
  */
-router.get('/tickets/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/tickets/:id', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const ticket = await SynthesisService.getTicketById(id);
@@ -73,7 +73,7 @@ router.get('/tickets/:id', requireAuth as any, requireRole('ADMIN') as any, asyn
  * Creates a new synthesis ticket (or returns existing duplicate).
  * FAIL-CLOSED: Returns 503 if DB is unavailable.
  */
-router.post('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/tickets', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {
       title,
@@ -140,7 +140,7 @@ router.post('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (
  * Adds a comment to an existing synthesis ticket.
  * FAIL-CLOSED: Returns 503 if DB is unavailable.
  */
-router.post('/tickets/:id/comments', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/tickets/:id/comments', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { content, isInternal, isAiGenerated } = req.body;
@@ -183,7 +183,7 @@ router.post('/tickets/:id/comments', requireAuth as any, requireRole('ADMIN') as
  * Ingests the e-Sbírka finding as first real Synthesis ticket.
  * FAIL-CLOSED: Returns 503 if DB is unavailable.
  */
-router.post('/ingest-esbirka', requireAuth as any, requireRole('ADMIN') as any, async (_req: AuthenticatedRequest, res: Response) => {
+router.post('/ingest-esbirka', requireAuth as any, requireExperimentalAccess() as any, async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const result = await SynthesisService.ingestEsbirkaRemediationFinding();
 
@@ -207,7 +207,7 @@ router.post('/ingest-esbirka', requireAuth as any, requireRole('ADMIN') as any, 
  * Links/synchronizes GitHub metadata (Issue, PR, Commit SHA, Branch) with a Synthesis ticket.
  * STRICT FAIL-CLOSED & RBAC: Requires ADMIN role, rejects invalid SHA/numbers and cross-repository references.
  */
-router.post('/tickets/:id/github', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/tickets/:id/github', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const {

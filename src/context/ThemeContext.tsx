@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiClient';
+import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
@@ -19,6 +19,98 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Globals for revoking object URLs to prevent memory leaks
+let activeManifestUrl: string | null = null;
+
+const updateDynamicFavicon = (faviconSvg?: string | null) => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  
+  const links = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+  
+  if (faviconSvg && faviconSvg.trim()) {
+    const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(faviconSvg)}`;
+    
+    links.forEach(link => {
+      link.setAttribute('href', dataUrl);
+    });
+  } else {
+    // Reset to defaults
+    links.forEach(link => {
+      const type = link.getAttribute('type');
+      const sizes = link.getAttribute('sizes');
+      if (type === 'image/svg+xml') {
+        link.setAttribute('href', '/icon.svg');
+      } else if (sizes === '32x32') {
+        link.setAttribute('href', '/favicon-32x32.png');
+      } else if (sizes === '16x16') {
+        link.setAttribute('href', '/favicon-16x16.png');
+      } else {
+        link.setAttribute('href', '/favicon.ico');
+      }
+    });
+  }
+};
+
+const updateDynamicMetadata = (branding?: any) => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  
+  if (branding && branding.primaryLogoSvg && branding.primaryLogoSvg.trim()) {
+    const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(branding.primaryLogoSvg)}`;
+    
+    let appleTouchIcon: HTMLLinkElement | null = document.querySelector('link[rel="apple-touch-icon"]');
+    if (appleTouchIcon) {
+      appleTouchIcon.setAttribute('href', dataUrl);
+    }
+    
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', dataUrl);
+    
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) twitterImage.setAttribute('content', dataUrl);
+  }
+};
+
+const updateDynamicManifest = (branding?: any) => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  
+  let manifestLink: HTMLLinkElement | null = document.querySelector('link[rel="manifest"]');
+  if (!manifestLink) return;
+
+  if (activeManifestUrl) {
+    URL.revokeObjectURL(activeManifestUrl);
+    activeManifestUrl = null;
+  }
+
+  const baseManifest = {
+    "name": branding?.logoAlt || "Táta má právo",
+    "short_name": branding?.logoAlt || "Táta má právo",
+    "description": "Informační a klientský portál pro otce v rozvodové situaci, sdílené rodičovství a krizovou pomoc.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#1e3a8a",
+    "background_color": "#f8fafc",
+    "icons": [
+      {
+        "src": branding?.faviconSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(branding.faviconSvg)}` : "/favicon.ico",
+        "sizes": "any",
+        "type": "image/svg+xml"
+      },
+      {
+        "src": branding?.primaryLogoSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(branding.primaryLogoSvg)}` : "/icon.svg",
+        "sizes": "any",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      }
+    ]
+  };
+  
+  const manifestBlob = new Blob([JSON.stringify(baseManifest, null, 2)], { type: 'application/json' });
+  activeManifestUrl = URL.createObjectURL(manifestBlob);
+  manifestLink.setAttribute('href', activeManifestUrl);
+};
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [activeTheme, setActiveThemeState] = useState<Theme | null>(null);
@@ -35,6 +127,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (res.ok) {
         const data = await res.json();
         setBranding(data);
+        if (data) {
+          updateDynamicFavicon(data.faviconSvg);
+          updateDynamicMetadata(data);
+          updateDynamicManifest(data);
+        }
       }
     } catch (e) {
       console.warn('Failed to fetch branding', e);
@@ -148,25 +245,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const res = await apiFetch('/api/themes');
       if (res.ok) {
-        const data: Theme[] = await res.json();
-        setThemes(data);
+        const data: Theme[] | null = await safeJsonResponse(res);
+        if (data && Array.isArray(data)) {
+          setThemes(data);
 
-        // Find active theme or default
-        const active = data.find((t) => t.active) || data.find((t) => t.isDefault) || data[0];
-        if (active) {
-          setActiveThemeState(active);
-          if (active.variables) {
-            applyCssVariables(active.variables);
-            setThemeSettings(
-              active.variables.map((v) => ({
-                id: v.id,
-                key: v.key,
-                value: v.value,
-                label: v.label,
-                category: v.category,
-                updatedAt: v.updatedAt || new Date().toISOString(),
-              }))
-            );
+          // Find active theme or default
+          const active = data.find((t) => t.active) || data.find((t) => t.isDefault) || data[0];
+          if (active) {
+            setActiveThemeState(active);
+            if (active.variables) {
+              applyCssVariables(active.variables);
+              setThemeSettings(
+                active.variables.map((v) => ({
+                  id: v.id,
+                  key: v.key,
+                  value: v.value,
+                  label: v.label,
+                  category: v.category,
+                  updatedAt: v.updatedAt || new Date().toISOString(),
+                }))
+              );
+            }
           }
         }
       }
@@ -178,6 +277,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     reloadThemes();
     fetchBranding();
+  }, []);
+
+  useEffect(() => {
+    const handleBrandingUpdate = () => {
+      fetchBranding();
+    };
+    window.addEventListener('branding-updated', handleBrandingUpdate);
+    return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
   }, []);
 
   const updateColor = async (key: string, value: string) => {

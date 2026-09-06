@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiClient';
+import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TextItem } from '../types';
 
@@ -26,15 +26,17 @@ export const TextProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await apiFetch('/api/content');
       if (res.ok) {
-        const data: TextItem[] = await res.json();
-        setTexts(data);
-        const map: Record<string, string> = {};
-        for (const item of data) {
-          if (item.active !== false) {
-            map[item.key] = locale === 'en' && item.valueEnglish ? item.valueEnglish : item.valueCzech;
+        const data: TextItem[] | null = await safeJsonResponse(res);
+        if (data && Array.isArray(data)) {
+          setTexts(data);
+          const map: Record<string, string> = {};
+          for (const item of data) {
+            if (item.active !== false) {
+              map[item.key] = locale === 'en' && item.valueEnglish ? item.valueEnglish : item.valueCzech;
+            }
           }
+          setTextMap(map);
         }
-        setTextMap(map);
       }
     } catch (e) {
       console.error('Error fetching content strings:', e);

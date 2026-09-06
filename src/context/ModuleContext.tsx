@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiClient';
+import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Module } from '../types';
 
@@ -22,8 +22,10 @@ export const ModuleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const res = await apiFetch('/api/modules');
       if (res.ok) {
-        const data: Module[] = await res.json();
-        setModules(data);
+        const data: Module[] | null = await safeJsonResponse(res);
+        if (data && Array.isArray(data)) {
+          setModules(data);
+        }
       }
     } catch (e) {
       console.error('Error fetching modules:', e);

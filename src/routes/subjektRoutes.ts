@@ -1,11 +1,24 @@
 import { apiFetch } from '../utils/apiClient';
 import { Router } from 'express';
-import { subjektService } from '../services/subjektService';
+import rateLimit from 'express-rate-limit';
+import { subjektService, toPublicSubjektDto } from '../services/subjektService';
+import { SubjectVerifiedInfoService } from '../services/subjectVerifiedInfoService';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// Rate limiter for geocode: ~20 requests per 60 seconds per client/IP (GAP-03)
+export const geocodeRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  message: { error: 'Příliš mnoho požadavků na geokódování. Zkuste to prosím za minutu.' },
+});
+
 // GET /api/subjekty - Get all subjekty with optional filtering
+// P1: Public endpoint strictly enforces status = 'VERIFIED' for unprivileged callers.
 
 // GET /api/subjekty/lookup?name=...
 router.get('/lookup', async (req, res) => {
@@ -29,16 +42,25 @@ router.get('/', async (req, res) => {
   try {
     const { type, region, kraj, city, search, minRating, status } = req.query;
     const filterRegion = (region || kraj) as string;
+
+    const user = (req as any).user;
+    const isModeratorOrAdmin = user && (user.role === 'MODERATOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN');
+
+    // P1: Only authenticated moderators/admins can query statuses other than VERIFIED
+    const requestedStatus = (isModeratorOrAdmin && typeof status === 'string') ? status : 'VERIFIED';
+
     const items = await subjektService.getSubjekty({
       type: type as string,
       region: filterRegion,
       kraj: filterRegion,
       city: city as string,
       search: search as string,
-      status: status as string,
+      status: requestedStatus,
       minRating: minRating ? Number(minRating) : undefined,
     });
-    return res.json(items);
+
+    const sanitized = items.map(item => toPublicSubjektDto(item, isModeratorOrAdmin));
+    return res.json(sanitized);
   } catch (error) {
     console.error('Error fetching subjekty:', error);
     return res.status(500).json({ error: 'Chyba při načítání subjektů' });
@@ -104,8 +126,8 @@ router.get('/verify-ico/:ico', async (req, res) => {
 
 
 
-// POST /api/subjekty/geocode - Geocode address securely
-router.post('/geocode', requireAuth as any, async (req: any, res) => {
+// POST /api/subjekty/geocode - Geocode address securely (Rate-limited, GAP-03)
+router.post('/geocode', geocodeRateLimiter, requireAuth as any, async (req: any, res) => {
   try {
     const { address, city } = req.body;
     if (!address && !city) {
@@ -238,14 +260,242 @@ router.put('/:id/reject', requireAuth as any, requireRole('MODERATOR') as any, a
 });
 
 
+// ============================================================================
+// REVIEW MODERATION ROUTES (Must precede /:id to avoid route parameter collision)
+// ============================================================================
+
+// GET /api/subjekty/reviews/pending - List pending reviews (Requires MODERATOR or ADMIN)
+router.get('/reviews/pending', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
+  try {
+    const pending = await subjektService.getPendingReviews();
+    return res.json(pending);
+  } catch (error) {
+    console.error('Error fetching pending reviews:', error);
+    return res.status(500).json({ error: 'Chyba při načítání recenzí ke schválení' });
+  }
+});
+
+// PATCH /api/subjekty/reviews/:id/status - Approve or reject review (Requires MODERATOR or ADMIN)
+router.patch('/reviews/:id/status', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (status !== 'APPROVED' && status !== 'REJECTED') {
+      return res.status(400).json({ error: 'Neplatný stav recenze (povoleno: APPROVED, REJECTED)' });
+    }
+    const updated = await subjektService.updateReviewStatus(req.params.id, status);
+    return res.json(updated);
+  } catch (error: any) {
+    console.error('Error updating review status:', error);
+    if (error?.message?.includes('Recenze nenalezena')) {
+      return res.status(404).json({ error: 'Recenze nenalezena' });
+    }
+    return res.status(500).json({ error: 'Chyba při aktualizaci stavu recenze' });
+  }
+});
+
+// DELETE /api/subjekty/reviews/:id - Delete review (Requires MODERATOR or ADMIN)
+router.delete('/reviews/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
+  try {
+    const result = await subjektService.deleteReview(req.params.id);
+    if (!result.success) {
+      return res.status(404).json({ error: result.error || 'Recenze nenalezena' });
+    }
+    return res.json({ success: true, message: 'Recenze byla smazána' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return res.status(500).json({ error: 'Chyba při mazání recenze' });
+  }
+});
+
+// ============================================================================
+// FAZE P1 — ENDPOINTY PRO OVĚŘENÉ INFORMACE A MODERACI NÁVRHŮ ZDROJŮ
+// ============================================================================
+
+// PUT /api/subjekty/sources/:sourceId/review - Moderator/Admin reviews proposed source
+router.put('/sources/:sourceId/review', requireAuth as any, requireRole('MODERATOR') as any, async (req: any, res) => {
+  try {
+    const { sourceId } = req.params;
+    const { action, rejectionReason, subjektId } = req.body;
+
+    if (action !== 'APPROVE' && action !== 'REJECT') {
+      return res.status(400).json({ error: 'Neplatná akce. Povolené hodnoty: APPROVE, REJECT.' });
+    }
+
+    if (action === 'REJECT') {
+      if (!rejectionReason || typeof rejectionReason !== 'string' || rejectionReason.trim().length < 5 || rejectionReason.trim().length > 500) {
+        return res.status(400).json({ error: 'Důvod zamítnutí musí mít délku mezi 5 a 500 znaky.' });
+      }
+    }
+
+    // Optional BOLA/IDOR check if subjektId is supplied in body
+    if (subjektId) {
+      const parentSubjekt = await subjektService.getSubjektById(subjektId);
+      if (!parentSubjekt) {
+        return res.status(404).json({ error: 'Subjekt nebo návrh nebyl nalezen.' });
+      }
+    }
+
+    const result = await SubjectVerifiedInfoService.reviewSourceProposal(
+      sourceId,
+      {
+        decision: action,
+        rejectionReason: action === 'REJECT' ? rejectionReason.trim() : undefined,
+      },
+      req.user
+    );
+
+    return res.json(result);
+  } catch (error: any) {
+    if (error?.statusCode === 409 || error?.code === 'CONFLICT' || error?.message?.includes('již zpracován')) {
+      return res.status(409).json({ error: error.message || 'Tento návrh byl již zpracován jiným moderátorem.' });
+    }
+    if (error?.statusCode === 403 || error?.code === 'FORBIDDEN' || error?.message?.includes('Nemůžete moderovat') || error?.message?.includes('oprávnění')) {
+      return res.status(403).json({ error: error.message || 'Nemáte oprávnění k této akci.' });
+    }
+    if (error?.statusCode === 404 || error?.message?.includes('nebyl nalezen')) {
+      return res.status(404).json({ error: error.message || 'Subjekt nebo návrh nebyl nalezen.' });
+    }
+    if (error?.statusCode === 400 || error?.message?.includes('Neplatné') || error?.message?.includes('povinné')) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error('Error reviewing source proposal:', error);
+    return res.status(500).json({ error: 'Chyba při moderaci návrhu zdroje' });
+  }
+});
+
+// GET /api/subjekty/:id/verified-profile - Public safe DTO for verified profile
+router.get('/:id/verified-profile', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subjekt = await subjektService.getSubjektById(id);
+    if (!subjekt) {
+      return res.status(404).json({ error: 'Subjekt nebo návrh nebyl nalezen.' });
+    }
+
+    const user = (req as any).user;
+    const isModeratorOrAdmin = user && (user.role === 'MODERATOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN');
+
+    const profile = await SubjectVerifiedInfoService.getVerifiedProfile(id);
+    if (!profile) {
+      return res.json(null);
+    }
+
+    // Public DTO separation: strip internal audit metadata for unprivileged users
+    if (!isModeratorOrAdmin) {
+      if (profile.status !== 'VERIFIED' && profile.status !== 'STALE') {
+        return res.json(null);
+      }
+      const {
+        verifiedById: _vId,
+        createdById: _cId,
+        reviewedById: _rId,
+        rejectionReason: _rReason,
+        informationSources: _iSources,
+        ...safeProfile
+      } = profile as any;
+      return res.json(safeProfile);
+    }
+
+    return res.json(profile);
+  } catch (error) {
+    console.error('Error fetching verified profile:', error);
+    return res.status(500).json({ error: 'Chyba při načítání ověřeného profilu' });
+  }
+});
+
+// GET /api/subjekty/:id/information-sources - Moderation list of sources for a subject
+router.get('/:id/information-sources', requireAuth as any, requireRole('MODERATOR') as any, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subjekt = await subjektService.getSubjektById(id);
+    if (!subjekt) {
+      return res.status(404).json({ error: 'Subjekt nebo návrh nebyl nalezen.' });
+    }
+
+    const status = req.query.status as any;
+    const sources = await SubjectVerifiedInfoService.getInformationSources(id, status);
+    return res.json(sources);
+  } catch (error) {
+    console.error('Error fetching information sources:', error);
+    return res.status(500).json({ error: 'Chyba při načítání zdrojů informací' });
+  }
+});
+
+// PUT /api/subjekty/:id/verified-profile - Direct admin update of verified profile
+router.put('/:id/verified-profile', requireAuth as any, requireRole('ADMIN') as any, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const subjekt = await subjektService.getSubjektById(id);
+    if (!subjekt) {
+      return res.status(404).json({ error: 'Subjekt nebo návrh nebyl nalezen.' });
+    }
+
+    // Whitelist only allowed fields to prevent mass assignment
+    const {
+      officialWebsite,
+      officialPhone,
+      officialEmail,
+      openingHours,
+      appointmentRequired,
+      bookingUrl,
+      accessibility,
+      dataBoxId,
+      submissionMethods,
+      staleAfterDays,
+    } = req.body;
+
+    const safeUpdateData = {
+      officialWebsite,
+      officialPhone,
+      officialEmail,
+      openingHours,
+      appointmentRequired,
+      bookingUrl,
+      accessibility,
+      dataBoxId,
+      submissionMethods,
+      staleAfterDays,
+    };
+
+    const updatedProfile = await SubjectVerifiedInfoService.updateVerifiedProfileDirect(
+      id,
+      safeUpdateData,
+      req.user
+    );
+
+    return res.json(updatedProfile);
+  } catch (error: any) {
+    if (error?.statusCode === 403 || error?.message?.includes('oprávnění') || error?.message?.includes('Neautorizovaný')) {
+      return res.status(403).json({ error: error.message || 'Nemáte oprávnění k této akci.' });
+    }
+    if (error?.statusCode === 400 || error?.message?.includes('Neplatn') || error?.message?.includes('Nevalidní') || error?.message?.includes('povinné')) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error('Error directly updating verified profile:', error);
+    return res.status(500).json({ error: 'Chyba při přímé úpravě ověřeného profilu' });
+  }
+});
+
 // GET /api/subjekty/:id - Get single Subjekt detail
+// P1: Restricts unverified/rejected subjects to moderators, admins, or resource owners.
 router.get('/:id', async (req, res) => {
   try {
     const item = await subjektService.getSubjektById(req.params.id);
     if (!item) {
       return res.status(404).json({ error: 'Subjekt nenalezen' });
     }
-    return res.json(item);
+
+    const user = (req as any).user;
+    const isModeratorOrAdmin = user && (user.role === 'MODERATOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN');
+    const isOwner = user && (item as any).createdById && (item as any).createdById === user.id;
+
+    // Unverified/rejected subjects are not visible to the public
+    if (item.status !== 'VERIFIED' && !isModeratorOrAdmin && !isOwner) {
+      return res.status(404).json({ error: 'Subjekt nenalezen' });
+    }
+
+    const sanitized = toPublicSubjektDto(item, isModeratorOrAdmin || isOwner);
+    return res.json(sanitized);
   } catch (error) {
     console.error('Error fetching subjekt detail:', error);
     return res.status(500).json({ error: 'Chyba při načítání detailu subjektu' });
@@ -308,6 +558,8 @@ router.delete('/:id', requireAuth as any, requireRole('ADMIN') as any, async (re
 });
 
 // POST /api/subjekty/:id/reviews - Add Review to Subjekt or Pracovnik (Requires Auth)
+// P0: Always creates review with status 'PENDING'.
+// P1: Validates numerical ratings (1-5), comment length, strips dangerous markup, prevents duplicates.
 router.post('/:id/reviews', requireAuth as any, async (req: any, res) => {
   try {
     const subjektId = req.params.id;
@@ -327,37 +579,83 @@ router.post('/:id/reviews', requireAuth as any, async (req: any, res) => {
     // Derived from cryptographically verified session
     const userId = req.user.id;
 
-    if (!rating || !comment) {
-      return res.status(400).json({ error: 'Chybí hodnocení nebo slovní komentář' });
+    // Validate rating
+    const numRating = Number(rating);
+    if (isNaN(numRating) || !Number.isFinite(numRating) || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ error: 'Celkové hodnocení musí být v rozsahu 1 až 5 hvězdiček.' });
     }
 
-    if (pracovnikId) {
-      if (objektivita === undefined || komunikace === undefined || rychlost === undefined) {
-        return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií pracovníka (objektivita, komunikace, rychlost)' });
+    // Validate comment
+    if (!comment || typeof comment !== 'string') {
+      return res.status(400).json({ error: 'Slovní komentář je povinný.' });
+    }
+    const cleanComment = comment.trim().replace(/<[^>]*>?/gm, ''); // Strip HTML tags
+    if (cleanComment.length < 5) {
+      return res.status(400).json({ error: 'Slovní komentář je příliš krátký (minimum je 5 znaků).' });
+    }
+    if (cleanComment.length > 2000) {
+      return res.status(400).json({ error: 'Slovní komentář přesahuje maximální povolenou délku 2000 znaků.' });
+    }
+
+    const validateCriterion = (val: any, label: string) => {
+      if (val === undefined || val === null) return undefined;
+      const n = Number(val);
+      if (isNaN(n) || n < 1 || n > 5) {
+        throw new Error(`Dílčí hodnocení "${label}" musí být v rozsahu 1 až 5.`);
       }
-    } else {
-      if (supportSharedCare === undefined || professionalism === undefined || speedAndDeadlines === undefined) {
-        return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií instituce (podpora střídavé péče, věcnost, rychlost)' });
+      return Math.round(n);
+    };
+
+    let parsedSupport: number | undefined;
+    let parsedProf: number | undefined;
+    let parsedSpeed: number | undefined;
+    let parsedObj: number | undefined;
+    let parsedKom: number | undefined;
+    let parsedRych: number | undefined;
+
+    try {
+      if (pracovnikId) {
+        parsedObj = validateCriterion(objektivita, 'objektivita');
+        parsedKom = validateCriterion(komunikace, 'komunikace');
+        parsedRych = validateCriterion(rychlost, 'rychlost');
+        if (parsedObj === undefined || parsedKom === undefined || parsedRych === undefined) {
+          return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií pracovníka (objektivita, komunikace, rychlost).' });
+        }
+      } else {
+        parsedSupport = validateCriterion(supportSharedCare, 'podpora střídavé péče');
+        parsedProf = validateCriterion(professionalism, 'věcnost a profesionalita');
+        parsedSpeed = validateCriterion(speedAndDeadlines, 'dodržování lhůt');
+        if (parsedSupport === undefined || parsedProf === undefined || parsedSpeed === undefined) {
+          return res.status(400).json({ error: 'Chybí hodnocení některého z dílčích kritérií instituce (podpora střídavé péče, věcnost, rychlost).' });
+        }
       }
+    } catch (valErr: any) {
+      return res.status(400).json({ error: valErr.message });
     }
 
     const review = await subjektService.addReview({
       subjektId,
       pracovnikId,
       userId,
-      rating: Number(rating),
-      supportSharedCare: supportSharedCare !== undefined ? Number(supportSharedCare) : undefined,
-      professionalism: professionalism !== undefined ? Number(professionalism) : undefined,
-      speedAndDeadlines: speedAndDeadlines !== undefined ? Number(speedAndDeadlines) : undefined,
-      objektivita: objektivita !== undefined ? Number(objektivita) : undefined,
-      komunikace: komunikace !== undefined ? Number(komunikace) : undefined,
-      rychlost: rychlost !== undefined ? Number(rychlost) : undefined,
-      comment,
+      rating: Math.round(numRating),
+      supportSharedCare: parsedSupport,
+      professionalism: parsedProf,
+      speedAndDeadlines: parsedSpeed,
+      objektivita: parsedObj,
+      komunikace: parsedKom,
+      rychlost: parsedRych,
+      comment: cleanComment,
       isAnonymous: isAnonymous !== undefined ? Boolean(isAnonymous) : true,
     });
 
-    return res.status(201).json(review);
-  } catch (error) {
+    return res.status(201).json({
+      ...review,
+      message: 'Hodnocení bylo uloženo a čeká na schválení moderátorem.',
+    });
+  } catch (error: any) {
+    if (error?.message?.includes('DUPLICATE_REVIEW')) {
+      return res.status(409).json({ error: 'Pro tento záznam jste již vložil(a) hodnocení.' });
+    }
     console.error('Error adding review:', error);
     return res.status(500).json({ error: 'Chyba při ukládání recenze' });
   }
