@@ -71,6 +71,16 @@ test('P1 RBAC REGRESSION TEST — Synthesis API (Real HTTP Route Check)', async 
     updatedAt: new Date(),
   };
 
+  const standardUser: User = {
+    id: 'user1',
+    email: 'user@example.com',
+    name: 'Normal User',
+    role: 'USER',
+    status: 'ACTIVE',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   // Mock Prisma for `requireExperimentalAccess` to allow ADMIN via systemSetting
   const mockPrisma = {
     systemSetting: {
@@ -176,12 +186,26 @@ test('P1 RBAC REGRESSION TEST — Synthesis API (Real HTTP Route Check)', async 
   await t.test('7. GET endpointy Synthesis zůstávají dostupné pro PREVIEW_ACTOR', async () => {
     mockUser = previewUser;
     const getTicketsMock = t.mock.method(SynthesisService, 'getTickets', async () => ({ tickets: [], total: 0, isDegraded: false }));
+    const getTicketByIdMock = t.mock.method(SynthesisService, 'getTicketById', async () => ({ id: 't1' }));
 
     const res = await request(app)
       .get('/api/admin/synthesis/tickets');
 
     assert.strictEqual(res.status, 200, 'GET must return 200');
     assert.strictEqual(getTicketsMock.mock.callCount(), 1, 'Query service must be called');
+
+    const res2 = await request(app).get('/api/admin/synthesis/tickets/123');
+    assert.strictEqual(res2.status, 200, 'GET /tickets/:id must return 200 for PREVIEW_ACTOR');
+    assert.strictEqual(getTicketByIdMock.mock.callCount(), 1);
+  });
+
+  await t.test('7b. Běžný uživatel NEMÁ přístup na GET Synthesis', async () => {
+    mockUser = standardUser;
+    const res1 = await request(app).get('/api/admin/synthesis/tickets');
+    assert.strictEqual(res1.status, 403, 'GET /tickets must return 403 for USER');
+
+    const res2 = await request(app).get('/api/admin/synthesis/tickets/123');
+    assert.strictEqual(res2.status, 403, 'GET /tickets/:id must return 403 for USER');
   });
 
   await t.test('8. Explicitní ověření pořadí: authorizeOperation -> service', () => {

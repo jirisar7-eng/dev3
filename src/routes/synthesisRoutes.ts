@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { SynthesisService } from '../services/synthesisService';
 import { GithubSyncService } from '../services/synthesis/githubSyncService';
@@ -7,10 +7,22 @@ import { ControlPlaneAuthorization } from '../services/controlPlaneAuthorization
 const router = Router();
 
 /**
+ * Bezpečný middleware model pro čtecí operace Synthesis
+ * Propouští pouze PREVIEW_ACTOR, ADMIN a SUPER_ADMIN. Běžný uživatel bez oprávnění je zamítnut (403).
+ */
+const requirePreviewAccess = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const role = req.user?.role as string | undefined;
+  if (role === 'PREVIEW_ACTOR' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Přístup odepřen. Chybí oprávnění.' });
+};
+
+/**
  * GET /api/admin/synthesis/tickets
  * Lists synthesis tickets with optional filtering.
  */
-router.get('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/tickets', requireAuth as any, requirePreviewAccess as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { source, severity, category, status, search, limit, offset } = req.query;
 
@@ -43,7 +55,7 @@ router.get('/tickets', requireAuth as any, requireRole('ADMIN') as any, async (r
  * GET /api/admin/synthesis/tickets/:id
  * Fetches a single synthesis ticket by ID or ticketNumber.
  */
-router.get('/tickets/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/tickets/:id', requireAuth as any, requirePreviewAccess as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const ticket = await SynthesisService.getTicketById(id);
