@@ -19,6 +19,7 @@ import {
 
 interface MementoViewProps {
   onNavigate: (path: string) => void;
+  currentPath?: string;
 }
 
 interface MementoSection {

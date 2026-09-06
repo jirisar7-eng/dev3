@@ -76,7 +76,6 @@ import {
 } from './academy';
 import { SeoHead } from './SeoHead';
 import { PsychologieView } from './PsychologieView';
-import { CareHubPublicLandingView } from './CareHubPublicLandingView';
 import { MajetekView } from './MajetekView';
 import { BiffCommunicationView } from './BiffCommunicationView';
 import { KalendarLhutView } from './KalendarLhutView';
@@ -190,10 +189,6 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
 
   // 0.1B Care Hub / Péče o dítě
-  if (slug === 'pece' || slug === 'moje-dite') {
-    return <CareHubPublicLandingView onNavigate={onNavigate} />;
-  }
-
   // 0.2 CoParent Hub (/coparent-hub, /coparent)
   if (slug === 'coparent-hub' || slug === 'coparent' || slug === 'spolurodicovsky-hub') {
     return <CoParentHubPage onNavigate={onNavigate} />;
