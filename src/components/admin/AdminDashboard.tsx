@@ -51,6 +51,7 @@ import { ContentProjectCenter } from './ContentProjectCenter';
 import { UnifiedOperationsCenter } from './operations/UnifiedOperationsCenter';
 import { AiTelemetryCard } from './audit/AiTelemetryCard';
 import { OrionTraceCenterPage } from './orion/OrionTraceCenterPage';
+import { ExperimentalLabPage } from '../experimental/ExperimentalLabPage';
 
 interface AdminDashboardProps {
   currentPath?: string;
@@ -65,6 +66,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
   const [activeTab, setActiveTab] = useState<AdminTabId>(() => resolveAdminTabFromUrl(currentPath));
   const [mailcowInitName, setMailcowInitName] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isExperimentalApproved, setIsExperimentalApproved] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.role === 'SUPER_ADMIN') {
+      setIsExperimentalApproved(true);
+      return;
+    }
+    fetch('/api/admin/experimental/approved-users')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          const approved = data.data.includes(currentUser.email);
+          setIsExperimentalApproved(approved);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch experimental approval:', err));
+  }, [currentUser]);
 
   useEffect(() => {
     setActiveTab(resolveAdminTabFromUrl(currentPath));
@@ -186,6 +205,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
                 activeTab={activeTab}
                 onSelectTab={handleSelectTab}
                 onCloseMobile={() => setIsMobileSidebarOpen(false)}
+                isExperimentalApproved={isExperimentalApproved}
               />
             </div>
           </div>
@@ -199,6 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           <AdminSidebar
             activeTab={activeTab}
             onSelectTab={handleSelectTab}
+            isExperimentalApproved={isExperimentalApproved}
           />
         </div>
 
@@ -394,6 +415,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'operations-overview' && <UnifiedOperationsCenter onNavigate={onNavigate} />}
           {(activeTab === 'qa' || activeTab === 'copilot') && <QADashboard currentPath={currentPath} onNavigate={onNavigate} />}
           {activeTab === 'orion' && <OrionTraceCenterPage onNavigate={onNavigate} />}
+          {activeTab === 'experimenty' && <ExperimentalLabPage onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'tests' && <TestRunnerCard />}
           {activeTab === 'ai-telemetry' && <AiTelemetryCard onNavigate={onNavigate} />}

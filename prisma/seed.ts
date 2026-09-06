@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { nonOspodSubjekty } from '../src/data/nonOspodSubjekty';
+import { SoudyPopulationPipeline } from '../src/services/dataPipeline/soudyPopulationPipeline';
 
 export const realSubjektyData = nonOspodSubjekty as any[];
 
@@ -461,6 +462,10 @@ export async function runSeed() {
       // 5. IMPORT VŠECH 227 PRACOVIŠŤ OSPOD Z DATASETU
       console.log('[Prisma Seed] Importování kompletního registru 227 pracovišť OSPOD...');
       await importOspody();
+
+      // 5b. POPULACE OVĚŘENÝCH PROFILŮ A ZDROJŮ PRO 107 SOUDŮ ČR
+      console.log('[Prisma Seed] Spouštím pipeline pro populaci ověřených profilů a provenience soudů...');
+      await SoudyPopulationPipeline.populatePrisma();
 
       await runHelpNewsSeed();
       await runWikiGuidesSeed();

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useText } from '../../context/TextContext';
 import { Mail, Lock, LogIn, AlertCircle, ArrowRight, Shield, CheckCircle2, Fingerprint, Key } from 'lucide-react';
+import { Logo } from '../common/Logo';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
@@ -323,9 +324,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       <div className="max-w-md w-full space-y-8 bg-[var(--color-surface,#ffffff)] p-8 sm:p-10 rounded-3xl border border-[var(--color-border,#e2e8f0)] shadow-xl">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-blue-900 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md font-extrabold text-2xl">
-            T
-          </div>
+          <Logo size="lg" variant="icon" className="mx-auto" />
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-heading,#0f172a)] tracking-tight">
             {t('auth.login.title', 'Přihlášení do systému')}
           </h2>

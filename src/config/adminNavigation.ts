@@ -54,6 +54,7 @@ export type AdminTabId =
   | 'qa'
   | 'copilot'
   | 'orion'
+  | 'experimenty'
   | 'ai-context'
   | 'ai-telemetry'
   | 'settings'
@@ -413,6 +414,15 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         requiredRole: 'SUPER_ADMIN',
         keywords: ['github', 'publisher', 'git', 'push', 'commit', 'release', 'repozitář'],
       },
+      {
+        id: 'experimenty',
+        title: '🧪 Experimentální Lab',
+        subtitle: 'Syntetický test-bed, Orion AI a technická laboratoř',
+        icon: FlaskConical,
+        badge: { text: 'LAB', variant: 'purple' },
+        path: '/administrace/experimenty',
+        keywords: ['laboratoř', 'experimenty', 'orion', 'lab', 'synthesis', 'experimental', 'schválení', 'přístup'],
+      },
     ],
   },
   {
@@ -434,7 +444,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   },
 ];
 
-export function getVisibleAdminSections(userRole?: UserRole): AdminNavSection[] {
+export function getVisibleAdminSections(userRole?: UserRole, isExperimentalApproved?: boolean): AdminNavSection[] {
   if (!userRole) return [];
 
   // Hierarchy check for SUPER_ADMIN vs ADMIN vs others
@@ -445,6 +455,9 @@ export function getVisibleAdminSections(userRole?: UserRole): AdminNavSection[] 
     // Non-admin roles (e.g. CONTENT_MANAGER, LEGAL_EDITOR, MODERATOR) can only see relevant items if enabled
     return ADMIN_NAV_SECTIONS.map((section) => {
       const visibleItems = section.items.filter((item) => {
+        if (item.id === 'experimenty') {
+          return !!isExperimentalApproved;
+        }
         if (item.requiredRole === 'SUPER_ADMIN') return false;
         if (item.requiredRole === 'ADMIN' && !isAdminOrSuper) return false;
         
@@ -462,6 +475,9 @@ export function getVisibleAdminSections(userRole?: UserRole): AdminNavSection[] 
   // Admin and Super Admin
   return ADMIN_NAV_SECTIONS.map((section) => {
     const visibleItems = section.items.filter((item) => {
+      if (item.id === 'experimenty') {
+        return isSuperAdmin || !!isExperimentalApproved;
+      }
       if (item.requiredRole === 'SUPER_ADMIN') {
         return isSuperAdmin;
       }
@@ -525,7 +541,8 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
   if (target.startsWith('/admin/pages')) return 'pages';
   if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
   if (target.startsWith('/admin/dns')) return 'dns';
-  if (target.includes('/administrace/orion') || target.includes('/admin/orion') || target.includes('tab=orion')) return 'orion';
+  if (target.includes('/administrace/orion') || target.includes('/admin/orion') || target.includes('tab=orion') || target.includes('/experimenty/orion')) return 'orion';
+  if (target.includes('/administrace/experimenty') || target.includes('/admin/experimenty') || target.includes('tab=experimenty') || target.includes('/experimenty')) return 'experimenty';
   if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'copilot';
   if (target.includes('/qa') || target.includes('/administrace/qa') || target.includes('/admin/copilot')) return 'qa';
   if (target.includes('/audity') || target.includes('/administrace/audity') || target.includes('/admin/audit-center')) return 'audits';

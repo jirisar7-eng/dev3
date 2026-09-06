@@ -23,6 +23,8 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-and-svg.test.ts'], name: 'Branding API & Secure SVG Sanitization' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/branding-api.test.ts'], name: 'Branding API Integration' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/prisma-fail-closed.test.ts'], name: 'Prisma Fail-Closed Security & Read-Only Fallback' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/startup-db-safety.test.ts'], name: 'Startup & Deployment DB Safety (Zero Schema Mutation on Startup)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/release-parity.test.ts'], name: 'DevOps Release Parity & Production Safety (P0)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/analytics-2-user-journey.test.ts'], name: 'Analytics 2.0 (User Journey, Funnels, Search Intelligence & Zero-PII)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/ai-provider-consistency.test.ts'], name: 'AI Provider Consistency & Failover (P0.1 Hardening)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/p0-2-1-ai-forms-source-fidelity.test.ts'], name: 'AI Forms Source Fidelity (P0.2.1)' }
@@ -41,6 +43,15 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/case-submission-drafts-phase21-1.test.ts'], name: 'Case Submission Drafts & Versioning (Phase 21.1)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/offline-sync-queue-phase21-2.test.ts'], name: 'Offline Sync Queue & Conflict Resolution (Phase 21.2)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/pwa-offline-sync-ui-phase22.test.ts'], name: 'PWA Offline Vault Sync UI & Integration (Phase 22)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/unified-agent-registry-phase1a.test.ts'], name: 'Unified Agent Registry & Capability Catalog (Phase 1A)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/agent-authorization-contract-phase1b.test.ts'], name: 'Agent Authorization Contract & Single Authority (Phase 1B)' }
+  , { cmd: 'npx', args: ['vitest', 'run', 'tests/agent-documentation-phase1b0.test.ts'], name: 'Agent Documentation Contract & Catalog Verification (Phase 1B-0)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/test_subject_moderation.ts'], name: 'Registr & Hodnocení Subjektů Moderation & Security' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/test_subject_verified_info.ts'], name: 'Subject Verified Information System (P0 Foundation & Security)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/mapa-subjektu-verified-profile-geocode.test.ts'], name: 'Mapa Subjektů Verified Profile & Geocode Security (Phase 05A)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/mapa-subjektu-advanced-filters.test.ts'], name: 'Mapa Subjektů Pokročilé Filtry (GAP-02 FÁZE A)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/soudy-data-population.test.ts'], name: 'Soudy ČR Verified Data Population Pipeline & Provenance (MASTER-IMPLEMENT-07A)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/nonospod-advokati-acquisition.test.ts'], name: 'ČAK Official Acquisition Pipeline & Four-Eyes Verification (MASTER-IMPLEMENT-07C-2)' }
 ];
 
 let failed = false;

@@ -85,6 +85,9 @@ model User {
   createdSubjekts          Subjekt[]                 @relation("SubjektCreatedBy")
   verifiedSubjekts         Subjekt[]                 @relation("SubjektVerifiedBy")
   rejectedSubjekts         Subjekt[]                 @relation("SubjektRejectedBy")
+  verifiedSubjectProfiles  SubjectVerifiedProfile[]  @relation("VerifiedProfileVerifier")
+  createdSubjectSources    SubjectInformationSource[] @relation("SubjectSourceSubmitter")
+  reviewedSubjectSources   SubjectInformationSource[] @relation("SubjectSourceReviewer")
   synthesisTicketsCreated  SynthesisTicket[]         @relation("SynthesisCreatedBy")
   synthesisTicketsAssigned SynthesisTicket[]         @relation("SynthesisAssignedTo")
   synthesisComments        SynthesisTicketComment[]  @relation("SynthesisCommentAuthor")
@@ -1072,6 +1075,89 @@ model Subjekt {
   createdAt       DateTime      @default(now())
   reviews         Review[]
   pracovnici      Pracovnik[]
+  verifiedProfile    SubjectVerifiedProfile?
+  informationSources SubjectInformationSource[]
+}
+
+enum SubjectVerificationStatus {
+  VERIFIED
+  PENDING_REVIEW
+  STALE
+  REJECTED
+}
+
+enum SourceTrustLevel {
+  P0_OFFICIAL_SUBJECT_WEB
+  P1_STATE_MUNICIPAL_PORTAL
+  P2_PUBLIC_STATE_REGISTRY
+  P3_VERIFIED_PARTNER
+  P4_USER_COMMUNITY_PROPOSAL
+  P5_UNVERIFIED_EXTERNAL
+}
+
+model SubjectVerifiedProfile {
+  id                  String                    @id @default(uuid())
+  subjektId           String                    @unique
+  subjekt             Subjekt                   @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+
+  officialWebsite     String?
+  officialPhone       String?
+  officialEmail       String?
+  openingHours        String?                   @db.Text
+  appointmentRequired Boolean                   @default(false)
+  bookingUrl          String?
+  accessibility       String?
+  dataBoxId           String?
+  submissionMethods   String?
+
+  status              SubjectVerificationStatus @default(PENDING_REVIEW)
+  staleAfterDays      Int                       @default(180)
+  lastCheckedAt       DateTime?
+  nextCheckAt         DateTime?
+  verifiedAt          DateTime?
+  verifiedById        String?
+  verifiedBy          User?                     @relation("VerifiedProfileVerifier", fields: [verifiedById], references: [id])
+
+  sources             SubjectInformationSource[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@index([subjektId])
+  @@index([status])
+  @@index([nextCheckAt])
+}
+
+model SubjectInformationSource {
+  id               String                    @id @default(uuid())
+  profileId        String?
+  profile          SubjectVerifiedProfile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  subjektId        String
+  subjekt          Subjekt                   @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+
+  sourceLevel      SourceTrustLevel          @default(P4_USER_COMMUNITY_PROPOSAL)
+  sourceUrl        String
+  fieldKey         String
+  extractedValue   String                    @db.Text
+  evidenceSnippet  String?                   @db.Text
+  extractionMethod String                    @default("MANUAL")
+  confidence       Float?
+
+  status           SubjectVerificationStatus @default(PENDING_REVIEW)
+  createdById      String?
+  createdBy        User?                     @relation("SubjectSourceSubmitter", fields: [createdById], references: [id])
+  reviewedById     String?
+  reviewedBy       User?                     @relation("SubjectSourceReviewer", fields: [reviewedById], references: [id])
+  reviewedAt       DateTime?
+  rejectionReason  String?
+  fetchedAt        DateTime                  @default(now())
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  @@index([subjektId])
+  @@index([profileId])
+  @@index([status])
+  @@index([sourceLevel])
+  @@index([createdAt])
 }
 
 model Pracovnik {

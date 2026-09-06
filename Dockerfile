@@ -19,8 +19,8 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Install git and bash for webhook redeploy
-RUN apk add --no-cache git bash
+# Install git, bash, and curl for webhook redeploy and healthcheck
+RUN apk add --no-cache git bash curl
 
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -33,6 +33,7 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/server.ts ./server.ts
+COPY --from=builder /app/release-metadata.json* ./
 
 EXPOSE 3000
 

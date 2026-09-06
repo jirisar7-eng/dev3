@@ -20,12 +20,14 @@ interface AdminSidebarProps {
   activeTab: AdminTabId;
   onSelectTab: (tabId: AdminTabId, path?: string) => void;
   onCloseMobile?: () => void;
+  isExperimentalApproved?: boolean;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   activeTab,
   onSelectTab,
   onCloseMobile,
+  isExperimentalApproved,
 }) => {
   const { currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,8 +51,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   }, [activeTab]);
 
   const visibleSections = useMemo(() => {
-    return getVisibleAdminSections(currentUser?.role);
-  }, [currentUser?.role]);
+    return getVisibleAdminSections(currentUser?.role, isExperimentalApproved);
+  }, [currentUser?.role, isExperimentalApproved]);
 
   // Handle Search Filtering
   const filteredItems = useMemo(() => {

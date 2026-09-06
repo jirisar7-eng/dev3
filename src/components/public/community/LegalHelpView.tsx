@@ -20,23 +20,23 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
   const judicatureList = [
     {
       code: 'I. ÚS 2482/13',
-      title: 'Střídavá péče jako výchozí pravidlo rovnocenné výchovy',
-      quote: 'Při rozhodování o svěření dítěte do péče musí být výchozím pravidlem střídavá péče obou rodičů, pokud jsou oba způsobilí dítě vychovávat a mají o péči zájem. Odchýlení je možné pouze v odůvodněném zájmu dítěte.',
+      title: 'Kritéria pro posuzování střídavé péče obou rodičů',
+      summary: 'Jsou-li splněna základní kritéria (způsobilost obou rodičů k výchově, jejich zájem o péči, citová vazba dítěte k oběma rodičům a stabilita výchovného prostředí), představuje střídavá péče prioritní ústavní model výchovy s ohledem na nejlepší zájem dítěte.',
     },
     {
-      code: 'II. ÚS 1642/22',
-      title: 'Přespávání dětí útlého věku u otce',
-      quote: 'Ústavní soud konstatuje, že nízký věk dítěte (včetně kojenců a batolat) sám o sobě nevylučuje přespávání dítěte u druhého rodiče, existuje-li vybudovaná citová vazba.',
+      code: 'II. ÚS 1835/12',
+      title: 'Péče a přespávání dětí útlého věku u otce',
+      summary: 'Nízký věk dítěte (včetně kojenců a batolat) sám o sobě neodůvodňuje vyloučení otce z péče nebo přespávání, existuje-li vybudovaná vzájemná citová vazba.',
     },
     {
       code: 'I. ÚS 1506/13',
-      title: 'Právo dítěte na zachování vazby s oběma rodiči',
-      quote: 'Soudy jsou povinny vytvářet podmínky pro rovnoměrný rozvoj vztahu dítěte k oběma rodičům a bránit umělému odcizení jednoho z nich.',
+      title: 'Vzdálenost bydlišť rodičů a možnost střídavé péče',
+      summary: 'Vzdálenost mezi bydlišti rodičů sama o sobě nevylučuje střídavou péči, jsou-li rodiče schopni vzájemné logistické a organizační součinnosti v zájmu dítěte.',
     },
     {
       code: 'III. ÚS 149/20',
-      title: 'Ochrana před účelovým bráněním ve styku a manipulací',
-      quote: 'Bezdůvodné maření kontaktu dítěte s jedním z rodičů ze strany druhého rodiče je závažným porušením práv dítěte a důvodem pro změnu výchovného prostředí.',
+      title: 'Důsledky bezdůvodného maření kontaktu s dítětem',
+      summary: 'Dlouhodobé a bezdůvodné maření kontaktu dítěte s jedním z rodičů představuje závažný zásah do práv dítěte a může být relevantním důvodem pro změnu výchovného prostředí.',
     },
   ];
 
@@ -113,8 +113,8 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
             <span>Klíčové nálezy Ústavního soudu ČR</span>
           </h2>
           <button
-            onClick={() => onNavigate('/pripadova-databaze')}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+            onClick={() => onNavigate('/judikatura')}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
           >
             <span>Celá databáze rozsudků</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -135,9 +135,14 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
                 {j.title}
               </h3>
 
-              <p className="text-xs text-slate-600 italic bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed">
-                "{j.quote}"
-              </p>
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
+                  Shrnutí právního závěru
+                </span>
+                <p className="italic text-slate-700">
+                  {j.summary}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -172,7 +177,17 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
             </div>
 
             <div className="bg-slate-100/60 p-3 rounded-xl text-[10px] text-slate-500 border border-slate-200 leading-relaxed">
-              <strong>Jak postupovat:</strong> Stáhněte si formulář „Žádost o určení advokáta k poskytnutí právní služby bezplatně“ na portálu <strong>cak.cz</strong>, vyplňte čestné prohlášení o majetku a příjmech, přiložte 2 odmítnutí a zašlete na ČAK (poštou či datovou schránkou).
+              <strong>Jak postupovat:</strong> Stáhněte si formulář „Žádost o určení advokáta k poskytnutí právní služby bezplatně“ na portálu{' '}
+              <a
+                href="https://www.cak.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-indigo-700 hover:text-indigo-900 underline inline-flex items-center gap-0.5"
+              >
+                cak.cz
+                <ExternalLink className="w-2.5 h-2.5 inline" />
+              </a>
+              , vyplňte čestné prohlášení o majetku a příjmech, přiložte 2 odmítnutí a zašlete na ČAK (poštou či datovou schránkou).
             </div>
 
             <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between items-center">
@@ -193,7 +208,7 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
             </h3>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              OSPOD vystupuje jako kolizní opatrovník dítěte a má absolutní povinnost nestrannosti. Pokud se setkáte s podjatostí, pasivitou či neprofesionálním chováním sociálního pracovníka, máte plné právo se bránit.
+              OSPOD vystupuje jako kolizní opatrovník dítěte. Je povinen postupovat objektivně, bez předsudků vůči rodičům a s primárním zřetelem na nejlepší zájem dítěte. Pokud se setkáte s podjatostí, pasivitou či neprofesionálním chováním sociálního pracovníka, máte plné právo se bránit.
             </p>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
@@ -261,6 +276,16 @@ export const LegalHelpView: React.FC<LegalHelpViewProps> = ({ onNavigate }) => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Právní upozornění */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 text-xs text-slate-600 space-y-1.5">
+          <strong className="text-slate-900 font-bold block text-xs sm:text-sm">Právní upozornění:</strong>
+          <p className="leading-relaxed">
+            Informace, vzory podání a výstupy AI asistenta mají pouze obecný informativní a vzdělávací charakter. Nenahrazují individuální právní posouzení ani právní zastoupení advokátem. Konkrétní opatrovnická věc vždy závisí na skutkových okolnostech a aktuálním právním stavu.
+          </p>
         </div>
       </div>
     </div>

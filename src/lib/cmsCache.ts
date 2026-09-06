@@ -29,15 +29,16 @@ export async function fetchCmsPublic<T = any>(endpoint: string): Promise<T> {
   const promise = (async () => {
     try {
       const res = await apiFetch(endpoint);
+      const contentType = res.headers.get('content-type') || '';
       const text = await res.text();
       let data: any;
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error(text || `Failed to fetch ${endpoint}`);
+        throw new Error(`Server returned non-JSON response (${res.status}) for ${endpoint}`);
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || `HTTP error ${res.status}`);
+        throw new Error(data?.error || data?.message || `HTTP error ${res.status}`);
       }
       cache.set(endpoint, { data, timestamp: Date.now() });
       return data as T;

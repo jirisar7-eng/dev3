@@ -29,7 +29,10 @@ import {
   AlertCircle,
   ThumbsUp,
   Clock,
-  BookOpen
+  BookOpen,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 
 const CZECH_REGIONS = [
@@ -146,6 +149,153 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
   const [geocodeWarning, setGeocodeWarning] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Subjekt | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [copiedDataBox, setCopiedDataBox] = useState<boolean>(false);
+
+  // Fetch verified profile if selectedSubjekt is opened without verifiedProfile loaded
+  useEffect(() => {
+    if (!selectedSubjekt?.id) return;
+    if (selectedSubjekt.verifiedProfile === undefined) {
+      let isMounted = true;
+      apiFetch(`/api/subjekty/${selectedSubjekt.id}/verified-profile`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((profile) => {
+          if (isMounted && profile) {
+            setSelectedSubjekt((prev) =>
+              prev && prev.id === selectedSubjekt.id ? { ...prev, verifiedProfile: profile } : prev
+            );
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [selectedSubjekt?.id]);
+
+  // Validated safe external booking URL (must be http/https, no javascript: or HTML)
+  const safeBookingUrl = React.useMemo(() => {
+    const url = selectedSubjekt?.verifiedProfile?.bookingUrl;
+    if (!url || typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  }, [selectedSubjekt?.verifiedProfile?.bookingUrl]);
+
+  // Human-readable submission methods mapping
+  const formattedSubmissionMethods = React.useMemo(() => {
+    const raw = selectedSubjekt?.verifiedProfile?.submissionMethods;
+    if (!raw) return [];
+    let list: string[] = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+        else list = [raw];
+      } catch {
+        list = raw.split(',').map((s) => s.trim()).filter(Boolean);
+      }
+    }
+    return list.map((m) => {
+      switch (m) {
+        case 'DATA_BOX':
+          return 'Datová schránka';
+        case 'POST':
+          return 'Pošta';
+        case 'IN_PERSON':
+          return 'Osobně na podatelně';
+        case 'EMAIL_SIGNED':
+          return 'E-mail s uznávaným el. podpisem';
+        default:
+          return m;
+      }
+    });
+  }, [selectedSubjekt?.verifiedProfile?.submissionMethods]);
+
+  // Structured rendering of opening hours
+  const renderedOpeningHours = React.useMemo(() => {
+    const vp = selectedSubjekt?.verifiedProfile;
+    if (!vp) return null;
+    const hoursData = vp.openingHours;
+    const rawData = vp.openingHoursRaw;
+    if (!hoursData && !rawData) return null;
+
+    let parsed = hoursData;
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        // keep as string
+      }
+    }
+
+    const DAY_CONFIG = [
+      { key: 'monday', label: 'Pondělí' },
+      { key: 'tuesday', label: 'Úterý' },
+      { key: 'wednesday', label: 'Středa' },
+      { key: 'thursday', label: 'Čtvrtek' },
+      { key: 'friday', label: 'Pátek' },
+      { key: 'saturday', label: 'Sobota' },
+      { key: 'sunday', label: 'Neděle' },
+    ];
+
+    if (parsed && typeof parsed === 'object' && ('monday' in parsed || 'tuesday' in parsed)) {
+      return (
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            {DAY_CONFIG.map(({ key, label }) => {
+              const day = (parsed as any)[key];
+              if (!day) return null;
+              return (
+                <div key={key} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0 text-slate-700">
+                  <span className="font-semibold text-slate-800">{label}</span>
+                  <span className="text-right">
+                    {day.isOpen && Array.isArray(day.intervals) && day.intervals.length > 0 ? (
+                      <span className="font-medium">
+                        {day.intervals.map((iv: any, i: number) => (
+                          <span key={i} className="inline-block ml-1.5 first:ml-0">
+                            {iv.from}–{iv.to}
+                            {iv.type === 'APPOINTMENT_ONLY' && (
+                              <span className="text-[10px] text-amber-700 ml-1 font-normal">(pouze pro objednané)</span>
+                            )}
+                            {iv.type === 'FILING_OFFICE' && (
+                              <span className="text-[10px] text-indigo-700 ml-1 font-normal">(podatelna)</span>
+                            )}
+                          </span>
+                        ))}
+                        {day.note && <span className="text-[10px] text-slate-400 block sm:inline sm:ml-1 font-normal">({day.note})</span>}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 italic">Zavřeno</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {parsed.irregularScheduleNote && (
+            <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-100">
+              Poznámka: {parsed.irregularScheduleNote}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    const textVal = typeof hoursData === 'string' ? hoursData : rawData;
+    if (textVal) {
+      return (
+        <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          {textVal}
+        </pre>
+      );
+    }
+
+    return null;
+  }, [selectedSubjekt?.verifiedProfile]);
 
   const handleAddPracovnik = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -667,6 +817,29 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                     </div>
                   </div>
 
+                  {/* Verified Profile status badge if available */}
+                  {item.verifiedProfile &&
+                    (item.verifiedProfile.status === 'VERIFIED' || item.verifiedProfile.status === 'STALE') && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {item.verifiedProfile.status === 'VERIFIED' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>Aktivně ověřeno</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <AlertCircle className="w-3 h-3" />
+                            <span>K přezkoumání</span>
+                          </span>
+                        )}
+                        {item.verifiedProfile.dataBoxId && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-slate-100 text-slate-700 border border-slate-200">
+                            ISDS: {item.verifiedProfile.dataBoxId}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                   {/* Title & Position */}
                   <div>
                     <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
@@ -780,7 +953,7 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
               </button>
             </div>
 
-            {/* Contact Info */}
+            {/* Contact Info (Základní údaje) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 bg-white border border-slate-200 rounded-2xl p-4">
               <div className="flex flex-col gap-1">
                 <div className="flex items-start gap-2.5">
@@ -836,6 +1009,194 @@ export const RegistrSubjektu: React.FC<{ onNavigate?: (path: string) => void }> 
                 </div>
               )}
             </div>
+
+            {/* Verified Profile Section (GAP-01 / MASTER-IMPLEMENT-07B) */}
+            {selectedSubjekt.verifiedProfile &&
+              (selectedSubjekt.verifiedProfile.status === 'VERIFIED' || selectedSubjekt.verifiedProfile.status === 'STALE') && (
+                <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+                  {/* Header of verified info */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+                        Ověřené úřední informace
+                      </h3>
+                      {selectedSubjekt.verifiedProfile.status === 'STALE' ? (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                          K přezkoumání
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          Aktivně ověřeno
+                        </span>
+                      )}
+                    </div>
+
+                    {(selectedSubjekt.verifiedProfile.verifiedAt || selectedSubjekt.verifiedProfile.lastCheckedAt) && (
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Naposledy ověřeno:{' '}
+                        <strong className="text-slate-700 font-bold">
+                          {new Date(
+                            selectedSubjekt.verifiedProfile.verifiedAt || selectedSubjekt.verifiedProfile.lastCheckedAt
+                          ).toLocaleDateString('cs-CZ')}
+                        </strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Official contacts if differing or explicitly confirmed */}
+                  {(selectedSubjekt.verifiedProfile.officialWebsite ||
+                    selectedSubjekt.verifiedProfile.officialPhone ||
+                    selectedSubjekt.verifiedProfile.officialEmail) && (
+                    <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1.5">
+                      <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Oficiální ověřené kontakty
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        {selectedSubjekt.verifiedProfile.officialPhone && (
+                          <div className="flex items-center gap-1.5 text-slate-700">
+                            <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <a href={`tel:${selectedSubjekt.verifiedProfile.officialPhone}`} className="hover:text-indigo-600 font-medium truncate">
+                              {selectedSubjekt.verifiedProfile.officialPhone}
+                            </a>
+                          </div>
+                        )}
+                        {selectedSubjekt.verifiedProfile.officialEmail && (
+                          <div className="flex items-center gap-1.5 text-slate-700">
+                            <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <a href={`mailto:${selectedSubjekt.verifiedProfile.officialEmail}`} className="hover:text-indigo-600 font-medium truncate">
+                              {selectedSubjekt.verifiedProfile.officialEmail}
+                            </a>
+                          </div>
+                        )}
+                        {selectedSubjekt.verifiedProfile.officialWebsite && (
+                          <div className="flex items-center gap-1.5 text-slate-700">
+                            <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <a
+                              href={selectedSubjekt.verifiedProfile.officialWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-indigo-600 font-medium truncate underline"
+                            >
+                              {selectedSubjekt.verifiedProfile.officialWebsite}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key administrative facts grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    {/* Datová schránka */}
+                    {selectedSubjekt.verifiedProfile.dataBoxId && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          ID datové schránky
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <code className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-xs">
+                            {selectedSubjekt.verifiedProfile.dataBoxId}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (selectedSubjekt.verifiedProfile?.dataBoxId) {
+                                navigator.clipboard.writeText(selectedSubjekt.verifiedProfile.dataBoxId);
+                                setCopiedDataBox(true);
+                                setTimeout(() => setCopiedDataBox(false), 2000);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                            title="Zkopírovat ID schránky"
+                          >
+                            {copiedDataBox ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Zkopírováno</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Kopírovat</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nutnost objednání & Rezervace */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1">
+                      <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Objednání předem
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span
+                          className={`font-bold text-xs ${
+                            selectedSubjekt.verifiedProfile.appointmentRequired ? 'text-amber-800' : 'text-slate-800'
+                          }`}
+                        >
+                          {selectedSubjekt.verifiedProfile.appointmentRequired ? 'Vyžadováno předem' : 'Není vyžadováno'}
+                        </span>
+                        {safeBookingUrl && (
+                          <a
+                            href={safeBookingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors"
+                          >
+                            <span>Online rezervace</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bezbariérovost */}
+                    {selectedSubjekt.verifiedProfile.accessibility && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1 sm:col-span-2">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          Bezbariérový přístup
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          {selectedSubjekt.verifiedProfile.accessibility}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Způsoby podání */}
+                    {formattedSubmissionMethods.length > 0 && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1.5 sm:col-span-2">
+                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          Akceptované způsoby podání
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {formattedSubmissionMethods.map((method, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200"
+                            >
+                              {method}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Úřední / otevírací hodiny */}
+                  {renderedOpeningHours && (
+                    <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold uppercase text-slate-700 tracking-wider">
+                        <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Úřední / otevírací hodiny</span>
+                      </div>
+                      {renderedOpeningHours}
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Workers / Contact Persons Section */}
             <div className="space-y-4 pt-2">

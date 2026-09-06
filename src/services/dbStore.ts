@@ -58,6 +58,8 @@ import {
   MementoCase,
   AnalyticsEvent,
   AnalyticsSetting,
+  SubjectVerifiedProfileDto,
+  SubjectInformationSourceDto,
 } from '../types';
 import ospodDataset from '../data/ospodDataset.json';
 import { nonOspodSubjekty } from '../data/nonOspodSubjekty'; // Contains Alena Malá
@@ -3421,6 +3423,9 @@ class MemoryStore {
     updatedAt: new Date().toISOString(),
   };
 
+  subjectVerifiedProfiles: SubjectVerifiedProfileDto[] = [];
+  subjectInformationSources: SubjectInformationSourceDto[] = [];
+
   // Helper methods
   logAudit(action: string, module: string, details: string, user?: User | null) {
     const newLog: AuditLog = {
@@ -3464,3 +3469,10 @@ class MemoryStore {
 }
 
 export const dbStore = new MemoryStore();
+
+// Auto-populate verified profiles and information sources for courts in in-memory mode
+import { SoudyPopulationPipeline } from './dataPipeline/soudyPopulationPipeline';
+SoudyPopulationPipeline.populateInMemory(dbStore).catch(err => {
+  console.warn('[dbStore] Failed to auto-populate soudy verified metadata:', err);
+});
+

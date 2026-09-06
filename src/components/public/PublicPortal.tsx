@@ -24,6 +24,8 @@ import { ContactView } from './ContactView';
 import { SponsorsView } from './SponsorsView';
 import { ArticleDetailView } from './ArticleDetailView';
 import { SharedAuditView } from './SharedAuditView';
+import { ExperimentalLabPage } from '../experimental/ExperimentalLabPage';
+import { ExperimentDetailView } from '../experimental/views/ExperimentDetailView';
 import { LegalHubPage } from '../../pages/LegalHubPage';
 import { LegalDocsPage } from '../../pages/LegalDocsPage';
 import { MyCasePage } from '../../pages/MyCasePage';
@@ -34,6 +36,7 @@ import { AiContextView } from './AiContextView';
 import {
   CrisisCommunityPortal,
   SosPlanView,
+  SosPlan48HoursView,
   ForumView,
   CaseStoriesView,
   MementoView,
@@ -73,6 +76,7 @@ import {
 } from './academy';
 import { SeoHead } from './SeoHead';
 import { PsychologieView } from './PsychologieView';
+import { CareHubPublicLandingView } from './CareHubPublicLandingView';
 import { MajetekView } from './MajetekView';
 import { BiffCommunicationView } from './BiffCommunicationView';
 import { KalendarLhutView } from './KalendarLhutView';
@@ -312,6 +316,9 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     }
     return fallbackComponent;
   }
+  if (slug === 'sos-plan/48-hodin' || slug === 'sos-plan-48') {
+    return <SosPlan48HoursView onNavigate={onNavigate} />;
+  }
   if (slug === 'forum') {
     const fallbackComponent = <ForumView onNavigate={onNavigate} />;
     const isPuckEnabled = typeof window !== 'undefined' && 
@@ -338,13 +345,13 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     }
     return fallbackComponent;
   }
-  if (slug === 'memento') {
-    const fallbackComponent = <MementoView onNavigate={onNavigate} />;
+  if (slug === 'memento' || slug.startsWith('memento/')) {
+    const fallbackComponent = <MementoView onNavigate={onNavigate} currentPath={cleanPath} />;
     const isPuckEnabled = typeof window !== 'undefined' && 
       (localStorage.getItem('PUCK_MEMENTO_RENDERER_ENABLED') === 'true' || 
        localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
 
-    if (isPuckEnabled) {
+    if (isPuckEnabled && slug === 'memento') {
       return (
         <CmsPageRenderer slug={slug} onNavigate={onNavigate} fallbackComponent={fallbackComponent} />
       );
@@ -436,8 +443,16 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
     return <LegalGuideDynamicView slug="mezinarodni-spory" fallbackComponent={<InternationalDisputesGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
-  if (slug === 'zdravotni-pece' || slug === 'zdravotni-dokumentace' || slug === 'ocr') {
-    return <LegalGuideDynamicView slug="zdravotni-pece" fallbackComponent={<HealthcareGuideView onNavigate={onNavigate} />} onNavigate={onNavigate} />;
+  if (slug === 'zdravotni-pece' || slug.startsWith('zdravotni-pece/') || slug === 'zdravotni-dokumentace' || slug === 'ocr') {
+    let subPath = '';
+    if (slug.startsWith('zdravotni-pece/')) {
+      subPath = slug.replace(/^zdravotni-pece\//, '');
+    } else if (slug === 'zdravotni-dokumentace') {
+      subPath = 'dokumentace';
+    } else if (slug === 'ocr') {
+      subPath = 'ocr';
+    }
+    return <LegalGuideDynamicView slug="zdravotni-pece" fallbackComponent={<HealthcareGuideView subPath={subPath} onNavigate={onNavigate} />} onNavigate={onNavigate} />;
   }
 
   if (slug === 'skola' || slug === 'skolka' || slug === 'skolni-informace' || slug === 'zmena-skoly') {
@@ -556,6 +571,23 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ currentPath, onNavig
   }
   if (slug === 'psychologie' || slug === 'psychologicka-podpora') {
     return <PsychologieView onNavigate={onNavigate} />;
+  }
+  if (slug === 'pece' || slug === 'care-hub' || slug === 'pece-o-dite') {
+    const isPuckEnabled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('PUCK_PECE_RENDERER_ENABLED') === 'true' ||
+       localStorage.getItem('PUCK_PUBLIC_RENDERER_ENABLED') === 'true');
+
+    if (isPuckEnabled) {
+      return (
+        <CmsPageRenderer
+          slug="pece"
+          onNavigate={onNavigate}
+          fallbackComponent={<CareHubPublicLandingView onNavigate={onNavigate} />}
+        />
+      );
+    }
+    return <CareHubPublicLandingView onNavigate={onNavigate} />;
   }
   if (slug === 'komunikace-biff' || slug === 'biff' || slug === 'deeskalace') {
     return <BiffCommunicationView onNavigate={onNavigate} />;

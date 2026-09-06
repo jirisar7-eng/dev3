@@ -3,13 +3,15 @@ dotenv.config();
 
 import { prisma, isPrismaAvailable } from '../../src/db/prisma';
 import { soudyDataset } from '../../src/data/soudyDataset';
+import { SoudyPopulationPipeline } from '../../src/services/dataPipeline/soudyPopulationPipeline';
 
 export async function importFullSoudy() {
-  console.log('[Import Soudy] Zahajuji import kompletního registru 109 soudů ČR...');
+  console.log('[Import Soudy] Zahajuji import kompletního registru 107 soudů ČR a jejich ověřených profilů...');
 
   if (!isPrismaAvailable()) {
-    console.warn('[Import Soudy] Databáze není momentálně dostupná nebo je v režimu in-memory fallback. SQL zápis vynechán.');
-    return { success: false, reason: 'Database unavailable' };
+    console.warn('[Import Soudy] Databáze není momentálně dostupná nebo je v režimu in-memory fallback. Provádím in-memory populaci...');
+    const inMemoryRes = await SoudyPopulationPipeline.populateInMemory();
+    return { success: true, reason: 'InMemory populated', inMemoryRes };
   }
 
   let createdCount = 0;
@@ -64,8 +66,11 @@ export async function importFullSoudy() {
     }
   }
 
-  console.log(`[Import Soudy] Dokončeno. Úspěšně zpracováno: ${createdCount} soudů, chyby: ${errorCount}.`);
-  return { success: errorCount === 0, processed: createdCount, errors: errorCount };
+  console.log(`[Import Soudy] Dokončen základní import: ${createdCount} soudů. Spouštím ověřenou datovou populaci profilů a zdrojů...`);
+  const pipelineResult = await SoudyPopulationPipeline.populatePrisma();
+  console.log('[Import Soudy] Výsledek ověřené datové populace:', pipelineResult);
+
+  return { success: errorCount === 0, processed: createdCount, errors: errorCount, pipelineResult };
 }
 
 // Podpora přímého spuštění přes tsx
@@ -80,3 +85,4 @@ if (process.argv[1]?.endsWith('import-soudy-full.ts') || process.argv[1]?.endsWi
       process.exit(1);
     });
 }
+

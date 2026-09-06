@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
+import { requireAuth, requireRole, requireExperimentalAccess, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { OrionTraceStore } from '../services/audit/orionTraceStore';
 import { NotionAuditMirrorService } from '../services/notionAuditMirror';
 import { OrionService } from '../services/audit/orionService';
@@ -18,7 +18,7 @@ const OrionRunBodySchema = z.object({
  * Polled by frontend every 1000ms. Returns active or latest process trace.
  * Observability only — 0-PII sanitized, no raw prompts or chain-of-thought.
  */
-router.get('/active-trace', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/active-trace', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const trace = OrionTraceStore.getActiveOrLatestTrace();
     const notionStatus = NotionAuditMirrorService.getStatus();
@@ -42,7 +42,7 @@ router.get('/active-trace', requireAuth as any, requireRole('ADMIN') as any, asy
  * GET /api/admin/orion/traces
  * Returns list of recent trace history records.
  */
-router.get('/traces', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/traces', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const traces = OrionTraceStore.getRecentTraces();
 
@@ -62,7 +62,7 @@ router.get('/traces', requireAuth as any, requireRole('ADMIN') as any, async (re
  * GET /api/admin/orion/trace/:id
  * Returns a specific trace by ID.
  */
-router.get('/trace/:id', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/trace/:id', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const trace = OrionTraceStore.getTraceById(id);
@@ -90,7 +90,7 @@ router.get('/trace/:id', requireAuth as any, requireRole('ADMIN') as any, async 
  * POST /api/admin/orion/run
  * Triggers an Orion analysis run which generates a live trace and safe AI_RECOMMENDATION.
  */
-router.post('/run', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/run', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parseResult = OrionRunBodySchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -131,7 +131,7 @@ router.post('/run', requireAuth as any, requireRole('ADMIN') as any, async (req:
  * GET /api/admin/orion/notion-status
  * Checks status of Notion Audit Mirror connection.
  */
-router.get('/notion-status', requireAuth as any, requireRole('ADMIN') as any, async (_req: AuthenticatedRequest, res: Response) => {
+router.get('/notion-status', requireAuth as any, requireExperimentalAccess() as any, async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const status = NotionAuditMirrorService.getStatus();
     res.json({

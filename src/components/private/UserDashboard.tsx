@@ -108,8 +108,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ currentPath = '/po
     );
   }
 
-  // 1.5 Samostatná uživatelská sekce Péče o dítě (/pece, /pece/plany/:id, /pece/kalendar, /pece/simulator, /pece/porovnani, atd.)
-  if (currentPath.startsWith('/pece')) {
+  // 1.5 Samostatná uživatelská sekce Péče o dítě (/portal/pece, /portal/pece/plany/:id, /portal/pece/kalendar, /portal/pece/simulator, /portal/pece/porovnani, atd.)
+  if (currentPath.startsWith('/portal/pece')) {
     return (
       <CareHubPage
         onNavigate={
