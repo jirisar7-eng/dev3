@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-09-07
+**Typ:** FEATURE / AI INFRASTRUCTURE / MODEL REGISTRY & TELEMETRY
+**Změna:** Implementace Dynamic AI Provider & Model Catalog + Usage Telemetry (Branch: 2026-09-07-000000-dynamic-ai-model-catalog-telemetry).
+**Důvod:** Náhrada hardcoded `seedInitialCatalog` za dynamické zjišťování dostupných modelů přes API/katalogy providerů a zavedení přesné telemetrie spotřeby, latence a kvót.
+**Výsledek:**
+- `src/services/ai/providerCatalogAdapters.ts`: Vytvořen modul adapterů pro Google Gemini (live API search + catalog fallback), OpenAI, xAI Grok, Groq a OpenRouter.
+- `src/services/ai/aiTelemetryService.ts`: Vytvořena služba pro sledování a agregaci tokenů (Prompt, Completion, Cached, Reasoning), latencí (Avg, P95), chybovosti, fallbacků, nákladů a typů kvót (`API_QUOTA`, `PROVIDER_QUOTA`, `SUBSCRIPTION_QUOTA`).
+- `src/services/ai/aiModelRegistry.ts`: Refaktorována služba registrů o metodu `discoverModels(providerKey)` se striktním výchozím stavem `enabled: false` (non-routable) pro nově objevené modely. Propojena s telemetrickým přehledem v `getModelsOverview()`.
+- `src/routes/adminAiRoutes.ts`: Přidány nové bezpečné endpointy `POST /api/admin/ai/models/discover` a `GET /api/admin/ai/telemetry`.
+- `src/components/admin/ai/AiModelControlCenter.tsx`: Rozšířeno rozhraní o tlačítko **Zjišťovat Katalog (Discovery)**, rozlišení **Zobrazovaný název** vs **API Model ID**, odkazující odznaky **Discovered Model** / **VYPNUTO (Non-routable)** a detailní tabulku telemetrie po modelech s výslovným upozorněním k nepodpoře telemetrie předplatného Google AI Pro přes veřejné API (`NOT_AVAILABLE_THROUGH_CURRENT_API`).
+**Ověření:** TYPECHECK / BUILD (`compile_applet` passed) / SECURITY AUDIT
+**Commit:** N/A (GitHub branch API)
+**Audit:** N/A
+**Riziko:** NONE (všechny nové modely jsou výchozí disabled)
+**Další krok:** Připraveno pro akceptaci.
+
 ## 2026-09-06
 **Typ:** FEATURE / HEALTHCARE / MOJE DÍTĚ  
 **Změna:** Zdravotní péče o dítě — Implementace modulární architektury (MASTER-IMPLEMENT-MOJE-DITE-04).  
@@ -268,3 +284,15 @@
 **Riziko:** NONE  
 **Další krok:** Připraveno pro review a finální acceptance.  
   
+-e 
+## [2026-09-06] AI Model Policy + Council Security Fixes
+- Task: Implement fail-closed target metadata and RBAC granularity proposals
+- Changed files: src/services/ai/aiPolicyEngine.ts, src/routes/adminAiRoutes.ts
+- Fail-closed fix: evaluateDelegationRequest now immediately returns DENY if targetModelMetadata is undefined.
+- RBAC: Added TODO annotations for granular permissions (ai.policy.read, ai.policy.manage, etc.). No changes to main RBAC/Prisma as requested.
+- Provider Architecture: Retained adapter pattern (OpenAI, Gemini, xAI, Groq, OpenRouter) dynamically without hardcoding keys.
+- Free Model Architecture: No bypass of data policies for FREE_TIER.
+- Tests: AI compatibility tests passed.
+- Build: Triggered build sequence.
+- Security Findings: P0 risk (fail-open target metadata) fixed.
+
