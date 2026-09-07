@@ -31,11 +31,11 @@ enum AccountStatus {
 }
 
 model User {
-  supportTickets           SupportTicket[]           @relation("UserTickets")
-  assignedTickets          SupportTicket[]           @relation("TicketAssignee")
-  assignedByTickets        SupportTicket[]           @relation("TicketAssigner")
-  supportMessages          SupportTicketMessage[]
-  id                       String                    @id @default(uuid())
+  supportTickets     SupportTicket[]        @relation("UserTickets")
+  assignedTickets    SupportTicket[]        @relation("TicketAssignee")
+  assignedByTickets  SupportTicket[]        @relation("TicketAssigner")
+  supportMessages    SupportTicketMessage[]
+  id                 String                 @id @default(uuid())
   email              String                 @unique
   passwordHash       String?
   name               String
@@ -61,7 +61,7 @@ model User {
   preferences              UserPreference?
   documentData             UserDocumentData[]
   userRoles                UserRole[]
-  articles                 Article[]                 @relation("UserArticles")
+  articles                 Article[]                  @relation("UserArticles")
   auditLogs                AuditLog[]
   consents                 Consent[]
   cases                    UserCase[]
@@ -77,21 +77,21 @@ model User {
   legalAuditLogs           LegalAuditLog[]
   clientCases              Case[]
   submissionDrafts         CaseSubmissionDraft[]
-  coparentSpaces           CoParentSpace[]           @relation("CoParentSpaceOwner")
+  coparentSpaces           CoParentSpace[]            @relation("CoParentSpaceOwner")
   coparentMemberships      CoParentMember[]
   coparentMessages         CoParentMessage[]
   coparentRequests         CoParentRequest[]
   passkeys                 Passkey[]
-  createdSubjekts          Subjekt[]                 @relation("SubjektCreatedBy")
-  verifiedSubjekts         Subjekt[]                 @relation("SubjektVerifiedBy")
-  rejectedSubjekts         Subjekt[]                 @relation("SubjektRejectedBy")
-  verifiedSubjectProfiles  SubjectVerifiedProfile[]  @relation("VerifiedProfileVerifier")
+  createdSubjekts          Subjekt[]                  @relation("SubjektCreatedBy")
+  verifiedSubjekts         Subjekt[]                  @relation("SubjektVerifiedBy")
+  rejectedSubjekts         Subjekt[]                  @relation("SubjektRejectedBy")
+  verifiedSubjectProfiles  SubjectVerifiedProfile[]   @relation("VerifiedProfileVerifier")
   createdSubjectSources    SubjectInformationSource[] @relation("SubjectSourceSubmitter")
   reviewedSubjectSources   SubjectInformationSource[] @relation("SubjectSourceReviewer")
-  synthesisTicketsCreated  SynthesisTicket[]         @relation("SynthesisCreatedBy")
-  synthesisTicketsAssigned SynthesisTicket[]         @relation("SynthesisAssignedTo")
-  synthesisComments        SynthesisTicketComment[]  @relation("SynthesisCommentAuthor")
-  synthesisEvents          SynthesisTicketEvent[]    @relation("SynthesisEventActor")
+  synthesisTicketsCreated  SynthesisTicket[]          @relation("SynthesisCreatedBy")
+  synthesisTicketsAssigned SynthesisTicket[]          @relation("SynthesisAssignedTo")
+  synthesisComments        SynthesisTicketComment[]   @relation("SynthesisCommentAuthor")
+  synthesisEvents          SynthesisTicketEvent[]     @relation("SynthesisEventActor")
 
   @@index([email])
 }
@@ -518,22 +518,22 @@ model AuditLog {
 }
 
 model AuditDocument {
-  id           String       @id @default(uuid())
-  sourcePath   String       @unique
-  title        String
-  category     String       @default("OTHER")
-  status       String       @default("UNKNOWN")
-  summary      String?      @db.Text
-  content      String?      @db.Text
-  auditDate    String?
-  author       String?
-  sourceSha    String?
-  commitSha    String?
-  branch       String?
-  sourceUrl    String?
-  discoveredAt DateTime     @default(now())
-  lastSyncedAt DateTime     @default(now())
-  createdAt    DateTime     @default(now())
+  id               String            @id @default(uuid())
+  sourcePath       String            @unique
+  title            String
+  category         String            @default("OTHER")
+  status           String            @default("UNKNOWN")
+  summary          String?           @db.Text
+  content          String?           @db.Text
+  auditDate        String?
+  author           String?
+  sourceSha        String?
+  commitSha        String?
+  branch           String?
+  sourceUrl        String?
+  discoveredAt     DateTime          @default(now())
+  lastSyncedAt     DateTime          @default(now())
+  createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   shares           AuditShare[]
   synthesisTickets SynthesisTicket[]
@@ -640,41 +640,41 @@ model UserDocument {
 // ------------------------------------------------------
 
 model Study {
-  id              String   @id @default(uuid())
-  slug            String   @unique
-  title           String
-  originalTitle   String?
-  authors         String
-  publicationYear Int?
-  publisher       String?
-  doi             String?
-  sourceUrl       String?
-  abstract        String?
-  summary         String?
-  methodology     String?
-  findings        String?
-  limitations     String?
-  relevance       String?
-  keywords        String?
-  evidenceLevel   String?  @default("B")
-  evidenceDirection String? @default("SUPPORTIVE")
-  causality       String?  @default("NOT_ESTABLISHED")
-  sourceType      String?  @default("PEER_REVIEWED_EMPIRICAL")
-  category        String   @default("stridava_pece")
-  status          String   @default("DRAFT") // "DRAFT", "PUBLISHED", "ARCHIVED"
-  featured        Boolean  @default(false)
-  pdfUrl          String?
-  pdfMediaId      String?
-  pdfSize         Int?     @default(0)
-  s3Bucket        String?
-  s3ObjectKey     String?
-  storageProvider String?  @default("MinIO")
-  mimeType        String?  @default("application/pdf")
-  fileHash        String?
-  createdBy       String?
-  updatedBy       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  title             String
+  originalTitle     String?
+  authors           String
+  publicationYear   Int?
+  publisher         String?
+  doi               String?
+  sourceUrl         String?
+  abstract          String?
+  summary           String?
+  methodology       String?
+  findings          String?
+  limitations       String?
+  relevance         String?
+  keywords          String?
+  evidenceLevel     String?  @default("B")
+  evidenceDirection String?  @default("SUPPORTIVE")
+  causality         String?  @default("NOT_ESTABLISHED")
+  sourceType        String?  @default("PEER_REVIEWED_EMPIRICAL")
+  category          String   @default("stridava_pece")
+  status            String   @default("DRAFT") // "DRAFT", "PUBLISHED", "ARCHIVED"
+  featured          Boolean  @default(false)
+  pdfUrl            String?
+  pdfMediaId        String?
+  pdfSize           Int?     @default(0)
+  s3Bucket          String?
+  s3ObjectKey       String?
+  storageProvider   String?  @default("MinIO")
+  mimeType          String?  @default("application/pdf")
+  fileHash          String?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([slug])
   @@index([status])
@@ -1045,36 +1045,36 @@ enum SubjektStatus {
 }
 
 model Subjekt {
-  id              String        @id @default(uuid())
-  type            EntityType
-  name            String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
-  titleBefore     String? // Např. "PhDr.", "JUDr."
-  position        String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
-  institution     String? // Název pracoviště / Úřadu / Kanceláře
-  city            String
-  lat             Float?
-  lng             Float? // Např. "Pardubice", "Přelouč"
-  region          String // Např. "Pardubický kraj"
-  address         String?
-  email           String?       @unique
-  phone           String?
-  website         String?
-  avgRating       Float         @default(0.0)
-  reviewCount     Int           @default(0)
-  isVerified      Boolean       @default(true)
-  status          SubjektStatus @default(VERIFIED)
-  createdById     String?
-  createdBy       User?         @relation("SubjektCreatedBy", fields: [createdById], references: [id])
-  verifiedById    String?
-  verifiedBy      User?         @relation("SubjektVerifiedBy", fields: [verifiedById], references: [id])
-  verifiedAt      DateTime?
-  rejectedById    String?
-  rejectedBy      User?         @relation("SubjektRejectedBy", fields: [rejectedById], references: [id])
-  rejectedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime      @default(now())
-  reviews         Review[]
-  pracovnici      Pracovnik[]
+  id                 String                     @id @default(uuid())
+  type               EntityType
+  name               String // Např. "Okresní soud v Přelouči", "MUDr. Jan Novák"
+  titleBefore        String? // Např. "PhDr.", "JUDr."
+  position           String? // Např. "Soudce opatrovnického oddělení", "Dětský psycholog"
+  institution        String? // Název pracoviště / Úřadu / Kanceláře
+  city               String
+  lat                Float?
+  lng                Float? // Např. "Pardubice", "Přelouč"
+  region             String // Např. "Pardubický kraj"
+  address            String?
+  email              String?                    @unique
+  phone              String?
+  website            String?
+  avgRating          Float                      @default(0.0)
+  reviewCount        Int                        @default(0)
+  isVerified         Boolean                    @default(true)
+  status             SubjektStatus              @default(VERIFIED)
+  createdById        String?
+  createdBy          User?                      @relation("SubjektCreatedBy", fields: [createdById], references: [id])
+  verifiedById       String?
+  verifiedBy         User?                      @relation("SubjektVerifiedBy", fields: [verifiedById], references: [id])
+  verifiedAt         DateTime?
+  rejectedById       String?
+  rejectedBy         User?                      @relation("SubjektRejectedBy", fields: [rejectedById], references: [id])
+  rejectedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime                   @default(now())
+  reviews            Review[]
+  pracovnici         Pracovnik[]
   verifiedProfile    SubjectVerifiedProfile?
   informationSources SubjectInformationSource[]
 }
@@ -1096,31 +1096,31 @@ enum SourceTrustLevel {
 }
 
 model SubjectVerifiedProfile {
-  id                  String                    @id @default(uuid())
-  subjektId           String                    @unique
-  subjekt             Subjekt                   @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  subjektId String  @unique
+  subjekt   Subjekt @relation(fields: [subjektId], references: [id], onDelete: Cascade)
 
   officialWebsite     String?
   officialPhone       String?
   officialEmail       String?
-  openingHours        String?                   @db.Text
-  appointmentRequired Boolean                   @default(false)
+  openingHours        String? @db.Text
+  appointmentRequired Boolean @default(false)
   bookingUrl          String?
   accessibility       String?
   dataBoxId           String?
   submissionMethods   String?
 
-  status              SubjectVerificationStatus @default(PENDING_REVIEW)
-  staleAfterDays      Int                       @default(180)
-  lastCheckedAt       DateTime?
-  nextCheckAt         DateTime?
-  verifiedAt          DateTime?
-  verifiedById        String?
-  verifiedBy          User?                     @relation("VerifiedProfileVerifier", fields: [verifiedById], references: [id])
+  status         SubjectVerificationStatus @default(PENDING_REVIEW)
+  staleAfterDays Int                       @default(180)
+  lastCheckedAt  DateTime?
+  nextCheckAt    DateTime?
+  verifiedAt     DateTime?
+  verifiedById   String?
+  verifiedBy     User?                     @relation("VerifiedProfileVerifier", fields: [verifiedById], references: [id])
 
-  sources             SubjectInformationSource[]
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  sources   SubjectInformationSource[]
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
 
   @@index([subjektId])
   @@index([status])
@@ -1128,30 +1128,30 @@ model SubjectVerifiedProfile {
 }
 
 model SubjectInformationSource {
-  id               String                    @id @default(uuid())
-  profileId        String?
-  profile          SubjectVerifiedProfile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  subjektId        String
-  subjekt          Subjekt                   @relation(fields: [subjektId], references: [id], onDelete: Cascade)
+  id        String                  @id @default(uuid())
+  profileId String?
+  profile   SubjectVerifiedProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  subjektId String
+  subjekt   Subjekt                 @relation(fields: [subjektId], references: [id], onDelete: Cascade)
 
-  sourceLevel      SourceTrustLevel          @default(P4_USER_COMMUNITY_PROPOSAL)
+  sourceLevel      SourceTrustLevel @default(P4_USER_COMMUNITY_PROPOSAL)
   sourceUrl        String
   fieldKey         String
-  extractedValue   String                    @db.Text
-  evidenceSnippet  String?                   @db.Text
-  extractionMethod String                    @default("MANUAL")
+  extractedValue   String           @db.Text
+  evidenceSnippet  String?          @db.Text
+  extractionMethod String           @default("MANUAL")
   confidence       Float?
 
-  status           SubjectVerificationStatus @default(PENDING_REVIEW)
-  createdById      String?
-  createdBy        User?                     @relation("SubjectSourceSubmitter", fields: [createdById], references: [id])
-  reviewedById     String?
-  reviewedBy       User?                     @relation("SubjectSourceReviewer", fields: [reviewedById], references: [id])
-  reviewedAt       DateTime?
-  rejectionReason  String?
-  fetchedAt        DateTime                  @default(now())
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
+  status          SubjectVerificationStatus @default(PENDING_REVIEW)
+  createdById     String?
+  createdBy       User?                     @relation("SubjectSourceSubmitter", fields: [createdById], references: [id])
+  reviewedById    String?
+  reviewedBy      User?                     @relation("SubjectSourceReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  rejectionReason String?
+  fetchedAt       DateTime                  @default(now())
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
 
   @@index([subjektId])
   @@index([profileId])
@@ -1261,22 +1261,22 @@ model Case {
 }
 
 model CaseSubmissionDraft {
-  id               String                        @id @default(uuid())
+  id               String   @id @default(uuid())
   caseId           String
-  case             Case                          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case             Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   userId           String
-  user             User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title            String
-  templateId       String?                       @default("CUSTOM")
-  status           String                        @default("DRAFT") // "DRAFT", "FINAL", "ARCHIVED"
+  templateId       String?  @default("CUSTOM")
+  status           String   @default("DRAFT") // "DRAFT", "FINAL", "ARCHIVED"
   formData         Json?
-  generatedContent String?                       @db.Text
-  notes            String?                       @db.Text
-  version          Int                           @default(1)
-  createdAt        DateTime                      @default(now())
-  updatedAt        DateTime                      @updatedAt
+  generatedContent String?  @db.Text
+  notes            String?  @db.Text
+  version          Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  versions         CaseSubmissionDraftVersion[]
+  versions CaseSubmissionDraftVersion[]
 
   @@index([caseId])
   @@index([userId])
@@ -1542,13 +1542,13 @@ model CoParentSpace {
 }
 
 model CoParentMember {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      String        @default("PARENT") // "FATHER", "MOTHER", "MEDIATOR", "LAWYER"
-  createdAt DateTime      @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String         @default("PARENT") // "FATHER", "MOTHER", "MEDIATOR", "LAWYER"
+  createdAt DateTime       @default(now())
 
   @@unique([spaceId, userId])
   @@index([spaceId])
@@ -1556,15 +1556,15 @@ model CoParentMember {
 }
 
 model CoParentChild {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   firstName String
   lastName  String
   birthDate String?
-  notes     String?       @db.Text
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  notes     String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   dailyUpdates CoParentDailyUpdate[]
 
@@ -1616,14 +1616,14 @@ model CoParentMessage {
 }
 
 model CoParentAgreement {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   title     String
-  content   String        @db.Text
-  status    String        @default("PROPOSED") // "PROPOSED", "ACCEPTED", "REJECTED"
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  content   String         @db.Text
+  status    String         @default("PROPOSED") // "PROPOSED", "ACCEPTED", "REJECTED"
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([spaceId])
 }
@@ -1661,14 +1661,14 @@ model CoParentDailyUpdate {
 }
 
 model CoParentItem {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   name      String // e.g., "Oblíbený medvídek", "Tableta", "Zimní bundička"
   holderId  String // User ID of who currently has the item
   location  String? // e.g., "U tatínka", "U maminky"
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([spaceId])
 }
@@ -1689,15 +1689,15 @@ model CoParentRequest {
 }
 
 model CoParentAuditLog {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   userId    String?
   action    String // e.g., "AGREEMENT_CREATED", "EXPENSE_APPROVED", "HANDOVER_CONFIRMED"
   entity    String // e.g., "CoParentAgreement", "CoParentExpense"
   entityId  String?
-  details   String        @db.Text
-  createdAt DateTime      @default(now())
+  details   String         @db.Text
+  createdAt DateTime       @default(now())
 
   @@index([spaceId])
 }
@@ -1716,15 +1716,15 @@ model CoParentDocument {
 }
 
 model CoParentInvite {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   spaceId   String?
   space     CoParentSpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   invitedBy String
   email     String
-  code      String        @unique
-  status    String        @default("PENDING") // "PENDING", "ACCEPTED", "EXPIRED"
+  code      String         @unique
+  status    String         @default("PENDING") // "PENDING", "ACCEPTED", "EXPIRED"
   expiresAt DateTime
-  createdAt DateTime      @default(now())
+  createdAt DateTime       @default(now())
 
   @@index([spaceId])
   @@index([code])
@@ -1962,12 +1962,12 @@ model QARun {
 }
 
 model QAFinding {
-  id         String   @id @default(uuid())
-  runId      String
-  run        QARun    @relation(fields: [runId], references: [id], onDelete: Cascade)
-  severity   String // P0, P1, P2, P3 or CRITICAL, HIGH, MEDIUM, LOW
-  category   String?  @default("FUNCTIONAL") // FUNCTIONAL, SECURITY, API, PERSISTENCE, E2E, INTEGRATION, INVARIANT, STATIC
-  message    String   @db.Text
+  id               String            @id @default(uuid())
+  runId            String
+  run              QARun             @relation(fields: [runId], references: [id], onDelete: Cascade)
+  severity         String // P0, P1, P2, P3 or CRITICAL, HIGH, MEDIUM, LOW
+  category         String?           @default("FUNCTIONAL") // FUNCTIONAL, SECURITY, API, PERSISTENCE, E2E, INTEGRATION, INVARIANT, STATIC
+  message          String            @db.Text
   endpointId       String?
   createdAt        DateTime          @default(now())
   synthesisTickets SynthesisTicket[]
@@ -2402,7 +2402,7 @@ model UserPreference {
 // ------------------------------------------------------
 model BrandingVersion {
   id             String   @id @default(uuid())
-  version        Int      @default(1) @unique
+  version        Int      @unique @default(1)
   primaryLogoSvg String?  @db.Text
   darkLogoSvg    String?  @db.Text
   faviconType    String?  @default("svg")
@@ -2441,7 +2441,7 @@ model AnalyticsEvent {
   timestamp   DateTime @default(now())
   sessionId   String
   userId      String?
-  eventType   String   // session_start, session_end, page_view, feature_open, feature_complete, search, form_start, form_complete, document_download, login, logout
+  eventType   String // session_start, session_end, page_view, feature_open, feature_complete, search, form_start, form_complete, document_download, login, logout
   route       String
   featureId   String?
   metadata    Json?
@@ -2530,22 +2530,22 @@ enum GitHubSyncStatus {
 }
 
 model SynthesisTicket {
-  id                  String                 @id @default(uuid())
-  ticketNumber        Int                    @unique @default(autoincrement())
+  id                  String                   @id @default(uuid())
+  ticketNumber        Int                      @unique @default(autoincrement())
   title               String
-  description         String                 @db.Text
+  description         String                   @db.Text
   source              SynthesisSource
   severity            SynthesisSeverity
   category            SynthesisCategory
-  status              SynthesisStatus        @default(DISCOVERED)
-  dedupHash           String                 @unique
+  status              SynthesisStatus          @default(DISCOVERED)
+  dedupHash           String                   @unique
   sourcePath          String?
   auditDocumentId     String?
-  auditDocument       AuditDocument?         @relation(fields: [auditDocumentId], references: [id], onDelete: SetNull)
+  auditDocument       AuditDocument?           @relation(fields: [auditDocumentId], references: [id], onDelete: SetNull)
   qaFindingId         String?
-  qaFinding           QAFinding?             @relation(fields: [qaFindingId], references: [id], onDelete: SetNull)
+  qaFinding           QAFinding?               @relation(fields: [qaFindingId], references: [id], onDelete: SetNull)
   supportTicketId     String?
-  supportTicket       SupportTicket?         @relation(fields: [supportTicketId], references: [id], onDelete: SetNull)
+  supportTicket       SupportTicket?           @relation(fields: [supportTicketId], references: [id], onDelete: SetNull)
   commitSha           String?
   branch              String?
   coderabbitCommentId String?
@@ -2553,18 +2553,18 @@ model SynthesisTicket {
   githubIssueUrl      String?
   githubPrNumber      Int?
   githubPrUrl         String?
-  githubSyncStatus    GitHubSyncStatus       @default(NOT_SYNCED)
+  githubSyncStatus    GitHubSyncStatus         @default(NOT_SYNCED)
   githubSyncError     String?
   githubSyncedAt      DateTime?
   createdById         String?
-  createdBy           User?                  @relation("SynthesisCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy           User?                    @relation("SynthesisCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   assignedToId        String?
-  assignedTo          User?                  @relation("SynthesisAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  discoveredAt        DateTime               @default(now())
+  assignedTo          User?                    @relation("SynthesisAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  discoveredAt        DateTime                 @default(now())
   resolvedAt          DateTime?
   slaDueDate          DateTime?
-  createdAt           DateTime               @default(now())
-  updatedAt           DateTime               @updatedAt
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
   comments            SynthesisTicketComment[]
   events              SynthesisTicketEvent[]
 
@@ -2595,7 +2595,7 @@ model SynthesisTicketEvent {
   id        String          @id @default(uuid())
   ticketId  String
   ticket    SynthesisTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  eventType String          // TICKET_CREATED, STATUS_CHANGE, COMMENT_ADDED, GITHUB_SYNCED, ASSIGNED, etc.
+  eventType String // TICKET_CREATED, STATUS_CHANGE, COMMENT_ADDED, GITHUB_SYNCED, ASSIGNED, etc.
   actorId   String?
   actor     User?           @relation("SynthesisEventActor", fields: [actorId], references: [id], onDelete: SetNull)
   actorName String
@@ -2608,64 +2608,62 @@ model SynthesisTicketEvent {
   @@index([eventType])
 }
 
-
-
 model ControlPlaneAction {
-  id              String   @id @default(uuid())
-  actorId         String
-  actorRole       String
-  request         String   @db.Text
-  intent          String
-  operationId     String?
-  affectedResources String @db.Text // JSON string array
-  riskLevel       String
-  approvalLevel   String
-  
-  currentState    String?  @db.Text // JSON string
-  proposedState   String?  @db.Text // JSON string
-  
+  id                String  @id @default(uuid())
+  actorId           String
+  actorRole         String
+  request           String  @db.Text
+  intent            String
+  operationId       String?
+  affectedResources String  @db.Text // JSON string array
+  riskLevel         String
+  approvalLevel     String
+
+  currentState  String? @db.Text // JSON string
+  proposedState String? @db.Text // JSON string
+
   backupReference String?
   changeReference String? // e.g. PR URL or Branch
   branch          String?
   commitSha       String?
   prNumber        Int?
-  
-  createdAt       DateTime @default(now())
-  expiresAt       DateTime
-  
-  status          String
-  version         Int      @default(1) // For optimistic concurrency
-  
-  events          ControlPlaneEvent[]
-  snapshots       ControlPlaneSnapshot[]
-  auditFindings   AuditFinding[]
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  status  String
+  version Int    @default(1) // For optimistic concurrency
+
+  events        ControlPlaneEvent[]
+  snapshots     ControlPlaneSnapshot[]
+  auditFindings AuditFinding[]
 }
 
 model ControlPlaneEvent {
-  id              String   @id @default(uuid())
-  actionId        String
-  timestamp       DateTime @default(now())
-  event           String
-  details         String   @db.Text
-  actorId         String?
+  id        String   @id @default(uuid())
+  actionId  String
+  timestamp DateTime @default(now())
+  event     String
+  details   String   @db.Text
+  actorId   String?
 
-  action          ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  action ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
 }
 
 model ControlPlaneSnapshot {
-  id              String   @id @default(uuid())
-  actionId        String
-  actorId         String
-  operation       String
-  target          String
-  createdAt       DateTime @default(now())
-  expiresAt       DateTime
-  beforeStateHash String
-  state           String   @db.Text // JSON string
+  id               String   @id @default(uuid())
+  actionId         String
+  actorId          String
+  operation        String
+  target           String
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  beforeStateHash  String
+  state            String   @db.Text // JSON string
   approvalRequired Boolean
-  approvalStatus  String // PENDING | APPROVED | REJECTED | NOT_REQUIRED
+  approvalStatus   String // PENDING | APPROVED | REJECTED | NOT_REQUIRED
 
-  action          ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  action ControlPlaneAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
 }
 
 model AuditFinding {
@@ -2694,4 +2692,100 @@ model AuditFinding {
   @@index([status, severity])
   @@index([code])
   @@index([actionId])
+}
+
+// ------------------------------------------------------
+// AI MODEL REGISTRY
+// ------------------------------------------------------
+
+enum AiProviderStatus {
+  ACTIVE
+  INACTIVE
+  DEGRADED
+  DEPRECATED
+}
+
+enum AiModelLifecycleStatus {
+  FREE
+  FREE_TIER
+  OPEN_SOURCE
+  PAID
+  UNAVAILABLE
+  DEPRECATED
+}
+
+model AiProvider {
+  id               String           @id @default(uuid())
+  key              String           @unique
+  name             String
+  status           AiProviderStatus @default(ACTIVE)
+  enabled          Boolean          @default(true)
+  adapterKey       String
+  baseUrl          String?
+  documentationUrl String?
+  termsUrl         String?
+  privacyUrl       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  models AiModel[]
+}
+
+model AiModel {
+  id              String                 @id @default(uuid())
+  providerId      String
+  provider        AiProvider             @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  key             String
+  displayName     String
+  modelName       String
+  status          String                 @default("ACTIVE")
+  enabled         Boolean                @default(true)
+  lifecycleStatus AiModelLifecycleStatus @default(PAID)
+
+  capabilities     String[]
+  inputModalities  String[]
+  outputModalities String[]
+
+  contextWindow   Int?
+  maxOutputTokens Int?
+
+  supportsTools            Boolean @default(false)
+  supportsStructuredOutput Boolean @default(false)
+  supportsVision           Boolean @default(false)
+  supportsAudio            Boolean @default(false)
+  supportsVideo            Boolean @default(false)
+  supportsEmbeddings       Boolean @default(false)
+  supportsReasoning        Boolean @default(false)
+
+  routingPriority  Int @default(0)
+  fallbackPriority Int @default(0)
+  timeoutMs        Int @default(15000)
+  maxRetries       Int @default(3)
+
+  freeTier Boolean @default(false)
+
+  rateLimitRpm Int?
+  rateLimitRpd Int?
+  rateLimitTpm Int?
+
+  inputPricePer1M  Float?
+  outputPricePer1M Float?
+  currency         String @default("USD")
+
+  dataRetentionPolicy String?
+  trainingUsePolicy   String?
+  zeroDataRetention   Boolean @default(false)
+  legalDataAllowed    Boolean @default(false)
+
+  verifiedAt DateTime?
+  sourceUrl  String?
+  notes      String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, key])
+  @@index([enabled, lifecycleStatus])
+  @@index([routingPriority])
+  @@index([key])
 }
