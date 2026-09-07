@@ -105,6 +105,26 @@ export class ControlPlaneAuthorization {
       caps.add('github.pr.create');
       caps.add('database.read');
       caps.add('vps.read');
+      
+      // Agent-specific capabilities that ADMIN/SUPER_ADMIN must possess
+      caps.add('agent.build');
+      caps.add('code.generate');
+      caps.add('preview.render');
+      caps.add('ui.inspect');
+      caps.add('audio.synthesize');
+      caps.add('faq.read');
+      caps.add('ticket.read');
+      caps.add('support.respond');
+      caps.add('analytics.read');
+      caps.add('metrics.query');
+      caps.add('report.generate');
+      caps.add('document.read');
+      caps.add('document.parse');
+      caps.add('ocr.extract');
+      caps.add('repo.read');
+      caps.add('findings.view');
+      caps.add('actions.propose');
+      caps.add('admin.assist');
     }
 
     if (user.role === 'SUPER_ADMIN') {
@@ -177,7 +197,7 @@ export class ControlPlaneAuthorization {
 
     const capabilities = this.getUserCapabilities(user);
 
-    if (!capabilities.includes(opDef.requiredCapability) && user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') { console.log('Caps fail', {role: user.role, required: opDef.requiredCapability, caps: Array.from(capabilities)});
+    if (!capabilities.includes(opDef.requiredCapability)) {
       throw new Error(`FAIL CLOSED: Uživatel ${user.email} nemá capability '${opDef.requiredCapability}' pro operaci ${operationId}.`);
     }
 
@@ -273,7 +293,7 @@ export class ControlPlaneAuthorization {
       }
 
       // Check User RBAC entitlement
-      if (requiredUserCap && !userCaps.includes(requiredUserCap) && user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') {
+      if (requiredUserCap && !userCaps.includes(requiredUserCap)) {
         return buildDeny(`FAIL CLOSED: User '${user.email}' lacks required capability '${requiredUserCap}'.`, cap.riskLevel, agent.traceRequired);
       }
 

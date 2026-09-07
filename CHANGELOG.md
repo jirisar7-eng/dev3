@@ -1,6 +1,94 @@
+## 2026-09-07
+**Typ:** SECURITY
+**Změna:** Zodolnění ControlPlaneAuthorization a odstranění role bypassu (Zero-Bypass).
+**Důvod:** Role jako ADMIN a SUPER_ADMIN dříve obcházely explicitní ověření capabilities (tzv. "fail-open" bypass), což porušovalo Zero-Trust architekturu.
+**Výsledek:** 
+- Přepracováno `ControlPlaneAuthorization.ts`, odstraněny všechny `user.role !== 'ADMIN'` výjimky.
+- Sjednocen typ `ControlPlaneCapability` s agent specific actions.
+- `getUserCapabilities()` nyní explicitně vrací všechny nezbytné agent a system capabilities pro administrátorské role.
+- Všechny modely nyní fail-close, pokud danou capabilitu role skutečně explicitně nemá.
+- 100% zachování test coverage v `agent-authorization-contract-phase1b.test.ts` a `orion-action-catalog.test.ts`.
+**Ověření:** TEST / TYPECHECK / BUILD
+**Commit:** N/A
+**Audit:** N/A
+**Riziko:** NONE
+**Další krok:** N/A
+
 # CHANGELOG
 
 ## 2026-09-07
+**Typ:** FEATURE / ORION ACTION CATALOG & AUTHORIZATION BRIDGE
+**Změna:** Vytvoření jednotného Orion Action/Capability Catalogu (`OrionActionCatalog`) a server-side Authorization Bridge engine (`authorizeAndBridgeAction`).
+**Důvod:** Centrální deklarativní správa rizikových úrovní, požadavků na lidské schválení (Human-in-the-Loop), auditování, trasování a Zero-Trust re-autorizace před provedením jakékoliv akce v systému Orion.
+**Výsledek:**
+- `src/services/orion/orionActionCatalog.ts`: Vytvořen katalog 32+ capabilities (`ORION_ACTION_CATALOG`) s atributy `riskLevel`, `requiresHumanApproval`, `isReadOnly`, `canMutate`, `policyEngineCheck`, `auditRequired`, `traceRequired`. Implementována metoda `authorizeAndBridgeAction` pro server-side autorizaci a bridgování akcí.
+- `src/services/orion/orionPermissionResolver.ts`: Aktualizace metody `generateCapabilityDiscoveryResponse` pro zobrazování katalogových názvů a popisů capabilities. Doplněno mapování pro `cms.write`.
+- `tests/orion-action-catalog.test.ts`: Vytvořena kompletní testovací sada pokrývající 18 verifikačních scénářů.
+- `audit-orion-action-catalog-2026-09-07.md`: Zpracován technický architektonický audit.
+- `COMMAND_LEDGER.json`: Aktualizován stav úkolu CMD-ORION-20260907-002 na COMPLETED.
+**Ověření:** TEST (42/42 vitest PASSED) / LINT (`tsc --noEmit` PASSED) / BUILD (`compile_applet` PASSED)
+**Commit:** N/A
+**Audit:** audit-orion-action-catalog-2026-09-07.md
+**Riziko:** NONE
+**Další krok:** Hotovo.
+
+
+## 2026-09-07
+**Typ:** FEATURE / ORION EFFECTIVE PERMISSION RESOLVER & DYNAMIC CAPABILITY DISCOVERY
+**Změna:** Zavedení centrálního server-side resolveru `OrionPermissionResolver` a dynamického obsluhování Capability Discovery dotazů ("Orione, s čím mi můžeš pomoct?").
+**Důvod:** Garance Zero-Trust architektury (klientská klamání rolí/specializací/capabilities v request body jsou striktně ignorována) a výpočet reálných Effective Permissions z autentizovaného serverového účtu, Custom Roles, Specializací a AI Policy Enginu.
+**Výsledek:**
+- `src/services/orion/orionPermissionResolver.ts`: Implementován serverový resolver `OrionPermissionResolver` s výpočtem Effective Capabilities a dynamickou tvorbou odpovědí Capability Discovery.
+- `src/services/orion/orionControlPlane.ts`: Propojení `resolveContext` a `processQuery` na server-side resolver. Automatická obsluha dotazů na schopnosti bez rizika úniku interních správcovských funkcí.
+- `src/services/controlPlaneAuthorization.ts`: Rozšíření `ORION_BASE_CAPABILITIES` a doplnění mapování capabilities pro všechny doménové role.
+- `src/services/ai/aiPolicyEngine.ts`: Doplněna metoda `evaluatePolicy` pro filtrování capabilities skrze AI Policy Engine.
+- `tests/orion-global-control-plane.test.ts`: Přidána testovací sada pro verifikaci resolveru (24/24 testů PASSED).
+- `audit-orion-effective-permission-resolver-2026-09-07.md`: Vytvořen kompletní architektonický a bezpečnostní audit.
+**Ověření:** TEST (24/24 vitest PASSED) / LINT (`tsc --noEmit` PASSED) / BUILD (`compile_applet` PASSED)
+**Commit:** N/A
+**Audit:** audit-orion-effective-permission-resolver-2026-09-07.md
+**Riziko:** NONE
+**Další krok:** Hotovo.
+
+## 2026-09-07
+**Typ:** FEATURE / ORION UNIVERSAL ASSISTANT MODE
+**Změna:** Rozšíření globálního asistenta Orion o režim univerzálního pomocníka (Universal Assistant Mode) pro neformální konverzaci, technické dotazy, orientaci v portálu, audity i administrativní operace.
+**Důvod:** Odstranění rigidních právních šablon při neformálním či obecném rozhovoru (např. dotaz "Chci si jen pokecat" dříve vracel šablonu kalkulačky) při zachování striktních server-side RBAC mantinelů, Policy Engine a Fail-Closed Zero-Trust architektury.
+**Výsledek:**
+- `src/services/orion/orionTypes.ts`: Zaveden typ `OrionIntent` (`conversational`, `informational`, `guidance`, `analytical`, `content_generation`, `audit`, `operational`).
+- `src/services/orion/orionControlPlane.ts`:
+  - Implementována metoda `classifyIntent(message, route, capability)` pro klasifikaci záměru (výhradně pro směrování workflow, NIKDY jako bezpečnostní hranice).
+  - Implementováno dynamické směrování `generateUniversalPublicResponse` a `generateUniversalContextualResponse` s přirozenou reakcí na neformální komunikaci i odborná témata (Docker, architektura).
+  - Přidána matice deterministických odpovědí `getDeterministicResponse` zajišťující spolehlivost i při výpadku externích LLM providerů.
+  - Zabezpečení: Pro `operational` a `audit` požadavky striktně zachováno `DENY` pro neoprávněné/veřejné uživatele a `HUMAN_APPROVAL_REQUIRED` pro mutující akce.
+- `src/routes/orionGlobalRoutes.ts`: Zpřesněna validace přes Zod s formátováním issue cest.
+- `src/components/orion/OrionGlobalShell.tsx`: Decentní systémový trigger (44×44 px, symbol `Cpu`, přístupný s `aria-label="ORION"`).
+- `tests/orion-global-control-plane.test.ts`: Testovací sada rozšířena o 5 nových testů pokrývajících konverzační intent, technické otázky, právní doporučení a bezpečnostní zamítnutí neautorizovaných operací (18/18 testů PASSED).
+**Ověření:** TEST (18/18 vitest PASSED) / LINT (`tsc --noEmit` PASSED) / BUILD (`compile_applet` PASSED)
+**Commit:** N/A
+**Audit:** N/A
+**Riziko:** NONE
+**Další krok:** Hotovo, připraveno pro produkční nasazení.
+
+## 2026-09-07
+**Typ:** FEATURE / ORION GLOBAL CONTROL PLANE & INTEGRATION
+**Změna:** Zavedení globálního Orion Control Plane a jednotné UI komponenty OrionGlobalShell (👁️) napříč celým portálem.
+**Důvod:** Sjednocení Orion AI asistenta do jediné globální komponenty s plnou kontextovou citlivostí (currentPath, role, effectiveCapabilities), ochranou proti eskalaci privilegií a striktním dodržováním Zero Trust / Fail-Closed architektury.
+**Výsledek:**
+- `src/services/orion/orionTypes.ts`: Definována typová rozhraní (`OrionContext`, `OrionDecision`, `OrionProposedAction`, `OrionQueryResponse`).
+- `src/services/orion/orionControlPlane.ts`: Implementováno řídicí jádro využívající stávající `ControlPlaneAuthorization` a `ControlPlaneService`. Enforcuje fail-closed přístup, validaci capabilities, intent analýzu (detekce mutací a P0/P1 operací vyžadujících `HUMAN_APPROVAL_REQUIRED`) a integraci s `aiPolicyEngine`.
+- `src/routes/orionGlobalRoutes.ts`: Vytvořen bezpečný backend endpoint `POST /api/orion` a `GET /api/orion/context` s validací přes Zod a absolutním zákazem klientských API klíčů/tokenů.
+- `server.ts`: Registrován a namountován `/api/orion`.
+- `src/components/orion/OrionGlobalShell.tsx`: Vytvořen plovoucí UI widget s ikonou 👁️, zobrazením efektivních capabilities bez možnosti jejich klientského udělování, chatovacím panelem, odznaky rozhodnutí (`ALLOW`, `DENY`, `AI_RECOMMENDATION`, `HUMAN_APPROVAL_REQUIRED`) a návrhovými kartami akcí.
+- `src/App.tsx`: Integrována komponenta `<OrionGlobalShell />` do nejvyššího společného layoutu portálu.
+- `tests/orion-global-control-plane.test.ts`: Vytvořena komplexní testovací sada se 13 testovacími scénáři (13/13 vitest PASSED).
+**Ověření:** TEST (13/13 PASSED) / BUILD (`compile_applet` PASSED)
+**Commit:** feat(orion): add global Orion control plane and shell
+**Audit:** N/A
+**Riziko:** NONE (veškeré operace fail-closed, bez ukládání hesel/secretů)
+**Další krok:** Připraveno pro akceptaci.
+
+## 2026-09-07 (00:00:00)
 **Typ:** FEATURE / AI INFRASTRUCTURE / MODEL REGISTRY & TELEMETRY
 **Změna:** Implementace Dynamic AI Provider & Model Catalog + Usage Telemetry (Branch: 2026-09-07-000000-dynamic-ai-model-catalog-telemetry).
 **Důvod:** Náhrada hardcoded `seedInitialCatalog` za dynamické zjišťování dostupných modelů přes API/katalogy providerů a zavedení přesné telemetrie spotřeby, latence a kvót.

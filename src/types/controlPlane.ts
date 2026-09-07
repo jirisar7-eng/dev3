@@ -30,7 +30,26 @@ export type ControlPlaneCapability =
   | "security.policy.write"
   | "project.manage"
   | "moderation.read"
-  | "moderation.write";
+  | "moderation.write"
+  // Agent-specific capabilities
+  | "agent.build"
+  | "code.generate"
+  | "preview.render"
+  | "ui.inspect"
+  | "audio.synthesize"
+  | "faq.read"
+  | "ticket.read"
+  | "support.respond"
+  | "analytics.read"
+  | "metrics.query"
+  | "report.generate"
+  | "document.read"
+  | "document.parse"
+  | "ocr.extract"
+  | "repo.read"
+  | "findings.view"
+  | "actions.propose"
+  | "admin.assist";
 
 export type ControlPlaneRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'P0' | 'P1' | 'P2' | 'P3';
 export type OldRiskLevel = 'P0' | 'P1' | 'P2' | 'P3'; 
