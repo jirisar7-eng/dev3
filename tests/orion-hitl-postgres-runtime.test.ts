@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { OrionApprovalStore } from '../src/services/orion/orionApprovalStore';
-import { ControlPlaneAuthorization } from '../src/services/controlPlaneAuthorization';
+import { ControlPlaneAuthorization, AGENT_ORION_IDENTITY } from '../src/services/controlPlaneAuthorization';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,13 +11,10 @@ import * as path from 'path';
 const TEST_AGENT_PREFIX = 'TEST_RUNTIME_AGENT_';
 const TEST_DB_URL = process.env.DATABASE_URL || 'postgresql://tatovacesta:tatovacesta@localhost:5432/tatovacesta_dev3?schema=public';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: TEST_DB_URL
-    }
-  }
-});
+const pool = new pg.Pool({ connectionString: TEST_DB_URL, connectionTimeoutMillis: 5000 });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
 
 describe('CMD-ORION-017: HITL PostgreSQL Runtime Harness', () => {
 
@@ -70,7 +69,9 @@ describe('CMD-ORION-017: HITL PostgreSQL Runtime Harness', () => {
       expect(read).toBeDefined();
       expect(read?.agentId).toBe(testAgentId);
 
-      const independentPrisma = new PrismaClient({ datasources: { db: { url: TEST_DB_URL } } });
+      const indPool = new pg.Pool({ connectionString: TEST_DB_URL, connectionTimeoutMillis: 5000 });
+      const indAdapter = new PrismaPg(indPool);
+      const independentPrisma = new PrismaClient({ adapter: indAdapter });
       await independentPrisma.$connect();
       const dbApproval = await independentPrisma.orionApproval.findUnique({ where: { id: approval.id } });
       expect(dbApproval).toBeDefined();
@@ -140,10 +141,10 @@ describe('CMD-ORION-017: HITL PostgreSQL Runtime Harness', () => {
 
   it('5. Post-approval revalidation strictly evaluates output', () => {
     const authRes = ControlPlaneAuthorization.authorizeAgentRequest({
-      agentId: 'orion-v1',
-      capabilityId: 'core.data.modify',
-      user: { id: 'usr', email: 'u@dev.cz', role: 'USER', status: 'ACTIVE', passwordHash: '' },
-      scope: 'ai-engine',
+      agentId: AGENT_ORION_IDENTITY,
+      capabilityId: 'ai.chat' as any,
+      user: { id: 'usr', email: 'super@dev.cz', role: 'SUPER_ADMIN', status: 'ACTIVE' } as any,
+      scope: 'ai.chat',
       hasValidHitlApproval: true
     });
     

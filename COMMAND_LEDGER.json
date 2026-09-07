@@ -124,6 +124,22 @@
       "branch": "feat/ai-policy-council-integration-20260907",
       "testsPassed": "PASS",
       "timestamp": "2026-09-07T18:41:09.281Z"
+    },
+    {
+      "commandId": "CMD-ORION-20260907-015",
+      "status": "PARTIAL / NOT VERIFIED",
+      "auditPath": "audit-orion-hitl-final-hardening-2026-09-07.md",
+      "branch": "feat/ai-policy-council-integration-20260907",
+      "testsPassed": "PASS",
+      "timestamp": "2026-09-07T18:48:11.804Z"
+    },
+    {
+      "commandId": "CMD-ORION-20260907-016",
+      "status": "PARTIAL / NOT VERIFIED",
+      "auditPath": "audit-orion-hitl-postgresql-runtime-verification-2026-09-07.md",
+      "branch": "feat/ai-policy-council-integration-20260907",
+      "testsPassed": "PASS",
+      "timestamp": "2026-09-07T18:52:36.837Z"
     }
   ]
 }
