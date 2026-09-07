@@ -244,12 +244,12 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
             <span>Šablony</span>
           </button>
 
-          <button onClick={() => setIsAiModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-slate-900 rounded-lg hover:bg-purple-700 text-xs font-semibold transition-colors cursor-pointer">
+          <button onClick={() => setIsAiModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-xs font-semibold transition-colors cursor-pointer">
             <Sparkles className="w-3.5 h-3.5" />
             <span>AI Generátor</span>
           </button>
           
-          <button onClick={() => handleSave(localData)} disabled={isSaving} className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 text-slate-900 rounded-lg hover:bg-indigo-700 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer">
+          <button onClick={() => handleSave(localData)} disabled={isSaving} className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer">
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Ukládám...' : 'Uložit stránku'}</span>
           </button>
@@ -283,13 +283,13 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
             <div className="flex gap-2 mb-4 border-b border-slate-200 pb-3">
               <button
                 onClick={() => setSaveAsTemplateMode(false)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${!saveAsTemplateMode ? 'bg-indigo-600 text-slate-900' : 'bg-slate-50 text-slate-600'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${!saveAsTemplateMode ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-600'}`}
               >
                 Vybrat z existujících šablon
               </button>
               <button
                 onClick={() => setSaveAsTemplateMode(true)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${saveAsTemplateMode ? 'bg-indigo-600 text-slate-900' : 'bg-slate-50 text-slate-600'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${saveAsTemplateMode ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-600'}`}
               >
                 + Uložit rozvržení jako novou šablonu
               </button>
@@ -313,7 +313,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
                       </div>
                       <button
                         onClick={() => handleApplyTemplate(tpl)}
-                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 text-xs font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-xs"
+                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-xs"
                       >
                         Aplikovat
                       </button>
@@ -368,7 +368,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-indigo-600 text-slate-900 rounded-xl text-xs font-bold"
+                    className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"
                   >
                     Uložit jako šablonu
                   </button>
@@ -391,7 +391,7 @@ export const AdminPageBuilder: React.FC<{ onNavigate?: (path: string) => void }>
             <textarea value={aiRawText} onChange={(e) => setAiRawText(e.target.value)} placeholder="Vložte podklady..." className="w-full h-56 p-3 mb-4 bg-white border border-slate-200 text-slate-900 rounded-xl text-xs" />
             <div className="flex justify-end gap-2">
               <button onClick={() => setIsAiModalOpen(false)} className="px-4 py-2 text-slate-600 text-xs">Zrušit</button>
-              <button onClick={handleGenerateAi} disabled={isGenerating} className="px-4 py-2 bg-purple-600 text-slate-900 rounded-xl text-xs font-bold disabled:opacity-50">
+              <button onClick={handleGenerateAi} disabled={isGenerating} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold disabled:opacity-50">
                 {isGenerating ? 'AI sestavuje Puck...' : 'Generovat'}
               </button>
             </div>

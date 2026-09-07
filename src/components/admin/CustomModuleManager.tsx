@@ -407,7 +407,7 @@ export const CustomModuleManager: React.FC = () => {
 
           <button
             onClick={handleOpenCreate}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit JSON Modul</span>
@@ -568,7 +568,7 @@ export const CustomModuleManager: React.FC = () => {
                     }}
                     className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
                       editorTab === 'preview'
-                        ? 'bg-indigo-600 text-slate-900 shadow-2xs'
+                        ? 'bg-indigo-600 text-white shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -623,7 +623,7 @@ export const CustomModuleManager: React.FC = () => {
               type="button"
               disabled={saving}
               onClick={handleSave}
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Ukládám...' : editingId ? 'Uložit změny' : 'Vytvořit modul'}</span>
@@ -639,7 +639,7 @@ export const CustomModuleManager: React.FC = () => {
             onClick={() => setFilterStatus('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === 'all'
-                ? 'bg-indigo-900 text-slate-900'
+                ? 'bg-indigo-900 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -649,7 +649,7 @@ export const CustomModuleManager: React.FC = () => {
             onClick={() => setFilterStatus('active')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === 'active'
-                ? 'bg-emerald-700 text-slate-900'
+                ? 'bg-emerald-700 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >

@@ -339,11 +339,11 @@ export const BrandingManager: React.FC = () => {
                   </div>
                   
                   {/* Dark Background Preview */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-8 flex items-center justify-center min-h-[160px]">
+                  <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 flex items-center justify-center min-h-[160px]">
                      {currentSvgEditorVal ? (
                        <div className="max-w-[250px] max-h-[100px] object-contain flex items-center justify-center" dangerouslySetInnerHTML={{ __html: currentSvgEditorVal }} />
                      ) : (
-                       <span className="text-slate-500 text-sm font-medium">Zatím nebylo zadáno SVG</span>
+                       <span className="text-slate-400 text-sm font-medium">Zatím nebylo zadáno SVG</span>
                      )}
                   </div>
 
@@ -372,7 +372,7 @@ export const BrandingManager: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-8 py-3 bg-blue-700 text-slate-900 font-bold rounded-xl hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                className="px-8 py-3 bg-blue-700 text-white font-bold rounded-xl hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 {saving ? 'Ukládám a validuji...' : 'Uložit branding'}

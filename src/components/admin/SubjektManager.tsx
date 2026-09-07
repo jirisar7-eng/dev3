@@ -642,7 +642,7 @@ const handleSave = async (e: React.FormEvent) => {
 
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2 bg-white hover:bg-indigo-600 text-slate-900 font-bold px-4 py-2.5 rounded-2xl text-xs transition-all cursor-pointer shadow-xs shrink-0"
+          className="inline-flex items-center gap-2 bg-white hover:bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all cursor-pointer shadow-xs shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Přidat nový subjekt</span>
@@ -859,7 +859,7 @@ const handleSave = async (e: React.FormEvent) => {
                         {item.pendingSourcesCount && item.pendingSourcesCount > 0 ? (
                           <span className="absolute -top-1 -right-1 flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600 text-[8px] font-bold text-slate-900 items-center justify-center">
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600 text-[8px] font-bold text-white items-center justify-center">
                               {item.pendingSourcesCount}
                             </span>
                           </span>
@@ -933,7 +933,7 @@ const handleSave = async (e: React.FormEvent) => {
                   type="button"
                   onClick={handleVerifyAres}
                   disabled={aresLoading || !aresIco.trim()}
-                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-slate-900 font-bold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs shrink-0"
+                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs shrink-0"
                 >
                   {aresLoading ? (
                     <>
@@ -1001,7 +1001,7 @@ const handleSave = async (e: React.FormEvent) => {
                     <button
                       type="button"
                       onClick={handleApplyAresData}
-                      className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-slate-900 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
+                      className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Použít údaje z ARES do formuláře</span>
@@ -1070,7 +1070,7 @@ const handleSave = async (e: React.FormEvent) => {
               <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-slate-800 flex items-center gap-2"><MapPin className="w-4 h-4 text-indigo-600"/> GPS Souřadnice</label>
-                  <button type="button" onClick={handleGeocode} disabled={geocodeLoading} className="text-xs bg-indigo-600 text-slate-900 px-2 py-1 rounded-md hover:bg-indigo-700 disabled:opacity-50">
+                  <button type="button" onClick={handleGeocode} disabled={geocodeLoading} className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-md hover:bg-indigo-700 disabled:opacity-50">
                     {geocodeLoading ? 'Hledám...' : 'Získat z adresy'}
                   </button>
                 </div>
@@ -1202,7 +1202,7 @@ const handleSave = async (e: React.FormEvent) => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-slate-900 font-bold px-4 py-2 rounded-xl shadow-xs"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl shadow-xs"
                 >
                   {saving ? 'Ukládám...' : 'Uložit'}
                 </button>
@@ -1302,7 +1302,7 @@ const handleSave = async (e: React.FormEvent) => {
                     {isAdmin && (
                       <button
                         onClick={handleOpenDirectEdit}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-indigo-600 text-slate-900 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs self-start sm:self-auto"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-indigo-600 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs self-start sm:self-auto"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         <span>Přímá úprava (Admin)</span>
@@ -1648,7 +1648,7 @@ const handleSave = async (e: React.FormEvent) => {
                                     <button
                                       onClick={() => handleApproveProposal(source)}
                                       disabled={reviewLoadingId === source.id || isSelfProposed}
-                                      className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl text-xs font-bold text-slate-900 bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                                      className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
                                     >
                                       {reviewLoadingId === source.id ? (
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1730,7 +1730,7 @@ const handleSave = async (e: React.FormEvent) => {
                   rejectionReasonInput.trim().length < 5 ||
                   rejectionReasonInput.trim().length > 500
                 }
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-200 text-slate-900 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-200 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
               >
                 {reviewLoadingId === rejectModalSource.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Potvrdit zamítnutí</span>
@@ -1860,7 +1860,7 @@ const handleSave = async (e: React.FormEvent) => {
                   type="button"
                   onClick={handleSaveDirectEdit}
                   disabled={directEditSaving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 text-slate-900 font-bold rounded-xl transition-colors cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 text-white font-bold rounded-xl transition-colors cursor-pointer shadow-xs"
                 >
                   {directEditSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Uložit změny</span>

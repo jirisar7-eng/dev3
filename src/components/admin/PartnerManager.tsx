@@ -194,7 +194,7 @@ export const PartnerManager: React.FC = () => {
           </div>
           
           <div className="pt-2 flex gap-3">
-            <button type="submit" className="px-5 py-2.5 bg-blue-900 text-slate-900 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors">
+            <button type="submit" className="px-5 py-2.5 bg-blue-900 text-white rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors">
               {isEditing ? 'Uložit změny' : 'Vytvořit partnera'}
             </button>
             {isEditing && (

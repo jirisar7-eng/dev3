@@ -259,7 +259,7 @@ export const VideoManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-video"
-          className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-slate-900 font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
+          className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Přidat video
         </button>
@@ -690,7 +690,7 @@ export const VideoManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
                 >
                   <Save className="w-4 h-4" /> Uložit video
                 </button>

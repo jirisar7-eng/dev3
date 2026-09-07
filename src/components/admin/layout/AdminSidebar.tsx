@@ -175,7 +175,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     onClick={() => handleItemClick(item)}
                     className={`w-full text-left p-2.5 rounded-2xl text-xs transition-all flex items-center justify-between group cursor-pointer ${
                       isActive
-                        ? 'bg-blue-900 text-slate-900 shadow-sm font-bold'
+                        ? 'bg-blue-900 text-white shadow-sm font-bold'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -274,7 +274,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                           onClick={() => handleItemClick(item)}
                           className={`w-full text-left px-2.5 py-2 rounded-xl text-xs transition-all flex items-center justify-between group cursor-pointer ${
                             isActive
-                              ? 'bg-blue-900 text-slate-900 shadow-xs font-bold'
+                              ? 'bg-blue-900 text-white shadow-xs font-bold'
                               : 'text-slate-700 hover:bg-slate-100/80'
                           }`}
                         >

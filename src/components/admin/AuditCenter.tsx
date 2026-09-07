@@ -110,7 +110,7 @@ export const AuditCenter: React.FC<AuditCenterProps> = ({
       {/* Header & Global Status */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 text-slate-900 rounded-xl shadow-xs">
+          <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-xs">
             <ShieldCheck className="w-7 h-7" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export const AuditCenter: React.FC<AuditCenterProps> = ({
           </div>
           <button
             onClick={handleRefreshAll}
-            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-slate-900 rounded-lg font-medium cursor-pointer"
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium cursor-pointer"
           >
             Zkusit znovu
           </button>

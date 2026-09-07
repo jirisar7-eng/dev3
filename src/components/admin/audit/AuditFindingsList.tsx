@@ -135,7 +135,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
     switch (type) {
       case 'REGRESSION':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-rose-600 text-slate-900 animate-pulse">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-rose-600 text-white animate-pulse">
             <TrendingDown className="w-3 h-3" />
             REGRESSION
           </span>
@@ -474,7 +474,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
                     setSelectedFinding(null);
                     onAnalyzeWithOrion(f);
                   }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-medium text-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors"
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>Analyzovat v Orionu</span>

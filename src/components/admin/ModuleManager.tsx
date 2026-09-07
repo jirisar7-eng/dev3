@@ -103,7 +103,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setManagerMode('custom')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             managerMode === 'custom'
-              ? 'bg-indigo-600 text-slate-900 shadow-xs'
+              ? 'bg-indigo-600 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -122,7 +122,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setFilterTab('all')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             filterTab === 'all'
-              ? 'bg-indigo-900 text-slate-900 shadow-xs'
+              ? 'bg-indigo-900 text-white shadow-xs'
               : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
@@ -134,7 +134,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setFilterTab('active')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             filterTab === 'active'
-              ? 'bg-emerald-700 text-slate-900 shadow-xs'
+              ? 'bg-emerald-700 text-white shadow-xs'
               : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
@@ -318,7 +318,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
               </button>
               <button
                 onClick={handleSaveConfig}
-                className="px-4 py-2 bg-indigo-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-indigo-950 flex items-center gap-1.5"
+                className="px-4 py-2 bg-indigo-900 text-white rounded-xl text-xs font-semibold hover:bg-indigo-950 flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
                 Uložit konfiguraci

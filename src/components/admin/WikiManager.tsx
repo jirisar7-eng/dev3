@@ -277,7 +277,7 @@ export const WikiManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-wiki-term"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Přidat nový pojem
@@ -333,7 +333,7 @@ export const WikiManager: React.FC = () => {
             onClick={() => setLetterFilter('all')}
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
               letterFilter === 'all'
-                ? 'bg-indigo-600 text-slate-900'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -347,7 +347,7 @@ export const WikiManager: React.FC = () => {
                 onClick={() => setLetterFilter(l)}
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
                   letterFilter === l
-                    ? 'bg-indigo-600 text-slate-900'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -744,7 +744,7 @@ export const WikiManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   {selectedTerm ? 'Uložit změny' : 'Vytvořit pojem'}

@@ -97,7 +97,7 @@ export const AiContextManager: React.FC = () => {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="px-5 py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+          className="px-5 py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? 'Generuji index...' : 'Obnovit index'}

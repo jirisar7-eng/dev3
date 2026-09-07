@@ -232,7 +232,7 @@ export const StateAdminManager: React.FC = () => {
             <button
               onClick={handleTriggerHealthCheck}
               disabled={isChecking || cooldownRemaining > 0}
-              className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Gauge className={`w-4 h-4 ${isChecking ? 'animate-spin text-amber-300' : ''}`} />
               {isChecking

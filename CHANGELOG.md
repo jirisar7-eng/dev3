@@ -268,3 +268,13 @@
 **Riziko:** NONE  
 **Další krok:** Připraveno pro review a finální acceptance.  
   
+
+### CMD-ADMIN-20260907-001R
+Datum: 2026-09-07
+Typ: RECONCILIATION / QA / ACCESSIBILITY HARDENING
+Parent: CMD-ADMIN-20260907-001
+Změna: Reconciled the global light theme admin UI redesign by fixing contrast issues and semantic color regressions.
+Důvod: Prior automated substitution created unreadable text pairings (dark text on dark backgrounds) and broke semantic components like the dark background branding preview.
+Výsledek: Restored `text-white` to elements using dark backgrounds (e.g., `bg-blue-600`), restored the `bg-slate-900` preview area for SVG logos. Verified shared components and responsive viewport rendering (no horizontal overflow across viewports 320px to 1440px). Created the required audit artifact.
+Ověření: BUILD / LINT / TYPECHECK / AUDIT
+Riziko: NONE

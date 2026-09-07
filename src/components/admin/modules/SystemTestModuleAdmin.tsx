@@ -165,7 +165,7 @@ export const SystemTestModuleAdmin: React.FC = () => {
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
               !enabled
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-purple-600 text-slate-900 hover:bg-purple-700'
+                : 'bg-purple-600 text-white hover:bg-purple-700'
             }`}
           >
             {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}

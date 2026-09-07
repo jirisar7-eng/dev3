@@ -495,7 +495,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
                 <button
                   onClick={() => handleCreateShare(30)}
                   disabled={creatingShare}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
                 >
                   {creatingShare ? 'Generuji...' : 'Vygenerovat odkaz (platnost 30 dní)'}
                 </button>

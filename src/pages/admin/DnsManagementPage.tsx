@@ -87,7 +87,7 @@ export const DnsManagementPage: React.FC = () => {
             {['A', 'CNAME', 'TXT', 'MX'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <input type="text" placeholder="Hodnota / IP" className="border p-2 rounded" value={newRecord.value} onChange={e => setNewRecord({...newRecord, value: e.target.value})} />
-          <button type="submit" className="bg-blue-600 text-slate-900 p-2 rounded flex items-center justify-center gap-2"><Plus size={16}/> Přidat</button>
+          <button type="submit" className="bg-blue-600 text-white p-2 rounded flex items-center justify-center gap-2"><Plus size={16}/> Přidat</button>
         </form>
 
         <div className="pt-4 border-t flex flex-wrap gap-2">

@@ -185,7 +185,7 @@ export const AiTelemetryCard: React.FC<{ onNavigate?: (path: string) => void }> 
       {/* Header card */}
       <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-purple-600 text-slate-900 rounded-xl shadow-xs">
+          <div className="p-3 bg-purple-600 text-white rounded-xl shadow-xs">
             <Cpu className="w-6 h-6" />
           </div>
           <div>
@@ -414,7 +414,7 @@ export const AiTelemetryCard: React.FC<{ onNavigate?: (path: string) => void }> 
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                         p.enabled
                           ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                          : 'bg-purple-600 text-slate-900 hover:bg-purple-700'
+                          : 'bg-purple-600 text-white hover:bg-purple-700'
                       }`}
                     >
                       {p.enabled ? (

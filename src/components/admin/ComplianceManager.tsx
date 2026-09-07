@@ -234,7 +234,7 @@ export const ComplianceManager: React.FC = () => {
         {activeTab === 'docs' && (
           <button
             onClick={() => setShowNewDocModal(true)}
-            className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-slate-900 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+            className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" />
             Vytvořit dokument
@@ -255,7 +255,7 @@ export const ComplianceManager: React.FC = () => {
               });
               setShowNewVersionModal(true);
             }}
-            className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-slate-900 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+            className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
           >
             <GitBranch className="w-4 h-4" />
             Vytvořit novou verzi
@@ -465,7 +465,7 @@ export const ComplianceManager: React.FC = () => {
                 onClick={() => setSelectedDocKey(d.key)}
                 className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
                   selectedDocKey === d.key
-                    ? 'bg-blue-900 text-slate-900 shadow-xs'
+                    ? 'bg-blue-900 text-white shadow-xs'
                     : 'hover:bg-slate-100 text-slate-700'
                 }`}
               >
@@ -504,7 +504,7 @@ export const ComplianceManager: React.FC = () => {
                       });
                       setShowNewVersionModal(true);
                     }}
-                    className="px-3 py-1.5 bg-blue-900 hover:bg-blue-950 text-slate-900 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                    className="px-3 py-1.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Přidat novou verzi
@@ -564,7 +564,7 @@ export const ComplianceManager: React.FC = () => {
                               {ver.status !== 'PUBLISHED' && (
                                 <button
                                   onClick={() => handlePublishVersion(ver.id)}
-                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-slate-900 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-xs"
+                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-xs"
                                 >
                                   <Check className="w-3.5 h-3.5" />
                                   Publikovat
@@ -1042,7 +1042,7 @@ export const ComplianceManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-slate-900 rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-semibold shadow-xs"
                 >
                   Vytvořit dokument
                 </button>
@@ -1118,7 +1118,7 @@ export const ComplianceManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-slate-900 rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-semibold shadow-xs"
                 >
                   Uložit novou verzi
                 </button>

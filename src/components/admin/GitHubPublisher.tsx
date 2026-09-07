@@ -296,7 +296,7 @@ export const GitHubPublisher: React.FC = () => {
         <button
           onClick={fetchStatus}
           disabled={loadingStatus}
-          className="py-3 px-5 rounded-2xl bg-slate-50 hover:bg-slate-700 border border-slate-200 text-slate-900 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+          className="py-3 px-5 rounded-2xl bg-slate-50 hover:bg-slate-700 border border-slate-200 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 text-emerald-400 ${loadingStatus ? 'animate-spin' : ''}`} />
           <span>{loadingStatus ? 'Kontroluji...' : 'Zkontrolovat změny'}</span>
@@ -518,7 +518,7 @@ export const GitHubPublisher: React.FC = () => {
               <button
                 onClick={handleOpenConfirm}
                 disabled={false}
-                className="py-3.5 px-6 rounded-xl bg-blue-900 text-slate-900 font-extrabold text-xs hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-3.5 px-6 rounded-xl bg-blue-900 text-white font-extrabold text-xs hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {pushing ? (
                   <>
@@ -596,7 +596,7 @@ export const GitHubPublisher: React.FC = () => {
               </button>
               <button
                 onClick={handleExecutePush}
-                className="py-2.5 px-6 rounded-xl bg-emerald-700 text-slate-900 font-extrabold text-xs hover:bg-emerald-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-emerald-700 text-white font-extrabold text-xs hover:bg-emerald-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Potvrdit PUSH na GitHub</span>
@@ -672,7 +672,7 @@ export const GitHubPublisher: React.FC = () => {
               </button>
               <button
                 onClick={handleExecuteForcePush}
-                className="py-2.5 px-6 rounded-xl bg-rose-700 text-slate-900 font-extrabold text-xs hover:bg-rose-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-rose-700 text-white font-extrabold text-xs hover:bg-rose-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <AlertTriangle className="w-4 h-4 text-amber-300" />
                 <span>POTVRDIT FORCE PUSH</span>

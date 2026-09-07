@@ -228,7 +228,7 @@ export const MementoManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-memento"
-          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
+          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Přidat varovný případ
         </button>
@@ -561,7 +561,7 @@ export const MementoManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
                 >
                   <Save className="w-4 h-4" /> Uložit případ
                 </button>

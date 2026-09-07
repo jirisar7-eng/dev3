@@ -326,7 +326,7 @@ export const LegalGuideManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-legal-guide"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Přidat nového průvodce
@@ -897,7 +897,7 @@ export const LegalGuideManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-amber-600 hover:bg-amber-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   {selectedGuide ? 'Uložit změny' : 'Vytvořit průvodce'}

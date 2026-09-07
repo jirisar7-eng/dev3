@@ -148,7 +148,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
               window.history.pushState({}, '', '/administrace/orion');
               window.dispatchEvent(new Event('popstate'));
             }}
-            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-slate-900 font-bold text-xs transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-purple-200" />
             Vizuální Trace Mind-Map →
@@ -209,7 +209,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
           <button
             onClick={handleRunAnalysis}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
           >
             {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             <span>{loading ? 'Orion analyzuje...' : 'Spustit AI analýzu'}</span>
@@ -339,7 +339,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
                     <button
                       onClick={() => handleProposeDraftAction(sug)}
                       disabled={proposingAction}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
                     >
                       <Layers className="w-3.5 h-3.5" />
                       <span>{proposingAction ? 'Vytvářím návrh...' : 'Vytvořit DRAFT návrh do fronty'}</span>

@@ -549,7 +549,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
                       isPassed
                         ? 'bg-purple-950/80 border-purple-500/50 text-purple-200'
                         : isCurrent
-                        ? 'bg-purple-600 border-purple-400 text-slate-900 animate-pulse'
+                        ? 'bg-purple-600 border-purple-400 text-white animate-pulse'
                         : 'bg-slate-950 border-slate-200 text-slate-600'
                     }`}
                   >
@@ -568,7 +568,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('dashboard')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'dashboard'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -580,7 +580,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('registry')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'registry'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -592,7 +592,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('runs')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'runs'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -604,7 +604,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('findings')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'findings'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -616,7 +616,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('ai')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'ai'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -628,7 +628,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('copilot')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'copilot'
-              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -1063,7 +1063,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                 <button
                   onClick={handleCompareRuns}
                   disabled={!prevRunId || !currRunId || comparing}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ArrowRightLeft className="w-4 h-4" />
                   {comparing ? 'Porovnávám...' : 'Porovnat Audity'}
@@ -1242,7 +1242,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                   onClick={() => setSeverityFilter(sev)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     severityFilter === sev
-                      ? 'bg-purple-600 text-slate-900'
+                      ? 'bg-purple-600 text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -1257,7 +1257,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                   onClick={() => setCategoryFilter(cat)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === cat
-                      ? 'bg-purple-600 text-slate-900'
+                      ? 'bg-purple-600 text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -1964,7 +1964,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                         {/* Final Decision Gate Badge */}
                         {(() => {
                           const verdict = copilotResults.aiVerdict || 'NOT PRODUCTION READY';
-                          const color = verdict === 'PRODUCTION READY' ? 'bg-emerald-500 text-slate-900 shadow-emerald-500/20' : 'bg-rose-600 text-slate-900 shadow-rose-600/20';
+                          const color = verdict === 'PRODUCTION READY' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-rose-600 text-white shadow-rose-600/20';
                           return (
                             <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase shadow-xs ${color}`}>
                               {verdict}

@@ -250,7 +250,7 @@ export const VpsManagement: React.FC = () => {
           <button
             onClick={handleUpdate}
             disabled={updating}
-            className="bg-emerald-600 hover:bg-emerald-500 text-slate-900 px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md transition-colors disabled:opacity-50 cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md transition-colors disabled:opacity-50 cursor-pointer"
           >
             {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             Restartovat kontejner (Podman API)

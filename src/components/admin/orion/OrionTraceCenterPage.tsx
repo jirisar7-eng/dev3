@@ -141,7 +141,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-purple-900 text-slate-900 flex items-center justify-center font-bold shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-purple-900 text-white flex items-center justify-center font-bold shadow-md">
               <Terminal className="w-6 h-6 text-purple-300" />
             </div>
             <div>
@@ -233,7 +233,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
             className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer ${
               isRunning
                 ? 'bg-purple-950 text-purple-300 border border-purple-800 cursor-not-allowed'
-                : 'bg-purple-600 hover:bg-purple-500 text-slate-900'
+                : 'bg-purple-600 hover:bg-purple-500 text-white'
             }`}
           >
             {isRunning ? (

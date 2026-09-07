@@ -105,7 +105,7 @@ export const ThemeManager: React.FC = () => {
 
           <button
             onClick={() => setShowNewModal(true)}
-            className="px-4 py-2 bg-purple-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-purple-950 flex items-center gap-1.5 shadow-xs"
+            className="px-4 py-2 bg-purple-900 text-white rounded-xl text-xs font-semibold hover:bg-purple-950 flex items-center gap-1.5 shadow-xs"
           >
             <Plus className="w-4 h-4" />
             Vytvořit nové téma
@@ -380,7 +380,7 @@ export const ThemeManager: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-purple-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-purple-950 shadow-xs"
+                className="px-4 py-2 bg-purple-900 text-white rounded-xl text-xs font-semibold hover:bg-purple-950 shadow-xs"
               >
                 Vytvořit téma
               </button>

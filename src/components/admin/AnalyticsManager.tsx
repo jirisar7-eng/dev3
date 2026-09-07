@@ -306,7 +306,7 @@ export const AnalyticsManager: React.FC = () => {
               onClick={() => setTimeRange(t.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 timeRange === t.id
-                  ? 'bg-blue-900 text-slate-900 shadow-sm'
+                  ? 'bg-blue-900 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
               }`}
             >
@@ -365,7 +365,7 @@ export const AnalyticsManager: React.FC = () => {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
                 isActive
-                  ? 'bg-blue-900 text-slate-900 shadow-md'
+                  ? 'bg-blue-900 text-white shadow-md'
                   : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
               }`}
             >
@@ -748,7 +748,7 @@ export const AnalyticsManager: React.FC = () => {
                 <div key={idx} className="space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-blue-900 text-slate-900 flex items-center justify-center text-xs">
+                      <span className="w-6 h-6 rounded-full bg-blue-900 text-white flex items-center justify-center text-xs">
                         {step.stepIndex}
                       </span>
                       <span className="text-slate-900 text-sm font-bold">{step.stepName}</span>
@@ -1015,7 +1015,7 @@ export const AnalyticsManager: React.FC = () => {
               <button
                 type="submit"
                 disabled={userHistoryLoading}
-                className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs transition-colors flex items-center gap-2"
+                className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs transition-colors flex items-center gap-2"
               >
                 {userHistoryLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 Zobrazit historii
@@ -1265,7 +1265,7 @@ export const AnalyticsManager: React.FC = () => {
             <button
               onClick={() => handleSaveSettings()}
               disabled={saving}
-              className="px-6 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
+              className="px-6 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Ukládám nastavení...' : 'Uložit nastavení simulace'}

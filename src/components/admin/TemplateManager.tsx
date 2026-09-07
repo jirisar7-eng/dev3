@@ -252,7 +252,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-slate-900 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit novou šablonu</span>
@@ -284,7 +284,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
               onClick={() => setActiveCategory(cat.key)}
               className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeCategory === cat.key
-                  ? 'bg-indigo-600 text-slate-900 shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'bg-slate-50/60 hover:bg-slate-50 text-slate-600 border border-slate-200/60'
               }`}
             >
@@ -317,7 +317,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
           </p>
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2 bg-indigo-600 text-slate-900 rounded-xl text-xs font-semibold"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
           >
             Vytvořit první šablonu
           </button>
@@ -407,7 +407,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
                   <button
                     onClick={() => handleUseTemplateForNewPage(tpl)}
-                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                   >
                     <span>Použít</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -517,7 +517,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   {saving ? 'Ukládám...' : 'Uložit šablonu'}
                 </button>
@@ -568,7 +568,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
               </button>
               <button
                 onClick={() => setPreviewTemplate(null)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 rounded-xl text-xs font-bold cursor-pointer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 Zavřít
               </button>

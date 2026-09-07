@@ -542,7 +542,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
               id="mailcow-create-submit-btn"
               type="submit"
               disabled={isSubmitting || loading}
-              className="w-full sm:w-auto px-5 py-2 bg-blue-600 text-slate-900 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -636,7 +636,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                       <div className="pt-2 flex justify-center gap-2">
                         <button
                           onClick={fetchMailboxes}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-colors cursor-pointer"
                         >
                           Zkusit znovu načíst
                         </button>
@@ -848,7 +848,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
               <button
                 type="button"
                 onClick={() => setShowHealthModal(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Zavřít
               </button>
@@ -919,7 +919,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                 type="button"
                 onClick={handleConfirmPasswordChange}
                 disabled={passwordChangeLoading || !passwordModal.newPass.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 text-xs font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {passwordChangeLoading ? 'Ukládám...' : 'Uložit nové heslo'}
               </button>

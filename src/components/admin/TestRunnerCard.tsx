@@ -214,17 +214,17 @@ export const TestRunnerCard: React.FC<{ compact?: boolean }> = ({ compact = fals
 
           <div className="flex items-center gap-2">
             {status.isTesting ? (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500 text-slate-900 font-bold text-xs shadow-xs animate-pulse">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500 text-white font-bold text-xs shadow-xs animate-pulse">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Běží testování...
               </span>
             ) : status.result === 'passed' ? (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-900 font-bold text-xs shadow-xs">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-xs shadow-xs">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 Poslední test: Úspěšný
               </span>
             ) : status.result === 'failed' ? (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-600 text-slate-900 font-bold text-xs shadow-xs">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-xs">
                 <XCircle className="w-3.5 h-3.5" />
                 Poslední test: Selhal
               </span>
@@ -290,7 +290,7 @@ export const TestRunnerCard: React.FC<{ compact?: boolean }> = ({ compact = fals
           className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
             status.isTesting || starting
               ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-slate-900 shadow-indigo-600/20'
+              : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-indigo-600/20'
           }`}
         >
           {status.isTesting || starting ? (

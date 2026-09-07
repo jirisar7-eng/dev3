@@ -209,7 +209,7 @@ export const ContactModerationManager: React.FC = () => {
                   <>
                     <button
                       onClick={() => handleStatusUpdate(prac.id, 'APPROVED')}
-                      className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all cursor-pointer"
+                      className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all cursor-pointer"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>Schválit</span>
