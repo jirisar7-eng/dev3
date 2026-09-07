@@ -50,6 +50,7 @@ import { AnalyticsManager } from './AnalyticsManager';
 import { ContentProjectCenter } from './ContentProjectCenter';
 import { UnifiedOperationsCenter } from './operations/UnifiedOperationsCenter';
 import { AiTelemetryCard } from './audit/AiTelemetryCard';
+import { AiModelControlCenter } from './ai/AiModelControlCenter';
 import { OrionTraceCenterPage } from './orion/OrionTraceCenterPage';
 import { ExperimentalLabPage } from '../experimental/ExperimentalLabPage';
 
@@ -418,6 +419,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
           {activeTab === 'experimenty' && <ExperimentalLabPage onNavigate={onNavigate} />}
           {activeTab === 'ai-context' && <AiContextManager />}
           {activeTab === 'tests' && <TestRunnerCard />}
+          {activeTab === 'ai-control-center' && <AiModelControlCenter currentPath={currentPath} onNavigate={onNavigate} />}
           {activeTab === 'ai-telemetry' && <AiTelemetryCard onNavigate={onNavigate} />}
 
           {/* 📈 Analytika & Audit */}

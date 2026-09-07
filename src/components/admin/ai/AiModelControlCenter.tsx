@@ -187,12 +187,63 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-export const AiModelControlCenter: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'providers' | 'models' | 'routing' | 'policy' | 'roles' | 'council' | 'telemetry'>('providers');
+export interface AiModelControlCenterProps {
+  currentPath?: string;
+  onNavigate?: (path: string) => void;
+}
+
+export type AiControlCenterTab = 'providers' | 'models' | 'routing' | 'policy' | 'roles' | 'council' | 'telemetry';
+
+export const getTabFromPath = (path?: string): AiControlCenterTab => {
+  const p = path || (typeof window !== 'undefined' ? window.location.pathname + window.location.search + window.location.hash : '');
+  if (p.includes('/ai-control-center/models') || p.includes('/admin/ai-control-center/models') || p.includes('tab=models') || p.includes('subtab=models') || p.includes('sub=models') || p.includes('#models')) {
+    return 'models';
+  }
+  if (p.includes('/ai-control-center/providers') || p.includes('/admin/ai-control-center/providers') || p.includes('tab=providers') || p.includes('subtab=providers') || p.includes('sub=providers') || p.includes('#providers')) {
+    return 'providers';
+  }
+  if (p.includes('/ai-control-center/routing') || p.includes('/admin/ai-control-center/routing') || p.includes('tab=routing') || p.includes('subtab=routing') || p.includes('sub=routing') || p.includes('#routing')) {
+    return 'routing';
+  }
+  if (p.includes('/ai-control-center/policy') || p.includes('/admin/ai-control-center/policy') || p.includes('tab=policy') || p.includes('subtab=policy') || p.includes('sub=policy') || p.includes('#policy')) {
+    return 'policy';
+  }
+  if (p.includes('/ai-control-center/roles') || p.includes('/admin/ai-control-center/roles') || p.includes('tab=roles') || p.includes('subtab=roles') || p.includes('sub=roles') || p.includes('#roles')) {
+    return 'roles';
+  }
+  if (p.includes('/ai-control-center/council') || p.includes('/admin/ai-control-center/council') || p.includes('tab=council') || p.includes('subtab=council') || p.includes('sub=council') || p.includes('#council')) {
+    return 'council';
+  }
+  if (p.includes('/ai-control-center/telemetry') || p.includes('/admin/ai-control-center/telemetry') || p.includes('tab=telemetry') || p.includes('subtab=telemetry') || p.includes('sub=telemetry') || p.includes('#telemetry')) {
+    return 'telemetry';
+  }
+  return 'providers';
+};
+
+export const AiModelControlCenter: React.FC<AiModelControlCenterProps> = ({ currentPath, onNavigate }) => {
+  const [activeTab, setActiveTab] = useState<AiControlCenterTab>(() => getTabFromPath(currentPath));
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath(currentPath));
+  }, [currentPath]);
+
+  const handleTabChange = (tab: AiControlCenterTab) => {
+    setActiveTab(tab);
+    const targetPath = tab === 'providers'
+      ? '/administrace/ai-control-center'
+      : `/administrace/ai-control-center/${tab}`;
+
+    if (onNavigate) {
+      onNavigate(targetPath);
+    } else if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', targetPath);
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
 
   const [providers, setProviders] = useState<ProviderData[]>([]);
   const [models, setModels] = useState<ModelData[]>([]);
@@ -727,7 +778,7 @@ export const AiModelControlCenter: React.FC = () => {
       {/* TABS NAVIGATION */}
       <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
         <button
-          onClick={() => setActiveTab('providers')}
+          onClick={() => handleTabChange('providers')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'providers'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -739,7 +790,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('models')}
+          onClick={() => handleTabChange('models')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'models'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -751,7 +802,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('routing')}
+          onClick={() => handleTabChange('routing')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'routing'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -763,7 +814,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('policy')}
+          onClick={() => handleTabChange('policy')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'policy'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -775,7 +826,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('roles')}
+          onClick={() => handleTabChange('roles')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'roles'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -787,7 +838,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('council')}
+          onClick={() => handleTabChange('council')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'council'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'
@@ -799,7 +850,7 @@ export const AiModelControlCenter: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('telemetry')}
+          onClick={() => handleTabChange('telemetry')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
             activeTab === 'telemetry'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950'

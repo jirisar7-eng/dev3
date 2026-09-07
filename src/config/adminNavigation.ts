@@ -57,6 +57,7 @@ export type AdminTabId =
   | 'experimenty'
   | 'ai-context'
   | 'ai-telemetry'
+  | 'ai-control-center'
   | 'settings'
   | 'sponsors'
   | 'dns'
@@ -296,6 +297,15 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         badge: { text: 'Trace Graph', variant: 'purple' },
         path: '/administrace/orion',
         keywords: ['orion', 'trace', 'mindmap', 'vizualizace', 'process', 'observability', 'graph'],
+      },
+      {
+        id: 'ai-control-center',
+        title: 'AI Model Control Center',
+        subtitle: 'Řídicí registr providerů, modelů a záchranných tras',
+        icon: Cpu,
+        badge: { text: 'Control Plane', variant: 'indigo' },
+        path: '/administrace/ai-control-center',
+        keywords: ['ai control center', 'model registry', 'ai model registry', 'katalog modelů', 'providers', 'models', 'routing', 'fallback', 'gemini', 'grok', 'groq', 'openrouter'],
       },
       {
         id: 'ai-telemetry',
@@ -541,6 +551,7 @@ export function resolveAdminTabFromUrl(urlOrPath?: string): AdminTabId {
   if (target.startsWith('/admin/pages')) return 'pages';
   if (target.startsWith('/admin/analytics') || target.includes('/analytika')) return 'analytics';
   if (target.startsWith('/admin/dns')) return 'dns';
+  if (target.startsWith('/administrace/ai-control-center') || target.startsWith('/admin/ai-control-center') || target.includes('tab=ai-control-center')) return 'ai-control-center';
   if (target.includes('/administrace/orion') || target.includes('/admin/orion') || target.includes('tab=orion') || target.includes('/experimenty/orion')) return 'orion';
   if (target.includes('/administrace/experimenty') || target.includes('/admin/experimenty') || target.includes('tab=experimenty') || target.includes('/experimenty')) return 'experimenty';
   if (target.includes('/qa/copilot') || target.includes('tab=copilot')) return 'copilot';
