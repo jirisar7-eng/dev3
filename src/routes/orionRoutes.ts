@@ -3,6 +3,7 @@ import { requireAuth, requireRole, requireExperimentalAccess, AuthenticatedReque
 import { OrionTraceStore } from '../services/audit/orionTraceStore';
 import { NotionAuditMirrorService } from '../services/notionAuditMirror';
 import { OrionService } from '../services/audit/orionService';
+import { requireOrionAuth } from '../middleware/orionAuthMiddleware';
 import { z } from 'zod';
 
 const router = Router();
@@ -90,7 +91,7 @@ router.get('/trace/:id', requireAuth as any, requireExperimentalAccess() as any,
  * POST /api/admin/orion/run
  * Triggers an Orion analysis run which generates a live trace and safe AI_RECOMMENDATION.
  */
-router.post('/run', requireAuth as any, requireExperimentalAccess() as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/run', requireAuth as any, requireExperimentalAccess() as any, requireOrionAuth('ai.generate') as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parseResult = OrionRunBodySchema.safeParse(req.body);
     if (!parseResult.success) {

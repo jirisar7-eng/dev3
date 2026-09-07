@@ -6,6 +6,7 @@ import { AuditRegistryEngine } from '../services/audit/auditRegistryEngine';
 import { RegressionEngine } from '../services/audit/regressionEngine';
 import { ReleaseGateService } from '../services/audit/releaseGateService';
 import { OrionService } from '../services/audit/orionService';
+import { requireOrionAuth } from '../middleware/orionAuthMiddleware';
 import { z } from 'zod';
 
 const router = Router();
@@ -29,7 +30,7 @@ const OrionProposeActionBodySchema = z.object({
  * POST /api/admin/audits/orion/analyze (and /api/admin/audit-center/orion/analyze)
  * Runs safe, read-only AI security analysis via Orion Identity (agent-orion-qa-v1).
  */
-router.post('/orion/analyze', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/orion/analyze', requireAuth as any, requireRole('ADMIN') as any, requireOrionAuth('ai.generate') as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parseResult = OrionAnalyzeBodySchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -65,7 +66,7 @@ router.post('/orion/analyze', requireAuth as any, requireRole('ADMIN') as any, a
  * POST /api/admin/audits/orion/propose-action (and /api/admin/audit-center/orion/propose-action)
  * Creates a ControlPlaneAction proposal strictly in DRAFT mode.
  */
-router.post('/orion/propose-action', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/orion/propose-action', requireAuth as any, requireRole('ADMIN') as any, requireOrionAuth('ai.generate') as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parseResult = OrionProposeActionBodySchema.safeParse(req.body);
     if (!parseResult.success) {

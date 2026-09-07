@@ -21,11 +21,6 @@ const enforceOrionAuth = (req: AuthenticatedRequest, res: express.Response, capa
       res.status(403).json({ error: authRes.reason });
       return false;
     }
-    const policyResult = aiPolicyEngine.evaluatePolicy(req.user, capabilityId);
-    if (!policyResult) {
-      res.status(403).json({ error: 'Operace zamítnuta Policy Engine (globální zákaz nebo omezení capabilit).' });
-      return false;
-    }
     return true;
   } catch (err: any) {
     res.status(403).json({ error: err.message || 'Přístup zamítnut kontrolní rovinou Orion.' });

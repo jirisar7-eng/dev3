@@ -5,6 +5,7 @@ import { AgentRegistry } from './agentRegistry';
 import { AgentCapabilityCatalog } from './agentCapabilityCatalog';
 import { AgentAuthorizationRequest, AgentAuthorizationResult } from '../types/agentRegistry';
 import { OrionTraceStore } from './audit/orionTraceStore';
+import { aiPolicyEngine } from './ai/aiPolicyEngine';
 
 export const AGENT_ORION_IDENTITY = 'agent-orion-qa-v1';
 export const AGENT_ORION_ROLE = 'AI_SECURITY_ANALYST';
@@ -304,6 +305,12 @@ export class ControlPlaneAuthorization {
             return buildDeny(`FAIL CLOSED: Target resource '${targetResource}' is forbidden for operation '${opDef.id}'.`, 'P0', agent.traceRequired);
           }
         }
+      }
+
+      // 8.5 Validate Policy Engine
+      const policyResult = aiPolicyEngine.evaluatePolicy(user, capabilityId);
+      if (!policyResult) {
+        return buildDeny(`FAIL CLOSED: Agent operation denied by AI Policy Engine (global block or capability restriction).`, cap.riskLevel, agent.traceRequired);
       }
 
       // 9. Trace Binding (OrionTraceStore)

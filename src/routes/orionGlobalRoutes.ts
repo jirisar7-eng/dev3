@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
-import { AuthenticatedRequest } from '../middleware/authMiddleware';
+import { requireAuth, AuthenticatedRequest } from '../middleware/authMiddleware';
+import { requireOrionAuth } from '../middleware/orionAuthMiddleware';
 import { OrionControlPlane } from '../services/orion/orionControlPlane';
 import { ControlPlaneCapability } from '../types/controlPlane';
 
@@ -41,7 +42,7 @@ router.get('/context', async (req: Request, res: Response) => {
  * POST /api/orion
  * Unified entry point for Global Orion Assistant & Security Copilot across the portal.
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth as any, requireOrionAuth('ai.chat') as any, async (req: Request, res: Response) => {
   // 1. Never accept API keys or secret tokens from client payload
   if (
     req.body.apiKey ||
