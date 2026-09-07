@@ -276,7 +276,7 @@ export const GitHubPublisher: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="bg-white text-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5">
@@ -285,7 +285,7 @@ export const GitHubPublisher: React.FC = () => {
             </span>
             <span className="text-xs text-slate-400 font-mono">system.github.publish</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             GitHub Publisher
           </h2>
           <p className="text-xs text-slate-400 mt-1">
@@ -296,7 +296,7 @@ export const GitHubPublisher: React.FC = () => {
         <button
           onClick={fetchStatus}
           disabled={loadingStatus}
-          className="py-3 px-5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+          className="py-3 px-5 rounded-2xl bg-slate-50 hover:bg-slate-700 border border-slate-200 text-slate-900 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 text-emerald-400 ${loadingStatus ? 'animate-spin' : ''}`} />
           <span>{loadingStatus ? 'Kontroluji...' : 'Zkontrolovat změny'}</span>
@@ -518,11 +518,11 @@ export const GitHubPublisher: React.FC = () => {
               <button
                 onClick={handleOpenConfirm}
                 disabled={false}
-                className="py-3.5 px-6 rounded-xl bg-blue-900 text-white font-extrabold text-xs hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-3.5 px-6 rounded-xl bg-blue-900 text-slate-900 font-extrabold text-xs hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {pushing ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-slate-900" />
                     <span>Publikuji na GitHub...</span>
                   </>
                 ) : (
@@ -539,7 +539,7 @@ export const GitHubPublisher: React.FC = () => {
 
       {/* CONFIRMATION MODAL - STANDARD PUSH */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2 text-slate-900 font-extrabold text-lg">
@@ -596,7 +596,7 @@ export const GitHubPublisher: React.FC = () => {
               </button>
               <button
                 onClick={handleExecutePush}
-                className="py-2.5 px-6 rounded-xl bg-emerald-700 text-white font-extrabold text-xs hover:bg-emerald-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-emerald-700 text-slate-900 font-extrabold text-xs hover:bg-emerald-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Potvrdit PUSH na GitHub</span>
@@ -608,7 +608,7 @@ export const GitHubPublisher: React.FC = () => {
 
       {/* CONFIRMATION MODAL - FORCE PUSH */}
       {showForceModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-white/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-2 border-rose-300 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2 text-rose-900 font-extrabold text-lg">
@@ -672,7 +672,7 @@ export const GitHubPublisher: React.FC = () => {
               </button>
               <button
                 onClick={handleExecuteForcePush}
-                className="py-2.5 px-6 rounded-xl bg-rose-700 text-white font-extrabold text-xs hover:bg-rose-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-rose-700 text-slate-900 font-extrabold text-xs hover:bg-rose-800 transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <AlertTriangle className="w-4 h-4 text-amber-300" />
                 <span>POTVRDIT FORCE PUSH</span>

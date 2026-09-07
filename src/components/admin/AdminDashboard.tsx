@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
               window.dispatchEvent(new Event('popstate'));
             }
           }}
-          className="px-6 py-3 rounded-xl bg-blue-900 text-white font-bold text-sm hover:bg-blue-800 transition-all shadow-md cursor-pointer"
+          className="px-6 py-3 rounded-xl bg-blue-900 text-slate-900 font-bold text-sm hover:bg-blue-800 transition-all shadow-md cursor-pointer"
         >
           Přihlásit se do administrace
         </button>
@@ -182,7 +182,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-white/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
 
@@ -352,7 +352,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentPath, onN
                       onClick={() => {
                         handleSelectTab('copilot', '/administrace/qa/copilot');
                       }}
-                      className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group-hover:shadow-lg"
+                      className="w-full py-3 bg-white text-slate-900 rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group-hover:shadow-lg"
                     >
                       <Sparkles className="w-4 h-4 text-purple-300" />
                       Spustit Admin Copilot

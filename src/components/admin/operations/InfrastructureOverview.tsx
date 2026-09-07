@@ -100,7 +100,7 @@ export const InfrastructureOverview: React.FC = () => {
         <p className="text-xs text-rose-700">{error || 'Nebyla vrácena žádná data.'}</p>
         <button
           onClick={fetchInfrastructureData}
-          className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer"
+          className="px-4 py-2 bg-rose-600 text-slate-900 rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer"
         >
           Zkusit znovu
         </button>
@@ -111,7 +111,7 @@ export const InfrastructureOverview: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Read-Only Guarantee Banner */}
-      <div className="bg-indigo-900 text-white p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+      <div className="bg-indigo-900 text-slate-900 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-800 text-indigo-200 rounded-xl">
             <Lock className="w-5 h-5 text-indigo-300" />
@@ -131,7 +131,7 @@ export const InfrastructureOverview: React.FC = () => {
 
         <button
           onClick={fetchInfrastructureData}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-800 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-800 hover:bg-indigo-700 text-slate-900 text-xs font-bold transition-colors shrink-0 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Obnovit audit</span>
@@ -436,7 +436,7 @@ export const InfrastructureOverview: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
-                      f.severity === 'P0' ? 'bg-rose-600 text-white' :
+                      f.severity === 'P0' ? 'bg-rose-600 text-slate-900' :
                       f.severity === 'P1' ? 'bg-rose-100 text-rose-800' :
                       f.severity === 'P2' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-800'
                     }`}>

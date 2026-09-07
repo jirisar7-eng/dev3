@@ -83,11 +83,11 @@ export const DnsManagementPage: React.FC = () => {
         <h2 className="font-semibold text-lg">Přidat záznam</h2>
         <form onSubmit={handleAddRecord} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <input type="text" placeholder="Název (subdoména)" className="border p-2 rounded" value={newRecord.name} onChange={e => setNewRecord({...newRecord, name: e.target.value})} />
-          <select className="border p-2 rounded" value={newRecord.type} onChange={e => setNewRecord({...newRecord, type: e.target.value})}>
+          <select className="border p-2 rounded max-w-full truncate w-full md:w-auto" value={newRecord.type} onChange={e => setNewRecord({...newRecord, type: e.target.value})}>
             {['A', 'CNAME', 'TXT', 'MX'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <input type="text" placeholder="Hodnota / IP" className="border p-2 rounded" value={newRecord.value} onChange={e => setNewRecord({...newRecord, value: e.target.value})} />
-          <button type="submit" className="bg-blue-600 text-white p-2 rounded flex items-center justify-center gap-2"><Plus size={16}/> Přidat</button>
+          <button type="submit" className="bg-blue-600 text-slate-900 p-2 rounded flex items-center justify-center gap-2"><Plus size={16}/> Přidat</button>
         </form>
 
         <div className="pt-4 border-t flex flex-wrap gap-2">
@@ -103,7 +103,7 @@ export const DnsManagementPage: React.FC = () => {
                 <Search className="absolute left-2 top-2.5 text-slate-400" size={16}/>
                 <input type="text" placeholder="Hledat..." className="border p-2 pl-8 rounded w-full" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <select className="border p-2 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <select className="border p-2 rounded max-w-full truncate w-full md:w-auto" value={filterType} onChange={e => setFilterType(e.target.value)}>
                 <option value="ALL">Všechny typy</option>
                 {['A', 'CNAME', 'TXT', 'MX'].map(t => <option key={t} value={t}>{t}</option>)}
             </select>

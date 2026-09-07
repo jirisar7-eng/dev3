@@ -259,7 +259,7 @@ export const VideoManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-video"
-          className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
+          className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-slate-900 font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Přidat video
         </button>
@@ -326,7 +326,7 @@ export const VideoManager: React.FC = () => {
                 <div className="flex items-start gap-4 flex-1">
                   <div
                     onClick={() => handleOpenPreview(video)}
-                    className="relative w-24 h-16 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0 group cursor-pointer"
+                    className="relative w-24 h-16 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 group cursor-pointer"
                   >
                     <img
                       src={video.thumbnailUrl}
@@ -334,9 +334,9 @@ export const VideoManager: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Play className="w-5 h-5 text-white/90 fill-white/80" />
+                      <Play className="w-5 h-5 text-slate-900/90 fill-white/80" />
                     </div>
-                    <span className="absolute bottom-1 right-1 bg-black/70 text-[9px] font-bold text-white px-1 rounded">
+                    <span className="absolute bottom-1 right-1 bg-black/70 text-[9px] font-bold text-slate-900 px-1 rounded">
                       {video.duration}
                     </span>
                   </div>
@@ -413,7 +413,7 @@ export const VideoManager: React.FC = () => {
 
       {/* Edit / Create Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -577,7 +577,7 @@ export const VideoManager: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleAddNote}
-                    className="px-3 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800"
+                    className="px-3 py-2 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-slate-50"
                   >
                     Přidat bod
                   </button>
@@ -624,7 +624,7 @@ export const VideoManager: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleAddAttachment}
-                      className="flex-1 px-3 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800"
+                      className="flex-1 px-3 py-2 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-slate-50"
                     >
                       Přidat
                     </button>
@@ -690,7 +690,7 @@ export const VideoManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
                 >
                   <Save className="w-4 h-4" /> Uložit video
                 </button>
@@ -702,9 +702,9 @@ export const VideoManager: React.FC = () => {
 
       {/* Preview Modal */}
       {isPreviewModalOpen && selectedVideo && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-white/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-white text-slate-900 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Video className="w-4 h-4 text-rose-400" />
                 <span className="text-xs font-bold uppercase tracking-wider text-rose-300">
@@ -713,7 +713,7 @@ export const VideoManager: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsPreviewModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-900 p-1"
               >
                 <X className="w-5 h-5" />
               </button>

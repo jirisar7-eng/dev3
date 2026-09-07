@@ -308,7 +308,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('dashboard')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'dashboard' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'dashboard' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -317,7 +317,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('pages')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'pages' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'pages' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -326,7 +326,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('articles')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'articles' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'articles' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -335,7 +335,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('categories')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'categories' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'categories' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <FolderTree className="w-3.5 h-3.5" />
@@ -344,7 +344,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('faqs')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'faqs' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'faqs' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
@@ -353,7 +353,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('nav')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'nav' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'nav' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <Navigation className="w-3.5 h-3.5" />
@@ -362,7 +362,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
           <button
             onClick={() => setActiveSubtab('media')}
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'media' ? 'bg-slate-900 text-white shadow-2xs' : 'hover:bg-slate-200'
+              activeSubtab === 'media' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:bg-slate-200'
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
@@ -372,7 +372,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('wiki')}
             id="cms-subtab-wiki"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'wiki' ? 'bg-indigo-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'wiki' ? 'bg-indigo-600 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -382,7 +382,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('legal-guides')}
             id="cms-subtab-legal-guides"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'legal-guides' ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'legal-guides' ? 'bg-amber-600 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -392,7 +392,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('studies')}
             id="cms-subtab-studies"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'studies' ? 'bg-blue-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'studies' ? 'bg-blue-600 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <BookMarked className="w-3.5 h-3.5" />
@@ -402,7 +402,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('videos')}
             id="cms-subtab-videos"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'videos' ? 'bg-rose-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'videos' ? 'bg-rose-600 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <Video className="w-3.5 h-3.5" />
@@ -412,7 +412,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('quizzes')}
             id="cms-subtab-quizzes"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'quizzes' ? 'bg-emerald-600 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'quizzes' ? 'bg-emerald-600 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
@@ -422,7 +422,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
             onClick={() => setActiveSubtab('memento')}
             id="cms-subtab-memento"
             className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubtab === 'memento' ? 'bg-amber-500 text-white shadow-2xs font-extrabold' : 'hover:bg-slate-200'
+              activeSubtab === 'memento' ? 'bg-amber-500 text-slate-900 shadow-2xs font-extrabold' : 'hover:bg-slate-200'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -515,7 +515,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
                   window.dispatchEvent(new Event('popstate'));
                 }
               }}
-              className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950 transition-all shrink-0 text-center cursor-pointer shadow-xs"
+              className="px-4 py-2 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950 transition-all shrink-0 text-center cursor-pointer shadow-xs"
             >
               Přejít do Vizuálního Puck Editoru
             </button>
@@ -528,7 +528,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
                 <h3 className="text-sm font-bold text-slate-900">Seznam stránek ({pages.length})</h3>
                 <button
                   onClick={handleSyncPages}
-                  className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer"
                   title="Obnovit / Synchronizovat všech 33 stránek z menu"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -642,7 +642,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
                         className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-4"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          <span className="w-8 h-8 rounded-xl bg-white text-slate-900 font-bold text-xs flex items-center justify-center shrink-0">
                             {sec.order}
                           </span>
                           <div>
@@ -729,7 +729,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950 transition-all flex items-center justify-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     Přidat sekci
@@ -802,7 +802,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               />
             </div>
 
-            <button type="submit" className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all">
+            <button type="submit" className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-black transition-all">
               Uložit novou stránku
             </button>
           </form>
@@ -921,7 +921,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               />
             </div>
 
-            <button type="submit" className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950">
+            <button type="submit" className="w-full py-3 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950">
               Uložit článek
             </button>
           </form>
@@ -1016,7 +1016,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               />
             </div>
 
-            <button type="submit" className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950">
+            <button type="submit" className="w-full py-3 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950">
               Přidat kategorii
             </button>
           </form>
@@ -1085,7 +1085,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               />
             </div>
 
-            <button type="submit" className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950">
+            <button type="submit" className="w-full py-3 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950">
               Uložit FAQ
             </button>
           </form>
@@ -1181,7 +1181,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               </select>
             </div>
 
-            <button type="submit" className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950">
+            <button type="submit" className="w-full py-3 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950">
               Přidat do navigace
             </button>
           </form>
@@ -1267,7 +1267,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               </select>
             </div>
 
-            <button type="submit" className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950">
+            <button type="submit" className="w-full py-3 bg-blue-900 text-slate-900 rounded-xl font-bold hover:bg-blue-950">
               Registrovat médium
             </button>
           </form>
@@ -1346,7 +1346,7 @@ export const CmsManager: React.FC<CmsManagerProps> = ({ onNavigate }) => {
               </button>
               <button
                 onClick={() => handleUpdatePage(editingPage.id!, editingPage)}
-                className="px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-xs hover:bg-blue-950 flex items-center gap-1.5"
+                className="px-5 py-2 bg-blue-900 text-slate-900 rounded-xl font-bold text-xs hover:bg-blue-950 flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" /> Uložit změny
               </button>

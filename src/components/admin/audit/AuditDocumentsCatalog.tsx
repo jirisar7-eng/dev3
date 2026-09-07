@@ -283,7 +283,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition-colors shadow-xs disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-medium text-xs transition-colors shadow-xs disabled:opacity-50"
             title="Synchronizovat markdown soubory z docs/audit/ do DB"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
@@ -389,7 +389,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
 
       {/* Detail Document Modal */}
       {selectedDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
@@ -448,11 +448,11 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
                   Načítám obsah zprávy...
                 </div>
               ) : viewMode === 'preview' ? (
-                <div className="prose prose-slate max-w-none text-slate-800 prose-headings:font-bold prose-headings:text-slate-900 prose-pre:bg-slate-900 prose-pre:text-slate-100">
+                <div className="prose prose-slate max-w-none text-slate-800 prose-headings:font-bold prose-headings:text-slate-900 prose-pre:bg-white prose-pre:text-slate-800">
                   <ReactMarkdown>{docContent || '_Žádný obsah reportu._'}</ReactMarkdown>
                 </div>
               ) : (
-                <pre className="font-mono bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap">
+                <pre className="font-mono bg-white text-slate-800 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap">
                   {docContent}
                 </pre>
               )}
@@ -473,7 +473,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
 
       {/* Share Modal */}
       {sharingDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -495,7 +495,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
                 <button
                   onClick={() => handleCreateShare(30)}
                   disabled={creatingShare}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
                 >
                   {creatingShare ? 'Generuji...' : 'Vygenerovat odkaz (platnost 30 dní)'}
                 </button>
@@ -507,7 +507,7 @@ export const AuditDocumentsCatalog: React.FC<AuditDocumentsCatalogProps> = ({ on
                 </div>
                 <button
                   onClick={() => handleCopy(window.location.origin + createdShareUrl)}
-                  className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-medium text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Zkopírováno!' : 'Kopírovat odkaz'}</span>

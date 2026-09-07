@@ -237,15 +237,15 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
   const getPriorityBadge = (priority: ProjectTaskPriority) => {
     switch (priority) {
       case 'P0_CRITICAL':
-        return { label: 'P0 KRITICKÁ', color: 'bg-rose-600 text-white' };
+        return { label: 'P0 KRITICKÁ', color: 'bg-rose-600 text-slate-900' };
       case 'P1_HIGH':
-        return { label: 'P1 VYSOKÁ', color: 'bg-orange-500 text-white' };
+        return { label: 'P1 VYSOKÁ', color: 'bg-orange-500 text-slate-900' };
       case 'P2_MEDIUM':
-        return { label: 'P2 STŘEDNÍ', color: 'bg-blue-600 text-white' };
+        return { label: 'P2 STŘEDNÍ', color: 'bg-blue-600 text-slate-900' };
       case 'P3_LOW':
-        return { label: 'P3 NÍZKÁ', color: 'bg-slate-500 text-white' };
+        return { label: 'P3 NÍZKÁ', color: 'bg-slate-500 text-slate-900' };
       case 'INFO':
-        return { label: 'INFO', color: 'bg-slate-400 text-white' };
+        return { label: 'INFO', color: 'bg-slate-400 text-slate-900' };
     }
   };
 
@@ -297,7 +297,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-blue-900 text-slate-900 flex items-center justify-center shadow-xs shrink-0">
               <Layers className="w-6 h-6" />
             </div>
             <div>
@@ -327,7 +327,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
             </button>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Nový úkol / nápad
@@ -395,7 +395,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('overview')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'overview'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -407,7 +407,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('content')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'content'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -419,7 +419,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('comparison')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'comparison'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -431,7 +431,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('recommendations')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'recommendations'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -443,7 +443,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('backlog')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'backlog'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -455,7 +455,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           onClick={() => setActiveSubTab('roadmap')}
           className={`px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeSubTab === 'roadmap'
-              ? 'bg-blue-900 text-white shadow-xs'
+              ? 'bg-blue-900 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -922,7 +922,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer self-stretch md:self-auto justify-center"
+              className="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer self-stretch md:self-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               Přidat položku
@@ -932,7 +932,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
           <div className="space-y-3">
             {filteredTasks.length === 0 ? (
               <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 text-slate-500">
-                <Lightbulb className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                <Lightbulb className="w-10 h-10 mx-auto text-slate-600 mb-2" />
                 <p className="text-xs font-bold text-slate-700">Žádné úkoly neodpovídají zadanému filtru.</p>
                 <button
                   onClick={() => {
@@ -1032,9 +1032,9 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
                   <div
                     className={`absolute -left-[31px] top-0 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center ${
                       phase.status === 'DONE'
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-emerald-600 text-slate-900'
                         : phase.status === 'IN_PROGRESS'
-                        ? 'bg-amber-500 text-white animate-pulse'
+                        ? 'bg-amber-500 text-slate-900 animate-pulse'
                         : 'bg-slate-300 text-slate-600'
                     }`}
                   >
@@ -1044,7 +1044,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
                   <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/90 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-blue-900 text-white">
+                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-blue-900 text-slate-900">
                           FÁZE {phase.phaseNumber}
                         </span>
                         <h4 className="text-xs font-extrabold text-slate-900">{phase.title}</h4>
@@ -1080,7 +1080,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
 
       {/* CREATE TASK MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
@@ -1205,7 +1205,7 @@ export const ContentProjectCenter: React.FC<ContentProjectCenterProps> = ({ onNa
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-blue-900 text-white font-bold hover:bg-blue-800 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-blue-900 text-slate-900 font-bold hover:bg-blue-800 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   {isSubmitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   Uložit do backlogu

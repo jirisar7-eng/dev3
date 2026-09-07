@@ -277,7 +277,7 @@ export const WikiManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-wiki-term"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Přidat nový pojem
@@ -333,7 +333,7 @@ export const WikiManager: React.FC = () => {
             onClick={() => setLetterFilter('all')}
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
               letterFilter === 'all'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-indigo-600 text-slate-900'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -347,7 +347,7 @@ export const WikiManager: React.FC = () => {
                 onClick={() => setLetterFilter(l)}
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
                   letterFilter === l
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-indigo-600 text-slate-900'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -465,7 +465,7 @@ export const WikiManager: React.FC = () => {
 
       {/* Edit / Create Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 my-8">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -744,7 +744,7 @@ export const WikiManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   {selectedTerm ? 'Uložit změny' : 'Vytvořit pojem'}
@@ -757,7 +757,7 @@ export const WikiManager: React.FC = () => {
 
       {/* Preview Modal */}
       {isPreviewModalOpen && selectedTerm && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 my-8">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
               <div>

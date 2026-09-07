@@ -194,7 +194,7 @@ export const PartnerManager: React.FC = () => {
           </div>
           
           <div className="pt-2 flex gap-3">
-            <button type="submit" className="px-5 py-2.5 bg-blue-900 text-white rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors">
+            <button type="submit" className="px-5 py-2.5 bg-blue-900 text-slate-900 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors">
               {isEditing ? 'Uložit změny' : 'Vytvořit partnera'}
             </button>
             {isEditing && (
@@ -256,7 +256,7 @@ export const PartnerManager: React.FC = () => {
           ))}
           {partners.length === 0 && !loading && (
             <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
-              <CheckCircle2 className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <CheckCircle2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
               <h3 className="text-sm font-bold text-slate-600">Zatím nejsou vytvořeni žádní partneři</h3>
             </div>
           )}

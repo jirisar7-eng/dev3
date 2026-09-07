@@ -407,7 +407,7 @@ export const CustomModuleManager: React.FC = () => {
 
           <button
             onClick={handleOpenCreate}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit JSON Modul</span>
@@ -568,7 +568,7 @@ export const CustomModuleManager: React.FC = () => {
                     }}
                     className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
                       editorTab === 'preview'
-                        ? 'bg-indigo-600 text-white shadow-2xs'
+                        ? 'bg-indigo-600 text-slate-900 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -623,7 +623,7 @@ export const CustomModuleManager: React.FC = () => {
               type="button"
               disabled={saving}
               onClick={handleSave}
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs shadow-md shadow-indigo-200 flex items-center gap-1.5 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Ukládám...' : editingId ? 'Uložit změny' : 'Vytvořit modul'}</span>
@@ -639,7 +639,7 @@ export const CustomModuleManager: React.FC = () => {
             onClick={() => setFilterStatus('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === 'all'
-                ? 'bg-indigo-900 text-white'
+                ? 'bg-indigo-900 text-slate-900'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -649,7 +649,7 @@ export const CustomModuleManager: React.FC = () => {
             onClick={() => setFilterStatus('active')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === 'active'
-                ? 'bg-emerald-700 text-white'
+                ? 'bg-emerald-700 text-slate-900'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -659,7 +659,7 @@ export const CustomModuleManager: React.FC = () => {
             onClick={() => setFilterStatus('inactive')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === 'inactive'
-                ? 'bg-slate-800 text-white'
+                ? 'bg-slate-50 text-slate-900'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -688,7 +688,7 @@ export const CustomModuleManager: React.FC = () => {
           </div>
         ) : filteredModules.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs space-y-2">
-            <Box className="w-8 h-8 text-slate-300 mx-auto" />
+            <Box className="w-8 h-8 text-slate-600 mx-auto" />
             <p className="font-bold text-slate-700">Žádné Schema-Driven moduly nebyl nalezeny.</p>
             <p className="text-[11px] opacity-80">
               Vytvořte svůj první modul tlačítkem "Vytvořit JSON Modul" výše.
@@ -802,7 +802,7 @@ export const CustomModuleManager: React.FC = () => {
 
       {/* Standalone Preview Modal */}
       {previewModalModule && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div>
@@ -830,7 +830,7 @@ export const CustomModuleManager: React.FC = () => {
             <div className="flex justify-end pt-4 border-t border-slate-200">
               <button
                 onClick={() => setPreviewModalModule(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-white text-slate-900 text-xs font-bold hover:bg-slate-50 cursor-pointer"
               >
                 Zavřít náhled
               </button>

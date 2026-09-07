@@ -474,7 +474,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
   return (
     <div className="space-y-6">
       {/* Top QA Header */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800">
+      <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -485,7 +485,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
                 Commit: {latestRun?.commitSha || 'main-HEAD'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               <Activity className="w-8 h-8 text-purple-400" />
               Quality Assurance & AI Analyst
             </h1>
@@ -498,7 +498,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
             <button
               onClick={handleDiscover}
               disabled={discovering || auditing || runningAI}
-              className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-700 disabled:opacity-50 cursor-pointer"
+              className="px-4 py-3 bg-slate-50 hover:bg-slate-700 text-slate-200 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-200 disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${discovering ? 'animate-spin' : ''}`} />
               Discovery
@@ -506,7 +506,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
             <button
               onClick={() => handleRunQA(true)}
               disabled={discovering || auditing || runningAI}
-              className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-900 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30 disabled:opacity-50 cursor-pointer"
             >
               <Zap className={`w-4 h-4 ${auditing && isIncrementalAudit ? 'animate-bounce' : ''}`} />
               {auditing && isIncrementalAudit ? 'PROVÁDÍM INCREMENTAL QA...' : '▶ RUN INCREMENTAL QA'}
@@ -514,7 +514,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
             <button
               onClick={() => handleRunQA(false)}
               disabled={discovering || auditing || runningAI}
-              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-purple-600/30 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-slate-900 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-purple-600/30 disabled:opacity-50 cursor-pointer"
             >
               <PlayCircle className={`w-4 h-4 ${auditing && !isIncrementalAudit ? 'animate-bounce' : ''}`} />
               {auditing && !isIncrementalAudit ? 'PROVÁDÍM FULL QA...' : '▶ RUN FULL QA'}
@@ -522,7 +522,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
             <button
               onClick={handleRunAIAnalysis}
               disabled={discovering || auditing || runningAI}
-              className="px-5 py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-pink-600/30 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-slate-900 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-pink-600/30 disabled:opacity-50 cursor-pointer"
             >
               <Bot className={`w-4 h-4 ${runningAI ? 'animate-spin' : ''}`} />
               {runningAI ? 'PROVÁDÍM AI ANALÝZU...' : '▶ RUN AI ANALYSIS'}
@@ -532,7 +532,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
 
         {/* Audit Stepper visualizer */}
         {auditing && (
-          <div className="mt-6 pt-6 border-t border-slate-800 space-y-3">
+          <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-purple-300">
               <span>Běží {isIncrementalAudit ? 'Inkrementální' : 'Kompletní'} 10-krokový proces auditu...</span>
               <span>Krok {auditStep} z 10</span>
@@ -549,8 +549,8 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
                       isPassed
                         ? 'bg-purple-950/80 border-purple-500/50 text-purple-200'
                         : isCurrent
-                        ? 'bg-purple-600 border-purple-400 text-white animate-pulse'
-                        : 'bg-slate-950 border-slate-800 text-slate-600'
+                        ? 'bg-purple-600 border-purple-400 text-slate-900 animate-pulse'
+                        : 'bg-slate-950 border-slate-200 text-slate-600'
                     }`}
                   >
                     {step}
@@ -568,7 +568,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('dashboard')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'dashboard'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -580,7 +580,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('registry')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'registry'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -592,7 +592,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('runs')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'runs'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -604,7 +604,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('findings')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'findings'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -616,7 +616,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('ai')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'ai'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -628,7 +628,7 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
           onClick={() => handleTabChange('copilot')}
           className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'copilot'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              ? 'bg-purple-600 text-slate-900 shadow-md shadow-purple-600/20'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -784,26 +784,26 @@ export const QADashboard: React.FC<QADashboardProps> = ({ currentPath, onNavigat
               </div>
             </div>
 
-            <div className="bg-slate-900 text-white p-4 rounded-3xl border border-slate-800 shadow-md">
+            <div className="bg-white text-slate-900 p-4 rounded-3xl border border-slate-200 shadow-md">
               <span className="text-[10px] font-bold text-purple-300 uppercase">Overall QA Score</span>
               <div className="text-2xl font-black text-purple-400 mt-1">{latestRun?.scores?.overall ?? latestRun?.overallScore ?? 100}%</div>
-              <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2">
+              <div className="w-full bg-slate-50 rounded-full h-1.5 mt-2">
                 <div className="bg-purple-400 h-1.5 rounded-full" style={{ width: `${latestRun?.scores?.overall ?? latestRun?.overallScore ?? 100}%` }}></div>
               </div>
             </div>
           </div>
 
           {/* SYNTHESIS QA FINAL REPORT Raw Text Container */}
-          <div className="bg-slate-950 text-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-800 font-mono text-xs shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-slate-950 text-slate-800 p-6 sm:p-8 rounded-3xl border border-slate-200 font-mono text-xs shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-400" />
-                <span className="font-bold text-sm text-white">SYNTHESIS QA FINAL REPORT</span>
+                <span className="font-bold text-sm text-slate-900">SYNTHESIS QA FINAL REPORT</span>
               </div>
-              <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">Přímo ze stanice QA Engine</span>
+              <span className="text-[10px] bg-slate-50 px-2 py-1 rounded text-slate-400">Přímo ze stanice QA Engine</span>
             </div>
 
-            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-300 overflow-x-auto">
+            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-600 overflow-x-auto">
 {latestRun?.rawReportText || latestRun?.stats?.rawReportText || `SYNTHESIS QA FINAL REPORT
 
 DISCOVERED: ${latestRun?.counts?.discovered || 113}
@@ -1063,7 +1063,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                 <button
                   onClick={handleCompareRuns}
                   disabled={!prevRunId || !currRunId || comparing}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-bold rounded-xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ArrowRightLeft className="w-4 h-4" />
                   {comparing ? 'Porovnávám...' : 'Porovnat Audity'}
@@ -1242,7 +1242,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                   onClick={() => setSeverityFilter(sev)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     severityFilter === sev
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-purple-600 text-slate-900'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -1257,7 +1257,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                   onClick={() => setCategoryFilter(cat)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === cat
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-purple-600 text-slate-900'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -1304,7 +1304,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                             <div className="text-xs font-bold text-slate-900 leading-snug">{finding.message}</div>
                             <div className="text-[10px] text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                               <span>Kategorie: <strong className="text-slate-700 uppercase">{finding.category || 'FUNCTIONAL'}</strong></span>
-                              {finding.endpointId && <span className="text-slate-300">|</span>}
+                              {finding.endpointId && <span className="text-slate-600">|</span>}
                               {finding.endpointId && <span>Endpoint: <strong className="text-slate-700">{finding.endpointId}</strong></span>}
                             </div>
                           </div>
@@ -1407,7 +1407,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                             {matched.evidenceBundle?.apiRequestResponse && (
                               <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">API Request / Response payload</span>
-                                <pre className="p-3 bg-slate-900 rounded-xl text-[10px] font-mono text-slate-200 overflow-x-auto">
+                                <pre className="p-3 bg-white rounded-xl text-[10px] font-mono text-slate-200 overflow-x-auto">
                                   {matched.evidenceBundle.apiRequestResponse}
                                 </pre>
                               </div>
@@ -1439,14 +1439,14 @@ PRODUCTION READINESS GATE EXPLANATION:
       {activeTab === 'ai' && (
         <div className="space-y-6">
           {/* AI Header Card */}
-          <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-6 sm:p-8 rounded-3xl border border-purple-800/50 shadow-2xl space-y-4">
+          <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-slate-900 p-6 sm:p-8 rounded-3xl border border-purple-800/50 shadow-2xl space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
                   <Bot className="w-6 h-6 text-purple-300" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">AI Audit Analyst Report</h3>
+                  <h3 className="text-lg font-black text-slate-900">AI Audit Analyst Report</h3>
                   <p className="text-xs text-purple-200">
                     Soustředěná architektura a bezpečnostní hodnocení pro produkční nasazení.
                   </p>
@@ -1468,7 +1468,7 @@ PRODUCTION READINESS GATE EXPLANATION:
               <button
                 onClick={handleRunAIAnalysis}
                 disabled={runningAI}
-                className="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-md shadow-pink-600/20 disabled:opacity-50 cursor-pointer self-start"
+                className="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-slate-900 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-md shadow-pink-600/20 disabled:opacity-50 cursor-pointer self-start"
               >
                 <Bot className={`w-3.5 h-3.5 ${runningAI ? 'animate-spin' : ''}`} />
                 {runningAI ? 'ANALYZUJI PROJEKT...' : '▶ SPUSTIT AI ANALÝZU'}
@@ -1592,8 +1592,8 @@ PRODUCTION READINESS GATE EXPLANATION:
 
                       {/* Evidence Details Collapsible Block (Default Expanded for complete overview) */}
                       {finding.evidenceBundle && (
-                        <div className="p-3.5 bg-slate-900 text-slate-300 rounded-xl font-mono text-[10px] space-y-3 overflow-auto max-h-64 scrollbar-thin">
-                          <div className="text-slate-400 border-b border-slate-800 pb-1 font-bold flex justify-between items-center">
+                        <div className="p-3.5 bg-white text-slate-600 rounded-xl font-mono text-[10px] space-y-3 overflow-auto max-h-64 scrollbar-thin">
+                          <div className="text-slate-400 border-b border-slate-200 pb-1 font-bold flex justify-between items-center">
                             <span>SPOUSTĚCÍ KONTEXT & DETERMINISTICKÁ DATA:</span>
                             <span className="text-slate-500">score: {finding.evidenceBundle.validationStatus?.evidenceScore}/100</span>
                           </div>
@@ -1619,7 +1619,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                           {finding.evidenceBundle.sourceFiles?.map((sf: any, sfIdx: number) => (
                             <div key={sfIdx} className="space-y-1">
                               <span className="text-emerald-400 font-bold block">SOUBOR: {sf.filePath}</span>
-                              <pre className="p-2 bg-slate-950 rounded text-slate-300 overflow-x-auto max-h-32 scrollbar-thin">
+                              <pre className="p-2 bg-slate-950 rounded text-slate-600 overflow-x-auto max-h-32 scrollbar-thin">
                                 {sf.content}
                               </pre>
                             </div>
@@ -1753,15 +1753,15 @@ PRODUCTION READINESS GATE EXPLANATION:
       {activeTab === 'copilot' && (
         <div className="space-y-6">
           {/* Hero Header Card */}
-          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-4">
+          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xl space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center shrink-0">
                   <Sparkles className="w-6 h-6 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">Synthesis Admin Copilot</h3>
-                  <p className="text-xs text-slate-300">
+                  <h3 className="text-lg font-black text-slate-900">Synthesis Admin Copilot</h3>
+                  <p className="text-xs text-slate-600">
                     Chytrý řídicí asistent pro nezávislou validaci, analýzu rizik a bezpečné provádění plánů.
                   </p>
                 </div>
@@ -1794,7 +1794,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                   <button
                     onClick={() => handleAskCopilot()}
                     disabled={copilotLoading || copilotExecuting || !copilotMessage.trim()}
-                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                    className="w-full py-3 bg-white hover:bg-slate-50 text-slate-900 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
                   >
                     {copilotLoading ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1879,7 +1879,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                                   </p>
                                   <button
                                     onClick={() => executeStepByIndex(copilotPlan, idx)}
-                                    className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg text-[10px] font-black hover:from-amber-500 hover:to-orange-500 transition-all flex items-center gap-1 cursor-pointer"
+                                    className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-slate-900 rounded-lg text-[10px] font-black hover:from-amber-500 hover:to-orange-500 transition-all flex items-center gap-1 cursor-pointer"
                                   >
                                     <CheckSquare className="w-3 h-3" />
                                     POTVRDIT A SPUSTIT KROK
@@ -1911,8 +1911,8 @@ PRODUCTION READINESS GATE EXPLANATION:
 
               {/* Execution Audit Log Tracker */}
               {copilotStepLogs.length > 0 && (
-                <div className="bg-slate-900 text-slate-100 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-3 font-mono text-[10px]">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div className="bg-white text-slate-800 p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3 font-mono text-[10px]">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                     <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                       <Terminal className="w-3.5 h-3.5 text-indigo-400" />
                       Live Audit Logs (Záznamy Bezpečnosti)
@@ -1921,12 +1921,12 @@ PRODUCTION READINESS GATE EXPLANATION:
                   </div>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {copilotStepLogs.map((log, idx) => (
-                      <div key={idx} className="p-2 rounded bg-slate-950 border border-slate-800 space-y-1">
+                      <div key={idx} className="p-2 rounded bg-slate-950 border border-slate-200 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-indigo-300 font-bold">{log.action || 'LOG'}</span>
                           <span className="text-slate-500 text-[9px]">{log.createdAt ? new Date(log.createdAt).toLocaleString() : ''}</span>
                         </div>
-                        <p className="text-slate-300">{log.details}</p>
+                        <p className="text-slate-600">{log.details}</p>
                         {log.userEmail && (
                           <div className="text-emerald-400 text-[8px] font-black">Authorized by: {log.userEmail}</div>
                         )}
@@ -1964,7 +1964,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                         {/* Final Decision Gate Badge */}
                         {(() => {
                           const verdict = copilotResults.aiVerdict || 'NOT PRODUCTION READY';
-                          const color = verdict === 'PRODUCTION READY' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-rose-600 text-white shadow-rose-600/20';
+                          const color = verdict === 'PRODUCTION READY' ? 'bg-emerald-500 text-slate-900 shadow-emerald-500/20' : 'bg-rose-600 text-slate-900 shadow-rose-600/20';
                           return (
                             <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase shadow-xs ${color}`}>
                               {verdict}

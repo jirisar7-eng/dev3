@@ -135,7 +135,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
     switch (type) {
       case 'REGRESSION':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-rose-600 text-white animate-pulse">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-rose-600 text-slate-900 animate-pulse">
             <TrendingDown className="w-3 h-3" />
             REGRESSION
           </span>
@@ -396,7 +396,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
                         {onProposeAction && (
                           <button
                             onClick={() => onProposeAction(finding)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-slate-50 text-slate-900 font-medium transition-colors"
                             title="Navrhnout akci do Control Plane"
                           >
                             <Layers className="w-3 h-3" />
@@ -415,7 +415,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
 
       {/* Finding Detail Modal */}
       {selectedFinding && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
@@ -474,7 +474,7 @@ export const AuditFindingsList: React.FC<AuditFindingsListProps> = ({
                     setSelectedFinding(null);
                     onAnalyzeWithOrion(f);
                   }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-medium text-xs transition-colors"
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>Analyzovat v Orionu</span>

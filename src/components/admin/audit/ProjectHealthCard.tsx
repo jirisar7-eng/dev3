@@ -140,7 +140,7 @@ export const ProjectHealthCard: React.FC<ProjectHealthCardProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-slate-900 text-white rounded-xl shadow-xs">
+            <div className="p-3 bg-white text-slate-900 rounded-xl shadow-xs">
               <Activity className="w-6 h-6" />
             </div>
             <div>

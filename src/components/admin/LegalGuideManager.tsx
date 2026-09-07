@@ -326,7 +326,7 @@ export const LegalGuideManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-legal-guide"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Přidat nového průvodce
@@ -479,7 +479,7 @@ export const LegalGuideManager: React.FC = () => {
 
       {/* Edit / Create Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 my-6">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -897,7 +897,7 @@ export const LegalGuideManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-amber-600 hover:bg-amber-700 text-slate-900 text-sm font-semibold rounded-xl transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   {selectedGuide ? 'Uložit změny' : 'Vytvořit průvodce'}
@@ -910,7 +910,7 @@ export const LegalGuideManager: React.FC = () => {
 
       {/* Preview Modal */}
       {isPreviewModalOpen && selectedGuide && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 my-8">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-amber-50/50 rounded-t-2xl">
               <div>

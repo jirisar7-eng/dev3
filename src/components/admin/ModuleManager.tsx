@@ -103,7 +103,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setManagerMode('custom')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             managerMode === 'custom'
-              ? 'bg-indigo-600 text-white shadow-xs'
+              ? 'bg-indigo-600 text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -122,7 +122,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setFilterTab('all')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             filterTab === 'all'
-              ? 'bg-indigo-900 text-white shadow-xs'
+              ? 'bg-indigo-900 text-slate-900 shadow-xs'
               : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
@@ -134,7 +134,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setFilterTab('active')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             filterTab === 'active'
-              ? 'bg-emerald-700 text-white shadow-xs'
+              ? 'bg-emerald-700 text-slate-900 shadow-xs'
               : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
@@ -146,7 +146,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
           onClick={() => setFilterTab('inactive')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             filterTab === 'inactive'
-              ? 'bg-slate-800 text-white shadow-xs'
+              ? 'bg-slate-50 text-slate-900 shadow-xs'
               : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
@@ -280,7 +280,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
 
       {/* JSON Config Editor Modal */}
       {selectedModule && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900">
@@ -302,7 +302,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
                 setJsonError(null);
               }}
               rows={8}
-              className="w-full p-3 font-mono text-xs bg-slate-900 text-emerald-400 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full p-3 font-mono text-xs bg-white text-emerald-400 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
 
             {jsonError && (
@@ -318,7 +318,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({ onNavigate }) => {
               </button>
               <button
                 onClick={handleSaveConfig}
-                className="px-4 py-2 bg-indigo-900 text-white rounded-xl text-xs font-semibold hover:bg-indigo-950 flex items-center gap-1.5"
+                className="px-4 py-2 bg-indigo-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-indigo-950 flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
                 Uložit konfiguraci

@@ -223,7 +223,7 @@ export const SynthesisProjectControlCenter: React.FC<{ onNavigate: (path: string
                   <button 
                     type="submit"
                     disabled={isAnalyzing || !copilotQuery.trim()}
-                    className="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+                    className="bg-purple-600 text-slate-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
                   >
                     {isAnalyzing ? (
                       <> <Activity className="w-4 h-4 animate-spin" /> Analyzing Intent... </>
@@ -287,7 +287,7 @@ export const SynthesisProjectControlCenter: React.FC<{ onNavigate: (path: string
 
                   <div className="pt-4 border-t flex justify-end gap-3">
                     <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Zrušit</button>
-                    <button onClick={executeAction} className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center gap-2">
+                    <button onClick={executeAction} className="px-4 py-2 text-sm bg-emerald-600 text-slate-900 rounded-lg hover:bg-emerald-700 font-medium flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
                       Provést akci (Creates Snapshot first)
                     </button>

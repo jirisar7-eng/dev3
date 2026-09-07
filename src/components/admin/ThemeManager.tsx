@@ -105,7 +105,7 @@ export const ThemeManager: React.FC = () => {
 
           <button
             onClick={() => setShowNewModal(true)}
-            className="px-4 py-2 bg-purple-900 text-white rounded-xl text-xs font-semibold hover:bg-purple-950 flex items-center gap-1.5 shadow-xs"
+            className="px-4 py-2 bg-purple-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-purple-950 flex items-center gap-1.5 shadow-xs"
           >
             <Plus className="w-4 h-4" />
             Vytvořit nové téma
@@ -263,7 +263,7 @@ export const ThemeManager: React.FC = () => {
                   Ukázkový Nadpis Karty
                 </span>
                 <span
-                  className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white"
+                  className="px-2.5 py-1 rounded-full text-[10px] font-bold text-slate-900"
                   style={{ backgroundColor: 'var(--color-success, #16a34a)' }}
                 >
                   Status Aktivní
@@ -280,13 +280,13 @@ export const ThemeManager: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-2 pt-2">
                 <button
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-90"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-900 shadow-xs transition-opacity hover:opacity-90"
                   style={{ backgroundColor: 'var(--color-button, #1e3a8a)' }}
                 >
                   Hlavní Tlačítko
                 </button>
                 <button
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-90"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-900 shadow-xs transition-opacity hover:opacity-90"
                   style={{ backgroundColor: 'var(--color-secondary, #0284c7)' }}
                 >
                   Sekundární
@@ -312,7 +312,7 @@ export const ThemeManager: React.FC = () => {
 
       {/* Modal Add New Theme */}
       {showNewModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <form onSubmit={handleCreateTheme} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
             <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-purple-600" />
@@ -380,7 +380,7 @@ export const ThemeManager: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-purple-900 text-white rounded-xl text-xs font-semibold hover:bg-purple-950 shadow-xs"
+                className="px-4 py-2 bg-purple-900 text-slate-900 rounded-xl text-xs font-semibold hover:bg-purple-950 shadow-xs"
               >
                 Vytvořit téma
               </button>

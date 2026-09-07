@@ -228,7 +228,7 @@ export const MementoManager: React.FC = () => {
         <button
           onClick={handleOpenCreate}
           id="btn-create-memento"
-          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
+          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Přidat varovný případ
         </button>
@@ -357,7 +357,7 @@ export const MementoManager: React.FC = () => {
 
       {/* Edit / Create Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -561,7 +561,7 @@ export const MementoManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs"
                 >
                   <Save className="w-4 h-4" /> Uložit případ
                 </button>
@@ -573,16 +573,16 @@ export const MementoManager: React.FC = () => {
 
       {/* Preview Modal */}
       {isPreviewModalOpen && selectedCase && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-white/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-            <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-5 bg-white text-slate-900 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {renderIcon(selectedCase.icon)}
                 <h3 className="text-sm font-bold">{selectedCase.title}</h3>
               </div>
               <button
                 onClick={() => setIsPreviewModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-900 p-1"
               >
                 <X className="w-5 h-5" />
               </button>

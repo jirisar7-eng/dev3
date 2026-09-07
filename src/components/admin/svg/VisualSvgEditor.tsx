@@ -179,7 +179,7 @@ export function VisualSvgEditor({ initialSvg, onSave, onCancel }: VisualSvgEdito
             <input type="range" min="0.1" max="3" step="0.1" value={zoom} onChange={e => setZoom(parseFloat(e.target.value))} className="w-24" />
             
             <button onClick={onCancel} className="px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg ml-4">Zrušit</button>
-            <button onClick={handleSave} disabled={isSaving} className="px-3 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2">
+            <button onClick={handleSave} disabled={isSaving} className="px-3 py-1.5 text-sm font-semibold text-slate-900 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2">
                {isSaving ? 'Ukládám...' : <><Save className="w-4 h-4" /> Uložit a použít</>}
             </button>
         </div>

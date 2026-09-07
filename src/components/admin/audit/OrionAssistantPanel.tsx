@@ -115,7 +115,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Orion Identity & Trust Notice Banner */}
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-md border border-indigo-900/50">
+      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-slate-900 rounded-2xl p-6 shadow-md border border-indigo-900/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-indigo-600/30 border border-indigo-400/30 rounded-xl text-indigo-300">
@@ -123,7 +123,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">Orion Safety Assistant</h2>
+                <h2 className="text-xl font-bold text-slate-900">Orion Safety Assistant</h2>
                 <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                   agent-orion-qa-v1
                 </span>
@@ -148,7 +148,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
               window.history.pushState({}, '', '/administrace/orion');
               window.dispatchEvent(new Event('popstate'));
             }}
-            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-slate-900 font-bold text-xs transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-purple-200" />
             Vizuální Trace Mind-Map →
@@ -209,7 +209,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
           <button
             onClick={handleRunAnalysis}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
           >
             {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             <span>{loading ? 'Orion analyzuje...' : 'Spustit AI analýzu'}</span>
@@ -326,7 +326,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className="font-bold text-xs text-indigo-950">{sug.title}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-white font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white text-slate-900 font-bold">
                           DRAFT ONLY
                         </span>
                       </div>
@@ -339,7 +339,7 @@ export const OrionAssistantPanel: React.FC<OrionAssistantPanelProps> = ({
                     <button
                       onClick={() => handleProposeDraftAction(sug)}
                       disabled={proposingAction}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
+                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-900 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50"
                     >
                       <Layers className="w-3.5 h-3.5" />
                       <span>{proposingAction ? 'Vytvářím návrh...' : 'Vytvořit DRAFT návrh do fronty'}</span>

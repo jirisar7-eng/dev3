@@ -102,13 +102,13 @@ export const OrionTraceMindMap: React.FC<OrionTraceMindMapProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 shadow-xl overflow-hidden relative">
+    <div className="bg-white text-slate-900 p-6 rounded-3xl border border-slate-200 shadow-xl overflow-hidden relative">
       {/* Mindmap Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
-            <h3 className="text-base font-extrabold text-white tracking-wide flex items-center gap-2">
+            <h3 className="text-base font-extrabold text-slate-900 tracking-wide flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-400" />
               ORION PROCESS TRACE MIND-MAP
             </h3>
@@ -172,7 +172,7 @@ export const OrionTraceMindMap: React.FC<OrionTraceMindMapProps> = ({
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900/10 flex items-center justify-center font-bold">
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center font-bold">
                       <IconComponent className={`w-5 h-5 ${style.iconColor}`} />
                     </div>
                     <span className={`text-[10px] font-extrabold font-mono px-2 py-0.5 rounded-full uppercase ${style.badgeBg}`}>
@@ -204,7 +204,7 @@ export const OrionTraceMindMap: React.FC<OrionTraceMindMapProps> = ({
       </div>
 
       {/* Bottom Summary Legend */}
-      <div className="mt-8 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
+      <div className="mt-8 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
         <div className="flex items-center gap-4 text-[11px]">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Dokončeno

@@ -179,7 +179,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
       {/* 1. Header & Unified Operations Center Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-xs">
+          <div className="p-3 bg-indigo-600 text-slate-900 rounded-2xl shadow-xs">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -218,7 +218,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
           </div>
           <button
             onClick={handleRefreshAll}
-            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium cursor-pointer"
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-slate-900 rounded-lg font-medium cursor-pointer"
           >
             Zkusit znovu
           </button>
@@ -372,10 +372,10 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
                 <div
                   className={`p-3 rounded-2xl ${
                     releaseGate?.verdict === 'READY_TO_MERGE'
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-emerald-600 text-slate-900'
                       : releaseGate?.verdict === 'DO_NOT_MERGE'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-amber-500 text-white'
+                      ? 'bg-rose-600 text-slate-900'
+                      : 'bg-amber-500 text-slate-900'
                   }`}
                 >
                   {releaseGate?.verdict === 'READY_TO_MERGE' ? (
@@ -438,7 +438,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
               className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700 group-hover:bg-purple-600 group-hover:text-slate-900 transition-colors">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
@@ -463,7 +463,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
               className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-slate-900 transition-colors">
                   <Activity className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold">
@@ -488,7 +488,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
               className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-slate-900 transition-colors">
                   <Cpu className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
@@ -513,7 +513,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
               className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                <div className="p-2.5 rounded-xl bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-slate-900 transition-colors">
                   <ShieldAlert className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold">
@@ -708,7 +708,7 @@ export const UnifiedOperationsCenter: React.FC<UnifiedOperationsCenterProps> = (
                 <button
                   onClick={handleSyncNotion}
                   disabled={syncingNotion}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-slate-900 rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${syncingNotion ? 'animate-spin' : ''}`} />
                   <span>{syncingNotion ? 'Synchronizuji...' : 'Idempotentní Sync do Notion'}</span>

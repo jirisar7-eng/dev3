@@ -132,7 +132,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
           <button
             onClick={handleSyncModules}
             disabled={isSyncing}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
             title="Synchronizuje všech 33 modulů z hlavního menu do seznamu stránek pro Puck Builder"
           >
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -148,7 +148,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
           </button>
           <button
             onClick={() => navigate('/admin/pages/new')}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-900 font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit novou stránku</span>
@@ -184,7 +184,7 @@ export const AdminPagesList: React.FC<AdminPagesListProps> = ({ onNavigate }) =>
           </p>
           <button
             onClick={() => navigate('/admin/pages/new')}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-500 transition-all cursor-pointer inline-flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 text-slate-900 font-bold text-xs hover:bg-indigo-500 transition-all cursor-pointer inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit první stránku</span>

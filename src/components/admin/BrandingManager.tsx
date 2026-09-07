@@ -304,7 +304,7 @@ export const BrandingManager: React.FC = () => {
                 <textarea
                   value={currentSvgEditorVal}
                   onChange={(e) => handleSvgChange(e.target.value, editorSection)}
-                  className="w-full h-[400px] font-mono text-xs bg-slate-900 text-green-400 p-4 rounded-xl border border-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full h-[400px] font-mono text-xs bg-white text-green-400 p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Vložte validní SVG kód počínající <svg>..."
                   spellCheck={false}
                 />
@@ -339,7 +339,7 @@ export const BrandingManager: React.FC = () => {
                   </div>
                   
                   {/* Dark Background Preview */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 flex items-center justify-center min-h-[160px]">
+                  <div className="bg-white border border-slate-200 rounded-xl p-8 flex items-center justify-center min-h-[160px]">
                      {currentSvgEditorVal ? (
                        <div className="max-w-[250px] max-h-[100px] object-contain flex items-center justify-center" dangerouslySetInnerHTML={{ __html: currentSvgEditorVal }} />
                      ) : (
@@ -372,7 +372,7 @@ export const BrandingManager: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-8 py-3 bg-blue-700 text-white font-bold rounded-xl hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                className="px-8 py-3 bg-blue-700 text-slate-900 font-bold rounded-xl hover:bg-blue-800 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 {saving ? 'Ukládám a validuji...' : 'Uložit branding'}
@@ -385,7 +385,7 @@ export const BrandingManager: React.FC = () => {
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {history.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                <History className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                <History className="w-12 h-12 mx-auto text-slate-600 mb-3" />
                 Zatím neexistuje žádná historie změn.
               </div>
             ) : (

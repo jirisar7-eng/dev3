@@ -232,7 +232,7 @@ export const StateAdminManager: React.FC = () => {
             <button
               onClick={handleTriggerHealthCheck}
               disabled={isChecking || cooldownRemaining > 0}
-              className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Gauge className={`w-4 h-4 ${isChecking ? 'animate-spin text-amber-300' : ''}`} />
               {isChecking
@@ -470,16 +470,16 @@ export const StateAdminManager: React.FC = () => {
       </div>
 
       {/* Security & SSRF Policy Footer */}
-      <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-md">
+      <div className="bg-white text-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-md">
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-base font-bold text-white mb-1">
+            <h4 className="text-base font-bold text-slate-900 mb-1">
               Bezpečnostní architektura a SSRF ochrana
             </h4>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
+            <p className="text-xs text-slate-600 leading-relaxed max-w-4xl">
               Všechny požadavky na externí registry státní správy jsou vykonávány výhradně serverovým modulem <code>StateAdminApiClient</code>.
               Klientovi je zakázáno volat externí API přímo (SSRF obrana). Každé volání je validováno proti lokálním a privátním IP rozsahům,
               aplikuje rate limiting 30 volání/min a dodržuje striktní kvóty a fail-closed politiku – žádná data nejsou generována uměle.

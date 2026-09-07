@@ -336,7 +336,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
             id="quick-create-submit-btn"
             type="submit"
             disabled={quickCreateLoading}
-            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-slate-900 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer"
           >
             {quickCreateLoading ? 'Vytvářím...' : 'Vytvořit a poslat přístupy'}
           </button>
@@ -429,7 +429,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <Users className="w-8 h-8 text-slate-300 mx-auto" />
+                        <Users className="w-8 h-8 text-slate-600 mx-auto" />
                         <p className="text-slate-600 font-medium">
                           V databázi zatím nejsou žádní uživatelé.
                         </p>
@@ -567,7 +567,7 @@ export const UserManager: React.FC<{ onCreateMailbox?: (name: string) => void }>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setEditingUser(null)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Zrušit</button>
-              <button type="submit" className="px-4 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer">Uložit změny</button>
+              <button type="submit" className="px-4 py-2 rounded-lg text-xs font-bold bg-blue-600 text-slate-900 hover:bg-blue-700 cursor-pointer">Uložit změny</button>
             </div>
           </form>
         </div>

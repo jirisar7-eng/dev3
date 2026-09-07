@@ -542,7 +542,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
               id="mailcow-create-submit-btn"
               type="submit"
               disabled={isSubmitting || loading}
-              className="w-full sm:w-auto px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-5 py-2 bg-blue-600 text-slate-900 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -636,7 +636,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                       <div className="pt-2 flex justify-center gap-2">
                         <button
                           onClick={fetchMailboxes}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 rounded-xl font-bold text-xs transition-colors cursor-pointer"
                         >
                           Zkusit znovu načíst
                         </button>
@@ -659,7 +659,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                       </p>
                     ) : (
                       <div className="space-y-2">
-                        <Mail className="w-8 h-8 text-slate-300 mx-auto" />
+                        <Mail className="w-8 h-8 text-slate-600 mx-auto" />
                         <p className="font-semibold text-slate-700">Nejsou vytvořeny žádné e-mailové schránky.</p>
                         <p className="text-[11px] text-slate-400">
                           Pomocí formuláře výše můžete vytvořit první e-mailovou schránku @tatovacesta.cz.
@@ -744,7 +744,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
 
       {/* Health Check Modal */}
       {showHealthModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -848,7 +848,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
               <button
                 type="button"
                 onClick={() => setShowHealthModal(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Zavřít
               </button>
@@ -859,7 +859,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
 
       {/* Password Change Modal */}
       {passwordModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -919,7 +919,7 @@ export const MailcowManager: React.FC<{ initialName?: string }> = ({ initialName
                 type="button"
                 onClick={handleConfirmPasswordChange}
                 disabled={passwordChangeLoading || !passwordModal.newPass.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 text-xs font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {passwordChangeLoading ? 'Ukládám...' : 'Uložit nové heslo'}
               </button>

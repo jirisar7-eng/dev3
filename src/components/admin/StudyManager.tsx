@@ -292,7 +292,7 @@ export const StudyManager: React.FC = () => {
         </div>
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-blue-100"
+          className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-slate-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-blue-100"
         >
           <Plus className="w-4 h-4" />
           Přidat studii
@@ -482,7 +482,7 @@ export const StudyManager: React.FC = () => {
 
       {/* Edit / Create Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-4xl w-full p-6 my-8 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-center justify-between border-b pb-4 border-slate-200">
               <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
@@ -774,7 +774,7 @@ export const StudyManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-md shadow-blue-100"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-slate-900 font-bold rounded-xl transition-colors shadow-md shadow-blue-100"
                 >
                   {selectedStudy ? 'Uložit změny' : 'Vytvořit studii'}
                 </button>
@@ -786,7 +786,7 @@ export const StudyManager: React.FC = () => {
 
       {/* Preview Modal */}
       {isPreviewModalOpen && selectedStudy && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-4xl w-full p-6 my-8 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-start justify-between border-b pb-4 border-slate-200">
               <div>
@@ -884,7 +884,7 @@ export const StudyManager: React.FC = () => {
             <div className="flex justify-end pt-4 border-t border-slate-200">
               <button
                 onClick={() => setIsPreviewModalOpen(false)}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors"
+                className="px-5 py-2 bg-white hover:bg-slate-50 text-slate-900 font-bold rounded-xl transition-colors"
               >
                 Zavřít náhled
               </button>

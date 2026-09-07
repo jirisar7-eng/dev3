@@ -141,7 +141,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-purple-900 text-white flex items-center justify-center font-bold shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-purple-900 text-slate-900 flex items-center justify-center font-bold shadow-md">
               <Terminal className="w-6 h-6 text-purple-300" />
             </div>
             <div>
@@ -207,7 +207,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
       </div>
 
       {/* Control Panel: Run Analysis & Live Timer */}
-      <div className="bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white text-slate-900 p-6 rounded-3xl border border-slate-200 shadow-xl flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div>
             <label className="text-[10px] font-mono text-slate-400 font-bold uppercase block mb-1">
@@ -217,7 +217,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
               value={scope}
               onChange={(e) => setScope(e.target.value as any)}
               disabled={isRunning}
-              className="bg-slate-800 text-white border border-slate-700 text-xs rounded-xl px-3 py-2 font-mono font-bold focus:outline-hidden focus:border-purple-500 cursor-pointer"
+              className="bg-slate-50 text-slate-900 border border-slate-200 text-xs rounded-xl px-3 py-2 font-mono font-bold focus:outline-hidden focus:border-purple-500 cursor-pointer"
             >
               <option value="REGISTRY">REGISTRY (Kompletní auditní registr)</option>
               <option value="FINDING">FINDING (Specifická zjištění P0-P3)</option>
@@ -233,7 +233,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
             className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer ${
               isRunning
                 ? 'bg-purple-950 text-purple-300 border border-purple-800 cursor-not-allowed'
-                : 'bg-purple-600 hover:bg-purple-500 text-white'
+                : 'bg-purple-600 hover:bg-purple-500 text-slate-900'
             }`}
           >
             {isRunning ? (
@@ -252,7 +252,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
 
         {/* Live Elapsed Stopwatch & Telemetry Summary */}
         <div className="flex items-center gap-6 font-mono text-xs">
-          <div className="bg-slate-800/80 px-4 py-2 rounded-2xl border border-slate-700/80">
+          <div className="bg-slate-50/80 px-4 py-2 rounded-2xl border border-slate-200/80">
             <span className="text-[10px] text-slate-400 block font-sans uppercase">Časomíra Latence</span>
             <span className="text-sm font-black text-purple-300 flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-purple-400" />
@@ -260,7 +260,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
             </span>
           </div>
 
-          <div className="bg-slate-800/80 px-4 py-2 rounded-2xl border border-slate-700/80">
+          <div className="bg-slate-50/80 px-4 py-2 rounded-2xl border border-slate-200/80">
             <span className="text-[10px] text-slate-400 block font-sans uppercase">Aktivní Provider</span>
             <span className="text-sm font-black text-emerald-400 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-emerald-400" />
@@ -285,7 +285,7 @@ export const OrionTraceCenterPage: React.FC<OrionTraceCenterPageProps> = ({ onNa
           selectedStepId={selectedStep?.id}
         />
       ) : (
-        <div className="bg-slate-900 text-white p-12 rounded-3xl text-center border border-slate-800">
+        <div className="bg-white text-slate-900 p-12 rounded-3xl text-center border border-slate-200">
           <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-3 animate-bounce" />
           <p className="text-sm font-bold">Načítám procesní mind-mapu Oriona...</p>
         </div>

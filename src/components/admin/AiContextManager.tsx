@@ -75,7 +75,7 @@ export const AiContextManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700 text-xs font-bold animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 bg-white text-slate-900 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-200 text-xs font-bold animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {toast}
         </div>
@@ -97,7 +97,7 @@ export const AiContextManager: React.FC = () => {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="px-5 py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+          className="px-5 py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-slate-900 font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? 'Generuji index...' : 'Obnovit index'}
@@ -239,7 +239,7 @@ export const AiContextManager: React.FC = () => {
               {previewLoading ? (
                 <div className="py-20 text-center text-slate-400 text-xs font-bold">Načítám náhled...</div>
               ) : (
-                <pre className="p-6 rounded-2xl bg-slate-900 text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
+                <pre className="p-6 rounded-2xl bg-white text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
                   {previewContent}
                 </pre>
               )}

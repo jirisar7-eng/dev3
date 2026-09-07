@@ -350,7 +350,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
         <button
           onClick={() => { setActiveSubTab('status'); setSelectedLawCode(null); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeSubTab === 'status' && !selectedLawCode ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+            activeSubTab === 'status' && !selectedLawCode ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Gauge className="w-4 h-4" />
@@ -359,7 +359,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
         <button
           onClick={() => { setActiveSubTab('laws'); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeSubTab === 'laws' || selectedLawCode ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+            activeSubTab === 'laws' || selectedLawCode ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <BookOpen className="w-4 h-4" />
@@ -368,7 +368,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
         <button
           onClick={() => { setActiveSubTab('audits'); setSelectedLawCode(null); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeSubTab === 'audits' && !selectedLawCode ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+            activeSubTab === 'audits' && !selectedLawCode ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -377,7 +377,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
         <button
           onClick={() => { setActiveSubTab('stats'); setSelectedLawCode(null); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeSubTab === 'stats' && !selectedLawCode ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+            activeSubTab === 'stats' && !selectedLawCode ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Clock className="w-4 h-4" />
@@ -641,7 +641,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
                 <button
                   type="submit"
                   disabled={syncing || (schedulerStatus?.quota?.isExceeded)}
-                  className="w-full py-3 px-4 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-slate-50 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                   {syncing ? 'Probíhá synchronizace...' : 'Spustit okamžitou synchronizaci'}
@@ -883,7 +883,7 @@ export const EsbirkaAdminPanel: React.FC = () => {
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             <button
                               onClick={() => setSelectedLawCode(law.actCode)}
-                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] rounded-lg transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
+                              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-900 font-bold text-[11px] rounded-lg transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
                             >
                               Zobrazit detaily a znění <ChevronRight className="w-3.5 h-3.5" />
                             </button>

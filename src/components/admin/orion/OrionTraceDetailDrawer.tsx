@@ -32,7 +32,7 @@ export const OrionTraceDetailDrawer: React.FC<OrionTraceDetailDrawerProps> = ({
   if (!step) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex justify-end">
+    <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-xs flex justify-end">
       <div className="w-full max-w-lg bg-white h-full shadow-2xl overflow-y-auto flex flex-col justify-between p-6 border-l border-slate-200 animate-in slide-in-from-right duration-200">
         <div>
           {/* Header */}
@@ -134,7 +134,7 @@ export const OrionTraceDetailDrawer: React.FC<OrionTraceDetailDrawerProps> = ({
               <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-blue-600" /> Strukturovaná Metadata Kroku
               </h4>
-              <div className="bg-slate-900 text-slate-100 p-4 rounded-2xl font-mono text-xs overflow-x-auto shadow-inner border border-slate-800">
+              <div className="bg-white text-slate-800 p-4 rounded-2xl font-mono text-xs overflow-x-auto shadow-inner border border-slate-200">
                 <pre className="whitespace-pre-wrap leading-relaxed">
                   {JSON.stringify(step.details, null, 2)}
                 </pre>
@@ -173,7 +173,7 @@ export const OrionTraceDetailDrawer: React.FC<OrionTraceDetailDrawerProps> = ({
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors shadow-xs cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
           >
             Zavřít panel
           </button>

@@ -228,14 +228,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 text-white shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 text-slate-900 shadow-xl">
         <div>
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
             <LayoutTemplate className="w-4 h-4" />
             <span>Puck Template Engine</span>
           </div>
           <h2 className="text-2xl font-extrabold">Správa šablon stránek</h2>
-          <p className="text-sm text-slate-300 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Vytvářejte a spravujte opakovaně použitelné layoutové šablony pro rychlé zakládání stránek a modulů.
           </p>
         </div>
@@ -244,7 +244,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
           <button
             onClick={handleSeedTemplates}
             title="Obnovit výchozí systémové šablony"
-            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+            className="px-3.5 py-2.5 bg-slate-50 hover:bg-slate-700 text-slate-200 border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
             <span>Obnovit výchozí</span>
@@ -252,7 +252,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-slate-900 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Vytvořit novou šablonu</span>
@@ -284,8 +284,8 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
               onClick={() => setActiveCategory(cat.key)}
               className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeCategory === cat.key
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-800/60 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
+                  ? 'bg-indigo-600 text-slate-900 shadow-sm'
+                  : 'bg-slate-50/60 hover:bg-slate-50 text-slate-600 border border-slate-200/60'
               }`}
             >
               {cat.label}
@@ -300,7 +300,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Hledat v šablonách..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 text-slate-200 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
       </div>
@@ -309,7 +309,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
       {loading ? (
         <div className="py-20 text-center text-slate-400 text-sm">Načítám šablony Puck...</div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="py-16 text-center bg-slate-900/50 border border-slate-800 rounded-2xl p-8">
+        <div className="py-16 text-center bg-white/50 border border-slate-200 rounded-2xl p-8">
           <LayoutTemplate className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-200 mb-1">Žádné šablony nenalezeny</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto mb-4">
@@ -317,7 +317,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
           </p>
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
+            className="px-4 py-2 bg-indigo-600 text-slate-900 rounded-xl text-xs font-semibold"
           >
             Vytvořit první šablonu
           </button>
@@ -327,13 +327,13 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
           {filteredTemplates.map((tpl) => (
             <div
               key={tpl.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all shadow-md group"
+              className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-200 transition-all shadow-md group"
             >
               <div>
                 {/* Thumbnail Header */}
                 <div
                   onClick={() => setPreviewTemplate(tpl)}
-                  className="h-40 w-full relative bg-slate-950 overflow-hidden border-b border-slate-800 cursor-pointer"
+                  className="h-40 w-full relative bg-slate-950 overflow-hidden border-b border-slate-200 cursor-pointer"
                 >
                   {tpl.thumbnailUrl ? (
                     <img
@@ -349,7 +349,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                   )}
 
                   <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-slate-900/90 backdrop-blur-md text-indigo-300 font-bold text-[10px] rounded-lg border border-slate-700 uppercase tracking-wider">
+                    <span className="px-2.5 py-1 bg-white/90 backdrop-blur-md text-indigo-300 font-bold text-[10px] rounded-lg border border-slate-200 uppercase tracking-wider">
                       {tpl.category}
                     </span>
                     {tpl.isSystem && (
@@ -364,12 +364,12 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                 <div className="p-5">
                   <h3
                     onClick={() => setPreviewTemplate(tpl)}
-                    className="text-lg font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors cursor-pointer"
+                    className="text-lg font-bold text-slate-900 mb-2 group-hover:text-indigo-300 transition-colors cursor-pointer"
                   >
                     {tpl.name}
                   </h3>
                   {tpl.description && (
-                    <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed mb-4">
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-4">
                       {tpl.description}
                     </p>
                   )}
@@ -377,11 +377,11 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
               </div>
 
               {/* Footer Actions */}
-              <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between gap-2">
+              <div className="p-4 bg-slate-950/80 border-t border-slate-200 flex items-center justify-between gap-2">
                 <button
                   onClick={() => setPreviewTemplate(tpl)}
                   title="Zobrazit Puck JSON strukturu"
-                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
+                  className="p-2 bg-slate-50 hover:bg-slate-700 text-slate-600 rounded-xl transition-colors cursor-pointer"
                 >
                   <FileText className="w-4 h-4" />
                 </button>
@@ -390,7 +390,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                   <button
                     onClick={() => handleOpenEditModal(tpl)}
                     title="Upravit šablonu"
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
+                    className="p-2 bg-slate-50 hover:bg-slate-700 text-slate-600 rounded-xl transition-colors cursor-pointer"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -399,7 +399,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                     <button
                       onClick={() => handleDeleteTemplate(tpl.id, tpl.name)}
                       title="Smazat šablonu"
-                      className="p-2 bg-slate-800 hover:bg-rose-900/60 text-rose-400 rounded-xl transition-colors cursor-pointer"
+                      className="p-2 bg-slate-50 hover:bg-rose-900/60 text-rose-400 rounded-xl transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -407,7 +407,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
                   <button
                     onClick={() => handleUseTemplateForNewPage(tpl)}
-                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                   >
                     <span>Použít</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -422,14 +422,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
       {/* Create / Edit Template Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[10000] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl text-white shadow-2xl p-6 my-8">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-800 mb-6">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl text-slate-900 shadow-2xl p-6 my-8">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-6">
               <h3 className="text-xl font-bold">
                 {editingTemplate ? 'Upravit šablonu' : 'Vytvořit novou šablonu'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xl font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-900 text-xl font-bold cursor-pointer"
               >
                 &times;
               </button>
@@ -437,7 +437,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
 
             <form onSubmit={handleSaveTemplate} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Název šablony <span className="text-rose-400">*</span>
                 </label>
                 <input
@@ -446,19 +446,19 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="např. Speciální Právní Návod"
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                     Kategorie <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
                   >
                     <option value="LANDING">LANDING (Prezentační stránka)</option>
                     <option value="ARTICLE">ARTICLE (Článek & Návod)</option>
@@ -469,7 +469,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                     URL náhledu (Obrázek)
                   </label>
                   <input
@@ -477,24 +477,24 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                     value={formThumbnail}
                     onChange={(e) => setFormThumbnail(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Popis šablony</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Popis šablony</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   rows={2}
                   placeholder="Stručně popište, k čemu šablona slouží..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Puck Data (JSON struktura) <span className="text-rose-400">*</span>
                 </label>
                 <textarea
@@ -502,22 +502,22 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                   value={formPuckJson}
                   onChange={(e) => setFormPuckJson(e.target.value)}
                   rows={10}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-200 rounded-xl text-xs font-mono text-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+                  className="px-4 py-2 bg-slate-50 hover:bg-slate-700 text-slate-600 rounded-xl text-xs font-semibold cursor-pointer"
                 >
                   Zrušit
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   {saving ? 'Ukládám...' : 'Uložit šablonu'}
                 </button>
@@ -530,21 +530,21 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
       {/* Preview JSON Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-[10000] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl text-white shadow-2xl p-6 max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800 mb-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl text-slate-900 shadow-2xl p-6 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-200 mb-4">
               <div>
                 <h3 className="text-lg font-bold">{previewTemplate.name}</h3>
                 <span className="text-xs text-indigo-400 font-mono">Puck JSON Data</span>
               </div>
               <button
                 onClick={() => setPreviewTemplate(null)}
-                className="text-slate-400 hover:text-white text-xl font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-900 text-xl font-bold cursor-pointer"
               >
                 &times;
               </button>
             </div>
 
-            <pre className="flex-1 overflow-auto bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-indigo-300 mb-4">
+            <pre className="flex-1 overflow-auto bg-slate-950 p-4 rounded-xl border border-slate-200 text-xs font-mono text-indigo-300 mb-4">
               {(() => {
                 try {
                   return JSON.stringify(JSON.parse(previewTemplate.puckDataJson), null, 2);
@@ -561,14 +561,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
                   setNotification({ type: 'success', message: 'JSON byl zkopírován do schránky.' });
                   setPreviewTemplate(null);
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 bg-slate-50 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" />
                 <span>Zkopírovat JSON</span>
               </button>
               <button
                 onClick={() => setPreviewTemplate(null)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 rounded-xl text-xs font-bold cursor-pointer"
               >
                 Zavřít
               </button>
