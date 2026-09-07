@@ -15,8 +15,8 @@ describe('P0.2.3: AI Provider Model Compatibility & Runtime Parity Suite', () =>
     globalThis.fetch = originalFetch;
   });
 
-  // TEST 1: Primary Gemini uses gemini-3.6-flash and not deprecated gemini-2.5-flash
-  test('TEST 1: Primary Gemini uses gemini-3.6-flash and not deprecated gemini-2.5-flash', async () => {
+  // TEST 1: Primary Gemini uses gemini-1.5-flash and not deprecated gemini-2.5-flash
+  test('TEST 1: Primary Gemini uses gemini-1.5-flash and not deprecated gemini-2.5-flash', async () => {
     process.env.GEMINI_API_KEY = 'mock-primary-key';
     delete process.env.GEMINI_API_KEY_2;
     delete process.env.XAI_API_KEY;
@@ -35,12 +35,12 @@ describe('P0.2.3: AI Provider Model Compatibility & Runtime Parity Suite', () =>
 
     const result = await AiService.generateContent('Test prompt');
     assert.strictEqual(result, 'Gemini 3.6 Flash Response');
-    assert.strictEqual(modelUsed, 'gemini-3.6-flash');
+    assert.strictEqual(modelUsed, 'gemini-1.5-flash');
     assert.notStrictEqual(modelUsed, 'gemini-2.5-flash');
   });
 
-  // TEST 2: Secondary Gemini uses gemini-3.6-flash when Primary fails
-  test('TEST 2: Secondary Gemini uses gemini-3.6-flash when Primary fails', async () => {
+  // TEST 2: Secondary Gemini uses gemini-1.5-flash when Primary fails
+  test('TEST 2: Secondary Gemini uses gemini-1.5-flash when Primary fails', async () => {
     process.env.GEMINI_API_KEY = 'mock-primary-key';
     process.env.GEMINI_API_KEY_2 = 'mock-secondary-key';
     delete process.env.XAI_API_KEY;
@@ -64,12 +64,12 @@ describe('P0.2.3: AI Provider Model Compatibility & Runtime Parity Suite', () =>
 
     const result = await AiService.generateContent('Test prompt');
     assert.strictEqual(result, 'Secondary Gemini 3.6 Flash Response');
-    assert.strictEqual(secondaryModelUsed, 'gemini-3.6-flash');
+    assert.strictEqual(secondaryModelUsed, 'gemini-1.5-flash');
     assert.strictEqual(callCount, 2);
   });
 
-  // TEST 3: Grok fallback uses grok-2-1212 and not deprecated grok-2-latest
-  test('TEST 3: Grok fallback uses grok-2-1212 and not deprecated grok-2-latest', async () => {
+  // TEST 3: Grok fallback uses grok-2 and not deprecated grok-2-latest
+  test('TEST 3: Grok fallback uses grok-2 and not deprecated grok-2-latest', async () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.GEMINI_API_KEY_2;
     process.env.XAI_API_KEY = 'mock-grok-key';
@@ -89,7 +89,7 @@ describe('P0.2.3: AI Provider Model Compatibility & Runtime Parity Suite', () =>
 
     const result = await AiService.generateContent('Test prompt');
     assert.strictEqual(result, 'Grok 2 1212 Response');
-    assert.strictEqual(grokModelRequested, 'grok-2-1212');
+    assert.strictEqual(grokModelRequested, 'grok-2');
     assert.notStrictEqual(grokModelRequested, 'grok-2-latest');
   });
 
@@ -126,7 +126,7 @@ describe('P0.2.3: AI Provider Model Compatibility & Runtime Parity Suite', () =>
     });
 
     assert.strictEqual(result, '{"analyzed": true}');
-    assert.strictEqual(grokBody.model, 'grok-2-1212');
+    assert.strictEqual(grokBody.model, 'grok-2');
     assert.deepStrictEqual(grokBody.response_format, { type: 'json_object' });
     assert.strictEqual(grokBody.messages[0].role, 'system');
     assert.strictEqual(grokBody.messages[0].content, systemInstruction);

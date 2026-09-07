@@ -19,9 +19,9 @@ export class AiService {
 
   /**
    * Universal AI content generation with multi-provider resilience:
-   * 1. Gemini Primary (gemini-3.6-flash via GEMINI_API_KEY)
-   * 2. Gemini Secondary (gemini-3.6-flash via GEMINI_API_KEY_2)
-   * 3. Grok / xAI (grok-2-1212 via XAI_API_KEY or GROK_API_KEY)
+   * 1. Gemini Primary (gemini-1.5-flash via GEMINI_API_KEY)
+   * 2. Gemini Secondary (gemini-1.5-flash via GEMINI_API_KEY_2)
+   * 3. Grok / xAI (grok-2 via XAI_API_KEY or GROK_API_KEY)
    * 4. Groq (llama-3.3-70b-versatile via GROQ_API_KEY)
    */
   static async generateContent(prompt: string, options?: AiGenerateOptions): Promise<string> {
@@ -71,7 +71,9 @@ export class AiService {
 
     // 1. Try Primary Gemini Key
     if (process.env.GEMINI_API_KEY) {
-      const model = options?.modelOverride || 'gemini-3.6-flash';
+      const _registry = (await import('./ai/aiModelRegistry')).aiModelRegistry;
+      const _route = await _registry.getRoute({ preferredProviderKey: 'gemini' });
+      const model = options?.modelOverride || (_route ? _route.modelName : 'gemini-1.5-flash');
       const start = Date.now();
       aiStatsManager.startOperation('gemini', model);
       try {
@@ -124,7 +126,9 @@ export class AiService {
 
     // 2. Try Secondary Gemini Key
     if (process.env.GEMINI_API_KEY_2) {
-      const model = options?.modelOverride || 'gemini-3.6-flash';
+      const _registry = (await import('./ai/aiModelRegistry')).aiModelRegistry;
+      const _route = await _registry.getRoute({ preferredProviderKey: 'gemini' });
+      const model = options?.modelOverride || (_route ? _route.modelName : 'gemini-1.5-flash');
       const start = Date.now();
       aiStatsManager.startOperation('gemini', model);
       try {
@@ -180,11 +184,16 @@ export class AiService {
     // 3. Fallback to Grok (xAI API)
     const grokKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
     if (grokKey) {
-      const model = 'grok-2-1212';
+      const _registry = (await import('./ai/aiModelRegistry')).aiModelRegistry;
+      const route = await _registry.getRoute({ preferredProviderKey: 'grok' });
+      if (!route) {
+        errors.push({ provider: 'Grok AI', error: 'PROVIDER_UNAVAILABLE: No active model found in registry for Grok.' });
+      } else {
+      const model = route.modelName;
       const start = Date.now();
       aiStatsManager.startOperation('grok', model);
       try {
-        console.log('[AiService] Fallback to Grok AI (grok-2-1212)...');
+        console.log(`[AiService] Fallback to Grok AI (${model})...`);
         const call = async () => {
           const controller = new AbortController();
           const grokResponse = await apiFetch('https://api.x.ai/v1/chat/completions', {
@@ -246,15 +255,21 @@ export class AiService {
       } finally {
         aiStatsManager.endOperation();
       }
+      }
     }
 
     // 4. Fallback to Groq API (llama-3.3-70b-versatile)
     if (process.env.GROQ_API_KEY) {
-      const model = 'llama-3.3-70b-versatile';
+      const _registry = (await import('./ai/aiModelRegistry')).aiModelRegistry;
+      const route = await _registry.getRoute({ preferredProviderKey: 'groq' });
+      if (!route) {
+        errors.push({ provider: 'Groq AI', error: 'PROVIDER_UNAVAILABLE: No active model found in registry for Groq.' });
+      } else {
+      const model = route.modelName;
       const start = Date.now();
       aiStatsManager.startOperation('groq', model);
       try {
-        console.log('[AiService] Fallback to Groq AI (llama-3.3-70b-versatile)...');
+        console.log(`[AiService] Fallback to Groq AI (${model})...`);
         const call = async () => {
           const groqResponse = await apiFetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -313,6 +328,7 @@ export class AiService {
         });
       } finally {
         aiStatsManager.endOperation();
+      }
       }
     }
 

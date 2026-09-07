@@ -1,17 +1,5 @@
 import { AIStats, ProviderTelemetryStats, AICallRecord, ModelPricing } from './types';
-
-/**
- * Centralized Pricing Model Table ($ per token)
- * Explicitly marked as ESTIMATED in UI.
- * If model is unknown or pricing unavailable, returns costStatus: 'UNKNOWN' and cost: null.
- */
-export const MODEL_PRICING: Record<string, ModelPricing> = {
-  'gemini-3.6-flash': { promptCostPerToken: 0.000000075, completionCostPerToken: 0.0000003 },
-  'gemini-2.5-flash': { promptCostPerToken: 0.000000075, completionCostPerToken: 0.0000003 },
-  'gemini-2.5-pro': { promptCostPerToken: 0.00000125, completionCostPerToken: 0.000005 },
-  'grok-2-1212': { promptCostPerToken: 0.000002, completionCostPerToken: 0.00001 },
-  'llama-3.3-70b-versatile': { promptCostPerToken: 0.00000059, completionCostPerToken: 0.00000079 },
-};
+import { aiModelRegistry } from '../../ai/aiModelRegistry';
 
 export function calculateEstimatedCost(
   model: string,
@@ -21,7 +9,7 @@ export function calculateEstimatedCost(
   if (promptTokens === null || promptTokens === undefined || completionTokens === null || completionTokens === undefined) {
     return { cost: null, costStatus: 'UNKNOWN' };
   }
-  const pricing = MODEL_PRICING[model];
+  const pricing = aiModelRegistry.getCachedPricing(model);
   if (!pricing) {
     return { cost: null, costStatus: 'UNKNOWN' };
   }
@@ -66,8 +54,8 @@ class AIStatsManager {
 
   private initDefaultProviders(): void {
     const defaultProviders = [
-      { name: 'gemini', model: 'gemini-3.6-flash' },
-      { name: 'grok', model: 'grok-2-1212' },
+      { name: 'gemini', model: 'gemini-1.5-flash' },
+      { name: 'grok', model: 'grok-2' },
       { name: 'groq', model: 'llama-3.3-70b-versatile' }
     ];
 
@@ -249,7 +237,7 @@ class AIStatsManager {
 
   // Legacy fallback method for backwards compatibility
   public recordCall(provider: string, promptTokens: number, completionTokens: number): void {
-    const model = provider === 'grok' ? 'grok-2-1212' : (provider === 'groq' ? 'llama-3.3-70b-versatile' : 'gemini-3.6-flash');
+    const model = provider === 'grok' ? 'grok-2' : (provider === 'groq' ? 'llama-3.3-70b-versatile' : 'gemini-1.5-flash');
     this.recordCallDetails({
       provider,
       model,

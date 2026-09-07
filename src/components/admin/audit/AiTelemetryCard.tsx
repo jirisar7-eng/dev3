@@ -202,6 +202,15 @@ export const AiTelemetryCard: React.FC<{ onNavigate?: (path: string) => void }> 
         </div>
 
         <div className="flex items-center gap-2">
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('ai-control-center')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Otevřít Control Center</span>
+            </button>
+          )}
           <button
             onClick={fetchTelemetry}
             disabled={loading}

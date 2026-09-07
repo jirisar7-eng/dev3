@@ -3,7 +3,7 @@ import { AIProvider, AIProviderResponse } from '../types';
 
 export class GrokProvider implements AIProvider {
   public name: 'grok' = 'grok';
-  public modelName = 'grok-2-1212';
+  public modelName = 'grok-2';
   private _enabled = true;
 
   public isAvailable(): boolean {
@@ -18,12 +18,13 @@ export class GrokProvider implements AIProvider {
     this._enabled = enabled;
   }
 
-  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number }): Promise<AIProviderResponse> {
+  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number; modelOverride?: string }): Promise<AIProviderResponse> {
     const apiKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
     if (!apiKey) {
       throw new Error('XAI_API_KEY or GROK_API_KEY is not configured');
     }
 
+    const activeModel = options?.modelOverride || this.modelName;
     const start = Date.now();
     const endpoint = 'https://api.x.ai/v1/chat/completions';
     const timeoutMs = options?.timeoutMs || 15000;
@@ -38,7 +39,7 @@ export class GrokProvider implements AIProvider {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: this.modelName,
+          model: activeModel,
           messages: [
             {
               role: 'system',
@@ -71,7 +72,7 @@ export class GrokProvider implements AIProvider {
         rawText,
         promptTokens,
         completionTokens,
-        model: this.modelName,
+        model: activeModel,
         latencyMs
       };
     } catch (err: any) {

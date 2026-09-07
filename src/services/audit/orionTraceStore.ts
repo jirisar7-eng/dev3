@@ -102,10 +102,10 @@ export class OrionTraceStore {
       currentStepId: 'USER',
       totalLatencyMs: 0,
       provider: {
-        primary: 'gemini-3.6-flash',
-        active: 'gemini-3.6-flash',
+        primary: 'gemini-1.5-flash',
+        active: 'gemini-1.5-flash',
         fallbackUsed: false,
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
       },
       telemetry: {
         promptTokens: 1250,
@@ -313,7 +313,7 @@ export class OrionTraceStore {
         subtitle: 'Vybrán primární provider Gemini 2.5 Flash (Latency 480ms)',
         status: 'COMPLETED',
         latencyMs: 480,
-        details: { primaryProvider: 'gemini-3.6-flash', activeProvider: 'gemini-3.6-flash', fallbackUsed: false },
+        details: { primaryProvider: 'gemini-1.5-flash', activeProvider: 'gemini-1.5-flash', fallbackUsed: false },
       },
       {
         id: 'EVIDENCE',
@@ -363,10 +363,10 @@ export class OrionTraceStore {
       currentStepId: 'HUMAN_APPROVAL_GATE',
       totalLatencyMs: 646,
       provider: {
-        primary: 'gemini-3.6-flash',
-        active: 'gemini-3.6-flash',
+        primary: 'gemini-1.5-flash',
+        active: 'gemini-1.5-flash',
         fallbackUsed: false,
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
       },
       telemetry: {
         promptTokens: 1420,

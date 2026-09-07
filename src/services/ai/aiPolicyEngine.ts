@@ -119,7 +119,7 @@ const DEFAULT_MODEL_OVERRIDES: Record<string, ModelPolicyOverride> = {
     sensitiveDataPolicy: 'ALLOW_SECURE',
     legalDataPolicy: 'ALLOW_SECURE'
   },
-  'grok-2-1212': {
+  'grok-2': {
     role: 'PRIMARY_ORCHESTRATOR',
     delegationEnabled: true,
     maxDelegationDepth: 3,

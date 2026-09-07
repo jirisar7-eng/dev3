@@ -114,7 +114,7 @@ async function runTests() {
     sourceHash: 'source-hash-456',
     context: 'production:main:default',
     provider: 'grok',
-    model: 'grok-2-1212'
+    model: 'grok-2'
   });
 
   aiCache.set(testCacheKey, {

@@ -5,7 +5,7 @@ import { AuditService } from '../auditService';
 export type CouncilWorkflowMode = 'SEQUENTIAL' | 'PARALLEL' | 'EVALUATION' | 'SYNTHESIS';
 
 export interface CouncilWorkflowRequest {
-  orchestratorModelKey: string; // e.g. 'gemini-1.5-pro' or 'grok-2-1212'
+  orchestratorModelKey: string; // e.g. 'gemini-1.5-pro' or 'grok-2'
   mode: CouncilWorkflowMode;
   taskTitle: string;
   taskDescriptionSummary: string; // No full prompts or PII
@@ -188,7 +188,7 @@ export class AiCouncilService {
       case 'SEQUENTIAL':
         return ['gemini-1.5-flash', 'llama-3.3-70b-versatile'];
       case 'PARALLEL':
-        return ['gemini-1.5-flash', 'grok-2-1212', 'llama-3.3-70b-versatile'];
+        return ['gemini-1.5-flash', 'grok-2', 'llama-3.3-70b-versatile'];
       case 'EVALUATION':
         return ['llama-3.3-70b-versatile', 'gemini-1.5-pro']; // Worker then Evaluator
       case 'SYNTHESIS':

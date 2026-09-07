@@ -179,13 +179,13 @@ export async function seedDatabaseIfEmpty() {
     return;
   }
 
-  // Ensure all existing AI modules are upgraded to gemini-3.6-flash
+  // Ensure all existing AI modules are upgraded to gemini-1.5-flash
   try {
     const aiAssistant = await prisma.module.findUnique({ where: { key: 'ai_assistant' } });
     if (aiAssistant && aiAssistant.config) {
       const configObj = JSON.parse(aiAssistant.config as string);
       if (configObj.model === 'gemini-1.5-flash' || configObj.model === 'gemini-2.5-flash') {
-        configObj.model = 'gemini-3.6-flash';
+        configObj.model = 'gemini-1.5-flash';
         await prisma.module.update({ where: { key: 'ai_assistant' }, data: { config: JSON.stringify(configObj) } });
       }
     }
@@ -193,7 +193,7 @@ export async function seedDatabaseIfEmpty() {
     if (copilot && copilot.config) {
       const configObj = JSON.parse(copilot.config as string);
       if (configObj.aiModel === 'gemini-1.5-flash' || configObj.aiModel === 'gemini-2.5-flash') {
-        configObj.aiModel = 'gemini-3.6-flash';
+        configObj.aiModel = 'gemini-1.5-flash';
         await prisma.module.update({ where: { key: 'admin_copilot' }, data: { config: JSON.stringify(configObj) } });
       }
     }
@@ -290,7 +290,7 @@ export async function seedDatabaseIfEmpty() {
           version: '0.9.0',
           enabled: false,
           public: false,
-          config: JSON.stringify({ model: 'gemini-3.6-flash', disclaimerNoticeRequired: true }),
+          config: JSON.stringify({ model: 'gemini-1.5-flash', disclaimerNoticeRequired: true }),
           description: 'Inteligentní asistent navržený pro rychlou analýzu podání a přípravu na jednání OSPOD.',
           icon: 'Bot',
         },
@@ -300,7 +300,7 @@ export async function seedDatabaseIfEmpty() {
           version: '1.0.0',
           enabled: true,
           public: false,
-          config: JSON.stringify({ aiModel: 'gemini-3.6-flash', safetyCheck: true }),
+          config: JSON.stringify({ aiModel: 'gemini-1.5-flash', safetyCheck: true }),
           description: 'AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.',
           icon: 'Bot',
         }
@@ -576,7 +576,7 @@ export async function seedDatabaseIfEmpty() {
         version: '0.9.0',
         enabled: false,
         public: false,
-        config: JSON.stringify({ model: 'gemini-3.6-flash', disclaimerNoticeRequired: true }),
+        config: JSON.stringify({ model: 'gemini-1.5-flash', disclaimerNoticeRequired: true }),
         description: 'Inteligentní asistent navržený pro rychlou analýzu podání a přípravu na jednání OSPOD.',
         icon: 'Bot',
       },
@@ -586,7 +586,7 @@ export async function seedDatabaseIfEmpty() {
         version: '1.0.0',
         enabled: true,
         public: false,
-        config: JSON.stringify({ aiModel: 'gemini-3.6-flash', safetyCheck: true }),
+        config: JSON.stringify({ aiModel: 'gemini-1.5-flash', safetyCheck: true }),
         description: 'AI asistent pro správu, QA, analýzu a bezpečné provádění administrativních úkolů.',
         icon: 'Bot',
       },

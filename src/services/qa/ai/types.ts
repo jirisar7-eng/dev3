@@ -215,7 +215,7 @@ export interface AIProvider {
   isAvailable(): boolean;
   isEnabled(): boolean;
   setEnabled(enabled: boolean): void;
-  analyze(sanitizedPrompt: string, options?: { timeoutMs?: number }): Promise<AIProviderResponse>;
+  analyze(sanitizedPrompt: string, options?: { timeoutMs?: number; modelOverride?: string }): Promise<AIProviderResponse>;
 }
 
 export interface ProviderStatus {
@@ -281,6 +281,10 @@ export interface AICallRecord {
   success: boolean;
   isTimeout: boolean;
   isFallback: boolean;
+  fallbackReason?: string;
+  routingDecision?: string;
+  providerId?: string;
+  modelId?: string;
   timestamp: string;
   errorMsg?: string | null;
 }

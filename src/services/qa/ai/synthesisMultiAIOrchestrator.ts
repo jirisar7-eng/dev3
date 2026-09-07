@@ -20,6 +20,7 @@ import { GeminiProvider } from './providers/geminiProvider';
 import { GrokProvider } from './providers/grokProvider';
 import { GroqProvider } from './providers/groqProvider';
 import { EvidenceValidator } from './evidenceValidator';
+import { aiModelRegistry } from '../../ai/aiModelRegistry';
 
 interface ProviderState {
   provider: AIProvider;
@@ -171,6 +172,12 @@ export class SynthesisMultiAIOrchestrator {
   ): Promise<AIProviderResponse> {
     let lastErr: any = null;
 
+    const route = await aiModelRegistry.getRoute({
+      preferredProviderKey: state.provider.name
+    });
+
+    const activeModel = route?.modelName;
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       if (attempt > 0) {
         const backoffMs = Math.min(1000, 200 * Math.pow(2, attempt - 1));
@@ -180,7 +187,7 @@ export class SynthesisMultiAIOrchestrator {
 
       try {
         const start = Date.now();
-        const res = await state.provider.analyze(sanitizedPrompt, { timeoutMs });
+        const res = await state.provider.analyze(sanitizedPrompt, { timeoutMs, modelOverride: activeModel });
         const latencyMs = res.latencyMs || (Date.now() - start);
 
         console.log(`[Synthesis Multi-AI Orchestrator] Provider ${state.provider.name} succeeded in ${latencyMs}ms (${res.promptTokens + res.completionTokens} tokens)`);

@@ -18,12 +18,13 @@ export class GroqProvider implements AIProvider {
     this._enabled = enabled;
   }
 
-  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number }): Promise<AIProviderResponse> {
+  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number; modelOverride?: string }): Promise<AIProviderResponse> {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       throw new Error('GROQ_API_KEY is not configured');
     }
 
+    const activeModel = options?.modelOverride || this.modelName;
     const start = Date.now();
     const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
     const timeoutMs = options?.timeoutMs || 15000;
@@ -38,7 +39,7 @@ export class GroqProvider implements AIProvider {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: this.modelName,
+          model: activeModel,
           messages: [
             {
               role: 'system',
@@ -71,7 +72,7 @@ export class GroqProvider implements AIProvider {
         rawText,
         promptTokens,
         completionTokens,
-        model: this.modelName,
+        model: activeModel,
         latencyMs
       };
     } catch (err: any) {

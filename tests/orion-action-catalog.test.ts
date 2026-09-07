@@ -5,6 +5,7 @@ import {
   ORION_ACTION_CATALOG
 } from '../src/services/orion/orionActionCatalog';
 import { OrionPermissionResolver } from '../src/services/orion/orionPermissionResolver';
+import { ControlPlaneAuthorization } from '../src/services/controlPlaneAuthorization';
 import { aiPolicyEngine } from '../src/services/ai/aiPolicyEngine';
 import { AuditService } from '../src/services/auditService';
 import { OrionTraceStore } from '../src/services/audit/orionTraceStore';
@@ -315,5 +316,328 @@ describe('CMD-ORION-20260907-002: Orion Action Catalog & Authorization Bridge', 
 
     expect(traceStartSpy).toHaveBeenCalledWith(regularUser, 'content.read');
     expect(traceCompSpy).toHaveBeenCalledWith('Action content.read authorized', undefined, 'COMPLETED');
+  });
+});
+
+describe('CMD-ORION-20260907-005: P1 Legacy ControlPlaneAuthorization Hardening & Zero-Bypass', () => {
+  const regularUser: User = {
+    id: 'sec-user-1',
+    email: 'user@tatamapravo.cz',
+    role: 'USER',
+    name: 'Jan Novák',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const editorUser: User = {
+    id: 'sec-editor-1',
+    email: 'editor@tatamapravo.cz',
+    role: 'CONTENT_MANAGER',
+    name: 'Editor Eva',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const legalEditorUser: User = {
+    id: 'sec-legal-editor-1',
+    email: 'legal.editor@tatamapravo.cz',
+    role: 'LEGAL_EDITOR',
+    name: 'Legal Editor Karel',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const moderatorUser: User = {
+    id: 'sec-moderator-1',
+    email: 'moderator@tatamapravo.cz',
+    role: 'MODERATOR',
+    name: 'Moderator Milan',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const adminUser: User = {
+    id: 'sec-admin-1',
+    email: 'admin@tatamapravo.cz',
+    role: 'ADMIN',
+    name: 'Admin Petr',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const superAdminUser: User = {
+    id: 'sec-superadmin-1',
+    email: 'superadmin@tatamapravo.cz',
+    role: 'SUPER_ADMIN',
+    name: 'Super Admin',
+    passwordHash: 'hash',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(AuditService, 'recordLog').mockResolvedValue(true as any);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // 1. ADMIN with granted capability: allows operation or requires HITL based on risk
+  describe('1. ADMIN Role Behavior (No Role Bypass)', () => {
+    it('ADMIN + granted read-only capability evaluates to ALLOW', async () => {
+      // Direct ControlPlaneAuthorization check
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(adminUser, 'AUDIT_RUN', 'system');
+      }).not.toThrow();
+
+      // Orion Action Catalog Bridge check
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: adminUser,
+        capabilityId: 'audit.run'
+      });
+      expect(result.decision).toBe('ALLOW');
+      expect(result.requiresHumanApproval).toBe(false);
+    });
+
+    it('ADMIN + granted mutating capability evaluates to HUMAN_APPROVAL_REQUIRED', async () => {
+      // content.write is granted to ADMIN, but is mutating -> requires HITL
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: adminUser,
+        capabilityId: 'content.write',
+        targetResource: 'article:123'
+      });
+      expect(result.decision).toBe('HUMAN_APPROVAL_REQUIRED');
+      expect(result.requiresHumanApproval).toBe(true);
+      expect(result.definition?.canMutate).toBe(true);
+    });
+
+    it('ADMIN + missing capability strictly fails closed with DENY (rejection of P1 bypass in authorizeOperation)', () => {
+      // ADMIN does NOT have deploy.production or settings.write or database.migrate
+      // Previously, user.role !== 'ADMIN' allowed this to bypass without throwing!
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(adminUser, 'DEPLOY', 'production');
+      }).toThrow(/FAIL CLOSED.*nemá capability 'deploy\.production'/);
+
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(adminUser, 'CONFIG_UPDATE', 'system_config');
+      }).toThrow(/FAIL CLOSED.*nemá capability 'settings\.write'/);
+    });
+
+    it('ADMIN + missing capability strictly fails closed with DENY in OrionActionCatalog', async () => {
+      // database.migrate is reserved for SUPER_ADMIN
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: adminUser,
+        capabilityId: 'database.migrate',
+        targetResource: 'postgres:prod'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('ADMIN + missing capability strictly fails closed in authorizeAgentRequest', () => {
+      // Agent request with capability not in ADMIN capabilities must return DENY
+      const result = ControlPlaneAuthorization.authorizeAgentRequest({
+        agentId: 'ORION_QA_ANALYST',
+        capabilityId: 'database.migrate',
+        user: adminUser
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+  });
+
+  // 2. SUPER_ADMIN Role Behavior (No Role Bypass)
+  describe('2. SUPER_ADMIN Role Behavior (Zero Bypass Invariant)', () => {
+    it('SUPER_ADMIN + granted capability evaluates according to operation risk (ALLOW for read-only)', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(superAdminUser, 'CONTENT_READ', 'page');
+      }).not.toThrow();
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: superAdminUser,
+        capabilityId: 'content.read'
+      });
+      expect(result.decision).toBe('ALLOW');
+      expect(result.requiresHumanApproval).toBe(false);
+    });
+
+    it('SUPER_ADMIN + granted critical capability requires HUMAN_APPROVAL_REQUIRED (HITL)', async () => {
+      // SUPER_ADMIN has deploy.production and database.migrate, but CRITICAL operations require approval
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: superAdminUser,
+        capabilityId: 'database.migrate',
+        targetResource: 'postgres:cluster'
+      });
+      expect(result.decision).toBe('HUMAN_APPROVAL_REQUIRED');
+      expect(result.requiresHumanApproval).toBe(true);
+      expect(result.riskLevel).toBe('CRITICAL');
+    });
+
+    it('SUPER_ADMIN + ungranted or fictitious capability strictly evaluates to DENY', async () => {
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: superAdminUser,
+        capabilityId: 'nonexistent.fictitious.capability' as any
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('SUPER_ADMIN + forbidden capability in authorizeAgentRequest strictly evaluates to DENY', () => {
+      const result = ControlPlaneAuthorization.authorizeAgentRequest({
+        agentId: 'BUILD_WITH_AGENTS',
+        capabilityId: 'shell.execute',
+        user: superAdminUser
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('strictly forbidden');
+    });
+  });
+
+  // 3. Privilege Escalation Across All Roles
+  describe('3. Privilege Escalation Prevention', () => {
+    it('USER cannot access admin capabilities (audit.run, vps.read, deploy.production)', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(regularUser, 'AUDIT_RUN', 'system');
+      }).toThrow(/FAIL CLOSED/);
+
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(regularUser, 'DEPLOY', 'production');
+      }).toThrow(/FAIL CLOSED/);
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: regularUser,
+        capabilityId: 'audit.run'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('CONTENT_MANAGER (EDITOR) cannot access admin capabilities (audit.run, vps.read)', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(editorUser, 'AUDIT_RUN', 'system');
+      }).toThrow(/FAIL CLOSED/);
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: editorUser,
+        capabilityId: 'vps.read'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('LEGAL_EDITOR cannot access admin capabilities (audit.run, vps.read)', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(legalEditorUser, 'AUDIT_RUN', 'system');
+      }).toThrow(/FAIL CLOSED/);
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: legalEditorUser,
+        capabilityId: 'audit.run'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('MODERATOR cannot access admin capabilities or content mutation', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(moderatorUser, 'AUDIT_RUN', 'system');
+      }).toThrow(/FAIL CLOSED/);
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: moderatorUser,
+        capabilityId: 'content.create'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('ADMIN cannot access super_admin-only ungranted capabilities (deploy.production, database.migrate)', async () => {
+      expect(() => {
+        ControlPlaneAuthorization.authorizeOperation(adminUser, 'DEPLOY', 'production');
+      }).toThrow(/FAIL CLOSED/);
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: adminUser,
+        capabilityId: 'deploy.production'
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+
+    it('SUPER_ADMIN cannot access nonexistent capabilities', async () => {
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: superAdminUser,
+        capabilityId: 'invalid.capability' as any
+      });
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('FAIL CLOSED');
+    });
+  });
+
+  // 4. Policy Engine Override (RBAC ALLOW + Policy DENY = DENY)
+  describe('4. Policy Engine Integration (Fail-Closed)', () => {
+    it('RBAC ALLOW + Policy Engine DENY evaluates strictly to DENY', async () => {
+      // adminUser has audit.run in RBAC capabilities
+      const userCaps = ControlPlaneAuthorization.getUserCapabilities(adminUser);
+      expect(userCaps).toContain('audit.run');
+
+      // But Policy Engine explicitly denies the action at step 3
+      let auditRunCallCount = 0;
+      const policySpy = vi.spyOn(aiPolicyEngine, 'evaluatePolicy').mockImplementation((_user: any, cap: any) => {
+        if (cap === 'audit.run') {
+          auditRunCallCount++;
+          // 1st call is in OrionPermissionResolver -> allow so it passes into effective capabilities
+          // 2nd call is in OrionActionCatalog step 3 -> deny to test policy block
+          return auditRunCallCount === 1;
+        }
+        return true;
+      });
+
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: adminUser,
+        capabilityId: 'audit.run'
+      });
+
+      expect(result.decision).toBe('DENY');
+      expect(result.reason).toContain('BLOCKED BY POLICY ENGINE');
+
+      policySpy.mockRestore();
+    });
+  });
+
+  // 5. HITL (Human-In-The-Loop) Verification
+  describe('5. HITL (Human-In-The-Loop) Enforcement', () => {
+    it('Valid capability + mutating operation evaluates to HUMAN_APPROVAL_REQUIRED', async () => {
+      // editorUser has content.write, which is a mutating action
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: editorUser,
+        capabilityId: 'content.write',
+        targetResource: 'article:99'
+      });
+
+      expect(result.decision).toBe('HUMAN_APPROVAL_REQUIRED');
+      expect(result.requiresHumanApproval).toBe(true);
+      expect(result.definition?.canMutate).toBe(true);
+    });
+
+    it('Valid capability + critical operation evaluates to HUMAN_APPROVAL_REQUIRED for SUPER_ADMIN', async () => {
+      // superAdminUser has database.migrate, which is a critical mutating action
+      const result = await OrionActionCatalog.authorizeAndBridgeAction({
+        user: superAdminUser,
+        capabilityId: 'database.migrate',
+        targetResource: 'postgres:schema'
+      });
+
+      expect(result.decision).toBe('HUMAN_APPROVAL_REQUIRED');
+      expect(result.requiresHumanApproval).toBe(true);
+      expect(result.riskLevel).toBe('CRITICAL');
+    });
   });
 });

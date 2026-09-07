@@ -259,9 +259,9 @@ export class GrokCatalogAdapter implements ProviderCatalogAdapter {
       const defaultGrok: DiscoveredModelInfo[] = [
         {
           providerKey: 'grok',
-          providerModelId: 'grok-2-1212',
+          providerModelId: 'grok-2',
           displayName: 'xAI Grok 2',
-          suggestedKey: 'grok-2-1212',
+          suggestedKey: 'grok-2',
           lifecycleStatus: 'PAID',
           capabilities: ['chat', 'code', 'vision', 'reasoning'],
           contextWindow: 131072,

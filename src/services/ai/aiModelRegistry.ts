@@ -256,9 +256,9 @@ export class AiModelRegistryService {
         },
         {
           providerId: grok.id,
-          key: 'grok-2-1212',
+          key: 'grok-2',
           displayName: 'Grok 2',
-          modelName: 'grok-2-1212',
+          modelName: 'grok-2',
           lifecycleStatus: 'PAID',
           freeTier: false,
           inputPricePer1M: 2.0,

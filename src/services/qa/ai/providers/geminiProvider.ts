@@ -3,7 +3,7 @@ import { AIProvider, AIProviderResponse } from '../types';
 
 export class GeminiProvider implements AIProvider {
   public name: 'gemini' = 'gemini';
-  public modelName = 'gemini-3.6-flash';
+  public modelName = 'gemini-1.5-flash';
   private _enabled = true;
 
   public isAvailable(): boolean {
@@ -18,12 +18,13 @@ export class GeminiProvider implements AIProvider {
     this._enabled = enabled;
   }
 
-  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number }): Promise<AIProviderResponse> {
+  public async analyze(sanitizedPrompt: string, options?: { timeoutMs?: number; modelOverride?: string }): Promise<AIProviderResponse> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
+    const activeModel = options?.modelOverride || this.modelName;
     const start = Date.now();
     const timeoutMs = options?.timeoutMs || 15000;
     const ai = new GoogleGenAI({ apiKey });
@@ -34,7 +35,7 @@ export class GeminiProvider implements AIProvider {
 
     const callPromise = (async () => {
       const response = await ai.models.generateContent({
-        model: this.modelName,
+        model: activeModel,
         contents: sanitizedPrompt,
         config: {
           responseMimeType: 'application/json'
@@ -53,7 +54,7 @@ export class GeminiProvider implements AIProvider {
       rawText,
       promptTokens,
       completionTokens,
-      model: this.modelName,
+      model: activeModel,
       latencyMs
     };
   }

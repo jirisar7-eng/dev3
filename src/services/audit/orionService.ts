@@ -221,7 +221,7 @@ ZÁSADY:
         });
       }
       OrionTraceStore.updateStep('AI_PROVIDER', 'COMPLETED', Date.now() - aiStartTime, {
-        primaryProvider: 'gemini-3.6-flash',
+        primaryProvider: 'gemini-1.5-flash',
         fallbackUsed,
       });
 
@@ -308,7 +308,7 @@ ZÁSADY:
         safetyWarnings: sanitizedSafetyWarnings,
         suggestedDraftActions: sanitizedDraftActions,
         metadata: {
-          model: 'gemini-3.6-flash',
+          model: 'gemini-1.5-flash',
           latencyMs,
           effectiveCapabilities,
         },
