@@ -2513,9 +2513,6 @@ enum SynthesisStatus {
   CLOSED
   IGNORED_FALSE_POSITIVE
   BACKLOG
-  VERIFIED_LOCAL
-  IN_PR
-  RELEASED
 }
 
 enum GitHubSyncStatus {
