@@ -1,4 +1,4 @@
-import { test, describe, beforeEach, afterEach } from 'node:test';
+import { test, describe, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert/strict';
 import { AiService } from '../src/services/AiService.js';
 import express from 'express';
@@ -7,6 +7,13 @@ import request from 'supertest';
 
 const app = express();
 app.use(express.json());
+
+app.use((req, res, next) => {
+  req.session = { userId: 'admin-id' };
+  req.user = { id: 'admin-id', role: 'ADMIN', email: 'admin@tata.cz', mfaEnabled: true, totpEnabled: true }; req.tokenMfaVerified = true;
+  next();
+});
+
 app.use('/api/ai', aiRoutes);
 
 describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite', () => {
@@ -62,7 +69,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: documentTextWithoutDate });
-    assert.strictEqual(res.status, 200, 'Must return 200 OK');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body)); assert.strictEqual(res.status, 200);
     const result = res.body;
 
     assert.ok(!JSON.stringify(result).includes('12.5.'), 'Output must NOT contain hallucinated date 12.5.');
@@ -83,7 +90,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: documentTextWithoutEmail });
-    assert.strictEqual(res.status, 200, 'Must return 200 OK');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body)); assert.strictEqual(res.status, 200);
     const result = res.body;
 
     assert.ok(!JSON.stringify(result).includes('e-mailová komunikace ze dne'), 'Output must NOT fabricate email communications');
@@ -105,7 +112,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: singleClaimDoc });
-    assert.strictEqual(res.status, 200, 'Must return 200 OK');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body)); assert.strictEqual(res.status, 200);
     assert.deepStrictEqual(res.body.contradictions, [], 'Contradictions must be empty when only one claim exists');
   });
 
@@ -126,7 +133,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: twoClaimsDoc });
-    assert.strictEqual(res.status, 200, 'Must return 200 OK');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body)); assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.contradictions.length, 1, 'Should identify valid contradiction');
     assert.ok(res.body.contradictions[0].includes('Rozpor v tvrzení'), 'Contradiction text must describe the conflict');
   });
@@ -165,7 +172,7 @@ describe('P0.2.1: AI Forms Fail-Safe & Case Manager Source Fidelity Test Suite',
     };
 
     const res = await request(app).post('/api/ai/analyze-document').send({ documentText: briefDoc });
-    assert.strictEqual(res.status, 200, 'Must return 200 OK');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body)); assert.strictEqual(res.status, 200);
     assert.ok(!JSON.stringify(res.body).includes('spisová značka 12 P 45/2024'), 'Must NOT invent unmentioned case numbers');
     assert.ok(!JSON.stringify(res.body).includes('OSPOD Praha 4'), 'Must NOT invent unmentioned OSPOD offices');
   });

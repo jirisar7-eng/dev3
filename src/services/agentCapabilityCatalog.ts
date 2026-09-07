@@ -162,6 +162,20 @@ export const CAPABILITY_CATALOG: Record<string, AgentCapability> = {
     requiresHumanApproval: false,
     allowedForAgents: ['REPO_MAINTAINER', 'ORION_QA_ANALYST'],
   },
+  'ai.chat': {
+    capabilityId: 'ai.chat',
+    description: 'AI chat and conversations',
+    riskLevel: 'P3',
+    requiresHumanApproval: false,
+    allowedForAgents: ['agent-orion-qa-v1', 'ADMIN_COPILOT'],
+  },
+  'ai.generate': {
+    capabilityId: 'ai.generate',
+    description: 'AI content generation',
+    riskLevel: 'P3',
+    requiresHumanApproval: false,
+    allowedForAgents: ['agent-orion-qa-v1', 'ADMIN_COPILOT'],
+  },
   'actions.propose': {
     capabilityId: 'actions.propose',
     description: 'Propose draft control plane action',

@@ -224,7 +224,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ onNavigate }) 
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-400/30">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400" /> AI Engine v3.6
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Orion
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold border border-emerald-500/30">
                 Aktivní

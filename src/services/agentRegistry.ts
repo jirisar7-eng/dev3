@@ -82,6 +82,16 @@ export const UNIFIED_AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
     enabled: true,
   },
   // Backward compatibility mappings
+  'agent-orion-qa-v1': {
+    id: 'agent-orion-qa-v1',
+    name: 'Orion (agent-orion-qa-v1)',
+    status: 'IMPLEMENTED',
+    allowedScopes: ['audit.run', 'findings.view', 'actions.propose', 'ai.chat', 'ai.generate', 'ai-engine'],
+    requiredApproval: false,
+    allowedProviders: ['gemini', 'grok'],
+    traceRequired: true,
+    enabled: true,
+  },
   ORION_QA_ANALYST: {
     id: 'ORION_QA_ANALYST',
     name: 'Orion QA Security Analyst',

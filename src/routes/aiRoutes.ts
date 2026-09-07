@@ -3,7 +3,36 @@ import rateLimit from 'express-rate-limit';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/authMiddleware';
 import { AiService } from '../services/AiService';
 
+import { ControlPlaneAuthorization, AGENT_ORION_IDENTITY } from '../services/controlPlaneAuthorization';
+import { aiPolicyEngine } from '../services/ai/aiPolicyEngine';
+
+
 const router = express.Router();
+
+const enforceOrionAuth = (req: AuthenticatedRequest, res: express.Response, capabilityId: 'ai.chat' | 'ai.generate'): boolean => {
+  try {
+    const authRes = ControlPlaneAuthorization.authorizeAgentRequest({
+      agentId: 'agent-orion-qa-v1',
+      capabilityId,
+      user: req.user,
+      scope: 'ai-engine'
+    });
+    if (authRes.decision !== 'ALLOW') {
+      res.status(403).json({ error: authRes.reason });
+      return false;
+    }
+    const policyResult = aiPolicyEngine.evaluatePolicy(req.user, capabilityId);
+    if (!policyResult) {
+      res.status(403).json({ error: 'Operace zamítnuta Policy Engine (globální zákaz nebo omezení capabilit).' });
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    res.status(403).json({ error: err.message || 'Přístup zamítnut kontrolní rovinou Orion.' });
+    return false;
+  }
+};
+
 
 // Strict rate limiter for public AI endpoints (10 requests per hour per IP)
 const aiRateLimiter = process.env.NODE_ENV === 'test' ? ((req, res, next) => next()) : rateLimit({
@@ -24,7 +53,8 @@ const aiPayloadLimiter = (req: express.Request, res: express.Response, next: exp
   next();
 };
 
-router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+router.post('/generate-page', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.generate')) return;
   try {
     const { rawText, title } = req.body;
     if (!rawText) return res.status(400).json({ error: 'Chybí vstupní text.' });
@@ -67,7 +97,8 @@ const SERVER_SCENARIOS: Record<string, { title: string, counterpartName: string 
   'jednani-ospod': { title: 'Jednání na OSPODu', counterpartName: 'Pracovnice OSPOD' }
 };
 // Chat endpoint for AiAssistantView, AiSimulatorView, AiFormsView
-router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
+router.post('/chat', requireAuth as any, aiRateLimiter, aiPayloadLimiter, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.chat')) return;
   try {
     const { messages, mode, scenarioId } = req.body;
 
@@ -76,7 +107,7 @@ router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
     if (JSON.stringify(messages).length > 50000) return res.status(400).json({ error: 'Překročena maximální velikost zprávy.' });
 
     // Server-side system instruction resolution (Security Hardening: Never trust client systemPrompt!)
-    let systemInstruction = 'Jsi odborný AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené a konstruktivní rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.';
+    let systemInstruction = 'Jsi Orion, centrální AI opatrovnický asistent portálu Táta má právo. Poskytuj věcné, právně podložené a konstruktivní rady v češtině se zaměřením na zájem dítěte a judikaturu Ústavního soudu.';
 
     if (mode === 'simulator' || scenarioId) {
       const scenarioConfig = scenarioId ? SERVER_SCENARIOS[scenarioId as string] : null;
@@ -109,12 +140,13 @@ router.post('/chat', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
 });
 
 // BIFF Message Converter
-router.post('/biff-convert', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
+router.post('/biff-convert', requireAuth as any, aiRateLimiter, aiPayloadLimiter, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.generate')) return;
   try {
     const { rawMessage } = req.body;
     if (!rawMessage) return res.status(400).json({ error: 'Chybí zpráva k převodu.' });
 
-    const prompt = `Jsi expert na komunikaci v opatrovnickém právu podle metodiky BIFF (Brief, Informative, Friendly, Firm).
+    const prompt = `Jsi Orion, expert na komunikaci v opatrovnickém právu podle metodiky BIFF (Brief, Informative, Friendly, Firm).
 Převeď následující emotivní nebo konfliktogenní zprávu od rodiče na věcnou, neutrální a právně bezúhonnou komunikaci.
 
 Původní zpráva: "${rawMessage}"
@@ -145,10 +177,11 @@ Vystup ve formátu JSON:
 });
 
 // Guide Action Plan Generator
-router.post('/guide-plan', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
+router.post('/guide-plan', requireAuth as any, aiRateLimiter, aiPayloadLimiter, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.generate')) return;
   try {
     const { childAge, conflictStage, ospodStance, primaryGoal } = req.body;
-    const prompt = `Jsi stratég opatrovnického práva v ČR. Na základě následujících parametrů vytvoř personalizovaný akční plán na 7-30 dní:
+    const prompt = `Jsi Orion, stratég opatrovnického práva v ČR. Na základě následujících parametrů vytvoř personalizovaný akční plán na 7-30 dní:
 - Věk dítěte: ${childAge}
 - Fáze konfliktu: ${conflictStage}
 - Postoj OSPOD: ${ospodStance}
@@ -183,12 +216,13 @@ Vystup ve formátu JSON:
 });
 
 // Document Analysis for AiCaseManagerView
-router.post('/analyze-document', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
+router.post('/analyze-document', requireAuth as any, aiRateLimiter, aiPayloadLimiter, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.generate')) return;
   try {
     const { documentText, documentType } = req.body;
     if (!documentText) return res.status(400).json({ error: 'Chybí text dokumentu.' });
 
-    const prompt = `Jsi analytik opatrovnických dokumentů. Proveď podrobný právní rozbor následujícího textu (typ: ${documentType || 'obecný dokument'}).
+    const prompt = `Jsi Orion, analytik opatrovnických dokumentů. Proveď podrobný právní rozbor následujícího textu (typ: ${documentType || 'obecný dokument'}).
 
 Text k rozboru:
 ${documentText}
@@ -264,10 +298,11 @@ Vystup ve formátu JSON:
 });
 
 // Simulator Evaluation
-router.post('/simulator-evaluate', aiRateLimiter, aiPayloadLimiter, async (req, res) => {
+router.post('/simulator-evaluate', requireAuth as any, aiRateLimiter, aiPayloadLimiter, async (req: AuthenticatedRequest, res: express.Response) => {
+  if (!enforceOrionAuth(req, res, 'ai.chat')) return;
   try {
     const { scenario, history } = req.body;
-    const prompt = `Jsi lektor komunikace a právní taktiky v opatrovnických řízeních.
+    const prompt = `Jsi Orion, lektor komunikace a právní taktiky v opatrovnických řízeních.
 Vyhodnoť výkon uživatele v simulaci scénáře "${scenario}".
 
 Průběh dialogu:
