@@ -147,4 +147,46 @@ router.get('/notion-status', requireAuth as any, requireExperimentalAccess() as 
   }
 });
 
+
+
+// HITL APPROVAL ENDPOINTS
+import { OrionApprovalStore } from '../services/orion/orionApprovalStore';
+
+router.get('/approvals', requireAuth as any, requireRole('SUPER_ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  const approvals = OrionApprovalStore.getAll();
+  res.json({ success: true, data: approvals });
+});
+
+router.post('/approvals/:id/approve', requireAuth as any, requireRole('SUPER_ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const approval = OrionApprovalStore.get(id);
+  if (!approval) {
+    return res.status(404).json({ success: false, error: 'Approval request not found.' });
+  }
+  if (approval.status !== 'PENDING') {
+    return res.status(400).json({ success: false, error: `Cannot approve request in status ${approval.status}` });
+  }
+  if (Date.now() > approval.expiresAt) {
+    OrionApprovalStore.updateStatus(id, 'EXPIRED');
+    return res.status(400).json({ success: false, error: 'Request expired.' });
+  }
+  
+  // Auditing
+  OrionApprovalStore.updateStatus(id, 'APPROVED');
+  res.json({ success: true, status: 'APPROVED', approvalId: id });
+});
+
+router.post('/approvals/:id/reject', requireAuth as any, requireRole('SUPER_ADMIN') as any, async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const approval = OrionApprovalStore.get(id);
+  if (!approval) {
+    return res.status(404).json({ success: false, error: 'Approval request not found.' });
+  }
+  if (approval.status !== 'PENDING') {
+    return res.status(400).json({ success: false, error: `Cannot reject request in status ${approval.status}` });
+  }
+  
+  OrionApprovalStore.updateStatus(id, 'REJECTED');
+  res.json({ success: true, status: 'REJECTED', approvalId: id });
+});
 export default router;
