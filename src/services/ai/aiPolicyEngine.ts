@@ -1,4 +1,5 @@
 import { AuditService } from '../auditService';
+import { User } from '../../types';
 
 export interface GlobalAiPolicy {
   allowedCapabilities: string[];
@@ -267,6 +268,25 @@ export class AiPolicyEngineService {
       maxWorkersPerTask,
       inheritedFields
     };
+  }
+
+  /**
+   * Evaluates whether a user and capability pass global AI Policy Engine constraints.
+   */
+  public evaluatePolicy(user: User | undefined, capability: string): boolean {
+    const globalPol = this.getGlobalPolicy();
+    if (globalPol.toolsPolicy === 'DENY') {
+      return false;
+    }
+    const blockedCaps = (globalPol as any).blockedCapabilities as string[] | undefined;
+    if (blockedCaps && blockedCaps.includes(capability)) {
+      return false;
+    }
+    const allowedCaps = (globalPol as any).allowedControlPlaneCapabilities as string[] | undefined;
+    if (allowedCaps && !allowedCaps.includes(capability)) {
+      return false;
+    }
+    return true;
   }
 
   /**

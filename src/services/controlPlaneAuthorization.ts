@@ -10,13 +10,38 @@ export const AGENT_ORION_IDENTITY = 'agent-orion-qa-v1';
 export const AGENT_ORION_ROLE = 'AI_SECURITY_ANALYST';
 
 export const ORION_BASE_CAPABILITIES: readonly ControlPlaneCapability[] = [
-  'audit.run',
-  'qa.run',
   'content.read',
+  'content.create',
+  'content.write',
+  'content.publish',
+  'legal.read',
+  'legal.research',
+  'judikatura.read',
+  'ai.chat',
+  'ai.generate',
+  'cms.write',
   'settings.read',
+  'settings.write',
+  'users.read',
+  'users.write',
+  'users.manage',
+  'rbac.manage',
+  'qa.run',
+  'audit.run',
+  'github.read',
+  'github.branch.create',
+  'github.commit',
+  'github.push.feature',
+  'github.pr.create',
   'database.read',
+  'database.migrate',
   'vps.read',
-  'github.read'
+  'vps.write',
+  'deploy.production',
+  'security.policy.write',
+  'project.manage',
+  'moderation.read',
+  'moderation.write'
 ];
 
 export class ControlPlaneAuthorization {
@@ -27,13 +52,29 @@ export class ControlPlaneAuthorization {
   public static getUserCapabilities(user: User): ControlPlaneCapability[] {
     const caps = new Set<ControlPlaneCapability>();
     
+    if (user.status === 'SUSPENDED' || user.status === 'BANNED') {
+      return [];
+    }
+
     // Base capabilities for all authenticated users
     caps.add('content.read');
     caps.add('settings.read');
+    caps.add('legal.read');
+    caps.add('judikatura.read');
+    caps.add('ai.chat');
     
-    if (user.role === 'CONTENT_MANAGER') {
+    if (user.role === 'VOLUNTEER' || user.role === 'VERIFIED_CONTRIBUTOR') {
+      caps.add('legal.research');
+      caps.add('ai.generate');
+    }
+
+    if (user.role === 'CONTENT_MANAGER' || (user.role as string) === 'EDITOR' || user.role === 'LEGAL_EDITOR') {
+      caps.add('content.create');
       caps.add('content.write');
+      caps.add('content.publish');
       caps.add('cms.write');
+      caps.add('legal.research');
+      caps.add('ai.generate');
     }
     
     if (user.role === 'MODERATOR') {
@@ -42,12 +83,18 @@ export class ControlPlaneAuthorization {
     }
     
     if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      caps.add('content.create');
       caps.add('content.write');
+      caps.add('content.publish');
       caps.add('cms.write');
+      caps.add('legal.research');
+      caps.add('ai.generate');
       caps.add('moderation.read');
       caps.add('moderation.write');
       caps.add('users.read');
       caps.add('users.write');
+      caps.add('users.manage');
+      caps.add('rbac.manage');
       caps.add('qa.run');
       caps.add('audit.run');
       caps.add('project.manage');

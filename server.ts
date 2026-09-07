@@ -70,6 +70,7 @@ import { analyticsRouter } from './src/routes/analyticsRoutes';
 import teamRoutes from './src/routes/teamRoutes';
 import projectControlRoutes from './src/routes/projectControlRoutes';
 import adminAiRoutes from './src/routes/adminAiRoutes';
+import orionGlobalRoutes from './src/routes/orionGlobalRoutes';
 
 dotenv.config();
 
@@ -202,7 +203,7 @@ app.get('/api/health', async (_req, res) => {
 // Initialize DB connectivity check without automatic startup schema/seed mutations (P0 Containment)
 async function initializeApp() {
   const isProd = process.env.NODE_ENV === 'production';
-  const dbConnected = await waitForDatabase(isProd ? 10 : 5);
+  const dbConnected = await waitForDatabase(isProd ? 10 : 2);
 
   if (dbConnected) {
     console.log('[System] Databáze je dostupná. Automatické DB mutace při spuštění jsou zakázány (P0 Containment).');
@@ -409,6 +410,7 @@ app.delete('/api/case-files/:id', requireAuth as any, async (req: AuthenticatedR
 app.use('/api/admin/vps', adminVpsRoutes);
 app.use(['/api/admin/audits', '/api/admin/audit-center'], auditCenterRoutes);
 app.use('/api/admin/orion', orionRoutes);
+app.use('/api/orion', orionGlobalRoutes);
 app.use('/api/admin/synthesis', synthesisRoutes);
 app.use('/api/audit/share', publicAuditShareRouter);
 app.use('/api/admin', adminRoutes);
@@ -5426,18 +5428,34 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    app.get('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        const rootIndex = path.resolve(process.cwd(), 'index.html');
+        if (fs.existsSync(rootIndex)) {
+          let template = fs.readFileSync(rootIndex, 'utf-8');
+          template = await vite.transformIndexHtml(url, template);
+          return res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+        }
+        next();
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
+  } else {
+    const distPath = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (_req, res) => {
+      const indexPath = path.resolve(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Index HTML not found');
+      }
+    });
   }
-
-  app.use(express.static(path.resolve('dist')));
-
-  app.get('*', (_req, res) => {
-    const indexPath = path.resolve('dist/index.html');
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send('Index HTML not found');
-    }
-  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);
