@@ -68,6 +68,7 @@ export interface AgentAuthorizationRequest {
   targetResource?: string;
   scope?: string;
   context?: Record<string, unknown>;
+  hasValidHitlApproval?: boolean;
 }
 
 export interface AgentAuthorizationResult {

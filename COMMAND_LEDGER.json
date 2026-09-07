@@ -116,6 +116,14 @@
       "branch": "feat/ai-policy-council-integration-20260907",
       "testsPassed": "PASS",
       "timestamp": "2026-09-07T18:32:37.663Z"
+    },
+    {
+      "commandId": "CMD-ORION-20260907-014",
+      "status": "PARTIAL / NOT VERIFIED",
+      "auditPath": "audit-orion-hitl-hardening-2026-09-07.md",
+      "branch": "feat/ai-policy-council-integration-20260907",
+      "testsPassed": "PASS",
+      "timestamp": "2026-09-07T18:41:09.281Z"
     }
   ]
 }

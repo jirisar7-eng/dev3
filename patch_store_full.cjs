@@ -1,4 +1,6 @@
-import crypto from 'crypto';
+const fs = require('fs');
+
+const classCode = `import crypto from 'crypto';
 import { prisma } from '../../db/prisma';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED' | 'EXECUTING' | 'EXECUTED' | 'FAILED' | 'CANCELLED';
@@ -80,7 +82,7 @@ export class OrionApprovalStore {
     traceId: string;
     payload: any;
   }): Promise<OrionApprovalRequest> {
-    const id = `apr_${crypto.randomBytes(12).toString('hex')}`;
+    const id = \`apr_\${crypto.randomBytes(12).toString('hex')}\`;
     const payloadHash = this.generatePayloadHash(data.payload);
     
     const bindingHash = this.generateBindingHash({
@@ -256,3 +258,5 @@ export class OrionApprovalStore {
     }
   }
 }
+`;
+fs.writeFileSync('src/services/orion/orionApprovalStore.ts', classCode);
