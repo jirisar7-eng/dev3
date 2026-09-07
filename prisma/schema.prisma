@@ -2789,3 +2789,29 @@ model AiModel {
   @@index([routingPriority])
   @@index([key])
 }
+
+model OrionApproval {
+  id           String   @id @default(uuid())
+  agentId      String
+  capabilityId String
+  userId       String
+  operation    String
+  target       String
+  scope        String
+  riskLevel    String
+  traceId      String
+  payloadHash  String
+  payload      String?  @db.Text
+  status       String
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  approvedAt   DateTime?
+  approvedBy   String?
+  rejectedAt   DateTime?
+  rejectedBy   String?
+  executingAt  DateTime?
+  executedAt   DateTime?
+  failedAt     DateTime?
+  auditRef     String?
+  bindingHash  String
+}

@@ -5,28 +5,53 @@ import { ControlPlaneCapability } from '../types/controlPlane';
 import { OrionApprovalStore } from '../services/orion/orionApprovalStore';
 
 export const requireOrionAuth = (capabilityId: ControlPlaneCapability, operation: string = 'unknown') => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const approvalId = req.headers['x-orion-approval-id'] as string;
       
       // Phase 1: Execution of an APPROVED request
       if (approvalId) {
-        const approval = OrionApprovalStore.get(approvalId);
+        const approval = await OrionApprovalStore.get(approvalId);
         if (!approval) {
            res.status(404).json({ error: 'Approval request not found.' });
            return;
         }
         if (approval.status !== 'APPROVED') {
-           res.status(403).json({ error: `Approval status is ${approval.status}.` });
+           res.status(403).json({ error: `Approval status is ${approval.status}. Expected APPROVED.` });
            return;
         }
         if (Date.now() > approval.expiresAt) {
-           OrionApprovalStore.updateStatus(approvalId, 'EXPIRED');
+           await OrionApprovalStore.transitionStatus(approvalId, 'APPROVED', 'EXPIRED');
            res.status(403).json({ error: 'Approval request has expired.' });
            return;
         }
         if (approval.userId !== req.user?.id) {
            res.status(403).json({ error: 'Actor binding mismatch. User mismatch.' });
+           return;
+        }
+
+        // Verify cryptographic binding
+        const currentPayloadHash = OrionApprovalStore.generatePayloadHash(req.body);
+        if (currentPayloadHash !== approval.payloadHash) {
+           res.status(403).json({ error: 'Payload tampering detected. Payload hash mismatch.' });
+           return;
+        }
+        
+        const currentBindingHash = OrionApprovalStore.generateBindingHash({
+           id: approval.id,
+           agentId: AGENT_ORION_IDENTITY,
+           capabilityId,
+           userId: req.user?.id || 'unknown',
+           operation: operation,
+           target: req.originalUrl,
+           scope: 'ai-engine',
+           traceId: approval.traceId,
+           riskLevel: approval.riskLevel,
+           payloadHash: currentPayloadHash
+        });
+
+        if (currentBindingHash !== approval.bindingHash) {
+           res.status(403).json({ error: 'Full binding tampering detected. Binding hash mismatch.' });
            return;
         }
         
@@ -43,8 +68,21 @@ export const requireOrionAuth = (capabilityId: ControlPlaneCapability, operation
           return;
         }
         
-        // Execute action
-        OrionApprovalStore.updateStatus(approvalId, 'EXECUTED');
+        // Atomic execution lock
+        const transitioned = await OrionApprovalStore.transitionStatus(approvalId, 'APPROVED', 'EXECUTING');
+        if (!transitioned) {
+           res.status(403).json({ error: 'Failed to acquire execution lock. Request may be already executing.' });
+           return;
+        }
+
+        res.on('finish', async () => {
+           if (res.statusCode >= 200 && res.statusCode < 400) {
+              await OrionApprovalStore.transitionStatus(approvalId, 'EXECUTING', 'EXECUTED');
+           } else {
+              await OrionApprovalStore.transitionStatus(approvalId, 'EXECUTING', 'FAILED');
+           }
+        });
+
         next();
         return;
       }
@@ -61,7 +99,7 @@ export const requireOrionAuth = (capabilityId: ControlPlaneCapability, operation
          next();
          return;
       } else if (authRes.decision === 'REQUIRE_HUMAN_APPROVAL') {
-         const approval = OrionApprovalStore.create({
+         const approval = await OrionApprovalStore.create({
             agentId: AGENT_ORION_IDENTITY,
             capabilityId,
             userId: req.user?.id || 'unknown',
@@ -72,6 +110,7 @@ export const requireOrionAuth = (capabilityId: ControlPlaneCapability, operation
             traceId: authRes.traceId || 'unknown',
             payload: req.body
          });
+
          res.status(202).json({
             decision: 'REQUIRE_HUMAN_APPROVAL',
             approvalId: approval.id,
