@@ -288,3 +288,11 @@ Důvod: Final contrast scan and evidence reconciliation requested under CMD-ADMI
 Výsledek: 6 contrast issues resolved. Implementation SHA: 09a53d7122a226e04317c9f9fcf5ec9b906cc13b.
 Ověření: BUILD / LINT / TYPECHECK / TEST
 Riziko: NONE
+
+### CMD-ADMIN-20260908-001R3
+Datum: 2026-09-08
+Typ: RESPONSIVE FIX / RUNTIME QA
+Parent: CMD-ADMIN-20260908-001R2
+Změna: Minimální oprava přetékání globální hlavičky.
+Ověření: DEV3 Playwright, 8 viewportů, FAILURES=0.
+Riziko: LOW

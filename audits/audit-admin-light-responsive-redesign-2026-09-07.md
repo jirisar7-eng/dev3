@@ -109,3 +109,43 @@ PASS
 - DB/Prisma Impact: NONE
 - RBAC/API/Security Impact: NONE
 - Remaining Risks: Low (P3).
+
+## CMD-ADMIN-20260908-001R3 — Runtime Reconciliation
+
+- Parent: `CMD-ADMIN-20260908-001R2`
+- Start SHA: `e18a6fac1a8aa4100fbae7b30619ea40b75435ec`
+- Prostředí: izolované VPS DEV3 preview
+- Rozsah: minimální oprava přetékání globální hlavičky
+- Mimo rozsah: Logo, SVG, Prisma, databáze, Docker a deployment
+
+### Skutečné změny
+
+- responzivní padding a mezery kontejneru;
+- `min-w-0` a smrštitelný wrapper loga;
+- malé logo pod 440 px;
+- `max-w-full` pro logo;
+- hranice registrace zůstala `>= 380`.
+
+### VPS runtime ověření
+
+- API forwarder: port 3000 → 3003, HTTP 200
+- Preview administrace: port 3013, HTTP 200
+- Playwright viewporty: 320, 360, 380, 390, 412, 768, 1024 a 1440 px
+- Horizontální overflow: PASS ve všech viewports
+- Registrace: skrytá při 320/360, viditelná při 380/390/412
+- Celkový výsledek: `FAILURES=0`
+
+### Verdikt
+
+`PASS` — minimální oprava hlavičky byla ověřena na izolovaném DEV3 preview. Neproběhl deploy ani zásah do PROD3.
+
+### Finální lokální ověření
+
+- Lint: PASS.
+- Build: PASS, exit 0.
+- Header runtime: PASS, 8 viewportů.
+- Test runner: BLOCKED — security suite neměla server na portu 3000.
+- Selhání: `ECONNREFUSED` před první assertion, nikoliv bezpečnostní regrese.
+- DEV3 forwarder nebyl obnoven, protože test zapisuje do `/api/audit`.
+- Existující problém: `zod` chybí v `package-lock.json`.
+- Celkový gate: `BLOCKED_FOR_FULL_TEST_GATE`.

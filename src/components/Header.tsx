@@ -366,13 +366,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header id="main-app-header" className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
-      <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div ref={containerRef} className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
         {/* Brand / Logo */}
-        <div ref={logoRef} className="shrink-0 flex items-center">
+        <div ref={logoRef} className="min-w-0 shrink flex items-center">
           <Logo
             variant="full"
-            size="md"
-            className="cursor-pointer"
+            size={dimensions.containerWidth > 0 && dimensions.containerWidth < 440 ? 'sm' : 'md'}
+            className="cursor-pointer max-w-full"
             onClick={() => handleNavClick('/')}
           />
         </div>
