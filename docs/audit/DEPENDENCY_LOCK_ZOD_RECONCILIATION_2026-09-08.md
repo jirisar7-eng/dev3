@@ -27,3 +27,12 @@ Tento samostatný P1 compatibility nález není součástí opravy lockfile.
 ## Verdikt
 
 PASS — lockfile je synchronizovaný a reprodukovatelný. Bez DB migrace, deploye nebo zásahu do DEV3/PROD3.
+
+## Izolované bezpečnostní ověření
+
+- Testovací backend: `isolated-security-test`
+- Databáze: odpojena, in-memory fallback
+- Security testy: 4/4 PASS
+- Exit code: 0
+- Port 3000 byl po testu uvolněn
+- Bez zásahu do DEV3 nebo PROD3
