@@ -239,7 +239,7 @@ export const AiContextManager: React.FC = () => {
               {previewLoading ? (
                 <div className="py-20 text-center text-slate-400 text-xs font-bold">Načítám náhled...</div>
               ) : (
-                <pre className="p-6 rounded-2xl bg-white text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
+                <pre className="p-6 rounded-2xl bg-slate-900 text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
                   {previewContent}
                 </pre>
               )}

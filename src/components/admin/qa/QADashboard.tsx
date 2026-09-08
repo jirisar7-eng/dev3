@@ -1407,7 +1407,7 @@ PRODUCTION READINESS GATE EXPLANATION:
                             {matched.evidenceBundle?.apiRequestResponse && (
                               <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">API Request / Response payload</span>
-                                <pre className="p-3 bg-white rounded-xl text-[10px] font-mono text-slate-200 overflow-x-auto">
+                                <pre className="p-3 bg-slate-900 rounded-xl text-[10px] font-mono text-slate-200 overflow-x-auto">
                                   {matched.evidenceBundle.apiRequestResponse}
                                 </pre>
                               </div>

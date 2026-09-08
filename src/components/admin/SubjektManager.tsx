@@ -642,7 +642,7 @@ const handleSave = async (e: React.FormEvent) => {
 
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2 bg-white hover:bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all cursor-pointer shadow-xs shrink-0"
+          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all cursor-pointer shadow-xs shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Přidat nový subjekt</span>
@@ -1302,7 +1302,7 @@ const handleSave = async (e: React.FormEvent) => {
                     {isAdmin && (
                       <button
                         onClick={handleOpenDirectEdit}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-indigo-600 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs self-start sm:self-auto"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs self-start sm:self-auto"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         <span>Přímá úprava (Admin)</span>

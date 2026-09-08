@@ -300,7 +300,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ onNavigate, on
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Hledat v šablonách..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 text-slate-200 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 text-slate-900 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
       </div>

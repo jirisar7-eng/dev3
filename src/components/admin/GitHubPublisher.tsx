@@ -296,7 +296,7 @@ export const GitHubPublisher: React.FC = () => {
         <button
           onClick={fetchStatus}
           disabled={loadingStatus}
-          className="py-3 px-5 rounded-2xl bg-slate-50 hover:bg-slate-700 border border-slate-200 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+          className="py-3 px-5 rounded-2xl bg-slate-50 hover:bg-slate-700 border border-slate-200 text-slate-800 hover:text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 text-emerald-400 ${loadingStatus ? 'animate-spin' : ''}`} />
           <span>{loadingStatus ? 'Kontroluji...' : 'Zkontrolovat změny'}</span>
