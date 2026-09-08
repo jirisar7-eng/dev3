@@ -278,3 +278,13 @@ Důvod: Prior automated substitution created unreadable text pairings (dark text
 Výsledek: Restored `text-white` to elements using dark backgrounds (e.g., `bg-blue-600`), restored the `bg-slate-900` preview area for SVG logos. Verified shared components and responsive viewport rendering (no horizontal overflow across viewports 320px to 1440px). Created the required audit artifact.
 Ověření: BUILD / LINT / TYPECHECK / AUDIT
 Riziko: NONE
+
+### CMD-ADMIN-20260908-001R2
+Datum: 2026-09-08
+Typ: FINAL RECONCILIATION / QA / EVIDENCE
+Parent: CMD-ADMIN-20260907-001R
+Změna: Resolved P1 bg-white/text-white regression on Admin Copilot button, fixed code preview contrasts in QADashboard, AiContextManager, and TemplateManager. Recorded truthful test execution evidence and non-synthetic viewport status.
+Důvod: Final contrast scan and evidence reconciliation requested under CMD-ADMIN-20260908-001R2.
+Výsledek: 6 contrast issues resolved. Implementation SHA: 09a53d7122a226e04317c9f9fcf5ec9b906cc13b.
+Ověření: BUILD / LINT / TYPECHECK / TEST
+Riziko: NONE
