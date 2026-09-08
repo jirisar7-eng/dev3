@@ -268,3 +268,9 @@
 **Riziko:** NONE  
 **Další krok:** Připraveno pro review a finální acceptance.  
   
+
+### DEPENDENCY-LOCK-ZOD-20260908
+Datum: 2026-09-08
+Změna: Synchronizován `package-lock.json` pro existující závislost `zod`.
+Ověření: npm ci, lint, build a cílené testy 31/31 PASS včetně izolované security suite.
+Riziko: P1 Node 20 engine compatibility řešit samostatně.
