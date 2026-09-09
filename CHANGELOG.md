@@ -311,3 +311,11 @@ Ověření: Čistý replay, 13 invariantů a úplné kopie DEV3/PROD3 PASS.
 Gate: PASS_FOR_CONTROLLED_ENVIRONMENT_RECONCILIATION
 Baseline: CANDIDATE_NOT_ACTIVE
 Riziko: LOW — živé databáze nebyly změněny.
+
+### DEV3-MIGRATION-RECONCILIATION-STAGE2-20260909
+Datum: 2026-09-09
+Změna: Řízeně aplikovány Brand Asset Studio a Study migrace na DEV3.
+Ověření: Restore rehearsal, ledger, 13 invariantů, data a health PASS.
+DEV3 gate: PASS_DEV3_MIGRATION_RECONCILIATION
+PROD3 gate: BLOCKED_FOR_PROD3_EXECUTION
+Riziko: LOW — zálohy ověřeny, PROD3 zůstalo beze změny.
