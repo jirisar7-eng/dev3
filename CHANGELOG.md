@@ -280,3 +280,10 @@ Datum: 2026-09-08
 Změna: Security integrační testy nyní automaticky používají izolovaný backend bez databáze.
 Ověření: security 4/4, celý test runner, lint a build PASS.
 Riziko: LOW
+
+### BRAND-ASSET-STUDIO-INVENTORY-20260909
+Datum: 2026-09-09
+Změna: Dokončena autoritativní inventura centrálního brandingu.
+Výsledek: Potvrzen plán pro tři PWA, dokumenty a verzované assety.
+Ověření: READ-ONLY SOURCE AUDIT
+Riziko: NONE
