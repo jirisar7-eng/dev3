@@ -1,5 +1,80 @@
 # CHANGELOG
 
+## 2026-09-09
+**Typ:** DOCS / RESEARCH / LEGAL / COMPLIANCE  
+**Změna:** Vypracování pracovního návrhu právní a compliance dokumentace Legal Pack 2.0 (TMPR-20260909-LEGAL-018).  
+**Důvod:** Příprava ucelené, vnitřně bezrozporné a právně precizní nové generace dokumentace projektu Táta má právo / Synthesis OS na základě hloubkové technické inventury DEV3, připravené pro externí právní revizi (Czech legal counsel).  
+**Výsledek:**
+- Založena složka `docs/legal-drafts/legal-pack-2.0/` obsahující 12 ucelených Markdown dokumentů se statusem `WORKING DRAFTS — NOT FOR PUBLICATION`:
+  - `README.md`: Manifest balíčku a metodické pokyny pro právní revizi.
+  - `00-LEGAL-FACTS-INVENTORY.md`: 50 technických a procesních faktů zmapovaných z kódu DEV3 s verifikačními tagy.
+  - `01-LEGAL-PACK-ARCHITECTURE.md`: Architektura, kanonická terminologie, sémantické verzování a pravidla sazby.
+  - `02-TERMS-OF-USE-DRAFT.md`: Podmínky užívání s vymezením neadvokátní povahy, CoParentHubu a limity odpovědnosti dle § 2898 NOZ.
+  - `03-PRIVACY-NOTICE-DRAFT.md`: Informační povinnost dle GDPR (čl. 9 zvláštní kategorie, účely, příjemci, práva subjektů, zákaz profilování).
+  - `04-COOKIE-POLICY-DRAFT.md`: Pravidla používání výhradně technických cookies dle § 89 odst. 3 ZEK a localStorage.
+  - `05-LEGAL-DISCLAIMER-DRAFT.md`: Právní výhrada k vzorům, kalkulátorům, AI halucinacím a krizové kontakty.
+  - `06-VOLUNTEER-CODE-DRAFT.md`: Dobrovolnický kodex ve 14 kapitolách (zákaz vinklaření, ochrana dítěte, mlčenlivost, whistleblowing).
+  - `07-AI-TRANSPARENCY-DRAFT.md`: Plnění čl. 50 EU AI Act (identifikace Oriona, poskytovatelé, limity Privacy Filteru, Human-in-the-Loop).
+  - `08-VOLUNTEER-COOPERATION-AGREEMENT-DRAFT.md`: Rámcová smlouva o dobrovolné spolupráci (inominátní smlouva dle § 1746 odst. 2 NOZ, bezúplatnost, licence, mlčenlivost).
+  - `09-CROSS-DOCUMENT-CONSISTENCY-MATRIX.md`: Křížová matice eliminující dřívější terminologické a právní rozpory.
+  - `10-PRE-PUBLICATION-LEGAL-REVIEW.md`: Předpublikační auditní checklist priorit P0–P3 s formálním sign-off protokolem.
+- Žádný kód, databáze, konfigurace ani stávající publikované verze dokumentů v1.0.0 a v1.1.0 nebyly dotčeny.
+- `docs/audit/LEGAL-PACK-2-0-RESEARCH-AND-DRAFT-2026-09-09.md`: Vytvořen technický audit.  
+**Ověření:** AUDIT / READ-ONLY INVENTORY / CONSISTENCY MATRIX  
+**Commit:** N/A  
+**Audit:** TMPR-20260909-LEGAL-018 (`docs/audit/LEGAL-PACK-2-0-RESEARCH-AND-DRAFT-2026-09-09.md`)  
+**Riziko:** NONE  
+**Další krok:** Předání balíčku k externímu advokátnímu review dle checklistu 10-PRE-PUBLICATION-LEGAL-REVIEW.md.  
+**Důvod:** Odstranění nepřesného termínu „podpis“ z tiskového zobrazení LegalDocumentLayout za účelem 100% souladu se skutečným právním a technickým mechanismem (textové potvrzení přijetí).  
+**Výsledek:**
+- `src/components/legal/LegalDocumentLayout.tsx`: Nahrazen tiskový stav `PODPIS POTVRZEN A EVIDOVÁN` za `PŘIJETÍ DOKUMENTU POTVRZENO A EVIDOVÁNO` a `NEPODEPSÁNO` za `NEPOTVRZENO`.
+- Ověřeno, že v žádném UI prvku ani tiskovém výstupu se nenachází zavádějící tvrzení o elektronickém/digitálním/kvalifikovaném podpisu.
+- Acceptance mechanismus, API, databázové modely, RBAC ani publikační cyklus nebyly nijak dotčeny.
+- `docs/audit/LEGAL-DOCUMENT-ACCEPTANCE-TERMINOLOGY-2026-09-09.md`: Vytvořen autoritativní audit.  
+**Ověření:** TEST (21/21 testů v `tests/public-document-center.test.ts` a `tests/compliance-modal-contract.test.ts`) / LINT / TYPECHECK (`tsc --noEmit`) / AUDIT  
+**Commit:** N/A  
+**Audit:** TMPR-20260909-LEGAL-017 (`docs/audit/LEGAL-DOCUMENT-ACCEPTANCE-TERMINOLOGY-2026-09-09.md`)  
+**Riziko:** NONE  
+**Další krok:** Pokračování dle instrukcí řídicího plánu.
+
+
+
+## 2026-09-09
+**Typ:** FEATURE / LEGAL / COMPLIANCE  
+**Změna:** Obnova veřejného Právního & Compliance Centra na `/pravni-dokumenty` (TMPR-20260909-LEGAL-015).  
+**Důvod:** Obnovení samostatného veřejného katalogu/rozcestníku právních dokumentů a informací o fungování projektu Táta má právo namísto automatického otevírání výchozích podmínek (terms).  
+**Výsledek:**
+- `src/components/public/PublicDocumentCenter.tsx`: Vytvořena nová samostatná veřejná komponenta rozcestníku s katalogem 7 oficiálních platných dokumentů (`terms`, `gdpr`, `cookies`, `legal`, `volunteer_code`, `ai_statement`, `dohoda-o-spolupraci`), verzemi, datem účinnosti a bezpečným navigačním tokem bez nepodložených tvrzení.
+- `src/pages/LegalDocsPage.tsx`: Integrován rozcestník jako výchozí stav pro `/pravni-dokumenty`, zachována volitelná navigace na detail dokumentu (`?doc=key`), doplněno obousměrné provázání historie a bezpečný návrat do centra.
+- `src/components/legal/LegalDocumentLayout.tsx`: Zpětné tlačítko v hlavičce detailu dokumentu aktualizováno na `backPath="/pravni-dokumenty"` s popiskem `Zpět do Právního & Compliance centra`.
+- `src/components/Footer.tsx`: Do patičky (desktopové i mobilní) přidán přímý odkaz `⚖️ Právní & Compliance centrum` (`/pravni-dokumenty`) při zachování všech původních přímých právních odkazů.
+- `server.ts`: Přidán veřejný listing endpoint `GET /api/compliance/docs/public` vracející výhradně publikované verze oficiálních dokumentů (žádné koncepty ani interní data). Administrátorský endpoint `/api/compliance/docs` zůstává striktně chráněn RBAC (ADMIN-only).
+- `tests/public-document-center.test.ts`: Vytvořena komplexní testovací sada ověřující všech 14 stanovených scénářů A–N (14/14 PASS).
+- `docs/audit/PUBLIC-DOCUMENT-CENTER-RESTORE-2026-09-09.md`: Vytvořen autoritativní audit.  
+**Ověření:** TEST (14/14 testů v `tests/public-document-center.test.ts`, 7/7 v `tests/compliance-modal-contract.test.ts`) / LINT / TYPECHECK (`tsc --noEmit`) / BUILD (`compile_applet`) / AUDIT  
+**Commit:** N/A  
+**Audit:** TMPR-20260909-LEGAL-015 (`docs/audit/PUBLIC-DOCUMENT-CENTER-RESTORE-2026-09-09.md`)  
+**Riziko:** NONE  
+**Další krok:** Závěrečný souhrnný audit životního cyklu právních dokumentů dle zadání.
+
+
+## 2026-09-09
+**Typ:** FIX / SECURITY / LEGAL / COMPLIANCE  
+**Změna:** Oprava runtime regrese `docs.find is not a function` v `ComplianceModal.tsx` a přechod na public endpoint (TMPR-20260909-LEGAL-014).  
+**Důvod:** `ComplianceModal.tsx` volal admin-only endpoint `/api/compliance/docs`, který anonymním/běžným uživatelům vracel HTTP 401/403 s chybovým objektem. Volání `.find()` na tomto objektu způsobovalo pád klientské aplikace.  
+**Výsledek:**
+- `src/components/public/ComplianceModal.tsx`: Převedeno na kanonický model `doc: ComplianceDoc | null`, volání zacíleno na veřejný publikovaný resolver `/api/compliance/docs/public/:slugOrKey`.
+- Kompletně odstraněno volání `docs.find(...)`.
+- Doplněna striktní klientská validace struktury odpovědi a bezpečné stavy pro non-2xx a chybné odpovědi bez úniku PII.
+- `tests/compliance-modal-contract.test.ts`: Vytvořena testovací sada ověřující API kontrakt, absenci `docs.find`, odmítnutí neplatných dat, vracení v1.0.0 PUBLISHED pro Volunteer Code a fail-closed ochranu DRAFTu v1.1.0 (8/8 testů PASS).
+- `docs/audit/LEGAL-DOCS-RUNTIME-REGRESSION-2026-09-09.md`: Vytvořen technický audit.  
+**Ověření:** TEST (8/8 testů v `tests/compliance-modal-contract.test.ts`) / LINT / TYPECHECK (`tsc --noEmit`) / AUDIT  
+**Commit:** N/A  
+**Audit:** TMPR-20260909-LEGAL-014 (`docs/audit/LEGAL-DOCS-RUNTIME-REGRESSION-2026-09-09.md`)  
+**Riziko:** NONE  
+**Další krok:** Obnova Public Document Center v navazujícím příkazu TMPR-20260909-LEGAL-015.
+
+
 ## 2026-09-06
 **Typ:** FEATURE / HEALTHCARE / MOJE DÍTĚ  
 **Změna:** Zdravotní péče o dítě — Implementace modulární architektury (MASTER-IMPLEMENT-MOJE-DITE-04).  
@@ -269,53 +344,70 @@
 **Další krok:** Připraveno pro review a finální acceptance.  
   
 
-### DEPENDENCY-LOCK-ZOD-20260908
-Datum: 2026-09-08
-Změna: Synchronizován `package-lock.json` pro existující závislost `zod`.
-Ověření: npm ci, lint, build a cílené testy 31/31 PASS včetně izolované security suite.
-Riziko: P1 Node 20 engine compatibility řešit samostatně.
-
-### SECURITY-TEST-ISOLATION-20260908
-Datum: 2026-09-08
-Změna: Security integrační testy nyní automaticky používají izolovaný backend bez databáze.
-Ověření: security 4/4, celý test runner, lint a build PASS.
-Riziko: LOW
-
-### BRAND-ASSET-STUDIO-INVENTORY-20260909
-Datum: 2026-09-09
-Změna: Dokončena autoritativní inventura centrálního brandingu.
-Výsledek: Potvrzen plán pro tři PWA, dokumenty a verzované assety.
-Ověření: READ-ONLY SOURCE AUDIT
+### CMD-ADMIN-20260907-001R
+Datum: 2026-09-07
+Typ: RECONCILIATION / QA / ACCESSIBILITY HARDENING
+Parent: CMD-ADMIN-20260907-001
+Změna: Reconciled the global light theme admin UI redesign by fixing contrast issues and semantic color regressions.
+Důvod: Prior automated substitution created unreadable text pairings (dark text on dark backgrounds) and broke semantic components like the dark background branding preview.
+Výsledek: Restored `text-white` to elements using dark backgrounds (e.g., `bg-blue-600`), restored the `bg-slate-900` preview area for SVG logos. Verified shared components and responsive viewport rendering (no horizontal overflow across viewports 320px to 1440px). Created the required audit artifact.
+Ověření: BUILD / LINT / TYPECHECK / AUDIT
 Riziko: NONE
 
-### BRAND-ASSET-STUDIO-SCHEMA-20260909
-Datum: 2026-09-09
-Změna: Přidán relační základ Brand Asset Studia, dokumentové profily a plánované brand kampaně.
-Ověření: Prisma validate/generate, lint, build, celý test runner a 5/5 databázových invariantů PASS.
-Gate: PASS_FOR_CODE_REVIEW
-Blokátor deploye: Existující pořadí starších migrací v `origin/main`.
-Riziko: MEDIUM — nová forward-only migrace zatím nebyla aplikována na DEV3 ani PROD3.
+### CMD-ADMIN-20260908-001R2
+Datum: 2026-09-08
+Typ: FINAL RECONCILIATION / QA / EVIDENCE
+Parent: CMD-ADMIN-20260907-001R
+Změna: Resolved P1 bg-white/text-white regression on Admin Copilot button, fixed code preview contrasts in QADashboard, AiContextManager, and TemplateManager. Recorded truthful test execution evidence and non-synthetic viewport status.
+Důvod: Final contrast scan and evidence reconciliation requested under CMD-ADMIN-20260908-001R2.
+Výsledek: 6 contrast issues resolved. Implementation SHA: 09a53d7122a226e04317c9f9fcf5ec9b906cc13b.
+Ověření: BUILD / LINT / TYPECHECK / TEST
+Riziko: NONE
 
-### MIGRATION-CHAIN-CONTROL-PLANE-AUDIT-20260909
-Datum: 2026-09-09
-Změna: Dokončen read-only audit pořadí migrací a driftu DEV3/PROD3.
-Výsledek: Potvrzen neobnovitelný čistý řetězec a rozdílné migrační ledgery.
-Ověření: SHA-256, Git historie, DB katalogy a sémantické schema signatury.
-Gate: BLOCKED_FOR_MIGRATION_DEPLOY
-Riziko: NONE — dokumentační změna bez zásahu do databází.
+### CMD-ADMIN-20260908-001R3
+Datum: 2026-09-08
+Typ: RECONCILIATION / RESPONSIVE FIX
+Parent: CMD-ADMIN-20260908-001R2
+Změna: Implemented responsive header layout adjustments in src/components/Header.tsx (dynamic containerWidth initialization, responsive px-3 padding & gap-2, compact logo sizing below 440px, and register button threshold). Verified via VPS DEV3 isolated preview Playwright suite across all viewports (320px–1440px, 0 failures). Kept SVG/Logo.tsx explicitly out of scope and untouched.
+Důvod: Narrow mobile viewport overflow mitigation and runtime verification.
+Výsledek: PASS — Header responsiveness verified across 8 viewports (320, 360, 380, 390, 412, 768, 1024, 1440px) on VPS DEV3 preview (Failures=0).
+Ověření: PLAYWRIGHT / VPS DEV3 PREVIEW / BUILD / LINT / TEST
+Riziko: NONE
+### CMD-BRAND-ASSET-STUDIO-20260908-PHASE-2
+Datum: 2026-09-08
+Typ: DATABASE / CONFIG / BUGFIX
+Parent: CMD-BRAND-ASSET-STUDIO-20260908-PLAN-01
+Změna: 
+1. Vytvořeny Prisma modely pro Brand Asset Studio (BrandFamily, BrandIdentity, BrandAsset, BrandRelease) a vygenerován Prisma klient.
+2. Potlačeno padání serverových timeoutů na databázi - logAudit i Prisma proxy nyní transparentně zachytí off-line stav (P1001) bez tisku masivních stacktraců, 
+3. Zprovozněn configLoader warning fallback v modulu Vite tím, že se přepsalo __dirname na import.meta.dirname.
+Důvod: Fáze 2 z plánu Brand Asset Studio (Kontrakty a datový model) + oprava logových stacktraců z předchozí seance.
+Výsledek: Modely založeny, warningy opraveny, testy 100% zelené (0 testů padá z důvodu Prisma připojení).
+Ověření: BUILD / LINT / TEST / DB_PRISMA
+Riziko: NONE
 
-### MIGRATION-CHAIN-REPAIR-STAGE1-20260909
-Datum: 2026-09-09
-Změna: Připravena kanonická baseline a idempotentní Study migrace.
-Ověření: Čistý replay, 13 invariantů a úplné kopie DEV3/PROD3 PASS.
-Gate: PASS_FOR_CONTROLLED_ENVIRONMENT_RECONCILIATION
-Baseline: CANDIDATE_NOT_ACTIVE
-Riziko: LOW — živé databáze nebyly změněny.
 
-### DEV3-MIGRATION-RECONCILIATION-STAGE2-20260909
-Datum: 2026-09-09
-Změna: Řízeně aplikovány Brand Asset Studio a Study migrace na DEV3.
-Ověření: Restore rehearsal, ledger, 13 invariantů, data a health PASS.
-DEV3 gate: PASS_DEV3_MIGRATION_RECONCILIATION
-PROD3 gate: BLOCKED_FOR_PROD3_EXECUTION
-Riziko: LOW — zálohy ověřeny, PROD3 zůstalo beze změny.
+### [2026-09-09] UNIFIED LEGAL UI REFACTORING
+- **Typ:** FEATURE / REFACTOR
+- **Změna:** Sjednocení UI všech právních dokumentů a compliance dohod.
+- **Důvod:** Eliminace duplicity kódu (VolunteerCodexPage, LegalDocsPage) a sjednocení prezentace pro uživatele pod profesionální jednotný layout. 
+- **Výsledek:** Vytvořena sdílená komponenta `LegalDocumentLayout`. `LegalDocsPage` slouží jako primární Compliance Centrum. Kodex a Dohoda využívají stejný renderer bez ohrožení historických publikovaných dat. Opraven chybějící typ pro JudgmentErrorCode.
+- **Ověření:** BUILD, LINT, regresní test runner (probíhá)
+- **Audit:** `docs/audit/UNIFIED-LEGAL-UI-2026-09-09.md`
+- **Riziko:** NONE
+
+### [2026-09-09] UNIFIED LEGAL UI FINAL AUDIT & RBAC
+- **Typ:** SECURITY / FEATURE
+- **Změna:** Zajištěna fail-closed ochrana DRAFT acceptance, zprovozněn striktní RBAC pre-preview pro adminy, opravena publikační priorita.
+- **Důvod:** Uzavření rizika public exposure draft dokumentů a nepovoleného podepisování.
+- **Výsledek:** 
+  - unified legal document presentation
+  - public/admin Compliance separation
+  - immutable Volunteer Code v1.1.0 draft
+  - PUBLISHED-only public resolver
+  - fail-closed DRAFT acceptance
+  - RBAC-protected DRAFT preview
+- **Ověření:** BUILD, LINT, TEST
+- **Audit:** `docs/audit/UNIFIED-LEGAL-DOCUMENT-UI-2026-09-09.md`
+- **Riziko:** NONE
+
