@@ -2589,7 +2589,6 @@ model BrandProfile {
   releases BrandRelease[]
 
   @@unique([familyId, key])
-  @@index([identityId])
   @@index([parentProfileId])
   @@index([kind])
 }
@@ -2676,7 +2675,7 @@ model BrandRelease {
 
   @@unique([profileId, version])
   @@index([profileId, status])
-  @@index([isActive])
+  @@index([profileId, isActive])
   @@index([supersedesReleaseId])
 }
 
@@ -2712,7 +2711,7 @@ model DocumentBrandingProfile {
 
   @@unique([identityId, key, version])
   @@index([identityId, status])
-  @@index([active])
+  @@index([identityId, key, active])
   @@index([createdById])
 }
 
