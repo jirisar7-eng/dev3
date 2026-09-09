@@ -303,3 +303,11 @@ Výsledek: Potvrzen neobnovitelný čistý řetězec a rozdílné migrační led
 Ověření: SHA-256, Git historie, DB katalogy a sémantické schema signatury.
 Gate: BLOCKED_FOR_MIGRATION_DEPLOY
 Riziko: NONE — dokumentační změna bez zásahu do databází.
+
+### MIGRATION-CHAIN-REPAIR-STAGE1-20260909
+Datum: 2026-09-09
+Změna: Připravena kanonická baseline a idempotentní Study migrace.
+Ověření: Čistý replay, 13 invariantů a úplné kopie DEV3/PROD3 PASS.
+Gate: PASS_FOR_CONTROLLED_ENVIRONMENT_RECONCILIATION
+Baseline: CANDIDATE_NOT_ACTIVE
+Riziko: LOW — živé databáze nebyly změněny.
