@@ -221,3 +221,59 @@ export const BRAND_IDENTITY_PRESETS = {
     serviceWorkerPath: '/sw-admin.js',
   },
 } satisfies Record<BrandAppKey, BrandIdentityPreset>;
+
+export type BrandCampaignStatus =
+  | 'DRAFT'
+  | 'READY'
+  | 'SCHEDULED'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type BrandCampaignDisplayMode =
+  | 'REPLACE_LOGO'
+  | 'DECORATE_LOGO'
+  | 'BADGE'
+  | 'THEME_ACCENT';
+
+export type BrandSurface =
+  | 'WEB_UI'
+  | 'LOGIN'
+  | 'OFFLINE_PAGE'
+  | 'SOCIAL_METADATA'
+  | 'PWA_MANIFEST'
+  | 'PWA_ICON'
+  | 'EMAIL'
+  | 'DOCUMENT'
+  | 'WATERMARK';
+
+export interface BrandCampaignContract {
+  id: string;
+  familyId: string;
+  key: string;
+  name: string;
+  description?: string | null;
+  status: BrandCampaignStatus;
+  startsAt: string;
+  endsAt: string;
+  timeZone: string;
+  priority: number;
+  altText?: string | null;
+  createdById?: string | null;
+  approvedById?: string | null;
+  approvedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrandCampaignTargetContract {
+  id: string;
+  campaignId: string;
+  identityId: string;
+  releaseId: string;
+  surface: BrandSurface;
+  displayMode: BrandCampaignDisplayMode;
+  enabled: boolean;
+  createdAt: string;
+}
