@@ -287,3 +287,11 @@ Změna: Dokončena autoritativní inventura centrálního brandingu.
 Výsledek: Potvrzen plán pro tři PWA, dokumenty a verzované assety.
 Ověření: READ-ONLY SOURCE AUDIT
 Riziko: NONE
+
+### BRAND-ASSET-STUDIO-SCHEMA-20260909
+Datum: 2026-09-09
+Změna: Přidán relační základ Brand Asset Studia, dokumentové profily a plánované brand kampaně.
+Ověření: Prisma validate/generate, lint, build, celý test runner a 5/5 databázových invariantů PASS.
+Gate: PASS_FOR_CODE_REVIEW
+Blokátor deploye: Existující pořadí starších migrací v `origin/main`.
+Riziko: MEDIUM — nová forward-only migrace zatím nebyla aplikována na DEV3 ani PROD3.
