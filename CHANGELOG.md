@@ -295,3 +295,11 @@ Ověření: Prisma validate/generate, lint, build, celý test runner a 5/5 datab
 Gate: PASS_FOR_CODE_REVIEW
 Blokátor deploye: Existující pořadí starších migrací v `origin/main`.
 Riziko: MEDIUM — nová forward-only migrace zatím nebyla aplikována na DEV3 ani PROD3.
+
+### MIGRATION-CHAIN-CONTROL-PLANE-AUDIT-20260909
+Datum: 2026-09-09
+Změna: Dokončen read-only audit pořadí migrací a driftu DEV3/PROD3.
+Výsledek: Potvrzen neobnovitelný čistý řetězec a rozdílné migrační ledgery.
+Ověření: SHA-256, Git historie, DB katalogy a sémantické schema signatury.
+Gate: BLOCKED_FOR_MIGRATION_DEPLOY
+Riziko: NONE — dokumentační změna bez zásahu do databází.
