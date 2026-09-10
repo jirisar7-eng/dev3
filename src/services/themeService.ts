@@ -2,6 +2,8 @@ import { prisma, isPrismaAvailable } from '../db/prisma';
 import { Theme, ThemeVariable, ThemeSetting, User } from '../types';
 import {
   ALLOWED_THEME_VARIABLE_KEYS,
+  ThemeContextSchema,
+  ThemeContextType,
   CreateThemeSchema,
   UpdateThemeVariablesSchema,
   UpdateThemeSingleColorSchema,
@@ -136,14 +138,67 @@ export class ThemeService {
   }
 
   /**
-   * Returns active theme for specific context (PUBLIC, PRIVATE, ADMIN, GLOBAL)
+   * Returns active theme for specific context (PUBLIC, PRIVATE, ADMIN, GLOBAL).
+   * Strict context isolation & priority:
+   * 1. Active theme matching context X (if X !== 'GLOBAL')
+   * 2. Active theme with context 'GLOBAL' (or unset/null)
+   * 3. Default theme matching context X or 'GLOBAL'
+   * 4. Safe fallback theme matching context X or 'GLOBAL'
+   * 5. Safe system read-only default theme
+   * Cross-context protection: Context X (e.g. PUBLIC) will NEVER receive an active theme of another context Y (e.g. ADMIN).
    */
   static async getActiveTheme(context: string = 'GLOBAL'): Promise<Theme> {
+    const parseResult = ThemeContextSchema.safeParse(context);
+    if (!parseResult.success) {
+      throw new ThemeValidationError(
+        `Neplatný kontext tématu: '${context}'. Povolené hodnoty: GLOBAL, PUBLIC, PRIVATE, ADMIN.`
+      );
+    }
+    const validContext = parseResult.data;
     const allThemes = await this.getThemes();
-    const active = allThemes.find((t) => t.active && (t.context === context || t.context === 'GLOBAL'));
-    if (active) return active;
-    const defaultTheme = allThemes.find((t) => t.isDefault);
-    return defaultTheme || allThemes[0];
+
+    // 1. Aktivní téma přímo se zadaným kontextem (pokud validContext !== 'GLOBAL')
+    if (validContext !== 'GLOBAL') {
+      const activeSpecific = allThemes.find((t) => t.active && t.context === validContext);
+      if (activeSpecific) return activeSpecific;
+    }
+
+    // 2. Jinak aktivní GLOBAL téma
+    const activeGlobal = allThemes.find((t) => t.active && (t.context === 'GLOBAL' || !t.context));
+    if (activeGlobal) return activeGlobal;
+
+    // 3. Jinak výchozí (default) téma z povoleného kontextu (X nebo GLOBAL, NIKDY jiný explicitní kontext)
+    const defaultTheme = allThemes.find(
+      (t) => t.isDefault && (t.context === validContext || t.context === 'GLOBAL' || !t.context)
+    );
+    if (defaultTheme) return defaultTheme;
+
+    // 4. Jinak jakékoliv téma z povoleného kontextu (X nebo GLOBAL)
+    const fallbackMatchingTheme = allThemes.find(
+      (t) => t.context === validContext || t.context === 'GLOBAL' || !t.context
+    );
+    if (fallbackMatchingTheme) return fallbackMatchingTheme;
+
+    // 5. Poslední bezpečná záchrana
+    return {
+      id: 'thm-default',
+      key: 'default',
+      name: 'Výchozí Světlé Téma',
+      description: 'Oficiální barevný profil portálu Táta má právo (bezpečný fallback)',
+      isDefault: true,
+      active: true,
+      context: 'GLOBAL',
+      variables: DEFAULT_THEME_VARIABLES.map((item) => ({
+        id: 'var-default-' + item.key,
+        themeId: 'thm-default',
+        key: item.key,
+        value: item.value,
+        label: item.label,
+        category: item.category,
+        updatedAt: new Date(0).toISOString(),
+      })),
+      updatedAt: new Date(0).toISOString(),
+    };
   }
 
   /**

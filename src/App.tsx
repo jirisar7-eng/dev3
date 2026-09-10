@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { BrandingProvider } from './context/BrandingContext';
 import { TextProvider } from './context/TextContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ModuleProvider } from './context/ModuleContext';
@@ -58,6 +59,7 @@ function MainApp() {
     window.history.pushState({}, '', formattedPath);
     setCurrentPath(formattedPath);
     setCurrentView(getViewFromPath(formattedPath));
+    window.dispatchEvent(new CustomEvent('app-navigate', { detail: formattedPath }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -111,15 +113,17 @@ function MainApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <TextProvider>
-        <ThemeProvider>
-          <ModuleProvider>
-            <GlobalStartupLoader>
-              <MainApp />
-            </GlobalStartupLoader>
-          </ModuleProvider>
-        </ThemeProvider>
-      </TextProvider>
+      <BrandingProvider>
+        <TextProvider>
+          <ThemeProvider>
+            <ModuleProvider>
+              <GlobalStartupLoader>
+                <MainApp />
+              </GlobalStartupLoader>
+            </ModuleProvider>
+          </ThemeProvider>
+        </TextProvider>
+      </BrandingProvider>
     </AuthProvider>
   );
 }

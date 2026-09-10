@@ -1,12 +1,54 @@
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { apiFetch, safeJsonResponse } from '../utils/apiClient';
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
+import { resolveThemeContext, AppThemeContext } from '../utils/themeResolver';
+import { DEFAULT_THEME_VARIABLES } from '../services/themeService';
 
-interface ThemeContextType {
-  branding: any;
+export { resolveThemeContext };
+export type { AppThemeContext };
+
+/**
+ * Pure resolver function to determine which theme is active for a given runtime context.
+ * Strict context isolation & priority:
+ * 1. Active theme matching the specific context (PUBLIC, PRIVATE, ADMIN)
+ * 2. Active GLOBAL theme
+ * 3. Default theme matching specific context or GLOBAL
+ * 4. Any theme matching specific context or GLOBAL
+ * 5. Safe system read-only default
+ * Cross-context isolation: Context X never receives active theme of context Y.
+ */
+export function resolveActiveThemeForContext(themeList: Theme[], context: AppThemeContext): Theme | null {
+  if (!themeList || themeList.length === 0) return null;
+
+  // 1. Active theme matching specific context
+  const specificActive = themeList.find((t) => t.active && t.context === context);
+  if (specificActive) return specificActive;
+
+  // 2. Active GLOBAL theme
+  const globalActive = themeList.find((t) => t.active && (t.context === 'GLOBAL' || !t.context));
+  if (globalActive) return globalActive;
+
+  // 3. Default theme matching specific context or GLOBAL
+  const defaultTheme = themeList.find(
+    (t) => t.isDefault && (t.context === context || t.context === 'GLOBAL' || !t.context)
+  );
+  if (defaultTheme) return defaultTheme;
+
+  // 4. Any theme matching specific context or GLOBAL
+  const fallbackMatching = themeList.find(
+    (t) => t.context === context || t.context === 'GLOBAL' || !t.context
+  );
+  if (fallbackMatching) return fallbackMatching;
+
+  // 5. Never return a theme of a different explicit non-global context if we can avoid it
+  return themeList[0] || null;
+}
+
+export interface ThemeContextType {
   themes: Theme[];
   activeTheme: Theme | null;
+  currentContext: AppThemeContext;
   themeSettings: ThemeSetting[];
   updateColor: (key: string, value: string) => Promise<void>;
   updateThemeVars: (themeId: string, variables: Record<string, string>) => Promise<void>;
@@ -15,277 +57,207 @@ interface ThemeContextType {
   deleteThemeById: (themeId: string) => Promise<void>;
   resetToDefaults: () => Promise<void>;
   reloadThemes: () => Promise<void>;
+  branding?: any; // Optional legacy compatibility accessor
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Globals for revoking object URLs to prevent memory leaks
-let activeManifestUrl: string | null = null;
-
-const updateDynamicFavicon = (faviconSvg?: string | null) => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  
-  const links = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
-  
-  if (faviconSvg && faviconSvg.trim()) {
-    const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(faviconSvg)}`;
-    
-    links.forEach(link => {
-      link.setAttribute('href', dataUrl);
-    });
-  } else {
-    // Reset to defaults
-    links.forEach(link => {
-      const type = link.getAttribute('type');
-      const sizes = link.getAttribute('sizes');
-      if (type === 'image/svg+xml') {
-        link.setAttribute('href', '/icon.svg');
-      } else if (sizes === '32x32') {
-        link.setAttribute('href', '/favicon-32x32.png');
-      } else if (sizes === '16x16') {
-        link.setAttribute('href', '/favicon-16x16.png');
-      } else {
-        link.setAttribute('href', '/favicon.ico');
-      }
-    });
-  }
-};
-
-const updateDynamicMetadata = (branding?: any) => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  
-  if (branding && branding.primaryLogoSvg && branding.primaryLogoSvg.trim()) {
-    const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(branding.primaryLogoSvg)}`;
-    
-    let appleTouchIcon: HTMLLinkElement | null = document.querySelector('link[rel="apple-touch-icon"]');
-    if (appleTouchIcon) {
-      appleTouchIcon.setAttribute('href', dataUrl);
-    }
-    
-    const ogImage = document.querySelector('meta[property="og:image"]');
-    if (ogImage) ogImage.setAttribute('content', dataUrl);
-    
-    const twitterImage = document.querySelector('meta[name="twitter:image"]');
-    if (twitterImage) twitterImage.setAttribute('content', dataUrl);
-  }
-};
-
-const updateDynamicManifest = (branding?: any) => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  
-  let manifestLink: HTMLLinkElement | null = document.querySelector('link[rel="manifest"]');
-  if (!manifestLink) return;
-
-  if (activeManifestUrl) {
-    URL.revokeObjectURL(activeManifestUrl);
-    activeManifestUrl = null;
-  }
-
-  const baseManifest = {
-    "name": branding?.logoAlt || "Táta má právo",
-    "short_name": branding?.logoAlt || "Táta má právo",
-    "description": "Informační a klientský portál pro otce v rozvodové situaci, sdílené rodičovství a krizovou pomoc.",
-    "start_url": "/",
-    "scope": "/",
-    "display": "standalone",
-    "orientation": "portrait-primary",
-    "theme_color": "#1e3a8a",
-    "background_color": "#f8fafc",
-    "icons": [
-      {
-        "src": branding?.faviconSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(branding.faviconSvg)}` : "/favicon.ico",
-        "sizes": "any",
-        "type": "image/svg+xml"
-      },
-      {
-        "src": branding?.primaryLogoSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(branding.primaryLogoSvg)}` : "/icon.svg",
-        "sizes": "any",
-        "type": "image/svg+xml",
-        "purpose": "any"
-      }
-    ]
-  };
-  
-  const manifestBlob = new Blob([JSON.stringify(baseManifest, null, 2)], { type: 'application/json' });
-  activeManifestUrl = URL.createObjectURL(manifestBlob);
-  manifestLink.setAttribute('href', activeManifestUrl);
-};
-
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themes, setThemes] = useState<Theme[]>([]);
-  const [activeTheme, setActiveThemeState] = useState<Theme | null>(null);
-  const [themeSettings, setThemeSettings] = useState<ThemeSetting[]>([]);
-  const [branding, setBranding] = useState<any>(null);
-
+  const [currentPath, setCurrentPath] = useState<string>(() =>
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
 
   const { currentUser } = useAuth();
-  
-  
-  const fetchBranding = async () => {
-    try {
-      const res = await apiFetch('/api/public/branding');
-      if (res.ok) {
-        const data = await res.json();
-        setBranding(data);
-        if (data) {
-          updateDynamicFavicon(data.faviconSvg);
-          updateDynamicMetadata(data);
-          updateDynamicManifest(data);
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to fetch branding', e);
-    }
-  };
 
-  const applyPreferences = (prefs: any) => {
-    const root = document.documentElement;
-    // Theme mode
-    if (prefs.themeMode === 'dark' || (prefs.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+  // Resolve current route context (PUBLIC | PRIVATE | ADMIN)
+  const currentContext: AppThemeContext = useMemo(() => {
+    return resolveThemeContext(currentPath);
+  }, [currentPath]);
+
+  // Track client-side navigation (popstate and custom app-navigate events)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      if (typeof window !== 'undefined') {
+        setCurrentPath(window.location.pathname);
+      }
+    };
+
+    const handleAppNavigate = (e: any) => {
+      if (e?.detail && typeof e.detail === 'string') {
+        setCurrentPath(e.detail);
+      } else if (typeof window !== 'undefined') {
+        setCurrentPath(window.location.pathname);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('app-navigate', handleAppNavigate);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('app-navigate', handleAppNavigate);
+    };
+  }, []);
+
+  // Determine active theme based on resolved context
+  const activeTheme = useMemo(() => {
+    return resolveActiveThemeForContext(themes, currentContext);
+  }, [themes, currentContext]);
+
+  // Build ThemeSetting[] representation of active variables for UI consumers
+  const themeSettings: ThemeSetting[] = useMemo(() => {
+    if (activeTheme?.variables && activeTheme.variables.length > 0) {
+      return activeTheme.variables.map((v) => ({
+        id: v.id,
+        key: v.key,
+        value: v.value,
+        label: v.label,
+        category: v.category,
+        updatedAt: v.updatedAt || new Date().toISOString(),
+      }));
     }
-    
-    // Color Presets
-    if (prefs.colorPreset) {
-       root.setAttribute('data-color-preset', prefs.colorPreset);
-       if (prefs.colorPreset === 'blue') {
-          root.style.setProperty('--color-primary', '#2563eb');
-          root.style.setProperty('--color-background', '#eff6ff');
-       } else if (prefs.colorPreset === 'green') {
-          root.style.setProperty('--color-primary', '#16a34a');
-          root.style.setProperty('--color-background', '#f0fdf4');
-       } else if (prefs.colorPreset === 'purple') {
-          root.style.setProperty('--color-primary', '#9333ea');
-          root.style.setProperty('--color-background', '#faf5ff');
-       } else if (prefs.colorPreset === 'neutral') {
-          root.style.setProperty('--color-primary', '#475569');
-          root.style.setProperty('--color-background', '#f8fafc');
-       } else if (prefs.colorPreset === 'high-contrast') {
-          root.style.setProperty('--color-primary', '#000000');
-          root.style.setProperty('--color-background', '#ffffff');
-          root.classList.add('high-contrast');
-       } else {
-          // default, let it use global vars
+    return DEFAULT_THEME_VARIABLES.map((v) => ({
+      id: 'thm-' + v.key,
+      key: v.key,
+      value: v.value,
+      label: v.label,
+      category: v.category,
+      updatedAt: new Date(0).toISOString(),
+    }));
+  }, [activeTheme]);
+
+  /**
+   * Applies CSS variables and user appearance preferences according to strict priority:
+   * Layer 1 (Highest): User appearance overrides (high contrast, explicit color preset, dark mode, font size, density)
+   * Layer 2: Context-resolved active theme variables (--color-*)
+   * Layer 3: Safe system fallback
+   */
+  const applyThemeAndPreferences = useCallback(
+    (theme: Theme | null, prefs: any) => {
+      if (typeof document === 'undefined') return;
+      const root = document.documentElement;
+
+      // 1. Apply active theme CSS variables (or fallback)
+      const varsToApply = theme?.variables && theme.variables.length > 0
+        ? theme.variables
+        : DEFAULT_THEME_VARIABLES;
+
+      varsToApply.forEach((v) => {
+        root.style.setProperty(`--color-${v.key}`, v.value);
+      });
+
+      // 2. Apply User Appearance Overrides (Higher Priority)
+      if (prefs) {
+        // Dark / light mode
+        if (
+          prefs.themeMode === 'dark' ||
+          (prefs.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+
+        // Color preset override
+        if (prefs.colorPreset && prefs.colorPreset !== 'default') {
+          root.setAttribute('data-color-preset', prefs.colorPreset);
+          if (prefs.colorPreset === 'blue') {
+            root.style.setProperty('--color-primary', '#2563eb');
+            root.style.setProperty('--color-background', '#eff6ff');
+            root.classList.remove('high-contrast');
+          } else if (prefs.colorPreset === 'green') {
+            root.style.setProperty('--color-primary', '#16a34a');
+            root.style.setProperty('--color-background', '#f0fdf4');
+            root.classList.remove('high-contrast');
+          } else if (prefs.colorPreset === 'purple') {
+            root.style.setProperty('--color-primary', '#9333ea');
+            root.style.setProperty('--color-background', '#faf5ff');
+            root.classList.remove('high-contrast');
+          } else if (prefs.colorPreset === 'neutral') {
+            root.style.setProperty('--color-primary', '#475569');
+            root.style.setProperty('--color-background', '#f8fafc');
+            root.classList.remove('high-contrast');
+          } else if (prefs.colorPreset === 'high-contrast') {
+            root.style.setProperty('--color-primary', '#000000');
+            root.style.setProperty('--color-background', '#ffffff');
+            root.classList.add('high-contrast');
+          }
+        } else {
           root.removeAttribute('data-color-preset');
           root.classList.remove('high-contrast');
-       }
-    }
-    
-    // Typography
-    if (prefs.fontFamily && prefs.fontFamily !== 'default') {
-      root.style.setProperty('font-family', prefs.fontFamily);
-    } else {
-      root.style.removeProperty('font-family');
-    }
-    
-    // Font Size
-    if (prefs.fontSize) {
-      root.style.setProperty('font-size', `${prefs.fontSize}%`);
-    } else {
-      root.style.removeProperty('font-size');
-    }
-    
-    // Density (e.g. padding adjustments) - can use custom vars
-    if (prefs.density) {
-      root.setAttribute('data-density', prefs.density);
-    } else {
-      root.removeAttribute('data-density');
-    }
-    
-    // Border Radius
-    if (prefs.borderRadius) {
-      root.setAttribute('data-radius', prefs.borderRadius);
-    } else {
-      root.removeAttribute('data-radius');
-    }
-  };
+        }
 
-  useEffect(() => {
-    if (currentUser?.preferences) {
-      applyPreferences(currentUser.preferences);
-    } else {
-      // Clear preferences if logged out
-      const root = document.documentElement;
-      root.classList.remove('dark', 'high-contrast');
-      root.removeAttribute('data-color-preset');
-      root.style.removeProperty('font-family');
-      root.style.removeProperty('font-size');
-      root.removeAttribute('data-density');
-      root.removeAttribute('data-radius');
-      // Re-apply global theme
-      if (activeTheme?.variables) {
-         applyCssVariables(activeTheme.variables);
+        // Typography
+        if (prefs.fontFamily && prefs.fontFamily !== 'default') {
+          root.style.setProperty('font-family', prefs.fontFamily);
+        } else {
+          root.style.removeProperty('font-family');
+        }
+
+        // Font Size
+        if (prefs.fontSize) {
+          root.style.setProperty('font-size', `${prefs.fontSize}%`);
+        } else {
+          root.style.removeProperty('font-size');
+        }
+
+        // Density
+        if (prefs.density) {
+          root.setAttribute('data-density', prefs.density);
+        } else {
+          root.removeAttribute('data-density');
+        }
+
+        // Border Radius
+        if (prefs.borderRadius) {
+          root.setAttribute('data-radius', prefs.borderRadius);
+        } else {
+          root.removeAttribute('data-radius');
+        }
+      } else {
+        // User logged out or no preferences: clear appearance overrides, keep active theme variables
+        root.classList.remove('dark', 'high-contrast');
+        root.removeAttribute('data-color-preset');
+        root.style.removeProperty('font-family');
+        root.style.removeProperty('font-size');
+        root.removeAttribute('data-density');
+        root.removeAttribute('data-radius');
       }
-    }
-  }, [currentUser?.preferences, activeTheme]);
+    },
+    []
+  );
 
+  // Re-apply whenever active theme or user preferences change
+  useEffect(() => {
+    applyThemeAndPreferences(activeTheme, currentUser?.preferences);
+  }, [activeTheme, currentUser?.preferences, applyThemeAndPreferences]);
+
+  // Listen to user preferences dynamic updates from UI
   useEffect(() => {
     const handlePrefChange = (e: any) => {
-      applyPreferences(e.detail);
+      applyThemeAndPreferences(activeTheme, e.detail);
     };
     window.addEventListener('user-preferences-updated', handlePrefChange);
     return () => window.removeEventListener('user-preferences-updated', handlePrefChange);
-  }, []);
+  }, [activeTheme, applyThemeAndPreferences]);
 
-  const applyCssVariables = (vars: ThemeVariable[] | ThemeSetting[]) => {
-    const root = document.documentElement;
-    vars.forEach((v) => {
-      
-      // Only apply if user has not overridden color (handled in applyPreferences)
-      if (!currentUser?.preferences || currentUser.preferences.colorPreset === 'default') {
-        root.style.setProperty(`--color-${v.key}`, v.value);
-      }
-    
-    });
-  };
-
-  const reloadThemes = async () => {
+  const reloadThemes = useCallback(async () => {
     try {
       const res = await apiFetch('/api/themes');
       if (res.ok) {
         const data: Theme[] | null = await safeJsonResponse(res);
         if (data && Array.isArray(data)) {
           setThemes(data);
-
-          // Find active theme or default
-          const active = data.find((t) => t.active) || data.find((t) => t.isDefault) || data[0];
-          if (active) {
-            setActiveThemeState(active);
-            if (active.variables) {
-              applyCssVariables(active.variables);
-              setThemeSettings(
-                active.variables.map((v) => ({
-                  id: v.id,
-                  key: v.key,
-                  value: v.value,
-                  label: v.label,
-                  category: v.category,
-                  updatedAt: v.updatedAt || new Date().toISOString(),
-                }))
-              );
-            }
-          }
         }
       }
     } catch (e) {
-      console.error('Error fetching themes:', e);
+      console.error('[ThemeContext] Error fetching themes:', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     reloadThemes();
-    fetchBranding();
-  }, []);
-
-  useEffect(() => {
-    const handleBrandingUpdate = () => {
-      fetchBranding();
-    };
-    window.addEventListener('branding-updated', handleBrandingUpdate);
-    return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
-  }, []);
+  }, [reloadThemes]);
 
   const updateColor = async (key: string, value: string) => {
     if (!activeTheme) return;
@@ -304,7 +276,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await reloadThemes();
       }
     } catch (e) {
-      console.error('Error updating theme color:', e);
+      console.error('[ThemeContext] Error updating theme color:', e);
     }
   };
 
@@ -326,7 +298,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw new Error(err.error || 'Chyba při aktualizaci proměnných tématu');
       }
     } catch (e) {
-      console.error('Error updating theme variables:', e);
+      console.error('[ThemeContext] Error updating theme variables:', e);
       throw e;
     }
   };
@@ -347,12 +319,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw new Error(err.error || 'Chyba při aktivaci tématu');
       }
     } catch (e) {
-      console.error('Error activating theme:', e);
+      console.error('[ThemeContext] Error activating theme:', e);
       throw e;
     }
   };
 
-  const createNewTheme = async (data: { key: string; name: string; description?: string; context?: string; variables?: Record<string, string> }) => {
+  const createNewTheme = async (data: {
+    key: string;
+    name: string;
+    description?: string;
+    context?: string;
+    variables?: Record<string, string>;
+  }) => {
     try {
       const token = localStorage.getItem('tatovacesta_auth_token');
       const res = await apiFetch('/api/themes', {
@@ -370,7 +348,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw new Error(err.error || 'Chyba při vytváření tématu');
       }
     } catch (e) {
-      console.error('Error creating theme:', e);
+      console.error('[ThemeContext] Error creating theme:', e);
       throw e;
     }
   };
@@ -391,7 +369,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw new Error(err.error || 'Chyba při mazání tématu');
       }
     } catch (e) {
-      console.error('Error deleting theme:', e);
+      console.error('[ThemeContext] Error deleting theme:', e);
       throw e;
     }
   };
@@ -424,13 +402,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         themes,
         activeTheme,
+        currentContext,
         themeSettings,
         updateColor,
         updateThemeVars,
         activateTheme,
         createNewTheme,
         deleteThemeById,
-        branding,
         resetToDefaults,
         reloadThemes,
       }}

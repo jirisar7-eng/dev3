@@ -3515,15 +3515,23 @@ app.get('/api/themes', async (_req, res) => {
 });
 
 app.get('/api/themes/active', async (req, res) => {
-  const context = (req.query.context as string) || 'GLOBAL';
-  const activeTheme = await ThemeService.getActiveTheme(context);
-  res.json(activeTheme);
+  try {
+    const context = (req.query.context as string) || 'GLOBAL';
+    const activeTheme = await ThemeService.getActiveTheme(context);
+    res.json(activeTheme);
+  } catch (err) {
+    return handleThemeError(err, res);
+  }
 });
 
 app.get('/api/themes/css-vars', async (req, res) => {
-  const context = (req.query.context as string) || 'GLOBAL';
-  const cssVars = await ThemeService.getCssVariablesMap(context);
-  res.json(cssVars);
+  try {
+    const context = (req.query.context as string) || 'GLOBAL';
+    const cssVars = await ThemeService.getCssVariablesMap(context);
+    res.json(cssVars);
+  } catch (err) {
+    return handleThemeError(err, res);
+  }
 });
 
 // Uniform, safe error handler for Theme API endpoints

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useBranding } from '../../context/BrandingContext';
 
 export interface LogoProps {
   variant?: 'full' | 'icon' | 'white';
@@ -18,7 +18,7 @@ export const Logo: React.FC<LogoProps> = ({
 }) => {
   const isWhite = variant === 'white';
   
-  const { branding } = useTheme();
+  const { branding } = useBranding();
   
   // Check if we are in dark mode to show dark logo if available
   const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
