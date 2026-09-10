@@ -56,6 +56,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-ssot.test.ts'], name: 'Legal Pack 2.0 Single Source of Truth (SSOT) & Generator (TMPR-022)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-terms-expansion.test.ts'], name: 'Legal Pack 2.0 Terms of Use Deep Expansion (TMPR-023)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/gdpr-security-remediation-phase025.test.ts'], name: 'GDPR Security Remediation & Terms SSOT Verification (TMPR-025)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/theme-security-integrity.test.ts'], name: 'Theme Engine Security & Data Integrity Remediation (TMPR-20260910-THEME-002-SEC01)' }
 ];
 
 let failed = false;

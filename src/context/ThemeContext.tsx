@@ -321,9 +321,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       if (res.ok) {
         await reloadThemes();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Chyba při aktualizaci proměnných tématu');
       }
     } catch (e) {
       console.error('Error updating theme variables:', e);
+      throw e;
     }
   };
 
@@ -338,9 +342,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       if (res.ok) {
         await reloadThemes();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Chyba při aktivaci tématu');
       }
     } catch (e) {
       console.error('Error activating theme:', e);
+      throw e;
     }
   };
 

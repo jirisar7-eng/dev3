@@ -13,7 +13,14 @@ import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountDeletedEmail, send
 import { getMailcowMailboxes, createMailcowMailbox, deleteMailcowMailbox, updateMailcowPassword, checkMailcowHealth, getMailcowDomains } from './src/services/mailcowService.ts';
 import { AuthService } from './src/services/authService.ts';
 import { TextService } from './src/services/textService.ts';
-import { ThemeService } from './src/services/themeService.ts';
+import {
+  ThemeService,
+  ThemeServiceError,
+  ThemeValidationError,
+  ThemeNotFoundError,
+  ThemeConflictError,
+  ThemePersistenceError,
+} from './src/services/themeService.ts';
 import { ModuleService } from './src/services/moduleService.ts';
 import { moduleEngine } from './src/core/moduleEngine';
 import { systemTestModuleContract } from './src/modules/systemTestModule';
@@ -3519,12 +3526,47 @@ app.get('/api/themes/css-vars', async (req, res) => {
   res.json(cssVars);
 });
 
+// Uniform, safe error handler for Theme API endpoints
+function handleThemeError(err: any, res: express.Response) {
+  if (err instanceof ThemeServiceError) {
+    return res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+      ...(err instanceof ThemeValidationError && err.details ? { details: err.details } : {}),
+    });
+  }
+  if (err?.code === 'P2002') {
+    return res.status(409).json({
+      error: 'Téma se zadaným unikátním klíčem již existuje.',
+      code: 'THEME_CONFLICT',
+    });
+  }
+  const isConnError =
+    err?.code === 'P1001' ||
+    err?.code === 'P1002' ||
+    err?.name === 'PrismaClientInitializationError' ||
+    err?.message?.includes("Can't reach database") ||
+    err?.message?.includes('Databáze je momentálně nedostupná') ||
+    err?.message?.includes('Theme persistence unavailable');
+  if (isConnError) {
+    return res.status(503).json({
+      error: 'Theme persistence unavailable',
+      code: 'THEME_PERSISTENCE_ERROR',
+    });
+  }
+  console.error('[Theme API] Server error:', err?.message || err);
+  return res.status(500).json({
+    error: 'Chyba serveru při zpracování tématu',
+    code: 'INTERNAL_ERROR',
+  });
+}
+
 app.post('/api/themes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const created = await ThemeService.createTheme(req.body, req.user);
     res.json(created);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -3533,7 +3575,7 @@ app.post('/api/themes/:id/activate', requireAuth as any, requireRole('ADMIN') as
     const activated = await ThemeService.activateTheme(req.params.id, req.user);
     res.json(activated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -3542,7 +3584,7 @@ app.put('/api/themes/:id/variables', requireAuth as any, requireRole('ADMIN') as
     const updated = await ThemeService.updateThemeVariables(req.params.id, req.body, req.user);
     res.json(updated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -3551,7 +3593,7 @@ app.delete('/api/themes/:id', requireAuth as any, requireRole('ADMIN') as any, a
     await ThemeService.deleteTheme(req.params.id, req.user);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -3562,7 +3604,7 @@ app.put('/api/themes/:key', requireAuth as any, requireRole('ADMIN') as any, asy
     const updated = await ThemeService.updateThemeColor(key, value, req.user);
     res.json(updated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -3572,7 +3614,7 @@ app.put('/api/themes', requireAuth as any, requireRole('ADMIN') as any, async (r
     const updated = await ThemeService.updateAllThemes(settings, req.user);
     res.json(updated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    handleThemeError(err, res);
   }
 });
 
@@ -4570,6 +4612,24 @@ app.post('/api/compliance/docs/:key/versions', requireAuth as any, requireRole('
     const { key } = req.params;
     const newVer = await ComplianceService.createVersion(key, req.body, req.user);
     res.json(newVer);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/versions/:versionId/preflight', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const preflight = await ComplianceService.preflightPublication(req.params.versionId);
+    res.json(preflight);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/docs/:key/prepare-draft', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const draftId = await ComplianceService.prepareDraftForPublication(req.params.key);
+    res.json({ id: draftId });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
