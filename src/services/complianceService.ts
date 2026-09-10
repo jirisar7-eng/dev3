@@ -1,6 +1,7 @@
 import { prisma, isPrismaAvailable } from '../db/prisma';
 import { dbStore } from './dbStore';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, UserConsent, ConsentRecord, User, LegalDocStatus } from '../types';
+import { legalDrafts20Content, legalDrafts20Meta, LEGAL_PACK_2_0_WARNING } from '../data/legalDrafts20';
 
 export function safeIsoString(val: any): string {
   if (!val) return new Date().toISOString();
@@ -109,6 +110,33 @@ export class ComplianceService {
 
         if (doc) {
           const publishedVer = doc.versions.find((v) => v.status === 'PUBLISHED') || doc.versions[0];
+          const versionsList: LegalDocumentVersion[] = doc.versions.map((v) => ({
+            id: v.id,
+            documentId: v.documentId,
+            version: v.version,
+            content: v.content,
+            status: v.status as LegalDocStatus,
+            effectiveDate: v.effectiveDate.toISOString(),
+            author: v.author || 'Administrátor',
+            createdAt: v.createdAt.toISOString(),
+            updatedAt: v.updatedAt.toISOString(),
+          }));
+
+          // Ensure 2.0.0-DRAFT is visible to Admin in versions list even if not yet persisted to Prisma
+          if (!versionsList.some((v) => v.version === '2.0.0-DRAFT') && legalDrafts20Content[targetKey]) {
+            versionsList.unshift({
+              id: `${doc.id}-v2-draft`,
+              documentId: doc.id,
+              version: '2.0.0-DRAFT',
+              content: legalDrafts20Content[targetKey],
+              status: 'DRAFT',
+              effectiveDate: '2026-09-10T00:00:00.000Z',
+              author: 'Jiří Šár (Pracovní návrh Legal Pack 2.0)',
+              createdAt: '2026-09-09T00:00:00.000Z',
+              updatedAt: '2026-09-10T00:00:00.000Z',
+            });
+          }
+
           return {
             id: doc.id,
             key: doc.key,
@@ -117,17 +145,7 @@ export class ComplianceService {
             description: doc.description || undefined,
             createdAt: doc.createdAt.toISOString(),
             updatedAt: doc.updatedAt.toISOString(),
-            versions: doc.versions.map((v) => ({
-              id: v.id,
-              documentId: v.documentId,
-              version: v.version,
-              content: v.content,
-              status: v.status as LegalDocStatus,
-              effectiveDate: v.effectiveDate.toISOString(),
-              author: v.author || 'Administrátor',
-              createdAt: v.createdAt.toISOString(),
-              updatedAt: v.updatedAt.toISOString(),
-            })),
+            versions: versionsList,
             currentVersion: publishedVer
               ? {
                   id: publishedVer.id,
@@ -151,15 +169,8 @@ export class ComplianceService {
     const doc = dbStore.complianceDocs.find((d) => d.key === targetKey || this.resolveKey(d.key) === targetKey);
     if (!doc) return null;
 
-    return {
-      id: doc.id,
-      key: doc.key,
-      title: doc.title,
-      type: doc.type || 'TERMS',
-      description: doc.description,
-      createdAt: doc.effectiveDate,
-      updatedAt: doc.updatedAt,
-      currentVersion: {
+    const fallbackVersions = (doc as any).versions || [
+      {
         id: doc.id + '-v1',
         documentId: doc.id,
         version: doc.version,
@@ -170,27 +181,62 @@ export class ComplianceService {
         createdAt: doc.effectiveDate,
         updatedAt: doc.updatedAt,
       },
-      versions: [
-        {
-          id: doc.id + '-v1',
-          documentId: doc.id,
-          version: doc.version,
-          content: doc.content,
-          status: doc.status || 'PUBLISHED',
-          effectiveDate: doc.effectiveDate,
-          author: doc.author || 'Administrátor',
-          createdAt: doc.effectiveDate,
-          updatedAt: doc.updatedAt,
-        },
-      ],
+    ];
+
+    if (!fallbackVersions.some((v: any) => v.version === '2.0.0-DRAFT') && legalDrafts20Content[targetKey]) {
+      fallbackVersions.unshift({
+        id: `${doc.id}-v2-draft`,
+        documentId: doc.id,
+        version: '2.0.0-DRAFT',
+        content: legalDrafts20Content[targetKey],
+        status: 'DRAFT',
+        effectiveDate: '2026-09-10T00:00:00.000Z',
+        author: 'Jiří Šár (Pracovní návrh Legal Pack 2.0)',
+        createdAt: '2026-09-09T00:00:00.000Z',
+        updatedAt: '2026-09-10T00:00:00.000Z',
+      });
+    }
+
+    const publishedVer = fallbackVersions.find((v: any) => v.status === 'PUBLISHED') || fallbackVersions[fallbackVersions.length - 1];
+
+    return {
+      id: doc.id,
+      key: doc.key,
+      title: doc.title,
+      type: doc.type || 'TERMS',
+      description: doc.description,
+      createdAt: doc.effectiveDate,
+      updatedAt: doc.updatedAt,
+      currentVersion: publishedVer
+        ? {
+            id: publishedVer.id,
+            documentId: doc.id,
+            version: publishedVer.version,
+            content: publishedVer.content,
+            status: publishedVer.status || 'PUBLISHED',
+            effectiveDate: publishedVer.effectiveDate,
+            author: publishedVer.author || 'Administrátor',
+            createdAt: publishedVer.createdAt || doc.effectiveDate,
+            updatedAt: publishedVer.updatedAt || doc.updatedAt,
+          }
+        : undefined,
+      versions: fallbackVersions,
     };
   }
 
-  // 3. Public version lookup (returns current PUBLISHED version)
+  // 3. Public version lookup (returns current PUBLISHED version ONLY)
   static async getPublishedDoc(slugOrKey: string): Promise<ComplianceDoc | null> {
     const key = this.resolveKey(slugOrKey);
     const docs = await this.getDocs();
-    return docs.find((d) => d.key === key) || null;
+    const doc = docs.find((d) => d.key === key) || null;
+    if (!doc || doc.status !== 'PUBLISHED') {
+      return null;
+    }
+    // Fail-Closed: Strip all non-PUBLISHED versions from public API response
+    return {
+      ...doc,
+      versions: doc.versions ? doc.versions.filter((v) => v.status === 'PUBLISHED') : undefined,
+    };
   }
 
   // 4. Create new legal document container
@@ -543,6 +589,32 @@ export class ComplianceService {
   ): Promise<UserConsent> {
     const key = this.resolveKey(docKey);
 
+    if (!docKey || !docVersion) {
+      throw new Error('Chybí identifikátor dokumentu nebo verze.');
+    }
+
+    // STRICT FAIL-CLOSED SECURITY: DRAFT versions CANNOT be accepted, signed, or used for consent
+    if (docVersion === '2.0.0-DRAFT' || docVersion.toUpperCase().includes('DRAFT')) {
+      throw new Error('FAIL CLOSED: Pracovní návrh verze DRAFT (Legal Pack 2.0) nesmí být akceptován, podepsán ani použit pro souhlas.');
+    }
+
+    // SERVER-SIDE VALIDATION: Enforce EXACT version existence and PUBLISHED status
+    const doc = await this.getDocByKey(key);
+    if (!doc) {
+      throw new Error(`Dokument '${key}' neexistuje.`);
+    }
+
+    const versionData = doc.versions.find(v => v.version === docVersion);
+    if (!versionData) {
+      throw new Error(`Verze '${docVersion}' pro dokument '${key}' neexistuje.`);
+    }
+
+    if (versionData.status !== 'PUBLISHED') {
+      // 403 / 409 style error string that will be passed down
+      throw new Error(`FAIL CLOSED: Není možné udělit souhlas s nepublikovanou verzí dokumentu (DRAFT/ARCHIVED).`);
+    }
+
+
     if (isPrismaAvailable()) {
       try {
         const consent = await prisma.consent.upsert({
@@ -796,5 +868,167 @@ export class ComplianceService {
       userName: 'In-Memory Uživatel',
       createdAt: l.createdAt.toISOString ? l.createdAt.toISOString() : l.createdAt,
     }));
+  }
+
+  // 17. Synchronize and ensure Legal Pack 2.0 Draft versions in DB and In-Memory
+  static async ensureLegalPack20Drafts(): Promise<{ synced: string[]; count: number }> {
+    const keys = [
+      'terms',
+      'gdpr',
+      'cookies',
+      'legal',
+      'volunteer_code',
+      'ai_statement',
+      'dohoda-o-spolupraci'
+    ];
+
+    const synced: string[] = [];
+
+    // 1. In-Memory dbStore sync
+    for (const key of keys) {
+      const draftContent = legalDrafts20Content[key];
+      const meta = legalDrafts20Meta[key];
+      if (!draftContent || !meta) continue;
+
+      const storeDoc = dbStore.complianceDocs.find((d) => d.key === key || this.resolveKey(d.key) === key);
+      if (storeDoc) {
+        if (!storeDoc.versions) {
+          storeDoc.versions = [];
+        }
+        const existingVer = storeDoc.versions.find((v) => v.version === '2.0.0-DRAFT');
+        if (!existingVer) {
+          storeDoc.versions.push({
+            id: `${storeDoc.id}-v2-draft`,
+            documentId: storeDoc.id,
+            version: '2.0.0-DRAFT',
+            content: draftContent,
+            status: 'DRAFT',
+            effectiveDate: '2026-09-10T00:00:00.000Z',
+            author: 'Jiří Šár (Pracovní návrh Legal Pack 2.0)',
+            createdAt: '2026-09-09T00:00:00.000Z',
+            updatedAt: '2026-09-10T00:00:00.000Z',
+          });
+        } else {
+          existingVer.content = draftContent;
+          existingVer.status = 'DRAFT';
+        }
+      }
+    }
+
+    // 2. Prisma Database sync (if available)
+    if (isPrismaAvailable()) {
+      try {
+        for (const key of keys) {
+          const draftContent = legalDrafts20Content[key];
+          const meta = legalDrafts20Meta[key];
+          if (!draftContent || !meta) continue;
+
+          let doc = await prisma.legalDocument.findUnique({
+            where: { key },
+            include: { versions: true }
+          });
+
+          if (!doc) {
+            // Create container with initial v1.0.0 published version first
+            doc = await prisma.legalDocument.create({
+              data: {
+                key,
+                title: meta.title.replace(' (Draft 2.0)', ''),
+                type: meta.type || 'TERMS',
+                description: meta.description,
+                versions: {
+                  create: {
+                    version: '1.0.0',
+                    content: `Počáteční verze dokumentu ${meta.title}.`,
+                    status: 'PUBLISHED',
+                    author: 'Jiří Šár (Správce)',
+                    effectiveDate: new Date('2026-01-01'),
+                  }
+                }
+              },
+              include: { versions: true }
+            });
+          }
+
+          const existingDraft = doc.versions.find((v) => v.version === '2.0.0-DRAFT');
+          if (existingDraft) {
+            // Update DRAFT content while keeping status strictly DRAFT
+            await prisma.legalDocumentVersion.update({
+              where: { id: existingDraft.id },
+              data: {
+                content: draftContent,
+                status: 'DRAFT',
+                author: 'Jiří Šár (Pracovní návrh Legal Pack 2.0)',
+                effectiveDate: new Date('2026-09-10'),
+              }
+            });
+          } else {
+            // Create 2.0.0-DRAFT version. Notice: PUBLISHED version remains PUBLISHED!
+            await prisma.legalDocumentVersion.create({
+              data: {
+                documentId: doc.id,
+                version: '2.0.0-DRAFT',
+                content: draftContent,
+                status: 'DRAFT',
+                author: 'Jiří Šár (Pracovní návrh Legal Pack 2.0)',
+                effectiveDate: new Date('2026-09-10'),
+              }
+            });
+          }
+          synced.push(key);
+        }
+      } catch (err) {
+        console.warn('Prisma ensureLegalPack20Drafts warning:', err);
+      }
+    } else {
+      synced.push(...keys);
+    }
+
+    return { synced, count: synced.length };
+  }
+
+  // 18. Admin Preview for a single Legal Pack 2.0 Draft
+  static async getDraftPreview(keyOrAlias: string): Promise<any | null> {
+    const key = this.resolveKey(keyOrAlias);
+    const meta = legalDrafts20Meta[key];
+    const content = legalDrafts20Content[key];
+    if (!meta || !content) {
+      return null;
+    }
+    return {
+      key,
+      canonicalId: meta.canonicalId,
+      title: meta.title,
+      type: meta.type,
+      description: meta.description,
+      version: '2.0.0-DRAFT',
+      status: 'DRAFT',
+      effectiveDate: meta.effectiveDate,
+      draftDate: meta.draftDate,
+      author: meta.author,
+      warningNotice: LEGAL_PACK_2_0_WARNING,
+      isDraft: true,
+      canAccept: false,
+      content,
+    };
+  }
+
+  // 19. Admin Preview for all Legal Pack 2.0 Drafts list
+  static async getAllDraftsPreview(): Promise<any[]> {
+    const keys = [
+      'terms',
+      'gdpr',
+      'cookies',
+      'legal',
+      'volunteer_code',
+      'ai_statement',
+      'dohoda-o-spolupraci'
+    ];
+    const drafts: any[] = [];
+    for (const key of keys) {
+      const item = await this.getDraftPreview(key);
+      if (item) drafts.push(item);
+    }
+    return drafts;
   }
 }

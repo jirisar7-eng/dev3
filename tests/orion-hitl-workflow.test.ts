@@ -29,8 +29,7 @@ describe('HITL Workflow', () => {
     };
     nextFn = vi.fn();
     // clear store
-    (OrionApprovalStore as any).fallbackApprovals.clear();
-    (OrionApprovalStore as any).useDb = false;
+    (OrionApprovalStore as any).testFallbackApprovals.clear();
   });
 
   it('creates pending request and returns 202 on REQUIRE_HUMAN_APPROVAL', async () => {
@@ -58,7 +57,7 @@ describe('HITL Workflow', () => {
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user1', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: mockReq.body
     });
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
     vi.spyOn(ControlPlaneAuthorization, 'authorizeAgentRequest').mockReturnValue({
       success: true, decision: 'ALLOW'
@@ -70,7 +69,7 @@ describe('HITL Workflow', () => {
     expect(nextFn).toHaveBeenCalled();
     const updatedApproval = await OrionApprovalStore.get(approval.id);
     expect(updatedApproval?.status).toBe('EXECUTING');
-    
+
     // Simulate request finish
     if (mockRes._finishCb) {
       await mockRes._finishCb();
@@ -84,9 +83,9 @@ describe('HITL Workflow', () => {
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user2', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: mockReq.body
     });
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
-    
+
     const middleware = requireOrionAuth('ai.generate', 'test-op');
     await middleware(mockReq, mockRes, nextFn);
 
@@ -100,9 +99,9 @@ describe('HITL Workflow', () => {
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user1', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: { some: 'other-data' }
     });
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
-    
+
     const middleware = requireOrionAuth('ai.generate', 'test-op');
     await middleware(mockReq, mockRes, nextFn);
 
@@ -116,13 +115,13 @@ describe('HITL Workflow', () => {
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user1', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: mockReq.body
     });
     // manually expire
-    const ap = (OrionApprovalStore as any).fallbackApprovals.get(approval.id);
+    const ap = (OrionApprovalStore as any).testFallbackApprovals.get(approval.id);
     ap.expiresAt = Date.now() - 1000;
-    
+
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
-    
+
     const middleware = requireOrionAuth('ai.generate', 'test-op');
     await middleware(mockReq, mockRes, nextFn);
 
@@ -135,7 +134,7 @@ describe('HITL Workflow', () => {
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user1', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: mockReq.body
     });
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
     vi.spyOn(ControlPlaneAuthorization, 'authorizeAgentRequest').mockReturnValue({
       success: false, decision: 'DENY', reason: 'Now blocked'
@@ -148,13 +147,13 @@ describe('HITL Workflow', () => {
     expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ error: expect.stringContaining('failed after approval') }));
     expect(nextFn).not.toHaveBeenCalled();
   });
-  
+
   it('sets state to FAILED if route execution fails (statusCode >= 400)', async () => {
     const approval = await OrionApprovalStore.create({
       agentId: AGENT_ORION_IDENTITY, capabilityId: 'ai.generate', userId: 'user1', operation: 'test-op', target: '/api/test', scope: 'ai-engine', riskLevel: 'P1_HIGH', traceId: 'trc', payload: mockReq.body
     });
     await OrionApprovalStore.transitionStatus(approval.id, 'PENDING', 'APPROVED');
-    
+
     mockReq.headers['x-orion-approval-id'] = approval.id;
     vi.spyOn(ControlPlaneAuthorization, 'authorizeAgentRequest').mockReturnValue({
       success: true, decision: 'ALLOW'
@@ -164,7 +163,7 @@ describe('HITL Workflow', () => {
     await middleware(mockReq, mockRes, nextFn);
 
     expect(nextFn).toHaveBeenCalled();
-    
+
     // Simulate request finish with error
     mockRes.statusCode = 500;
     if (mockRes._finishCb) {

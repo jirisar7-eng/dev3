@@ -52,6 +52,10 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/mapa-subjektu-advanced-filters.test.ts'], name: 'Mapa Subjektů Pokročilé Filtry (GAP-02 FÁZE A)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/soudy-data-population.test.ts'], name: 'Soudy ČR Verified Data Population Pipeline & Provenance (MASTER-IMPLEMENT-07A)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/nonospod-advokati-acquisition.test.ts'], name: 'ČAK Official Acquisition Pipeline & Four-Eyes Verification (MASTER-IMPLEMENT-07C-2)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-draft-preview.test.ts'], name: 'Legal Pack 2.0 DEV3 Draft Preview & Isolation (TMPR-021)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-ssot.test.ts'], name: 'Legal Pack 2.0 Single Source of Truth (SSOT) & Generator (TMPR-022)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-terms-expansion.test.ts'], name: 'Legal Pack 2.0 Terms of Use Deep Expansion (TMPR-023)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/gdpr-security-remediation-phase025.test.ts'], name: 'GDPR Security Remediation & Terms SSOT Verification (TMPR-025)' }
 ];
 
 let failed = false;
@@ -60,9 +64,9 @@ for (const t of tests) {
   console.log(`\n=============================================================`);
   console.log(`>>> RUNNING: ${t.name}`);
   console.log(`=============================================================`);
-  
+
   const res = spawnSync(t.cmd, t.args, { stdio: 'inherit' });
-  
+
   if (res.status !== 0) {
     console.error(`\n❌ [FAILED] ${t.name}`);
     failed = true;

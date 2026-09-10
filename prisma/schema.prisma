@@ -88,10 +88,18 @@ model User {
   verifiedSubjectProfiles  SubjectVerifiedProfile[]   @relation("VerifiedProfileVerifier")
   createdSubjectSources    SubjectInformationSource[] @relation("SubjectSourceSubmitter")
   reviewedSubjectSources   SubjectInformationSource[] @relation("SubjectSourceReviewer")
-  synthesisTicketsCreated  SynthesisTicket[]          @relation("SynthesisCreatedBy")
-  synthesisTicketsAssigned SynthesisTicket[]          @relation("SynthesisAssignedTo")
-  synthesisComments        SynthesisTicketComment[]   @relation("SynthesisCommentAuthor")
-  synthesisEvents          SynthesisTicketEvent[]     @relation("SynthesisEventActor")
+  synthesisTicketsCreated  SynthesisTicket[]         @relation("SynthesisCreatedBy")
+  synthesisTicketsAssigned SynthesisTicket[]         @relation("SynthesisAssignedTo")
+  synthesisComments        SynthesisTicketComment[]  @relation("SynthesisCommentAuthor")
+  synthesisEvents          SynthesisTicketEvent[]    @relation("SynthesisEventActor")
+  brandAssetVersionsCreated       BrandAssetVersion[]       @relation("BrandAssetVersionCreatedBy")
+  brandReleasesCreated            BrandRelease[]            @relation("BrandReleaseCreatedBy")
+  brandReleasesValidated          BrandRelease[]            @relation("BrandReleaseValidatedBy")
+  brandReleasesPublished          BrandRelease[]            @relation("BrandReleasePublishedBy")
+  documentBrandingProfilesCreated DocumentBrandingProfile[] @relation("DocumentBrandingProfileCreatedBy")
+  brandedDocumentExportsCreated   BrandedDocumentExport[]   @relation("BrandedDocumentExportCreatedBy")
+  brandCampaignsCreated           BrandCampaign[]           @relation("BrandCampaignCreatedBy")
+  brandCampaignsApproved          BrandCampaign[]           @relation("BrandCampaignApprovedBy")
 
   @@index([email])
 }
@@ -2416,6 +2424,374 @@ model BrandingVersion {
   // Pro zajištění "právě jeden aktivní" na úrovni DB je navržen partial unique index:
   // CREATE UNIQUE INDEX "one_active_branding" ON "BrandingVersion"("isActive") WHERE "isActive" = true;
   @@index([isActive])
+}
+enum BrandAppKey {
+  public_portal
+  case_portal
+  admin_portal
+}
+
+enum BrandProfileKind {
+  FAMILY
+  APPLICATION
+}
+
+enum BrandReleaseStatus {
+  DRAFT
+  VALIDATED
+  READY
+  PUBLISHED
+  SUPERSEDED
+  ARCHIVED
+}
+
+enum BrandAssetRole {
+  LOGO
+  MARK
+  FAVICON
+  PWA_ICON
+  APPLE_TOUCH_ICON
+  SOCIAL_IMAGE
+  DOCUMENT_LOGO
+  WATERMARK
+}
+
+enum BrandAssetVariant {
+  PRIMARY
+  LIGHT
+  DARK
+  MONO
+  ANY
+  MASKABLE
+}
+
+enum BrandAssetSource {
+  UPLOADED
+  GENERATED
+  MIGRATED
+}
+
+enum BrandAssetValidationStatus {
+  PENDING
+  VALID
+  INVALID
+}
+
+enum DocumentBrandingMode {
+  FULL
+  SUBTLE
+  NEUTRAL
+  NONE
+}
+
+enum WatermarkMode {
+  NONE
+  BRAND
+  STATUS
+  BRAND_AND_STATUS
+}
+
+enum BrandedDocumentFormat {
+  PDF
+  DOCX
+  PRINT
+}
+
+enum BrandedDocumentSource {
+  SYSTEM_GENERATED
+  USER_UPLOAD_DERIVATIVE
+  AUDIT_EXPORT
+}
+
+enum BrandCampaignStatus {
+  DRAFT
+  READY
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum BrandCampaignDisplayMode {
+  REPLACE_LOGO
+  DECORATE_LOGO
+  BADGE
+  THEME_ACCENT
+}
+
+enum BrandSurface {
+  WEB_UI
+  LOGIN
+  OFFLINE_PAGE
+  SOCIAL_METADATA
+  PWA_MANIFEST
+  PWA_ICON
+  EMAIL
+  DOCUMENT
+  WATERMARK
+}
+
+model BrandFamily {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  identities AppIdentity[]
+  profiles   BrandProfile[]
+  campaigns  BrandCampaign[]
+}
+
+model AppIdentity {
+  id                String      @id @default(uuid())
+  familyId          String
+  family            BrandFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  appKey            BrandAppKey @unique
+  name              String
+  shortName         String
+  scope             String      @unique
+  startUrl          String
+  manifestPath      String      @unique
+  serviceWorkerPath String      @unique
+  enabled           Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  profile          BrandProfile?
+  documentProfiles DocumentBrandingProfile[]
+  campaignTargets  BrandCampaignTarget[]
+  documentExports  BrandedDocumentExport[]
+
+  @@index([familyId])
+  @@index([enabled])
+}
+
+model BrandProfile {
+  id               String           @id @default(uuid())
+  familyId         String
+  family           BrandFamily      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  identityId       String?          @unique
+  identity         AppIdentity?     @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  parentProfileId  String?
+  parentProfile    BrandProfile?    @relation("BrandProfileInheritance", fields: [parentProfileId], references: [id], onDelete: SetNull)
+  childProfiles    BrandProfile[]   @relation("BrandProfileInheritance")
+  key              String
+  name             String
+  kind             BrandProfileKind
+  inheritsParent   Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  assets   BrandAsset[]
+  releases BrandRelease[]
+
+  @@unique([familyId, key])
+  @@index([parentProfileId])
+  @@index([kind])
+}
+
+model BrandAsset {
+  id           String            @id @default(uuid())
+  profileId    String
+  profile      BrandProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  key          String
+  role         BrandAssetRole
+  variant      BrandAssetVariant
+  targetWidth  Int?
+  targetHeight Int?
+  required     Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  versions BrandAssetVersion[]
+
+  @@unique([profileId, key])
+  @@index([profileId, role, variant])
+}
+
+model BrandAssetVersion {
+  id                 String                     @id @default(uuid())
+  assetId            String
+  asset              BrandAsset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  version            Int
+  source             BrandAssetSource
+  storageProvider    String                     @default("MINIO")
+  bucket             String
+  objectKey          String
+  deliveryPath       String?
+  mimeType           String
+  byteSize           Int
+  sha256             String                     @db.VarChar(64)
+  width              Int?
+  height             Int?
+  validationStatus   BrandAssetValidationStatus @default(PENDING)
+  validationReport   Json?
+  sanitizerVersion   String?
+  derivedFromId      String?
+  derivedFrom        BrandAssetVersion?         @relation("BrandAssetVersionDerivation", fields: [derivedFromId], references: [id], onDelete: SetNull)
+  derivatives        BrandAssetVersion[]        @relation("BrandAssetVersionDerivation")
+  createdById        String?
+  createdBy          User?                      @relation("BrandAssetVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime                   @default(now())
+
+  releaseAssets BrandReleaseAsset[]
+
+  @@unique([assetId, version])
+  @@unique([bucket, objectKey])
+  @@index([sha256])
+  @@index([validationStatus])
+  @@index([derivedFromId])
+  @@index([createdById])
+}
+
+model BrandRelease {
+  id                  String             @id @default(uuid())
+  profileId           String
+  profile             BrandProfile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  version             Int
+  status              BrandReleaseStatus @default(DRAFT)
+  isActive            Boolean            @default(false)
+  manifestHash        String?            @db.VarChar(64)
+  notes               String?            @db.Text
+  createdById         String?
+  createdBy           User?              @relation("BrandReleaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  validatedById       String?
+  validatedBy         User?              @relation("BrandReleaseValidatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
+  publishedById       String?
+  publishedBy         User?              @relation("BrandReleasePublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+  supersedesReleaseId String?
+  supersedesRelease   BrandRelease?      @relation("BrandReleaseSupersession", fields: [supersedesReleaseId], references: [id], onDelete: SetNull)
+  supersededBy        BrandRelease[]     @relation("BrandReleaseSupersession")
+  createdAt           DateTime           @default(now())
+  validatedAt         DateTime?
+  publishedAt         DateTime?
+
+  assets          BrandReleaseAsset[]
+  campaignTargets BrandCampaignTarget[]
+  documentExports BrandedDocumentExport[]
+
+  @@unique([profileId, version])
+  @@index([profileId, status])
+  @@index([profileId, isActive])
+  @@index([supersedesReleaseId])
+}
+
+model BrandReleaseAsset {
+  releaseId     String
+  release       BrandRelease      @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  slotKey       String
+  assetVersionId String
+  assetVersion  BrandAssetVersion @relation(fields: [assetVersionId], references: [id], onDelete: Restrict)
+
+  @@id([releaseId, slotKey])
+  @@index([assetVersionId])
+}
+
+model DocumentBrandingProfile {
+  id            String               @id @default(uuid())
+  identityId    String
+  identity      AppIdentity          @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  key           String
+  name          String
+  version       Int
+  mode          DocumentBrandingMode
+  watermarkMode WatermarkMode
+  status        BrandReleaseStatus   @default(DRAFT)
+  config        Json
+  active        Boolean              @default(false)
+  createdById   String?
+  createdBy     User?                @relation("DocumentBrandingProfileCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime             @default(now())
+  publishedAt   DateTime?
+
+  exports BrandedDocumentExport[]
+
+  @@unique([identityId, key, version])
+  @@index([identityId, status])
+  @@index([identityId, key, active])
+  @@index([createdById])
+}
+
+model BrandedDocumentExport {
+  id                String                  @id @default(uuid())
+  identityId        String
+  identity          AppIdentity             @relation(fields: [identityId], references: [id], onDelete: Restrict)
+  releaseId         String
+  release            BrandRelease            @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  documentProfileId String?
+  documentProfile   DocumentBrandingProfile? @relation(fields: [documentProfileId], references: [id], onDelete: Restrict)
+  sourceType        BrandedDocumentSource
+  sourceId          String?
+  format            BrandedDocumentFormat
+  storageProvider   String                  @default("MINIO")
+  bucket            String
+  objectKey         String
+  mimeType          String
+  byteSize          Int
+  sha256            String                  @db.VarChar(64)
+  originalSha256    String?                 @db.VarChar(64)
+  isDerivative      Boolean
+  createdById       String?
+  createdBy         User?                   @relation("BrandedDocumentExportCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime                @default(now())
+
+  @@unique([bucket, objectKey])
+  @@index([identityId, createdAt])
+  @@index([releaseId])
+  @@index([documentProfileId])
+  @@index([sourceType, sourceId])
+  @@index([sha256])
+  @@index([createdById])
+}
+
+model BrandCampaign {
+  id           String              @id @default(uuid())
+  familyId     String
+  family       BrandFamily         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  key          String
+  name         String
+  description  String?             @db.Text
+  status       BrandCampaignStatus @default(DRAFT)
+  startsAt     DateTime
+  endsAt       DateTime
+  timeZone     String              @default("Europe/Prague")
+  priority     Int                 @default(0)
+  altText      String?
+  createdById  String?
+  createdBy    User?               @relation("BrandCampaignCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedById String?
+  approvedBy   User?               @relation("BrandCampaignApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  targets BrandCampaignTarget[]
+
+  @@unique([familyId, key])
+  @@index([status, startsAt, endsAt])
+  @@index([createdById])
+  @@index([approvedById])
+}
+
+model BrandCampaignTarget {
+  id          String                   @id @default(uuid())
+  campaignId  String
+  campaign    BrandCampaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  identityId  String
+  identity    AppIdentity              @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  releaseId   String
+  release      BrandRelease             @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  surface     BrandSurface
+  displayMode BrandCampaignDisplayMode
+  enabled     Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
+
+  @@unique([campaignId, identityId, surface])
+  @@index([identityId, surface, enabled])
+  @@index([releaseId])
 }
 
 // ------------------------------------------------------

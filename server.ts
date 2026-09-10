@@ -447,8 +447,8 @@ app.post('/api/pracovnici', requireAuth as any, async (req: AuthenticatedRequest
     // Role check: only MODERATOR, ADMIN or SUPER_ADMIN can create approved workers directly.
     // Regular authenticated users must suggest with status PENDING.
     const hasModeratorRole = req.user && (
-      req.user.role === 'MODERATOR' || 
-      req.user.role === 'ADMIN' || 
+      req.user.role === 'MODERATOR' ||
+      req.user.role === 'ADMIN' ||
       req.user.role === 'SUPER_ADMIN'
     );
     const finalStatus = hasModeratorRole ? (status || 'APPROVED') : 'PENDING';
@@ -486,19 +486,19 @@ app.patch('/api/pracovnici/:id/status', requireAuth as any, requireRole('MODERAT
 app.delete('/api/pracovnici/:id', requireAuth as any, requireRole('MODERATOR') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
-    
+
     // Zjistit existenci a údaje pracovníka pro audit
     const prac = await prisma.pracovnik.findUnique({
       where: { id },
       include: { subjekt: true }
     });
-    
+
     if (!prac) {
       return res.status(404).json({ error: 'Pracovník nebyl nalezen' });
     }
 
     await subjektService.deletePracovnik(id);
-    
+
     // Audit log
     dbStore.logAudit(
       'WORKER_DELETED',
@@ -1072,7 +1072,7 @@ app.get('/api/admin/state-admin/health', requireAuth, requireRole('ADMIN'), asyn
 app.post('/api/admin/state-admin/health-check', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const health = await StateAdminHubService.performLiveHealthCheck();
-    
+
     // Record administrative action in cryptographic AuditLog
     await AuditService.recordLog(
       'STATE_ADMIN_HEALTH_CHECK_TRIGGERED',
@@ -1257,7 +1257,7 @@ const respondWithPopupHtml = (res: any, data: any, customTargetUrl?: string) => 
       </div>
 
       <h1>${isSuccess ? 'Přihlášení dokončeno' : 'Přihlášení selhalo'}</h1>
-      
+
       <p>
         ${isSuccess
           ? 'Probíhá automatické přesměrování do aplikace... Pokud se okno nezavře nebo nepřesměruje, klikněte na tlačítko níže.'
@@ -2227,9 +2227,9 @@ app.post('/api/auth/2fa/enable', requireAuth as any, async (req: AuthenticatedRe
     const freshUser = await getPrismaClient().user.findUnique({
       where: { id: user.id }
     });
-    
+
     let secret = freshUser?.totpTempSecret;
-    
+
     if (!secret) {
       const dbUser = dbStore.users.find(u => u.id === user.id);
       secret = dbUser?.totpTempSecret;
@@ -2631,7 +2631,7 @@ app.post('/api/users/quick-create', requireAuth as any, requireRole('ADMIN') as 
     }
 
     const emailSent = await sendQuickCreateEmail(cleanEmail, cleanName, generatedPassword);
-    
+
     let finalMessage = 'Uživatel vytvořen a přístupy vygenerovány.';
     if (!emailSent) {
       finalMessage = 'Uživatel byl vytvořen (odeslání uvítacího e-mailu selhalo, předejte přístupové heslo manuálně).';
@@ -2772,7 +2772,7 @@ app.get('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as an
 app.post('/api/mailcow/mailboxes', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { local_part, domain, name, password, quota, email } = req.body;
-    
+
     let targetEmail = email;
     if (!targetEmail) {
       if (!local_part) {
@@ -2894,7 +2894,7 @@ app.put('/api/mailcow/mailboxes/:email/password', requireAuth as any, requireRol
 app.post('/api/volunteers', async (req, res) => {
   try {
     const { name, email, phone, birthDate, address, motivation, linkedin, position, acceptedVolunteering, acceptedGDPR, acceptedCodex } = req.body;
-    
+
     if (!name || !email || !motivation || !position || !acceptedVolunteering || !acceptedGDPR || !acceptedCodex) {
       return res.status(400).json({ error: 'Chybí povinné údaje.' });
     }
@@ -3156,12 +3156,12 @@ app.get('/api/admin/control-plane/action/:id', requireAuth as any, async (req: A
     const { id } = req.params;
     const action = await ControlPlaneService.getAction(id);
     if (!action) return res.status(404).json({ success: false, error: 'Akce nebyla nalezena' });
-    
+
     // RBAC for viewing specific action
     if ((req.user as any).role !== 'ADMIN' && (req.user as any).role !== 'SUPER_ADMIN' && action.actorId !== (req.user as any).id) {
        return res.status(403).json({ success: false, error: 'Nedostatečná oprávnění' });
     }
-    
+
     res.json({ success: true, action });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -4457,9 +4457,44 @@ app.get('/api/studies/pdf-file/*', async (req, res) => {
 
 
 // 6. COMPLIANCE CENTER
-app.get('/api/compliance/docs', async (_req, res) => {
-  const docs = await ComplianceService.getDocs();
-  res.json(docs);
+app.get('/api/compliance/docs', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const docs = await ComplianceService.getDocs();
+    res.json(docs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/docs/public', async (req, res) => {
+  try {
+    const registeredKeys = [
+      'terms',
+      'gdpr',
+      'cookies',
+      'legal',
+      'volunteer_code',
+      'ai_statement',
+      'dohoda-o-spolupraci'
+    ];
+    const docs = await Promise.all(
+      registeredKeys.map((key) => ComplianceService.getPublishedDoc(key))
+    );
+    const publishedDocs = docs
+      .filter((d): d is NonNullable<typeof d> => d !== null && d.status === 'PUBLISHED')
+      .map((d) => ({
+        id: d.id,
+        key: d.key,
+        title: d.title,
+        type: d.type,
+        version: d.version,
+        effectiveDate: d.effectiveDate,
+        status: d.status,
+      }));
+    res.json(publishedDocs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/compliance/docs/public/:slugOrKey', async (req, res) => {
@@ -4474,13 +4509,35 @@ app.get('/api/compliance/docs/public/:slugOrKey', async (req, res) => {
   }
 });
 
-app.get('/api/compliance/docs/:key', async (req, res) => {
+app.get('/api/compliance/docs/:key', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const doc = await ComplianceService.getDocByKey(req.params.key);
     if (!doc) {
       return res.status(404).json({ error: 'Dokument nenalezen.' });
     }
     res.json(doc);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Legal Pack 2.0 Admin Preview Endpoints (STRICT ADMIN ONLY)
+app.get('/api/compliance/drafts', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const drafts = await ComplianceService.getAllDraftsPreview();
+    res.json(drafts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/drafts/preview/:key', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res: express.Response) => {
+  try {
+    const draft = await ComplianceService.getDraftPreview(req.params.key);
+    if (!draft) {
+      return res.status(404).json({ error: 'Koncept Legal Pack 2.0 nenalezen.' });
+    }
+    res.json(draft);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -4499,7 +4556,7 @@ app.put('/api/compliance/docs/:key', requireAuth as any, requireRole('ADMIN') as
   try {
     const { key } = req.params;
     const { title, content, version, type, description } = req.body;
-    
+
     if (content && version) {
       const doc = await ComplianceService.updateDoc(key, title || '', content, version, req.user);
       return res.json(doc);
@@ -4544,7 +4601,7 @@ app.post('/api/compliance/volunteer-agreement/sign', async (req: AuthenticatedRe
   try {
     const { contractId, timestamp, volunteerName, birthDate, address, email, userId, signatureText, auditHash } = req.body;
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
-    
+
     // Record consent in compliance service
     const targetUserId = userId || req.user?.id || 'volunteer-guest';
     const consent = await ComplianceService.recordConsent(
@@ -4575,7 +4632,7 @@ app.post('/api/compliance/volunteer-codex/sign', async (req: AuthenticatedReques
   try {
     const { documentVersion, userId, signatureText, auditHash } = req.body;
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
-    const targetUserId = userId || req.user?.id;
+    const targetUserId = (req.user?.role === 'ADMIN' && userId) ? userId : req.user?.id;
     if (!targetUserId) {
       return res.status(400).json({ error: 'Uživatel není přihlášen nebo chybí userId.' });
     }
@@ -4825,7 +4882,7 @@ app.get('/api/forms/submissions', requireAuth as any, requireRole('ADMIN') as an
 });
 
 
-app.post('/api/compliance/consent', async (req: AuthenticatedRequest, res) => {
+app.post('/api/compliance/consent', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { userId, docKey, docVersion, status } = req.body;
     const targetUserId = userId || req.user?.id;
@@ -4905,7 +4962,7 @@ app.post('/api/legal/accept', async (req: AuthenticatedRequest, res) => {
     }
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
     const consent = await ComplianceService.recordConsent(targetUserId, docKey, docVersion, status || 'ACCEPTED', req.user?.email, ip);
-    
+
     // Log in Legal Audit Trail
     await ComplianceService.logLegalAudit(targetUserId, 'DOCUMENT_ACCEPTED', 'Consent', consent.id, {
       docKey,
@@ -4926,7 +4983,7 @@ app.post('/api/legal/cookie-consent', async (req: AuthenticatedRequest, res) => 
     const { userId, sessionHash, essential, functional, analytics, marketing } = req.body;
     const targetUserId = userId || req.user?.id || null;
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
-    
+
     const consent = await ComplianceService.recordCookieConsent(targetUserId, sessionHash || null, {
       essential,
       functional,
@@ -5016,11 +5073,18 @@ app.get('/api/legal/admin/audit-logs', requireAuth as any, requireRole('ADMIN') 
 });
 
 // GDPR Compliance Center API Endpoints (Release 0.5.1)
-app.post('/api/gdpr/consent-log', async (req: AuthenticatedRequest, res) => {
+app.post('/api/gdpr/consent-log', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { documentType, documentVersion, userId } = req.body;
-    const targetUserId = userId || req.user?.id;
-    if (!targetUserId) return res.status(400).json({ error: 'Uživatel není přihlášen.' });
+    const authenticatedUserId = req.user?.id;
+    if (!authenticatedUserId) return res.status(401).json({ error: 'Neautorizovaný přístup. Přihlaste se prosím.' });
+
+    // Invariant: cannot log consent for another user
+    if (userId && userId !== authenticatedUserId) {
+      return res.status(403).json({ error: 'Přístup odepřen. Nelze zaznamenávat souhlas za cizího uživatele.' });
+    }
+
+    const targetUserId = authenticatedUserId;
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
     const userAgent = req.headers['user-agent'] || '';
     const prisma = getPrismaClient();
@@ -5042,11 +5106,18 @@ app.post('/api/gdpr/consent-log', async (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.post('/api/gdpr/sensitive-access', async (req: AuthenticatedRequest, res) => {
+app.post('/api/gdpr/sensitive-access', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { action, resource, userId } = req.body;
-    const targetUserId = userId || req.user?.id;
-    if (!targetUserId) return res.status(400).json({ error: 'Uživatel není přihlášen.' });
+    const authenticatedUserId = req.user?.id;
+    if (!authenticatedUserId) return res.status(401).json({ error: 'Neautorizovaný přístup. Přihlaste se prosím.' });
+
+    // Invariant: cannot forge sensitive access log for another user
+    if (userId && userId !== authenticatedUserId) {
+      return res.status(403).json({ error: 'Přístup odepřen. Nelze zaznamenávat auditní záznam za cizího uživatele.' });
+    }
+
+    const targetUserId = authenticatedUserId;
     const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
     const prisma = getPrismaClient();
     if (prisma && (prisma as any).sensitiveAccessLog) {
@@ -5066,11 +5137,18 @@ app.post('/api/gdpr/sensitive-access', async (req: AuthenticatedRequest, res) =>
   }
 });
 
-app.post('/api/gdpr/deletion-request', async (req: AuthenticatedRequest, res) => {
+app.post('/api/gdpr/deletion-request', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   try {
     const { userId, notes } = req.body;
-    const targetUserId = userId || req.user?.id;
-    if (!targetUserId) return res.status(400).json({ error: 'Uživatel není přihlášen.' });
+    const authenticatedUserId = req.user?.id;
+    if (!authenticatedUserId) return res.status(401).json({ error: 'Neautorizovaný přístup. Přihlaste se prosím.' });
+
+    // Invariant: client-supplied userId must not target another user (IDOR prevention)
+    if (userId && userId !== authenticatedUserId) {
+      return res.status(403).json({ error: 'Přístup odepřen. Nelze žádat o výmaz cizího uživatelského účtu.' });
+    }
+
+    const targetUserId = authenticatedUserId;
     const prisma = getPrismaClient();
     if (prisma && (prisma as any).gdprDeletionRequest) {
       const request = await (prisma as any).gdprDeletionRequest.create({
@@ -5177,7 +5255,7 @@ app.get('/api/audit', requireAuth as any, requireRole('ADMIN') as any, async (re
 app.post('/api/audit', auditRateLimiter, async (req: AuthenticatedRequest, res) => {
   try {
     const { action, module, details } = req.body;
-    
+
     // Validate inputs to prevent spam and DB bloat
     if (!action || typeof action !== 'string' || action.length > 50) {
       return res.status(400).json({ error: 'Neplatná nebo příliš dlouhá akce (max 50 znaků).' });
@@ -5189,7 +5267,7 @@ app.post('/api/audit', auditRateLimiter, async (req: AuthenticatedRequest, res) 
       return res.status(400).json({ error: 'Neplatné nebo příliš dlouhé detaily (max 1000 znaků).' });
     }
 
-    // Always use req.user (from parseAuthToken) if available, ignoring any client-provided user ID 
+    // Always use req.user (from parseAuthToken) if available, ignoring any client-provided user ID
     // to prevent spoofing. If not logged in, user is undefined (which is allowed for public errors like login failed).
     const log = await AuditService.recordLog(action, module, details, req.user, req.ip);
     res.json(log);
@@ -5417,45 +5495,43 @@ async function startServer() {
     }
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      configFile: './vite.config.ts',
-      server: {
-        middlewareMode: true,
-        allowedHosts: ['tatovacesta.cz', 'dev3.tatovacesta.cz', '.run.app', 'localhost'],
-      },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+  let viteMiddleware: any = null;
+  const viteReadyPromise = (async () => {
+    if (process.env.NODE_ENV !== 'production') {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        configFile: './vite.config.ts',
+        server: {
+          middlewareMode: true,
+          allowedHosts: ['tatovacesta.cz', 'dev3.tatovacesta.cz', '.run.app', 'localhost'],
+        },
+        appType: 'spa',
+      });
+      viteMiddleware = vite.middlewares;
+      console.log('[System] Vite development middleware připraven.');
+      return vite;
+    }
+    return null;
+  })().catch((err) => {
+    console.error('[System] Chyba při inicializaci Vite middleware:', err);
+    return null;
+  });
 
-    app.get('*', async (req, res, next) => {
-      const url = req.originalUrl;
-      try {
-        const rootIndex = path.resolve(process.cwd(), 'index.html');
-        if (fs.existsSync(rootIndex)) {
-          let template = fs.readFileSync(rootIndex, 'utf-8');
-          template = await vite.transformIndexHtml(url, template);
-          return res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
-        }
-        next();
-      } catch (e: any) {
-        vite.ssrFixStacktrace(e);
-        next(e);
+  // Frontend routing & Vite middleware handler
+  app.use(async (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/test-report')) {
+      return next();
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      if (!viteMiddleware) {
+        await viteReadyPromise;
       }
-    });
-  } else {
-    const distPath = path.resolve(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      const indexPath = path.resolve(distPath, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Index HTML not found');
+      if (viteMiddleware) {
+        return viteMiddleware(req, res, next);
       }
-    });
-  }
+    }
+    next();
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);
@@ -5468,16 +5544,29 @@ async function startServer() {
         const isDbReachable = await checkDatabaseReachable();
         if (isDbReachable) {
           console.log('[System] PostgreSQL databáze je dostupná.');
+          try {
+            await ComplianceService.ensureLegalPack20Drafts();
+            console.log('[System] Legal Pack 2.0 pracovní drafty synchronizovány (DRAFT režim).');
+          } catch (syncErr) {
+            console.warn('[System] Upozornění při synchronizaci Legal Pack 2.0 draftů:', syncErr);
+          }
         } else {
           console.info('[System] PostgreSQL databáze na DATABASE_URL není dostupná.');
+          await ComplianceService.ensureLegalPack20Drafts();
         }
       } else {
         console.log('[System] DATABASE_URL chybí, přeskakuji Prisma inicializaci.');
         markPrismaUnavailable('DATABASE_URL is missing');
+        await ComplianceService.ensureLegalPack20Drafts();
       }
     } catch (error) {
       console.warn('[System] Upozornění při kontrole databáze:', error);
       markPrismaUnavailable(error);
+      try {
+        await ComplianceService.ensureLegalPack20Drafts();
+      } catch (e) {
+        // ignore
+      }
     }
   }, 100);
 }
