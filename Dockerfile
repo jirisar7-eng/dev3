@@ -1,5 +1,5 @@
 # Dockerfile for tatovacesta_app_dev3 (dev3.tatovacesta.cz)
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Install git, bash, and curl for webhook redeploy and healthcheck
