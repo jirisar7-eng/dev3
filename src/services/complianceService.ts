@@ -312,6 +312,19 @@ export class ComplianceService {
       author: authorName,
     };
 
+    const initialVersion: LegalDocumentVersion = {
+      id: 'cmp-ver-' + Date.now(),
+      documentId: doc.id,
+      version,
+      content,
+      status: 'PUBLISHED',
+      effectiveDate: new Date().toISOString(),
+      author: authorName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    doc.versions = [initialVersion];
+
     dbStore.complianceDocs.push(doc);
     dbStore.logAudit('COMPLIANCE_DOC_CREATE', 'COMPLIANCE', `Vytvořen nový compliance dokument '${data.title}' [${key}] s verzí ${version}.`, user);
     return doc;
@@ -385,7 +398,7 @@ export class ComplianceService {
     user?: User | null
   ): Promise<LegalDocumentVersion> {
     const targetKey = this.resolveKey(docKey);
-    const newStatus = data.status || 'PUBLISHED';
+    const newStatus = data.status || 'DRAFT';
     const authorName = data.author || user?.name || 'Administrátor';
     const effDate = data.effectiveDate ? new Date(data.effectiveDate) : new Date();
 
@@ -457,16 +470,7 @@ export class ComplianceService {
       throw new Error(`Verze ${data.version} pro dokument '${targetKey}' již existuje. Zvolte nové číslo verze.`);
     }
 
-    doc.version = data.version;
-    doc.content = data.content;
-    doc.status = newStatus;
-    doc.effectiveDate = effDate.toISOString();
-    doc.updatedAt = new Date().toISOString();
-    doc.author = authorName;
-
-    dbStore.logAudit('COMPLIANCE_VERSION_CREATE', 'COMPLIANCE', `Vytvořena nová verze v${data.version} (${newStatus}) pro dokument '${doc.title}'.`, user);
-
-    return {
+    const versionRecord = {
       id: doc.id + '-v' + Date.now(),
       documentId: doc.id,
       version: data.version,
@@ -477,39 +481,151 @@ export class ComplianceService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    if (!doc.versions) doc.versions = [];
+    doc.versions.push(versionRecord);
+
+    if (newStatus === 'PUBLISHED') {
+      doc.version = data.version;
+      doc.content = data.content;
+      doc.status = newStatus;
+      doc.effectiveDate = effDate.toISOString();
+      doc.updatedAt = new Date().toISOString();
+      doc.author = authorName;
+    }
+
+    dbStore.logAudit('COMPLIANCE_VERSION_CREATE', 'COMPLIANCE', `Vytvořena nová verze v${data.version} (${newStatus}) pro dokument '${doc.title}'.`, user);
+
+    return versionRecord;
+  }
+
+  static async preflightPublication(versionId: string): Promise<{ canPublish: boolean; status: 'BLOCKED' | 'READY'; blockers: string[]; warnings: string[]; candidateVersion: string; currentPublishedVersion: string | null; }> {
+    let ver: any = null;
+    let documentVersions: any[] = [];
+    
+    if (isPrismaAvailable()) {
+      try {
+        ver = await prisma.legalDocumentVersion.findUnique({
+          where: { id: versionId },
+          include: { document: { include: { versions: true } } }
+        });
+        if (ver) {
+          documentVersions = ver.document.versions;
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    
+    if (!ver) {
+      for (const d of dbStore.complianceDocs) {
+        if (d.versions) {
+          const found = d.versions.find(v => v.id === versionId);
+          if (found) {
+            ver = found;
+            documentVersions = d.versions;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!ver || versionId.startsWith('draft-20-')) {
+      return {
+        canPublish: false,
+        status: 'BLOCKED',
+        blockers: ['Kandidátní verze neexistuje v databázi nebo se jedná o nepublikovatelné syntetické ID náhledu (draft-20-*).'],
+        warnings: [],
+        candidateVersion: 'unknown',
+        currentPublishedVersion: null
+      };
+    }
+
+    const blockers: string[] = [];
+    const warnings: string[] = [];
+    if (ver.status === 'PUBLISHED') blockers.push('Tato verze je již publikována.');
+    else if (ver.status === 'ARCHIVED') blockers.push('Nelze publikovat archivovanou verzi.');
+    if (ver.version.endsWith('-DRAFT') || ver.version.includes('DRAFT')) {
+      blockers.push(`Pracovní verzi s příznakem DRAFT (${ver.version}) nelze publikovat přímo. Dokument musí být nejprve připraven a schválen jako ostré číslo verze (např. 2.0.0).`);
+    }
+    if (!ver.content || ver.content.trim().length === 0) blockers.push('Obsah dokumentu je prázdný.');
+    const unresolvedMarkers = ['[LEGAL RESEARCH REQUIRED', '[TO VERIFY BEFORE PUBLICATION', '[REQUIRES_ADMIN_INPUT', '[PRODUCT INTENT — FUTURE]', '[PROPOSED CLAUSE]', '{{GENERATED_ID}}', '{{USER_'];
+    unresolvedMarkers.forEach(marker => { if ((ver.content || '').includes(marker)) blockers.push(`Nalezen nevyřešený blokující marker: ${marker}`); });
+    
+    const publishedVer = (documentVersions || []).find(v => v.status === 'PUBLISHED');
+    if (ver.version === publishedVer?.version) warnings.push('Publikovaná verze bude mít stejné číslo jako aktuálně publikovaná verze.');
+    
+    return { canPublish: blockers.length === 0, status: blockers.length === 0 ? 'READY' : 'BLOCKED', blockers, warnings, candidateVersion: ver.version, currentPublishedVersion: publishedVer ? publishedVer.version : null };
   }
 
   // 7. Publish a specific version ID
   static async publishVersion(versionId: string, user?: User | null): Promise<LegalDocumentVersion> {
+    const preflight = await this.preflightPublication(versionId);
+    if (!preflight.canPublish) {
+      throw new Error('FAIL CLOSED: Dokument neprošel kontrolou před publikací. Blokátory: ' + preflight.blockers.join(' '));
+    }
+
     if (isPrismaAvailable()) {
+      let connectionError = false;
       try {
         const ver = await prisma.legalDocumentVersion.findUnique({
           where: { id: versionId },
           include: { document: true },
         });
+        if (!ver) throw new Error('Verze neexistuje v databázi.');
+        if (!ver.documentId || !ver.document) {
+          throw new Error('Kandidátní verze nemá přiřazený platný LegalDocument.');
+        }
+        if (ver.status === 'PUBLISHED') {
+          throw new Error('Verze je již publikována.');
+        }
+        if (ver.status === 'ARCHIVED') {
+          throw new Error('Nelze publikovat archivovanou verzi.');
+        }
+        if (ver.version.includes('DRAFT')) {
+          throw new Error('Nelze publikovat verzi s příznakem DRAFT.');
+        }
 
-        if (!ver) throw new Error('Verze neexistuje.');
+        // ATOMIC PRISMA TRANSACTION (All 3 operations in one transaction client 'tx'):
+        // 1. archive previous PUBLISHED version(s)
+        // 2. promote candidate to PUBLISHED
+        // 3. create COMPLIANCE_VERSION_PUBLISH audit record
+        const updated = await prisma.$transaction(async (tx) => {
+          const txVer = await tx.legalDocumentVersion.findUnique({
+            where: { id: versionId },
+            include: { document: true },
+          });
+          if (!txVer || txVer.documentId !== ver.documentId) {
+            throw new Error('Kandidátní verze nebyla nalezena v transakci.');
+          }
+          if (txVer.status === 'PUBLISHED') {
+            throw new Error('Verze byla mezitím publikována jiným procesem.');
+          }
 
-        // Archive all other published versions for this document
-        await prisma.legalDocumentVersion.updateMany({
-          where: { documentId: ver.documentId, status: 'PUBLISHED' },
-          data: { status: 'ARCHIVED' },
-        });
+          // 1. Archive previous PUBLISHED
+          await tx.legalDocumentVersion.updateMany({
+            where: { documentId: txVer.documentId, status: 'PUBLISHED' },
+            data: { status: 'ARCHIVED' },
+          });
 
-        // Set this version to PUBLISHED
-        const updated = await prisma.legalDocumentVersion.update({
-          where: { id: versionId },
-          data: { status: 'PUBLISHED', effectiveDate: new Date() },
-        });
+          // 2. Promote candidate to PUBLISHED
+          const promoted = await tx.legalDocumentVersion.update({
+            where: { id: versionId },
+            data: { status: 'PUBLISHED', effectiveDate: new Date() },
+          });
 
-        await prisma.auditLog.create({
-          data: {
-            userId: user?.id,
-            userEmail: user?.email,
-            action: 'COMPLIANCE_VERSION_PUBLISH',
-            module: 'COMPLIANCE',
-            details: `Publikována verze v${updated.version} dokumentu '${ver.document.title}'. Starší publikované verze byly archivovány.`,
-          },
+          // 3. Create mandatory audit record inside tx
+          await tx.auditLog.create({
+            data: {
+              userId: user?.id,
+              userEmail: user?.email,
+              action: 'COMPLIANCE_VERSION_PUBLISH',
+              module: 'COMPLIANCE',
+              details: `Publikována verze v${promoted.version} dokumentu '${txVer.document.title}'. Starší publikované verze byly archivovány.`,
+            },
+          });
+
+          return promoted;
         });
 
         return {
@@ -524,12 +640,85 @@ export class ComplianceService {
           updatedAt: updated.updatedAt.toISOString(),
         };
       } catch (err: any) {
-        console.warn('Prisma publishVersion error:', err);
-        throw err;
+        if (err?.code === 'P1001' || err?.message?.includes("Can't reach database server")) {
+          connectionError = true;
+        } else {
+          console.warn('Prisma publishVersion error:', err);
+          throw new Error(`FAIL CLOSED: Publikace selhala v transakci a byla kompletně vrácena zpět (rollback). Důvod: ${err.message}`);
+        }
+      }
+
+      if (!connectionError) {
+        throw new Error('FAIL CLOSED: Databáze selhala při publikaci.');
       }
     }
+    
+    if (process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production') {
+       throw new Error('FAIL CLOSED: Databáze není dostupná pro atomickou publikaci dokumentu.');
+    }
+    
+    // In-memory atomic transaction simulation
+    let targetDoc: any = null;
+    let foundVersion: any = null;
+    for (const d of dbStore.complianceDocs) {
+      if (d.versions) {
+        const found = d.versions.find(v => v.id === versionId);
+        if (found) {
+          targetDoc = d;
+          foundVersion = found;
+          break;
+        }
+      }
+    }
+    if (!targetDoc || !foundVersion) throw new Error('Verze neexistuje in-memory.');
 
-    throw new Error('Fallback nepodporuje přímou publikaci verze podle ID.');
+    if (foundVersion.status === 'PUBLISHED') {
+      throw new Error('Verze je již publikována.');
+    }
+    if (foundVersion.status === 'ARCHIVED') {
+      throw new Error('Nelze publikovat archivovanou verzi.');
+    }
+    if (foundVersion.version.includes('DRAFT')) {
+      throw new Error('Nelze publikovat verzi s příznakem DRAFT.');
+    }
+
+    // Complete deep snapshot for atomic rollback
+    const docSnapshot = JSON.parse(JSON.stringify(targetDoc));
+    const auditLogsSnapshot = [...dbStore.auditLogs];
+
+    try {
+      // 1. Archive previous PUBLISHED versions
+      targetDoc.versions.forEach((v: any) => {
+        if (v.status === 'PUBLISHED') v.status = 'ARCHIVED';
+      });
+
+      // 2. Promote candidate to PUBLISHED
+      foundVersion.status = 'PUBLISHED';
+      foundVersion.effectiveDate = new Date().toISOString();
+      foundVersion.updatedAt = new Date().toISOString();
+
+      targetDoc.version = foundVersion.version;
+      targetDoc.content = foundVersion.content;
+      targetDoc.status = 'PUBLISHED';
+      targetDoc.effectiveDate = foundVersion.effectiveDate;
+      targetDoc.updatedAt = new Date().toISOString();
+
+      // 3. Create mandatory audit record
+      dbStore.logAudit(
+        'COMPLIANCE_VERSION_PUBLISH',
+        'COMPLIANCE',
+        `Publikována verze v${foundVersion.version} dokumentu '${targetDoc.title}'. Starší publikované verze byly archivovány.`,
+        user
+      );
+
+      return foundVersion;
+    } catch (err: any) {
+      // Roll back all changes completely
+      Object.assign(targetDoc, docSnapshot);
+      targetDoc.versions = JSON.parse(JSON.stringify(docSnapshot.versions));
+      dbStore.auditLogs = auditLogsSnapshot;
+      throw new Error(`FAIL CLOSED: Publikace selhala v transakci a byla kompletně vrácena zpět (rollback). Důvod: ${err.message}`);
+    }
   }
 
   // 8. Deactivate / Archive a specific version ID
@@ -870,6 +1059,91 @@ export class ComplianceService {
     }));
   }
 
+
+  static async prepareDraftForPublication(keyOrAlias: string): Promise<string> {
+    await this.ensureLegalPack20Drafts();
+    const key = this.resolveKey(keyOrAlias);
+    const draftContent = legalDrafts20Content[key] || '';
+    
+    let candidateId = null;
+    let connectionError = false;
+
+    if (isPrismaAvailable()) {
+      try {
+        const doc = await prisma.legalDocument.findUnique({ where: { key }, include: { versions: true } });
+        if (doc) {
+          let candidate = doc.versions.find(v => v.version === '2.0.0');
+          if (!candidate) {
+            candidate = await prisma.legalDocumentVersion.create({
+              data: {
+                documentId: doc.id,
+                version: '2.0.0',
+                content: draftContent,
+                status: 'DRAFT',
+                author: 'Administrátor (Schváleno a připraveno z Legal Pack 2.0 SSOT)',
+              }
+            });
+          } else {
+            // DEFECT 1: Fail closed if version 2.0.0 exists and is not DRAFT
+            if (candidate.status !== 'DRAFT') {
+              throw new Error(`FAIL CLOSED: Verze 2.0.0 pro dokument '${key}' již existuje se statusem '${candidate.status}'. Historické, publikované a archivované právní verze jsou neměnné.`);
+            }
+            candidate = await prisma.legalDocumentVersion.update({
+              where: { id: candidate.id },
+              data: { content: draftContent }
+            });
+          }
+          candidateId = candidate.id;
+        }
+      } catch (e: any) {
+        if (e.message?.includes('FAIL CLOSED')) {
+          throw e;
+        }
+        if (e?.code === 'P1001' || e?.message?.includes("Can't reach database server")) {
+          connectionError = true;
+        } else {
+          console.warn('Prisma prepareDraftForPublication error:', e);
+        }
+      }
+    }
+    
+    if (!candidateId) {
+      if (isPrismaAvailable() && !connectionError && (process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production')) {
+        throw new Error(`FAIL CLOSED: Databáze selhala při přípravě konceptu pro '${key}'.`);
+      }
+
+      // In-memory fallback
+      const storeDoc = dbStore.complianceDocs.find((d) => d.key === key);
+      if (storeDoc) {
+        if (!storeDoc.versions) storeDoc.versions = [];
+        let candidate = storeDoc.versions.find((v) => v.version === '2.0.0');
+        if (!candidate) {
+          candidate = {
+            id: `${storeDoc.id}-v2-0-0`,
+            documentId: storeDoc.id,
+            version: '2.0.0',
+            content: draftContent,
+            status: 'DRAFT',
+            effectiveDate: new Date().toISOString(),
+            author: 'Administrátor (Schváleno a připraveno z Legal Pack 2.0 SSOT)',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          storeDoc.versions.push(candidate);
+        } else {
+          // DEFECT 1: Fail closed if version 2.0.0 exists and is not DRAFT
+          if (candidate.status !== 'DRAFT') {
+            throw new Error(`FAIL CLOSED: Verze 2.0.0 pro dokument '${key}' již existuje se statusem '${candidate.status}'. Historické, publikované a archivované právní verze jsou neměnné.`);
+          }
+          candidate.content = draftContent;
+        }
+        candidateId = candidate.id;
+      }
+    }
+    
+    if (!candidateId) throw new Error(`Draft dokument '${key}' neexistuje v databázi pro přípravu verze 2.0.0.`);
+    return candidateId;
+  }
   // 17. Synchronize and ensure Legal Pack 2.0 Draft versions in DB and In-Memory
   static async ensureLegalPack20Drafts(): Promise<{ synced: string[]; count: number }> {
     const keys = [

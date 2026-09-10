@@ -4579,6 +4579,24 @@ app.post('/api/compliance/docs/:key/versions', requireAuth as any, requireRole('
   }
 });
 
+app.get('/api/compliance/versions/:versionId/preflight', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const preflight = await ComplianceService.preflightPublication(req.params.versionId);
+    res.json(preflight);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/docs/:key/prepare-draft', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
+  try {
+    const draftId = await ComplianceService.prepareDraftForPublication(req.params.key);
+    res.json({ id: draftId });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.put('/api/compliance/versions/:versionId/publish', requireAuth as any, requireRole('ADMIN') as any, async (req: AuthenticatedRequest, res) => {
   try {
     const published = await ComplianceService.publishVersion(req.params.versionId, req.user);

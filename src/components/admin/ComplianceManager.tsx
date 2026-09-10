@@ -2,20 +2,20 @@ import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, ConsentRecord, LegalDocStatus } from '../../types';
 import { LegalDocumentLayout } from '../legal/LegalDocumentLayout';
-import {
-  ShieldCheck,
-  FileText,
-  GitBranch,
-  CheckCircle2,
-  Settings,
-  Plus,
-  Eye,
-  Check,
-  X,
-  Search,
-  Filter,
-  History,
-  Calendar,
+import { 
+  ShieldCheck, 
+  FileText, 
+  GitBranch, 
+  CheckCircle2, 
+  Settings, 
+  Plus, 
+  Eye, 
+  Check, 
+  X, 
+  Search, 
+  Filter, 
+  History, 
+  Calendar, 
   AlertCircle,
   FileCode,
   AlertTriangle,
@@ -63,6 +63,9 @@ export const ComplianceManager: React.FC = () => {
   });
 
   const [inspectVersion, setInspectVersion] = useState<LegalDocumentVersion | null>(null);
+  const [preflightLoading, setPreflightLoading] = useState<boolean>(false);
+  const [preflightResult, setPreflightResult] = useState<any>(null);
+  const [showPublishConfirm, setShowPublishConfirm] = useState<boolean>(false);
 
   // Settings state
   const [complianceSettings, setComplianceSettings] = useState({
@@ -84,6 +87,52 @@ export const ComplianceManager: React.FC = () => {
       console.error('Error fetching compliance docs:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+
+  const handlePreflight = async (versionId: string, docKey: string) => {
+    try {
+      setPreflightLoading(true);
+      setMessage(null);
+      setPreflightResult(null);
+      // If it's a synthetic draft, prepare it first
+      let activeVersionId = versionId;
+      if (versionId.startsWith('draft-20-')) {
+        const prepRes = await apiFetch(`/api/compliance/docs/${docKey}/prepare-draft`, { method: 'POST' });
+        const prepData = await prepRes.json();
+        if (!prepRes.ok) throw new Error(prepData.error || 'Nepodařilo se připravit DRAFT');
+        activeVersionId = prepData.id;
+        // Update inspectVersion to the real ID
+        setInspectVersion(prev => prev ? { ...prev, id: activeVersionId } : null);
+      }
+      const res = await apiFetch(`/api/compliance/versions/${activeVersionId}/preflight`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Chyba při kontrole před publikací');
+      setPreflightResult(data);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setPreflightLoading(false);
+    }
+  };
+
+  const executePublish = async () => {
+    if (!inspectVersion || !inspectVersion.id) return;
+    try {
+      setPreflightLoading(true);
+      setMessage(null);
+      const res = await apiFetch(`/api/compliance/versions/${inspectVersion.id}/publish`, { method: 'PUT' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Chyba při publikaci');
+      setMessage({ type: 'success', text: `Verze ${data.version} byla publikována.` });
+      setInspectVersion(null);
+      setShowPublishConfirm(false);
+      await fetchDocsSummary();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setPreflightLoading(false);
     }
   };
 
@@ -395,10 +444,10 @@ export const ComplianceManager: React.FC = () => {
               ].map((item) => {
                 const doc = docs.find((d) => d.key === item.key);
                 const hasPlaceholder = doc?.content?.includes('[REQUIRES_ADMIN_INPUT]') || doc?.content?.includes('{{GENERATED_ID}}') || doc?.content?.includes('{{USER_');
-
+                
                 let statusColor = 'bg-rose-50 border-rose-200 text-rose-800';
                 let statusLabel = 'Chybí dokument';
-
+                
                 if (doc) {
                   if (hasPlaceholder) {
                     statusColor = 'bg-amber-50 border-amber-200 text-amber-800';
@@ -599,7 +648,7 @@ export const ComplianceManager: React.FC = () => {
 
                               {ver.status !== 'PUBLISHED' && (
                                 ver.version.includes('DRAFT') ? (
-                                  <span
+                                  <span 
                                     className="px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-bold tracking-tight flex items-center gap-1"
                                     title="Pracovní návrh Legal Pack 2.0 (DRAFT). Publikace je blokována."
                                   >
@@ -1287,6 +1336,31 @@ export const ComplianceManager: React.FC = () => {
       {inspectVersion && (
         <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
+            
+            {showPublishConfirm ? (
+               <div className="bg-rose-50 border-2 border-rose-300 rounded-xl p-6 space-y-4">
+                 <h3 className="text-lg font-bold text-rose-900 flex items-center gap-2">
+                   <AlertTriangle className="w-5 h-5" /> Potvrzení Publikace Dokumentu
+                 </h3>
+                 <p className="text-sm text-rose-800">
+                   Opravdu chcete publikovat tuto verzi dokumentu (<strong>{inspectVersion.documentId} v{inspectVersion.version}</strong>)?
+                   <br/><br/>
+                   <strong>Upozornění:</strong>
+                   <ul className="list-disc pl-5 mt-2">
+                     <li>Předchozí publikovaná verze (pokud existuje) bude archivována.</li>
+                     <li>Tato změna je okamžitě účinná pro všechny návštěvníky a uživatele.</li>
+                     <li>Historické záznamy budou neměnné.</li>
+                   </ul>
+                 </p>
+                 <div className="flex justify-end gap-3 pt-2">
+                   <button onClick={() => setShowPublishConfirm(false)} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-xl text-sm font-semibold">Zrušit</button>
+                   <button onClick={executePublish} disabled={preflightLoading} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2">
+                     {preflightLoading ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                     Potvrdit Publikaci
+                   </button>
+                 </div>
+               </div>
+            ) : null}
             {inspectVersion.status === 'DRAFT' && (
               <div className="w-full bg-amber-500 text-amber-950 px-4 py-3 font-bold text-sm flex items-center justify-center gap-2 shadow-sm rounded-xl mb-2">
                 <AlertCircle className="w-5 h-5" /> NÁHLED — NEPUBLIKOVANÁ VERZE (Verze {inspectVersion.version}, DRAFT). Tento dokument zatím není veřejně účinnou/publikovanou verzí.
@@ -1328,13 +1402,68 @@ export const ComplianceManager: React.FC = () => {
               />
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-200">
-              <button
-                onClick={() => setInspectVersion(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs"
-              >
-                Zavřít
-              </button>
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-200">
+              
+              {inspectVersion.status === 'DRAFT' && !showPublishConfirm && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-sm">Kontrola před publikací</h4>
+                      <p className="text-xs text-slate-500">Ověřuje obsah na přítomnost nevyřešených právních markerů a platnost verze.</p>
+                    </div>
+                    <button 
+                      onClick={() => handlePreflight(inspectVersion.id, inspectVersion.documentId)}
+                      disabled={preflightLoading}
+                      className="px-4 py-2 bg-blue-100 text-blue-900 rounded-lg text-xs font-semibold hover:bg-blue-200 flex items-center gap-1"
+                    >
+                      {preflightLoading ? 'Probíhá...' : 'Spustit kontrolu před publikací'}
+                    </button>
+                  </div>
+                  
+                  {preflightResult && (
+                    <div className="pt-2 border-t border-slate-200 space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-bold">
+                        Stav: <span className={preflightResult.status === 'READY' ? 'text-emerald-600' : 'text-rose-600'}>{preflightResult.status}</span>
+                      </div>
+                      
+                      {preflightResult.blockers.length > 0 && (
+                        <div className="text-xs text-rose-700 space-y-1">
+                          <span className="font-bold">Blokátory ({preflightResult.blockers.length}):</span>
+                          <ul className="list-disc pl-5">
+                            {preflightResult.blockers.map((b: string, i: number) => <li key={i}>{b}</li>)}
+                          </ul>
+                        </div>
+                      )}
+
+                      {preflightResult.warnings.length > 0 && (
+                        <div className="text-xs text-amber-700 space-y-1 mt-2">
+                          <span className="font-bold">Upozornění ({preflightResult.warnings.length}):</span>
+                          <ul className="list-disc pl-5">
+                            {preflightResult.warnings.map((b: string, i: number) => <li key={i}>{b}</li>)}
+                          </ul>
+                        </div>
+                      )}
+
+                      {preflightResult.status === 'READY' && (
+                        <div className="pt-3">
+                           <button onClick={() => setShowPublishConfirm(true)} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-sm">
+                             Přejít k publikaci (Vyžaduje potvrzení)
+                           </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => { setInspectVersion(null); setShowPublishConfirm(false); setPreflightResult(null); }}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs"
+                >
+                  Zavřít
+                </button>
+              </div>
             </div>
           </div>
         </div>
