@@ -58,6 +58,7 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/gdpr-security-remediation-phase025.test.ts'], name: 'GDPR Security Remediation & Terms SSOT Verification (TMPR-025)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/theme-security-integrity.test.ts'], name: 'Theme Engine Security & Data Integrity Remediation (TMPR-20260910-THEME-002-SEC01)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/theme-runtime-context.test.ts'], name: 'Theme Runtime Context Resolution & Responsibility Separation (TMPR-20260910-THEME-003)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/theme-token-foundation.test.ts'], name: 'Theme Token Foundation & Táta Classic Snapshot (TMPR-20260910-THEME-004)' }
 ];
 
 let failed = false;

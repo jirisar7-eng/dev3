@@ -89,7 +89,7 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({ forceO
   if (!isVisible && !forceOpenTrigger) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl font-sans text-xs sm:text-sm text-slate-800 animate-in fade-in slide-in-from-bottom duration-350">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 bg-surface-card/95 backdrop-blur-md border-t border-border-default shadow-2xl font-sans text-xs sm:text-sm text-text-primary animate-in fade-in slide-in-from-bottom duration-350">
       <div className="max-w-6xl mx-auto space-y-4">
         {/* Banner main content */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -197,7 +197,7 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({ forceO
               <div className="pt-3 flex justify-end">
                 <button
                   onClick={handleSavePreferences}
-                  className="px-4 py-1.5 bg-blue-900 text-white hover:bg-blue-950 font-bold text-[10px] rounded-lg transition-all"
+                  className="px-4 py-1.5 bg-action-primary text-white hover:bg-action-primary-hover font-bold text-[10px] rounded-lg transition-all"
                 >
                   Uložit nastavení
                 </button>

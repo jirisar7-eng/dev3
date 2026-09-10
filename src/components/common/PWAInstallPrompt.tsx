@@ -22,7 +22,7 @@ export const PWAInstallPrompt: React.FC = () => {
 
   return (
     <div 
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white border border-slate-200 shadow-xl rounded-xl p-4 z-50 flex flex-col gap-3 transition-all duration-300 transform translate-y-0"
+      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-surface-card border border-border-default shadow-xl rounded-xl p-4 z-50 flex flex-col gap-3 transition-all duration-300 transform translate-y-0"
       role="dialog"
       aria-labelledby="pwa-install-title"
       aria-describedby="pwa-install-desc"
@@ -32,7 +32,7 @@ export const PWAInstallPrompt: React.FC = () => {
           <div className="bg-blue-100 p-2 rounded-lg text-blue-600" aria-hidden="true">
             <Download size={20} />
           </div>
-          <h3 id="pwa-install-title" className="font-semibold text-slate-800 text-sm">
+          <h3 id="pwa-install-title" className="font-semibold text-text-heading text-sm">
             Aplikace Táta má právo
           </h3>
         </div>
@@ -45,7 +45,7 @@ export const PWAInstallPrompt: React.FC = () => {
         </button>
       </div>
       
-      <p id="pwa-install-desc" className="text-slate-600 text-xs leading-relaxed">
+      <p id="pwa-install-desc" className="text-text-muted text-xs leading-relaxed">
         {isIOS 
           ? 'Nainstalujte si aplikaci pro offline přístup. V prohlížeči Safari klepněte na tlačítko Sdílet a zvolte "Přidat na plochu".'
           : 'Nainstalujte si aplikaci pro rychlý a bezpečný offline přístup k vašim případům.'}
@@ -61,7 +61,7 @@ export const PWAInstallPrompt: React.FC = () => {
           </button>
           <button 
             onClick={handleInstall}
-            className="px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-xs font-medium bg-action-primary hover:bg-action-primary-hover text-white rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Nainstalovat aplikaci
           </button>

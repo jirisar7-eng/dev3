@@ -3,6 +3,27 @@
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Semantic Design Tokens — Táta má právo Token Bridge (TMPR-20260910-THEME-004) */
+  --color-brand-primary: var(--color-brand-primary, var(--color-primary, #1e3a8a));
+  --color-brand-secondary: var(--color-brand-secondary, var(--color-secondary, #0284c7));
+
+  --color-surface-page: var(--color-surface-page, var(--color-background, #f8fafc));
+  --color-surface-card: var(--color-surface-card, var(--color-surface, #ffffff));
+
+  --color-text-primary: var(--color-text-primary, var(--color-text, #1e293b));
+  --color-text-muted: var(--color-text-muted, var(--color-textMuted, #64748b));
+  --color-text-heading: var(--color-text-heading, var(--color-heading, #0f172a));
+
+  --color-border-default: var(--color-border-default, var(--color-border, #e2e8f0));
+
+  --color-action-primary: var(--color-action-primary, var(--color-button, #1e3a8a));
+  --color-action-primary-hover: var(--color-action-primary-hover, var(--color-buttonHover, #0f172a));
+  --color-action-link: var(--color-action-link, var(--color-link, #2563eb));
+
+  --color-status-success: var(--color-status-success, var(--color-success, #16a34a));
+  --color-status-warning: var(--color-status-warning, var(--color-warning, #d97706));
+  --color-status-danger: var(--color-status-danger, var(--color-error, #dc2626));
 }
 
 @font-face {
@@ -70,8 +91,25 @@
 
 html, body, #root {
   width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
   margin: 0;
   padding: 0;
 }
+
+/* Admin Design Tokens (Light responsive theme) */
+@layer base {
+  :root {
+    --admin-bg: #f8fafc;
+    --admin-surface: #ffffff;
+    --admin-surface-muted: #f1f5f9;
+    --admin-border: #e2e8f0;
+    --admin-text: #0f172a;
+    --admin-text-muted: #64748b;
+    --admin-primary: #0f172a;
+    --admin-success: #10b981;
+    --admin-warning: #f59e0b;
+    --admin-danger: #ef4444;
+    --admin-info: #3b82f6;
+    --admin-restricted: #8b5cf6;
+  }
+}
+

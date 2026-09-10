@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
 import { resolveThemeContext, AppThemeContext } from '../utils/themeResolver';
 import { DEFAULT_THEME_VARIABLES } from '../services/themeService';
+import { TATA_CLASSIC_PROFILE, getTataClassicVariablesMap } from '../theme/profiles/tataClassic';
+import { LEGACY_KEY_TO_SEMANTIC_TOKEN } from '../theme/themeTokens';
 
 export { resolveThemeContext };
 export type { AppThemeContext };
@@ -144,6 +146,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       varsToApply.forEach((v) => {
         root.style.setProperty(`--color-${v.key}`, v.value);
+        const semanticToken = LEGACY_KEY_TO_SEMANTIC_TOKEN[v.key];
+        if (semanticToken) {
+          root.style.setProperty(`--color-${semanticToken}`, v.value);
+        }
       });
 
       // 2. Apply User Appearance Overrides (Higher Priority)
@@ -375,22 +381,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetToDefaults = async () => {
-    const defaultColors: Record<string, string> = {
-      primary: '#1e3a8a',
-      secondary: '#0284c7',
-      background: '#f8fafc',
-      surface: '#ffffff',
-      text: '#1e293b',
-      textMuted: '#64748b',
-      heading: '#0f172a',
-      link: '#2563eb',
-      border: '#e2e8f0',
-      button: '#1e3a8a',
-      buttonHover: '#0f172a',
-      success: '#16a34a',
-      warning: '#d97706',
-      error: '#dc2626',
-    };
+    const defaultColors = getTataClassicVariablesMap();
 
     if (activeTheme) {
       await updateThemeVars(activeTheme.id, defaultColors);

@@ -229,12 +229,12 @@ export const Header: React.FC<HeaderProps> = ({
   const rightRef = useRef<HTMLDivElement>(null);
 
   // 3. Dimensions tracking state
-  const [dimensions, setDimensions] = useState({
-    containerWidth: 0,
+  const [dimensions, setDimensions] = useState(() => ({
+    containerWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
     logoWidth: 0,
     navWidth: 0,
     rightWidth: 0,
-  });
+  }));
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -310,8 +310,8 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`flex items-center gap-1 transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
-                  : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
+                  ? 'border-brand-primary text-brand-primary font-bold'
+                  : 'border-transparent text-text-primary hover:text-brand-primary'
               }`}
             >
               <span>{getLabelForNavKey(item.labelKey)}</span>
@@ -333,8 +333,8 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors flex items-center justify-between cursor-pointer ${
                       isSubActive
-                        ? 'bg-blue-50 text-[var(--color-primary,#1e3a8a)] font-bold'
-                        : 'text-slate-700 hover:bg-slate-50 hover:text-[var(--color-primary,#1e3a8a)]'
+                        ? 'bg-blue-50 text-brand-primary font-bold'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-brand-primary'
                     }`}
                   >
                     <span>{getLabelForNavKey(subItem.labelKey)}</span>
@@ -354,8 +354,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={isMeasuring ? undefined : () => handleNavClick(item.url)}
           className={`transition-all py-1 border-b-2 whitespace-nowrap cursor-pointer ${
             isActive
-              ? 'border-[var(--color-primary,#1e3a8a)] text-[var(--color-primary,#1e3a8a)] font-bold'
-              : 'border-transparent text-[var(--color-text,#1e293b)] hover:text-[var(--color-primary,#1e3a8a)]'
+              ? 'border-brand-primary text-brand-primary font-bold'
+              : 'border-transparent text-text-primary hover:text-brand-primary'
           }`}
         >
           {getLabelForNavKey(item.labelKey)}
@@ -366,13 +366,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header id="main-app-header" className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
-      <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div ref={containerRef} className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
         {/* Brand / Logo */}
-        <div ref={logoRef} className="shrink-0 flex items-center">
+        <div ref={logoRef} className="min-w-0 shrink flex items-center">
           <Logo
             variant="full"
-            size="md"
-            className="cursor-pointer"
+            size={dimensions.containerWidth > 0 && dimensions.containerWidth < 440 ? 'sm' : 'md'}
+            className="cursor-pointer max-w-full"
             onClick={() => handleNavClick('/')}
           />
         </div>
@@ -534,7 +534,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <LogIn className="w-5 h-5" />
                     </button>
                   )}
-                  {dimensions.containerWidth >= 380 && (
+                  {dimensions.containerWidth >= 390 && (
                     <button
                       id="header-mobile-register-btn"
                       type="button"
@@ -794,7 +794,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => {
                       if (onNavigate) onNavigate('/registrace');
                     }}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--color-primary,#1e3a8a)] text-white hover:bg-blue-900 transition-colors text-xs font-bold shadow-xs cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-action-primary text-white hover:bg-action-primary-hover transition-colors text-xs font-bold shadow-xs cursor-pointer"
                   >
                     <UserPlus className="w-3.5 h-3.5 text-blue-200" />
                     <span>Registrace</span>

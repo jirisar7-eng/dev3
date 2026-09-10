@@ -62,12 +62,12 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           </div>
 
           {/* Main Title powered by Text Manager */}
-          <h1 className="text-4xl sm:text-5xl font-black text-[var(--color-heading,#0f172a)] tracking-tight leading-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl font-black text-text-heading tracking-tight leading-tight mb-6">
             {t('home.hero.title', 'Táta má právo. Dítě má právo na oba rodiče.')}
           </h1>
 
           {/* Subtitle powered by Text Manager */}
-          <p className="text-lg sm:text-xl text-[var(--color-text,#1e293b)] leading-relaxed mb-8 opacity-90">
+          <p className="text-lg sm:text-xl text-text-primary leading-relaxed mb-8 opacity-90">
             {t(
               'home.hero.subtitle',
               'Komplexní opora pro otce v opatrovnických situacích. Právní orientace, psychologická podpora a spravedlivá péče zohledňující NEJLEPŠÍ ZÁJEM DÍTĚTE.'
@@ -78,14 +78,14 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <button
               onClick={() => handleNav('/kalkulacka-vyzivneho')}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[var(--color-primary,#1e3a8a)] text-white font-semibold shadow-md hover:opacity-95 transition-all text-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-action-primary hover:bg-action-primary-hover text-white font-semibold shadow-md transition-all text-sm cursor-pointer"
             >
               <span>Kalkulačka výživného</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleNav('/judikatura')}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white border border-[var(--color-border,#e2e8f0)] text-[var(--color-heading,#0f172a)] font-semibold shadow-2xs hover:bg-slate-50 transition-all text-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-surface-card border border-border-default text-text-heading font-semibold shadow-2xs hover:bg-slate-50 transition-all text-sm cursor-pointer"
             >
               <span>Judikatura ÚS ČR</span>
             </button>
@@ -99,7 +99,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           </div>
 
           {/* Feature Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-14 text-left border-t border-[var(--color-border,#e2e8f0)] pt-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-14 text-left border-t border-border-default pt-10">
             <div
               onClick={() => handleNav('/state-laws')}
               className="p-4 rounded-xl bg-white/70 border border-slate-100 shadow-2xs hover:border-blue-300 transition-all cursor-pointer"

@@ -1,3 +1,4 @@
+import { TATA_CLASSIC_PROFILE } from '../theme/profiles/tataClassic';
 import { prisma, isPrismaAvailable } from '../db/prisma';import { legalDocumentsContent } from '../data/legalDocuments';
 import { NAVIGATION_ITEMS } from '../config/navigation';
 import { DEFAULT_HOMEPAGE_PUCK_DATA } from '../puck/defaultPageData';
@@ -336,22 +337,14 @@ const defaultTextItems: TextItem[] = [
   },
 ];
 
-const defaultThemeSettings: ThemeSetting[] = [
-  { id: 'thm-1', key: 'primary', value: '#1e3a8a', label: 'Hlavní (Primary)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-2', key: 'secondary', value: '#0284c7', label: 'Sekundární (Secondary)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-3', key: 'background', value: '#f8fafc', label: 'Pozadí (Background)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-4', key: 'surface', value: '#ffffff', label: 'Povrch karet (Surface)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-5', key: 'text', value: '#1e293b', label: 'Text těla (Text)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-6', key: 'textMuted', value: '#64748b', label: 'Tlumený text (Text Muted)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-7', key: 'heading', value: '#0f172a', label: 'Text nadpisů (Heading)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-8', key: 'link', value: '#2563eb', label: 'Odkazy (Link)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-9', key: 'border', value: '#e2e8f0', label: 'Rámečky (Border)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-10', key: 'button', value: '#1e3a8a', label: 'Tlačítko (Button)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-11', key: 'buttonHover', value: '#0f172a', label: 'Tlačítko Hover (Button Hover)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-12', key: 'success', value: '#16a34a', label: 'Úspěch (Success)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-13', key: 'warning', value: '#d97706', label: 'Varování (Warning)', category: 'color', updatedAt: new Date().toISOString() },
-  { id: 'thm-14', key: 'error', value: '#dc2626', label: 'Chyba (Error)', category: 'color', updatedAt: new Date().toISOString() },
-];
+const defaultThemeSettings: ThemeSetting[] = TATA_CLASSIC_PROFILE.variables.map((v, idx) => ({
+  id: `thm-${idx + 1}`,
+  key: v.key,
+  value: v.value,
+  label: v.label,
+  category: v.category,
+  updatedAt: new Date(0).toISOString(),
+}));
 
 const defaultModules: Module[] = [
   {

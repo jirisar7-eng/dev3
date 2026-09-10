@@ -8,6 +8,8 @@ import {
   UpdateThemeVariablesSchema,
   UpdateThemeSingleColorSchema,
 } from './themeValidation';
+import { TATA_CLASSIC_PROFILE } from '../theme/profiles/tataClassic';
+import { LEGACY_KEY_TO_SEMANTIC_TOKEN } from '../theme/themeTokens';
 
 // ---------------------------------------------------------------------------
 // Error Hierarchy for Theme Service (Uniform Server-Side Error Model)
@@ -54,22 +56,7 @@ export class ThemePersistenceError extends ThemeServiceError {
   }
 }
 
-export const DEFAULT_THEME_VARIABLES = [
-  { key: 'primary', value: '#1e3a8a', label: 'Hlavní barva (Primary)', category: 'color' },
-  { key: 'secondary', value: '#0284c7', label: 'Sekundární barva (Secondary)', category: 'color' },
-  { key: 'background', value: '#f8fafc', label: 'Pozadí stránek (Background)', category: 'color' },
-  { key: 'surface', value: '#ffffff', label: 'Povrch karet & modulů (Surface)', category: 'color' },
-  { key: 'text', value: '#1e293b', label: 'Hlavní text (Text)', category: 'color' },
-  { key: 'textMuted', value: '#64748b', label: 'Tlumený text (Text Muted)', category: 'color' },
-  { key: 'heading', value: '#0f172a', label: 'Text nadpisů (Heading)', category: 'color' },
-  { key: 'link', value: '#2563eb', label: 'Odkazy & Akce (Link)', category: 'color' },
-  { key: 'border', value: '#e2e8f0', label: 'Rámečky & Oddělovače (Border)', category: 'color' },
-  { key: 'button', value: '#1e3a8a', label: 'Hlavní tlačítko (Button)', category: 'color' },
-  { key: 'buttonHover', value: '#0f172a', label: 'Tlačítko při najetí (Button Hover)', category: 'color' },
-  { key: 'success', value: '#16a34a', label: 'Stav Úspěch (Success)', category: 'color' },
-  { key: 'warning', value: '#d97706', label: 'Stav Varování (Warning)', category: 'color' },
-  { key: 'error', value: '#dc2626', label: 'Stav Chyba (Error)', category: 'color' },
-];
+export const DEFAULT_THEME_VARIABLES = [...TATA_CLASSIC_PROFILE.variables];
 
 export class ThemeService {
   /**
@@ -210,6 +197,10 @@ export class ThemeService {
     if (activeTheme && activeTheme.variables) {
       for (const v of activeTheme.variables) {
         map[`--color-${v.key}`] = v.value;
+        const semanticToken = LEGACY_KEY_TO_SEMANTIC_TOKEN[v.key];
+        if (semanticToken) {
+          map[`--color-${semanticToken}`] = v.value;
+        }
       }
     }
     return map;
