@@ -5532,6 +5532,13 @@ async function startServer() {
     }
     next();
   });
+  if (process.env.NODE_ENV === "production") {
+    const distPath = path.resolve(process.cwd(), "dist");
+    app.use("/assets", express.static(path.join(distPath, "assets")));
+    app.use("/fonts", express.static(path.join(distPath, "fonts")));
+    app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
+  }
+
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Táta má právo] Core & API Server running on port ${PORT}`);

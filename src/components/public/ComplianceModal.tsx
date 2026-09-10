@@ -16,9 +16,9 @@ export const ComplianceModal: React.FC<ComplianceModalProps> = ({ activeDocKey, 
   const [consented, setConsented] = useState<boolean>(false);
 
   useEffect(() => {
-    apiFetch('/api/compliance/docs')
+    apiFetch('/api/compliance/docs/public')
       .then((res) => res.json())
-      .then((data) => setDocs(data))
+      .then((data) => setDocs(Array.isArray(data) ? data : []))
       .catch((err) => console.error('Error fetching compliance docs:', err));
   }, []);
 
