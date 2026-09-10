@@ -357,6 +357,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         subtitle: 'Verzování GDPR, Podmínek užití a Kodexu',
         icon: ShieldCheck,
         badge: { text: 'GDPR', variant: 'sky' },
+        path: '/admin/compliance',
         keywords: ['compliance', 'gdpr', 'podmínky', 'kodex', 'právní dokumenty', 'verze', 'cookies'],
       },
       {
