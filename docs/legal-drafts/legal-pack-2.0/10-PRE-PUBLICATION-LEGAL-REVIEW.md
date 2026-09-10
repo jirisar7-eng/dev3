@@ -22,7 +22,7 @@ Položky P0 představují přímá rizika sankcí ze strany dozorových orgánů
 
 | ID | Kontrolní bod | Zjištěný stav v DRAFTU | Požadavek pro právní revizi (Sign-Off) | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **P0-1** | **Identita provozovatele a právní forma** | V textech použity placeholdery `[TO VERIFY: identita budoucího provozovatele]`, IČO a sídlo. | Určit právní subjektivitu (zapsaný spolek / nadační fond / z.s. / s.r.o.), ověřit zápis ve veřejném rejstříku a doplnit skutečné identifikační údaje do všech dokumentů. | 🟡 K DOPLNĚNÍ |
+| **P0-1** | **Identita provozovatele a právní forma** | Provozovatel ukotven jako Jiří Šár, fyzická osoba. Z public-facing dokumentů odstraněny neexistující subjekty (spolek, IČO, sídlo PO, zápis v rejstříku). Budoucí spolek je označen jako `[PRODUCT INTENT — FUTURE]`. | Dokončit právní rešerši povinných identifikačních a kontaktních údajů fyzické osoby poskytující bezplatnou informační službu dle zákona č. 480/2004 Sb. a GDPR (`[LEGAL RESEARCH REQUIRED]`) a stanovit veřejnou doručovací/kontaktní adresu. | 🟡 K SIGN-OFF |
 | **P0-2** | **Čl. 9 GDPR – Rodinná data a data dětí o zdraví a psychologii** | Definováno uložení na základě čl. 9 odst. 2 písm. f) GDPR (výkon právních nároků) s fail-closed blokováním AI v `PrivacyFilterService`. | Advokátní posouzení právního titulu pro uchovávání citlivých zpráv OSPOD a psychologických posudků v uživatelském trezoru bez rizika pro správce. | 🟡 K REVIZI |
 | **P0-3** | **Zákaz vinklaření (zákon o advokacii č. 85/1996 Sb.)** | Explicitní zákaz v Terms (Čl. II), Kodexu (Část IV) i Dohodě (Čl. IV); odmítnutí právních služeb. | Kontrola formulací advokátem zapsaným v ČAK, zda nemůže vzniknout podezření na neoprávněné poskytování právních služeb dobrovolníky či AI. | 🟡 K REVIZI |
 | **P0-4** | **Předávání dat do USA a smlouvy s AI poskytovateli (DPA)** | Identifikováno volání Google Gemini, Grok (xAI) a Groq přes enterprise API. | Ověřit existenci a platnost Data Processing Addenda (DPA), účast v EU-U.S. Data Privacy Frameworku nebo uzavření Standardních smluvních doložek (SCC). | 🟡 K REVIZI |
@@ -58,7 +58,7 @@ Položky P0 představují přímá rizika sankcí ze strany dozorových orgánů
 
 | ID | Kontrolní bod | Popis dlouhodobého cíle | Termín |
 | :--- | :--- | :--- | :---: |
-| **P3-1** | **Akreditace dobrovolnické služby** | Příprava žádosti na Ministerstvo vnitra ČR pro akreditaci dle zákona č. 198/2002 Sb. | Dle harmonogramu spolku |
+| **P3-1** | **Akreditace dobrovolnické služby** | Příprava žádosti na Ministerstvo vnitra ČR pro akreditaci dle zákona č. 198/2002 Sb. (podmíněno existencí PO) | Dle budoucího záměru [PRODUCT INTENT — FUTURE] |
 | **P3-2** | **Pravidelný audit halucinací AI** | Zavedení kvartálního interního auditu přesnosti odpovědí generátoru podání a analyzátoru rozsudků. | Průběžně |
 | **P3-3** | **Monitoring legislativních novel e-Sbírky** | Automatická notifikace právního editora při novelizaci klíčových ustanovení občanského zákoníku a ZŘS. | Průběžně |
 
@@ -80,7 +80,7 @@ Před publikací musí být tento protokol fyzicky nebo kvalifikovaným elektron
 - **Výrok:** *Prohlašuji, že Zásady ochrany osobních údajů a mechanismus Privacy Filteru odpovídají požadavkům GDPR a nálezům technické inventury.*  
 - **Datum:** ........................................ **Podpis:** ....................................................
 
-### 3. Statutární zástupce Provozovatele
-- **Jméno a funkce:** .........................................................................................  
+### 3. Provozovatel (Fyzická osoba)
+- **Jméno a příjmení:** Jiří Šár (Provozovatel)  
 - **Výrok:** *Schvaluji znění balíčku Legal Pack 2.0 k postoupení do systému verzování dokumentů jako nové PUBLISHED verze.*  
 - **Datum:** ........................................ **Podpis:** ....................................................

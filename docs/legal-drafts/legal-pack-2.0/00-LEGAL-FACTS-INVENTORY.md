@@ -20,9 +20,15 @@
 ## ČÁST 1: IDENTITA PROVOZOVATELE A SPRÁVA IDENTIT (1–10)
 
 ### 1. Provozovatel / Operator Identity
-- **Zjištěný stav:** V současném kódu a textech v1.0.0 (`src/data/legalDocuments.ts`, `src/services/dbStore.ts`) je provozovatel uváděn jako placeholder `[REQUIRES_ADMIN_INPUT]` nebo zástupný text „Provozovatel portálu Táta má právo“. `[EXISTING LEGAL TEXT]`
-- **Právní subjektivita:** Není v kódu napevno zakotvena (uvažuje se o zapsaném spolku / nadačním fondu / fyzické osobě). `[TO VERIFY BEFORE PUBLICATION]`
-- **Placeholdery pro Legal Pack 2.0:** `[TO VERIFY: identita budoucího provozovatele]`, `[TO VERIFY: IČO]`, `[TO VERIFY: sídlo]`, `[TO VERIFY: kontaktní e-mail]`.
+- **Současný ověřený stav (Current Verified State):**
+  - Provozovatelem portálu **Táta má právo** je **Jiří Šár**, fyzická osoba.
+  - Současným provozovatelem **NENÍ** spolek, zapsaný spolek, společnost ani jiná právnická osoba.
+  - Jiří Šár jako fyzická osoba v současném provozním modelu nedisponuje IČO pro tento projekt (nejedná se o zapsanou právnickou osobu), nemá statutární orgán, nemá sídlo právnické osoby ani zápis ve veřejném rejstříku.
+  - `[LEGAL RESEARCH REQUIRED: determine mandatory operator identification for current natural-person operating model]` – Prověřit s advokátní kanceláří povinné identifikační a kontaktní minimum fyzické osoby poskytující bezúplatnou digitální službu informační společnosti dle zákona č. 480/2004 Sb., občanského zákoníku a GDPR.
+  - `[ROZHODNUTÍ: Veřejná kontaktní/doručovací adresa]` – Z důvodu ochrany soukromí fyzické osoby nevkládat automaticky bydliště; stanovit samostatným rozhodnutím veřejnou doručovací/kontaktní adresu nebo P.O. Box.
+- **Budoucí záměr (Future Product/Organizational Intent):**
+  - `[PRODUCT INTENT — FUTURE]`: Projekt může být v budoucnu provozován nebo zastřešen nově založeným zapsaným spolkem. Spolek dosud nebyl založen, neexistuje, nemá IČO, nemá sídlo ani statutární orgán a nesmí být uváděn jako současný provozovatel, správce osobních údajů nebo smluvní strana v žádném veřejném právním dokumentu.
+- **Historický stav v kódu:** V kódu a textech v1.0.0 (`src/data/legalDocuments.ts`, `src/services/dbStore.ts`) byl provozovatel uváděn jako placeholder `[REQUIRES_ADMIN_INPUT]` nebo zástupný text „Provozovatel portálu Táta má právo“. `[EXISTING LEGAL TEXT]`
 
 ### 2. Registrace a User model
 - **Zjištěný stav:** `[VERIFIED FROM CONFIG]` Model `User` v `prisma/schema.prisma` (řádky 33–97):
@@ -179,7 +185,7 @@
 - **Zjištěný stav:** `[VERIFIED FROM CODE]` Endpoint `/api/ai/biff-convert`.
   - Přeformulování emocionálně vypjatých zpráv na konstruktivní, stručnou a neútočnou komunikaci vhodnou pro předložení soudu.
 
-### 29. Volání externích poskytovatelů AI
+### 29. Volání externích poskytovatelů AI a stav souladu (Provider Compliance Gate)
 - **Zjištěný stav:** `[VERIFIED FROM CODE]` Implementováno v `src/services/AiService.ts`.
   - Multi-provider architektura s automatickým fallbackem:
     1. Google Gemini Primary (`gemini-3.6-flash` via `GEMINI_API_KEY`).
@@ -187,7 +193,12 @@
     3. xAI Grok (`grok-2-1212` via `XAI_API_KEY` / `GROK_API_KEY`).
     4. Groq (`llama-3.3-70b-versatile` via `GROQ_API_KEY`).
   - Geografická lokace serverů: USA / globální servery poskytovatelů.
-  - Smluvní podmínky API: Podle oficiálních podmínek Google Cloud Vertex / Google GenAI API a Groq nejsou vstupy zaslané přes placené API využívány k trénování globálních modelů. `[LEGAL RESEARCH REQUIRED: ověřit DPA s Google, xAI a Groq]`.
+  - **PROVIDER COMPLIANCE GATE = BLOCKED:**
+    - `TIER = NOT VERIFIED` – v kódu není doloženo, zda jsou klíče navázány výhradně na placené Enterprise účty.
+    - `RETENTION = NOT VERIFIED` – přesná doba uchovávání na straně poskytovatelů není smluvně doložena.
+    - `DPA / SCC = NOT VERIFIED` – dosud nebyla formálně uzavřena DPA (Data Processing Agreement) ani Standardní smluvní doložky (SCC) pro přenosy do třetích zemí.
+    - `TRAINING ON DATA = TO VERIFY BEFORE PUBLICATION` – nelze blanketně prohlašovat, že žádný poskytovatel netrénuje na datech bez předložení platného podnikového kontraktu.
+    - **Status:** `[LEGAL RESEARCH REQUIRED: ověřit DPA, SCC a podnikové podmínky s Google, xAI a Groq před ostrým spuštěním produkce]`.
 
 ### 30. Filtrování soukromí a pseudonymizace (Privacy Boundary)
 - **Zjištěný stav:** `[VERIFIED FROM CODE]` Implementováno v `src/services/privacy/privacyFilterService.ts`.
@@ -199,26 +210,37 @@
 
 ## ČÁST 5: ANALYTIKA, COOKIES A ÚLOŽIŠTĚ PROHLÍŽEČE (31–34)
 
-### 31. Analytika
-- **Zjištěný stav:** `[VERIFIED FROM CODE]` Implementováno v `src/services/analyticsService.ts`.
-  - Interní self-hosted agregace událostí (`AnalyticsEvent`: `eventType`, `featureId`, `path`, `anonymousId`).
-  - Portál v současném kódu neobsahuje žádné sledovací skripty Google Analytics, Facebook Pixel ani reklamní sítě.
+### 31. Analytika (Self-Hosted Internal Analytics)
+- **Zjištěný stav:** `[VERIFIED FROM CODE]` Implementováno v `src/services/analyticsService.ts` a `src/lib/analyticsClient.ts`.
+  - Využívá interní klientskou knihovnu `AnalyticsClient`, která generuje pseudonymní `sessionId` (`sess_...`) ukládané v `sessionStorage` pod klíčem `tmp_analytics_sid`.
+  - Odesílá agregované události (`AnalyticsEventType`: navigace, zobrazení modulů, kliknutí na funkce) přes endpoint `/api/analytics/event` (případně `navigator.sendBeacon` při ukončení relace).
+  - Portál neobsahuje žádné komerční sledovací skripty třetích stran (Google Analytics, Google Tag Manager, Meta Pixel, Hotjar ani reklamní trackery).
 
 ### 32. Cookies
 - **Zjištěný stav:** `[VERIFIED FROM CODE]` V `server.ts` a `cookieUtils.ts` se používají výhradně tyto cookies:
-  1. `token` (JWT session token, HttpOnly, SameSite=Lax/Strict, secure v produkci).
-  2. `pending_mfa_user` (krátkodobá session pro dokončení 2FA).
-  3. `passkey_reg_challenge` / `passkey_auth_challenge` (krátkodobé podepsané výzvy pro WebAuthn).
-  4. `google_oauth_state` / `microsoft_oauth_state` (CSRF prevence pro OAuth).
-  5. `oauth_return_url` (návratová URL po přihlášení).
-  - Všechny uvedené cookies jsou **STRICTLY NECESSARY** (technické a bezpečnostní).
+  1. `token` (JWT autentizační token relace, HttpOnly, SameSite=Lax/Strict, secure v produkci).
+  2. `pending_mfa_user` (dočasný identifikátor uživatele při probíhající dvoufázové výzvě TOTP; maxAge 10 minut, HttpOnly, SameSite=Strict).
+  3. `passkey_reg_challenge` / `passkey_auth_challenge` (krátkodobé kryptografické výzvy pro registraci a autentizaci FIDO2/WebAuthn; HttpOnly, SameSite=Strict).
+  4. `google_oauth_state` / `microsoft_oauth_state` (kryptografické náhodné stavy pro ochranu proti CSRF útokům při OAuth autentizaci; signed, HttpOnly, SameSite=Lax).
+  5. `oauth_return_url` (bezpečná návratová URL adresa po úspěšném přihlášení přes federovanou identitu; HttpOnly).
+  - Všechny uvedené cookies spadají do kategorie **STRICTLY NECESSARY** (technické a bezpečnostní nezbytnosti dle § 89 odst. 3 zákona č. 127/2005 Sb., o elektronických komunikacích).
 
-### 33. Úložiště prohlížeče (localStorage & sessionStorage)
+### 33. Úložiště prohlížeče (localStorage, sessionStorage, IndexedDB, Service Worker)
 - **Zjištěný stav:** `[VERIFIED FROM CODE]`
-  - `localStorage.getItem('cookie_consent_v1')` – uložení voleb cookie lišty.
-  - `localStorage.getItem('session_hash')` – náhodný identifikátor relace pro záznam souhlasu anonymního návštěvníka.
-  - `localStorage.getItem('tatovacesta_auth_token')` – záložní klientský token pro autentizaci API volání.
-  - `localStorage.getItem('puck_pending_template')` – dočasný JSON náhledu šablon v redakčním systému.
+  - **`localStorage`:**
+    1. `tatovacesta_auth_token` (případně `tatovacesta_token`, `token`) – klientský Bearer JWT token pro autorizaci požadavků z webového rozhraní.  
+       ⚠️ **`[SECURITY REVIEW REQUIRED]`**: Ukládání bearer JWT autentizačního tokenu v `localStorage` představuje vyšší expozici vůči XSS útokům ve srovnání s výhradním používáním `HttpOnly` cookies. Doporučena revize pro budoucí sjednocení do striktního `HttpOnly` režimu.
+    2. `cookie_consent_v1` – serializovaný JSON stav preferencí cookie lišty (`{ essential: true, functional: boolean, analytics: boolean, marketing: boolean }`).
+    3. `session_hash` – náhodný pseudonymní identifikátor relace pro spárování volby souhlasu s backendovým záznamem v `/api/legal/cookie-consent`.
+    4. `puck_pending_template` – dočasný JSON serializované šablony editoru Puck v redakční části.
+    5. `PUCK_*_RENDERER_ENABLED` – lokální příznaky aktivace experimentálních rendererů pro administrátory a editory.
+  - **`sessionStorage`:**
+    1. `tmp_analytics_sid` – dočasný identifikátor návštěvnické relace pro interní modul `AnalyticsClient`.
+    2. `ai_assistant_initial_prompt` – přenos textového kontextu z veřejných modulů (kalkulačka, judikatura) do AI asistenta.
+    3. `tatovapravo_form_context` – přenos vybraných parametrů formuláře do AI generátoru podání.
+    4. `tatovacesta_auth_token` – záložní čtení autentizačního tokenu v klientských modálech.
+  - **`IndexedDB`:** V současném běhovém kódu DEV3 **NENÍ runtime implementováno**; existuje pouze jako architektonický návrh pro budoucí mobilní offline PWA režim (`[PRODUCT INTENT]`).
+  - **`Service Worker / Cache Storage`:** Standardní PWA cache pro offline dostupnost aplikačního jádra (statická HTML/CSS/JS aktiva a ikony).
 
 ### 34. Monitoring a systémové logování
 - **Zjištěný stav:** `[VERIFIED FROM CODE]`

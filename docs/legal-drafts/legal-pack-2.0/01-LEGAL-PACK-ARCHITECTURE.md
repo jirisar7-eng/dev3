@@ -50,7 +50,7 @@ Právní dokumentace Legal Pack 2.0 tvoří integrovaný, vnitřně nerozporný 
 V celém balíčku dokumentů se používají tyto jednotné definice:
 
 1. **Portál / Služba:** Webová aplikace, informační databáze a nástroje dostupné na doméně `tatovacesta.cz` (a souvisejících subdoménách), provozované pod názvem „Táta má právo“ v rámci technologické platformy Synthesis OS.
-2. **Provozovatel:** Budoucí určený subjekt `[TO VERIFY: identita budoucího provozovatele]`, IČO: `[TO VERIFY: IČO]`, se sídlem: `[TO VERIFY: sídlo]`.
+2. **Provozovatel:** Jiří Šár, fyzická osoba (`[LEGAL RESEARCH REQUIRED: determine mandatory operator identification for current natural-person operating model]`; určení veřejné kontaktní/doručovací adresy představuje samostatný bod k rozhodnutí). *Poznámka k organizaci [PRODUCT INTENT — FUTURE]: Případné budoucí zastřešení zapsaným spolkem je dosud neuskutečněný záměr; spolek nebyl založen a nesmí být uváděn jako současný subjekt.*
 3. **Uživatel:** Každá fyzická osoba starší 18 let, která přistupuje k Portálu, prohlíží jej nebo vytváří uživatelský účet.
 4. **Návštěvník:** Uživatel přistupující k veřejně dostupným částem Portálu bez přihlášení k účtu.
 5. **Registrovaný uživatel:** Uživatel, který úspěšně dokončil registrační proces a disponuje aktivním uživatelským účtem.

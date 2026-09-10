@@ -1,5 +1,81 @@
 # CHANGELOG
 
+## 2026-09-10
+**Typ:** SECURITY / FIX / LEGAL / COMPLIANCE  
+**Změna:** GDPR Security Remediation & Post-Cancel Verification (TMPR-20260910-LEGAL-025 / LEGAL-026).  
+**Důvod:** Bezpečnostní nálezy S-01 až S-03 z auditu LEGAL-024 (absence autentizace a riziko IDOR na GDPR POST endpointech) a nezávislá verifikace pracovního stromu po neočekávaně přerušeném běhu LEGAL-025.  
+**Výsledek:**
+- `server.ts`: Endpointy `POST /api/gdpr/deletion-request`, `POST /api/gdpr/consent-log` a `POST /api/gdpr/sensitive-access` jsou zabezpečeny centrálním middlewarem `requireAuth`. Identita žadatele je odvozena výhradně ze serverově ověřené relace (`req.user.id`). Pokusy o IDOR manipulaci s cizím `userId` jsou okamžitě odmítány s kódem HTTP 403 Forbidden.
+- Nález S-03 vyhodnocen jako `SECURITY DEBT` (ukládání JWT v `localStorage`, absence refresh tokenů a revokace; navržen budoucí ticket `TMPR-AUTH-COOKIE-MIGRATION`).
+- `docs/legal-drafts/legal-pack-2.0/02-TERMS-OF-USE-DRAFT.md`: Technická harmonizace Článku 12 (specifikace `Argon2id` s automatickým upgradem z legacy `bcrypt`) a Článku 14 (hybridní model `Authorization: Bearer` a `HttpOnly` cookies).
+- Deterministicky synchronizován artefakt `src/data/legalDrafts20.ts` přes `scripts/generateLegalDrafts20.ts`.
+- Vytvořen a integrován testovací modul `tests/gdpr-security-remediation-phase025.test.ts` (8/8 pass) a zařazen do `scripts/test-runner.js`.
+- Vyvrácena nepřesnost v předchozím auditu ohledně logování do `SensitiveAccessLog` (každý GDPR endpoint zapisuje do svého specializovaného Prisma modelu: `GdprDeletionRequest`, `UserConsentLog`, `SensitiveAccessLog`).
+- Publikační bloker PB-03 označen jako `RESOLVED`. Stav dokumentace Legal Pack 2.0: `READY FOR LEGAL REVIEW` (nadále `WORKING DRAFT — NOT FOR PUBLICATION`, blokery PB-01 a PB-02 zůstávají aktivní).
+- Vytvořen audit `docs/audit/LEGAL-PACK-2-0-POST-CANCEL-VERIFICATION-2026-09-10.md`.  
+**Ověření:** `compile_applet` (Build succeeded), `lint_applet` (`tsc --noEmit` 0 chyb), `npm test` (58/58 testovacích sad PASS, 100 %).  
+**Commit:** N/A  
+**Audit:** TMPR-20260910-LEGAL-026 (`docs/audit/LEGAL-PACK-2-0-POST-CANCEL-VERIFICATION-2026-09-10.md`)  
+**Riziko:** P1 (Vyřešeno a zabezpečeno)  
+**Další krok:** Předání podkladů advokátovi ČAK k odbornému právnímu posouzení (PB-04).  
+
+
+## 2026-09-10
+**Typ:** REFACTOR / ARCHITECTURE / LEGAL / COMPLIANCE  
+**Změna:** Odstranění Dual Source of Truth (DSOT) pro Legal Pack 2.0 (TMPR-20260910-LEGAL-022).  
+**Důvod:** Odstranění architektonického dluhu P2 způsobeného paralelní manuální existencí obsahu v Markdown souborech a TypeScript souboru `src/data/legalDrafts20.ts`. Ustavení Markdown souborů v `docs/legal-drafts/legal-pack-2.0/` jako jediného autoritativního Single Source of Truth (SSOT).  
+**Výsledek:**
+- Vytvořen idempotentní a deterministický generátor `scripts/generateLegalDrafts20.ts`, který přímo načítá 7 autoritativních Markdown dokumentů a generuje `src/data/legalDrafts20.ts` s označením `AUTO-GENERATED FILE — DO NOT EDIT MANUALLY!`.
+- Přidán skript `"generate:legal-drafts"` do `package.json` a integrován jako pre-build krok v pipeline.
+- Vytvořen testovací modul `tests/legal-pack-2-0-ssot.test.ts` ověřující shodu obsahu znak po znaku (byte-for-byte), determinismus generátoru a Fail-Closed bezpečnostní pravidla.
+- Integrovány testy do globálního runneru `scripts/test-runner.js`.
+- Vytvořen technický audit `docs/audit/LEGAL-PACK-2-0-SSOT-2026-09-10.md`.
+- Všechny bezpečnostní garance (zákaz akceptace, admin-only náhled, nulová mutace DB/Prisma) zůstávají 100% zachovány.  
+**Ověření:** `compile_applet` (Build succeeded), `lint_applet` (`tsc --noEmit`), `tests/legal-pack-2-0-ssot.test.ts` (7/7 pass), `tests/legal-pack-2-0-draft-preview.test.ts` (12/12 pass).  
+**Commit:** N/A  
+**Audit:** TMPR-20260910-LEGAL-022 (`docs/audit/LEGAL-PACK-2-0-SSOT-2026-09-10.md`)  
+**Riziko:** NONE  
+**Další krok:** Připraveno pro další navazující kroky.  
+
+
+## 2026-09-10
+**Typ:** FIX / SERVER / INFRA  
+**Změna:** Optimalizace spouštění dev serveru a zkrácení doby otevření portu 3000.  
+**Důvod:** Při startu kontejneru a dev serveru blokovala inicializace `createViteServer` a dlouhá smyčka `waitForDatabase` okamžité otevření portu 3000 (`app.listen`), což vedlo k timeoutu startovací sondy AI Studia ("The dev server didn't start").  
+**Výsledek:**
+- `server.ts`: Inicializace Vite middleware je nyní asynchronní (`viteReadyPromise`) a `app.listen(PORT, '0.0.0.0')` váže port 3000 okamžitě. Požadavky na frontend bezpečně vyčkají na dokončení inicializace Vite, zatímco `/api/health` a API trasy reagují okamžitě.
+- `src/db/prisma.ts`: Ve vývojovém/preview režimu, kde je povolen fallback do paměťového `dbStore`, `waitForDatabase` nečeká zbytečných 15 sekund v prázdných `setTimeout` cyklech, pokud je detekována nedostupnost PostgreSQL.
+- Server nyní startuje a odpovídá na `/api/health` i `/` do 9 sekund.
+- Úklid dočasných testovacích skriptů.  
+**Ověření:** `compile_applet` (Build succeeded), `restart_dev_server`, HTTP curl test (`200 OK` na `/` i `/api/health`).  
+**Commit:** N/A  
+**Audit:** N/A  
+**Riziko:** NONE  
+**Další krok:** Žádný, server je plně funkční.  
+
+
+## 2026-09-09
+**Typ:** DOCS / RESEARCH / LEGAL / COMPLIANCE  
+**Změna:** Rozšíření a zkvalitnění pracovních návrhů Legal Pack 2.0 (TMPR-20260909-LEGAL-019).  
+**Důvod:** Druhá hluboká a rigorózní iterace rozpracování všech 7 normativních dokumentů v `docs/legal-drafts/legal-pack-2.0/` na základě reálných technických faktů v kódu DEV3, datových toků a identifikovaných rizik pro externí advokátní posouzení.  
+**Výsledek:**
+- Podstatně rozšířeno a strukturováno všech 7 základních dokumentů (celkem přes 17 000 slov):
+  - `02-TERMS-OF-USE-DRAFT.md`: 14 částí; spotřebitelská ochrana, limity odpovědnosti dle § 2898 NOZ, CoParentHub, ADR u ČOI.
+  - `03-PRIVACY-NOTICE-DRAFT.md`: 14 částí; informační plnění dle GDPR, čl. 9 odst. 2 písm. f) GDPR pro spisy, fail-closed filtr, práva subjektů.
+  - `04-COOKIE-POLICY-DRAFT.md`: 10 částí; § 89 odst. 3 ZEK (technické cookies), oddělení od localStorage a sessionStorage.
+  - `05-LEGAL-DISCLAIMER-DRAFT.md`: 11 částí; striktní odmítnutí právních služeb a pokoutnictví (§ 52d zákona o advokacii), limity kalkulátorů, AI halucinace.
+  - `06-VOLUNTEER-CODE-DRAFT.md`: 10 částí; etické zásady, zákaz pokoutnictví a přijímání plateb, ochrana PII, RBAC role.
+  - `07-AI-TRANSPARENCY-DRAFT.md`: 11 částí; čl. 50 EU AI Act, deklarace statusu PROVIDER COMPLIANCE GATE = BLOCKED, fail-closed PrivacyFilter, Human-in-the-Loop, vyloučení čl. 22 GDPR.
+  - `08-VOLUNTEER-COOPERATION-AGREEMENT-DRAFT.md`: 13 částí; vzorová inominátní smlouva dle § 1746 odst. 2 NOZ, bezúplatnost, přísné NDA se smluvní pokutou 50 000 Kč, autorské licence.
+- Aktualizován faktografický přehled `00-LEGAL-FACTS-INVENTORY.md` o stav externích AI providerů a web storage.
+- Vytvořen ucelený technický audit `docs/audit/LEGAL-PACK-2-0-EXPANSION-2026-09-09.md`.
+- Striktní dodržení bezpečnostního rámce: 0 zásahů do kódu (`src/**`), serveru, DB ani platných PUBLISHED verzí dokumentů.  
+**Ověření:** AUDIT / READ-ONLY INVENTORY / CONSISTENCY MATRIX / PLACEHOLDER TRACKING  
+**Commit:** N/A  
+**Audit:** TMPR-20260909-LEGAL-019 (`docs/audit/LEGAL-PACK-2-0-EXPANSION-2026-09-09.md`)  
+**Riziko:** NONE  
+**Další krok:** Připraveno pro formální předání české advokátní kanceláři k posouzení před publikací.  
+
 ## 2026-09-09
 **Typ:** DOCS / RESEARCH / LEGAL / COMPLIANCE  
 **Změna:** Vypracování pracovního návrhu právní a compliance dokumentace Legal Pack 2.0 (TMPR-20260909-LEGAL-018).  

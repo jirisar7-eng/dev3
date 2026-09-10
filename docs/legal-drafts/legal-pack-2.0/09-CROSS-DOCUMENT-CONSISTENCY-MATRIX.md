@@ -62,7 +62,7 @@ Během přípravy Legal Packu 2.0 byly detailně analyzovány dřívější text
 1. **Pojem dítěte:** Ve všech dokumentech důsledně označováno jako „dítě“ nebo „nezletilé dítě“; jeho nejlepší zájem je definován jako primární hledisko v Terms, Privacy Notice, Disclaimeru, Kodexu i Dohodě.
 2. **Pojem Asistivní AI:** Všude rozlišována deterministická část softwaru od pravděpodobnostních LLM; konzistentní zákaz automatizovaného rozhodování dle čl. 22 GDPR.
 3. **Pojem Dobrovolník:** V Kodexu i Dohodě striktně zakázáno vinklaření a poskytování právních služeb.
-4. **Pojem Provozovatel:** Sjednocený placeholder `[TO VERIFY: identita budoucího provozovatele]` ve všech 7 normativních návrzích.
+4. **Pojem Provozovatel / Správce:** Důsledně sjednoceno ve všech normativních dokumentech na fyzickou osobu: **Jiří Šár, fyzická osoba** (s označením `[LEGAL RESEARCH REQUIRED: determine mandatory operator identification for current natural-person operating model]`). Vyloučeny veškeré předpoklady existence neexistujícího spolku, IČO, sídla či statutárního orgánu v současném stavu; budoucí záměr založení spolku je izolován jako interní plánovací fakt (`[PRODUCT INTENT — FUTURE]`).
 
 ---
 

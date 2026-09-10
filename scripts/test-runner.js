@@ -14,7 +14,7 @@ if (true) {
 
 const tests = [
   { cmd: 'node', args: ['--test', 'test/main.test.cjs'], name: 'Static & Security Integrity (PWA, Disclaimers, Auth, RBAC)' },
-  { cmd: 'node', args: ['scripts/run-security-isolated.cjs'], name: 'Security & Audit Integrations' },
+  { cmd: 'node', args: ['run_security_tests.cjs'], name: 'Security & Audit Integrations' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/state-admin-p1-p2.test.js'], name: 'State Administration API Hub (P1 & P2 Connectors)' },
   { cmd: 'node', args: ['scripts/test-mapa-subjektu.cjs'], name: 'Mapa Subjektů & Registr Integration' },
   { cmd: 'npx', args: ['tsx', '--test', 'tests/judgment-case-sync.test.ts'], name: 'Judgment AI Extractor -> Case Persistence Integration' },
@@ -52,6 +52,10 @@ const tests = [
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/mapa-subjektu-advanced-filters.test.ts'], name: 'Mapa Subjektů Pokročilé Filtry (GAP-02 FÁZE A)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/soudy-data-population.test.ts'], name: 'Soudy ČR Verified Data Population Pipeline & Provenance (MASTER-IMPLEMENT-07A)' }
   , { cmd: 'npx', args: ['tsx', '--test', 'tests/nonospod-advokati-acquisition.test.ts'], name: 'ČAK Official Acquisition Pipeline & Four-Eyes Verification (MASTER-IMPLEMENT-07C-2)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-draft-preview.test.ts'], name: 'Legal Pack 2.0 DEV3 Draft Preview & Isolation (TMPR-021)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-ssot.test.ts'], name: 'Legal Pack 2.0 Single Source of Truth (SSOT) & Generator (TMPR-022)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/legal-pack-2-0-terms-expansion.test.ts'], name: 'Legal Pack 2.0 Terms of Use Deep Expansion (TMPR-023)' }
+  , { cmd: 'npx', args: ['tsx', '--test', 'tests/gdpr-security-remediation-phase025.test.ts'], name: 'GDPR Security Remediation & Terms SSOT Verification (TMPR-025)' }
 ];
 
 let failed = false;

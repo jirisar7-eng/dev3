@@ -1,10 +1,31 @@
 import { apiFetch } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import { ComplianceDoc, LegalDocument, LegalDocumentVersion, ConsentRecord, LegalDocStatus } from '../../types';
-import { ShieldCheck, FileText, GitBranch, CheckCircle2, Settings, Plus, Eye, Check, X, Search, Filter, History, Calendar, AlertCircle } from 'lucide-react';
+import { LegalDocumentLayout } from '../legal/LegalDocumentLayout';
+import { 
+  ShieldCheck, 
+  FileText, 
+  GitBranch, 
+  CheckCircle2, 
+  Settings, 
+  Plus, 
+  Eye, 
+  Check, 
+  X, 
+  Search, 
+  Filter, 
+  History, 
+  Calendar, 
+  AlertCircle,
+  FileCode,
+  AlertTriangle,
+  Lock,
+  UserCheck
+} from 'lucide-react';
+import { legalDrafts20Content, legalDrafts20Meta, LEGAL_PACK_2_0_WARNING } from '../../data/legalDrafts20';
 
 export const ComplianceManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'docs' | 'versions' | 'consents' | 'audit' | 'settings'>('docs');
+  const [activeTab, setActiveTab] = useState<'docs' | 'versions' | 'drafts' | 'consents' | 'audit' | 'settings'>('docs');
   const [docs, setDocs] = useState<ComplianceDoc[]>([]);
   const [selectedDocKey, setSelectedDocKey] = useState<string>('terms');
   const [selectedDocDetail, setSelectedDocDetail] = useState<LegalDocument | null>(null);
@@ -309,6 +330,21 @@ export const ComplianceManager: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('drafts')}
+          className={`px-4 py-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all ${
+            activeTab === 'drafts'
+              ? 'border-amber-600 text-amber-900 bg-amber-50/50'
+              : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <FileCode className="w-4 h-4 text-amber-600" />
+          Legal Pack 2.0 (Draft Preview)
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900 border border-amber-300">
+            DRAFT
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('consents')}
           className={`px-4 py-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all ${
             activeTab === 'consents'
@@ -562,13 +598,23 @@ export const ComplianceManager: React.FC = () => {
                               </button>
 
                               {ver.status !== 'PUBLISHED' && (
-                                <button
-                                  onClick={() => handlePublishVersion(ver.id)}
-                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-xs"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                  Publikovat
-                                </button>
+                                ver.version.includes('DRAFT') ? (
+                                  <span 
+                                    className="px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-bold tracking-tight flex items-center gap-1"
+                                    title="Pracovní návrh Legal Pack 2.0 (DRAFT). Publikace je blokována."
+                                  >
+                                    <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
+                                    Publikace blokována (Draft 2.0)
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handlePublishVersion(ver.id)}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-xs"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    Publikovat
+                                  </button>
+                                )
                               )}
 
                               {ver.status === 'PUBLISHED' && (
@@ -636,7 +682,7 @@ export const ComplianceManager: React.FC = () => {
                       <button
                         onClick={() => setShowDiffSection(true)}
                         disabled={!diffVerA || !diffVerB}
-                        className="px-3 py-1.5 bg-slate-900 text-white disabled:bg-slate-200 disabled:text-slate-400 font-bold text-xs rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-white text-slate-900 disabled:bg-slate-200 disabled:text-slate-400 font-bold text-xs rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
                       >
                         Porovnat
                       </button>
@@ -713,6 +759,115 @@ export const ComplianceManager: React.FC = () => {
             ) : (
               <div className="p-8 text-center text-slate-500 text-xs">Načítám detail dokumentu...</div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: LEGAL PACK 2.0 (DRAFT PREVIEW) */}
+      {activeTab === 'drafts' && (
+        <div className="space-y-6">
+          {/* Working Draft Notice Banner */}
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-950 font-mono font-black text-[10px] tracking-wider uppercase">
+                    WORKING DRAFT — NOT FOR PUBLICATION
+                  </span>
+                  <span className="text-xs font-bold text-amber-900">
+                    Legal Pack 2.0 (DEV3 Draft Preview)
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-amber-950">
+                  Pracovní návrh právních dokumentů verze 2.0
+                </h3>
+                <p className="text-xs text-amber-900 leading-relaxed max-w-4xl">
+                  Tento balíček slouží výhradně k internímu přezkumu a auditu. Žádný z těchto dokumentů není aktuálně účinný,
+                  není publikován ve veřejném rozhraní a systém fail-closed blokuje jakoukoli registraci souhlasu či podpisu pro verzi 2.0.0-DRAFT.
+                </p>
+                <div className="mt-3 p-3 bg-white/80 rounded-xl border border-amber-200 text-xs text-slate-800 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-950">
+                    <ShieldCheck className="w-4 h-4 text-blue-900" />
+                    Autoritativní identita provozovatele:
+                  </div>
+                  <div className="text-[11px] text-slate-700">
+                    Projekt Táta má právo je provozován <strong>fyzickou osobou: Jiří Šár</strong>. Založení zapsaného spolku je výhradně budoucím záměrem.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Drafts List Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.keys(legalDrafts20Meta).map((key) => {
+              const meta = legalDrafts20Meta[key];
+              const content = legalDrafts20Content[key];
+              return (
+                <div
+                  key={key}
+                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:border-amber-300 transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                      <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                        {meta.canonicalId}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded text-[9px] font-bold">
+                          v2.0.0-DRAFT
+                        </span>
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-medium">
+                          {meta.type}
+                        </span>
+                      </div>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                      {meta.title}
+                    </h4>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      {meta.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Autor návrhu:</span>
+                      <span className="font-semibold text-slate-700">{meta.author}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded text-[10px] font-semibold flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-rose-600" />
+                        Akceptace zakázána
+                      </span>
+
+                      <button
+                        onClick={() => {
+                          setInspectVersion({
+                            id: `draft-20-${key}`,
+                            documentId: key,
+                            version: '2.0.0-DRAFT',
+                            content: content || '',
+                            status: 'DRAFT',
+                            effectiveDate: '2026-09-10',
+                            author: meta.author,
+                            createdAt: '2026-09-10',
+                            updatedAt: '2026-09-10',
+                          });
+                        }}
+                        className="px-3 py-1.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Prohlédnout návrh
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -949,7 +1104,7 @@ export const ComplianceManager: React.FC = () => {
 
       {/* MODAL: Nový Dokument */}
       {showNewDocModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-base font-bold text-slate-900">Vytvořit nový compliance dokument</h3>
@@ -1054,7 +1209,7 @@ export const ComplianceManager: React.FC = () => {
 
       {/* MODAL: Nová Verze */}
       {showNewVersionModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
@@ -1128,10 +1283,15 @@ export const ComplianceManager: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: Náhled Historické Verze */}
+      {/* MODAL: Náhled Historické Verze / DRAFT */}
       {inspectVersion && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
+            {inspectVersion.status === 'DRAFT' && (
+              <div className="w-full bg-amber-500 text-amber-950 px-4 py-3 font-bold text-sm flex items-center justify-center gap-2 shadow-sm rounded-xl mb-2">
+                <AlertCircle className="w-5 h-5" /> NÁHLED — NEPUBLIKOVANÁ VERZE (Verze {inspectVersion.version}, DRAFT). Tento dokument zatím není veřejně účinnou/publikovanou verzí.
+              </div>
+            )}
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -1155,8 +1315,17 @@ export const ComplianceManager: React.FC = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto space-y-3 pr-2 text-xs leading-relaxed text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div className="whitespace-pre-wrap font-sans">{inspectVersion.content}</div>
+            <div className="overflow-y-auto w-full max-w-full">
+              <LegalDocumentLayout
+                documentId={inspectVersion.documentId}
+                version={inspectVersion.version}
+                effectiveDate={inspectVersion.effectiveDate.split('T')[0]}
+                title="Náhled Dokumentu"
+                content={inspectVersion.content}
+                behavior="INFORMATION"
+                status={inspectVersion.status}
+                hideBackButton={true}
+              />
             </div>
 
             <div className="flex justify-end pt-2 border-t border-slate-200">

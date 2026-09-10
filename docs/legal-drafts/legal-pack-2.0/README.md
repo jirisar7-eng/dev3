@@ -16,7 +16,7 @@ Dokumenty v této složce:
 2. **NEJSOU PUBLIKOVANÉ (STATUS: DRAFT ONLY)** – současné platné verze dokumentů (`PUBLISHED` v1.0.0 / v1.1.0) v databázi a rozhraní zůstávají zcela nedotčeny.
 3. **NEJSOU PRÁVNĚ SCHVÁLENÉ** – jedná se o technicko-právní architektonický koncept připravený pro finální revizi kvalifikovaným českým advokátem specializovaným na IT, rodinné a spotřebitelské právo a GDPR.
 4. **NESMÍ BÝT AUTOMATICKY INFORMOVÁNY ANI IMPORTOVÁNY DO PRODUKCE** – přechod do Compliance Document Versioning systému smí proběhnout až po dokončení procedury `PRE-PUBLICATION LEGAL REVIEW`.
-5. **VYŽADUJÍ FACT VERIFICATION** – doplnění reálných identifikačních údajů provozovatele, IČO, sídla, kontaktních osob a reálných smluvních procesorů.
+5. **VYŽADUJÍ PRÁVNÍ REŠERŠI IDENTIFIKACE FO** – provozovatel je autoritativně ukotven jako **Jiří Šár, fyzická osoba**; zbývá právně posoudit povinné identifikační a doručovací minimum pro bezúplatnou digitální službu a stanovit veřejnou kontaktní adresu. Případné budoucí založení spolku je izolováno jako budoucí záměr (`[PRODUCT INTENT — FUTURE]`).
 6. **VYŽADUJÍ CONSISTENCY REVIEW** – kontrolu křížových vazeb dle matice `09-CROSS-DOCUMENT-CONSISTENCY-MATRIX.md`.
 
 ---
@@ -52,10 +52,10 @@ V celém balíčku je striktně dodržováno pravidlo pravdivosti (*Synthesis Tr
 - `[TO VERIFY BEFORE PUBLICATION]` – hodnota, kterou je nutné před ostrým nasazením doplnit nebo zkontrolovat.
 - `[PROPOSED CLAUSE]` – navržená smluvní formulace určená k revizi.
 
-Pokud hodnota není v repozitáři pevně daná, je použit explicitní placeholder:
-- `[TO VERIFY: identita budoucího provozovatele]`
-- `[TO VERIFY: IČO]`
-- `[TO VERIFY: sídlo]`
+Pokud hodnota není v repozitáři pevně daná, je použit explicitní placeholder či metodická značka:
+- `[LEGAL RESEARCH REQUIRED: determine mandatory operator identification for current natural-person operating model]`
+- `[LEGAL RESEARCH REQUIRED: stanovit veřejnou kontaktní/doručovací adresu Provozovatele]`
+- `[PRODUCT INTENT — FUTURE]` (budoucí záměr, např. založení zapsaného spolku)
 - `[TO VERIFY: konkrétní procesor]`
 - `[TO VERIFY: retention period]`
 - `[TO VERIFY: international transfer mechanism]`
