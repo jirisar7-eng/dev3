@@ -3,7 +3,6 @@ import { apiFetch, safeJsonResponse } from '../utils/apiClient';
 import { useAuth } from './AuthContext';
 import { Theme, ThemeSetting, ThemeVariable } from '../types';
 import { resolveThemeContext, AppThemeContext } from '../utils/themeResolver';
-import { DEFAULT_THEME_VARIABLES } from '../services/themeService';
 import { TATA_CLASSIC_PROFILE, getTataClassicVariablesMap } from '../theme/profiles/tataClassic';
 import { LEGACY_KEY_TO_SEMANTIC_TOKEN } from '../theme/themeTokens';
 
@@ -118,7 +117,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updatedAt: v.updatedAt || new Date().toISOString(),
       }));
     }
-    return DEFAULT_THEME_VARIABLES.map((v) => ({
+    return TATA_CLASSIC_PROFILE.variables.map((v) => ({
       id: 'thm-' + v.key,
       key: v.key,
       value: v.value,
@@ -142,7 +141,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 1. Apply active theme CSS variables (or fallback)
       const varsToApply = theme?.variables && theme.variables.length > 0
         ? theme.variables
-        : DEFAULT_THEME_VARIABLES;
+        : TATA_CLASSIC_PROFILE.variables;
 
       varsToApply.forEach((v) => {
         root.style.setProperty(`--color-${v.key}`, v.value);
