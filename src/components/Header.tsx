@@ -229,12 +229,12 @@ export const Header: React.FC<HeaderProps> = ({
   const rightRef = useRef<HTMLDivElement>(null);
 
   // 3. Dimensions tracking state
-  const [dimensions, setDimensions] = useState(() => ({
-    containerWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+  const [dimensions, setDimensions] = useState({
+    containerWidth: 0,
     logoWidth: 0,
     navWidth: 0,
     rightWidth: 0,
-  }));
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -366,13 +366,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header id="main-app-header" className="sticky top-0 z-40 bg-[var(--color-surface,#ffffff)] border-b border-[var(--color-border,#e2e8f0)] shadow-xs">
-      <div ref={containerRef} className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
+      <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
-        <div ref={logoRef} className="min-w-0 shrink flex items-center">
+        <div ref={logoRef} className="shrink-0 flex items-center">
           <Logo
             variant="full"
-            size={dimensions.containerWidth > 0 && dimensions.containerWidth < 440 ? 'sm' : 'md'}
-            className="cursor-pointer max-w-full"
+            size="md"
+            className="cursor-pointer"
             onClick={() => handleNavClick('/')}
           />
         </div>
@@ -534,7 +534,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <LogIn className="w-5 h-5" />
                     </button>
                   )}
-                  {dimensions.containerWidth >= 390 && (
+                  {dimensions.containerWidth >= 380 && (
                     <button
                       id="header-mobile-register-btn"
                       type="button"
